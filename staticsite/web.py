@@ -139,7 +139,7 @@ class WebWriter:
 
     def write_markdown(self, page):
         self.md_staticsite.set_page(page)
-        dst = self.output_abspath(page.dst_relpath + ".html")
+        dst = self.output_abspath(page.dst_relpath)
         with open(dst, "wt") as out:
             self.markdown.reset()
             html = self.markdown.convert(page.get_content())

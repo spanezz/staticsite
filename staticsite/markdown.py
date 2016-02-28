@@ -13,28 +13,47 @@ log = logging.getLogger()
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
     def run(self, root):
-        from markdown.util import AMP_SUBSTITUTE
-
         for a in root.iter("a"):
-            url = a.attrib.get("href", None)
-            if not url: continue
-            if url.startswith(AMP_SUBSTITUTE):
-                # Possibly an overencoded mailto: link.
-                # see https://bugs.debian.org/816218
-                #
-                # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
-                # we look for it here.
-                continue
-            parsed = urlparse(url)
-            if parsed.scheme or parsed.netloc: continue
-            if not parsed.path: continue
-            dest = self.page.resolve_link(parsed.path)
-            if dest is None:
-                log.warn("%s: internal link %r does not resolve to any site page", self.page.src_relpath, url)
-            else:
-                a.attrib["href"] = urlunparse(
-                    (parsed.scheme, parsed.netloc, dest.dst_relpath, parsed.params, parsed.query, parsed.fragment)
-                )
+            new_url = self.resolve_url(a.attrib.get("href", None))
+            if new_url is not None:
+                a.attrib["href"] = new_url
+
+        for a in root.iter("img"):
+            new_url = self.resolve_url(a.attrib.get("src", None))
+            if new_url is not None:
+                a.attrib["src"] = new_url
+
+
+
+    def resolve_url(self, url):
+        """
+        Resolve internal URLs.
+
+        Returns None if the URL does not need changing, else returns the new URL.
+        """
+        from markdown.util import AMP_SUBSTITUTE
+        if not url:
+            return None
+        if url.startswith(AMP_SUBSTITUTE):
+            # Possibly an overencoded mailto: link.
+            # see https://bugs.debian.org/816218
+            #
+            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
+            # we look for it here.
+            return None
+        parsed = urlparse(url)
+        if parsed.scheme or parsed.netloc:
+            return None
+        if not parsed.path:
+            return None
+        dest = self.page.resolve_link(parsed.path)
+        if dest is None:
+            log.warn("%s: internal link %r does not resolve to any site page", self.page.src_relpath, url)
+            return None
+
+        return urlunparse(
+            (parsed.scheme, parsed.netloc, "/" + dest.dst_link, parsed.params, parsed.query, parsed.fragment)
+        )
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
@@ -63,6 +82,9 @@ class MarkdownPage(Page):
 
         # Sequence of lines found in the body
         self.body = []
+
+        # Destination file name
+        self.dst_relpath = os.path.join(self.src_relpath, "index.html")
 
 #        # Rules used to match metadata lines
 #        self.meta_line_rules = [

@@ -24,6 +24,9 @@ class Page:
         # generate the output page
         self.dst_relpath = relpath
 
+        # Relative link used to point to this resource in URLs
+        self.dst_link = relpath
+
         # Page metadata. See README for a list.
         self.meta = {}
 
