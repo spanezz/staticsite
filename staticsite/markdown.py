@@ -6,6 +6,51 @@ import os
 import pytz
 import datetime
 import markdown
+from urllib.parse import urlparse, urlunparse
+import logging
+
+log = logging.getLogger()
+
+class LinkResolver(markdown.treeprocessors.Treeprocessor):
+    def run(self, root):
+        from markdown.util import AMP_SUBSTITUTE
+
+        for a in root.iter("a"):
+            url = a.attrib.get("href", None)
+            if not url: continue
+            if url.startswith(AMP_SUBSTITUTE):
+                # Possibly an overencoded mailto: link.
+                # see https://bugs.debian.org/816218
+                #
+                # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
+                # we look for it here.
+                continue
+            parsed = urlparse(url)
+            if parsed.scheme or parsed.netloc: continue
+            if not parsed.path: continue
+            dest = self.page.resolve_link(parsed.path)
+            if dest is None:
+                log.warn("%s: internal link %r does not resolve to any site page", self.page.src_relpath, url)
+            else:
+                a.attrib["href"] = urlunparse(
+                    (parsed.scheme, parsed.netloc, dest.dst_relpath, parsed.params, parsed.query, parsed.fragment)
+                )
+
+
+class StaticSiteExtension(markdown.extensions.Extension):
+    def extendMarkdown(self, md, md_globals):
+        self.link_resolver = LinkResolver(md)
+        # Insert instance of 'mypattern' before 'references' pattern
+        md.treeprocessors.add('staticsite', self.link_resolver, '_end')
+        md.registerExtension(self)
+
+    def reset(self):
+        pass
+
+    def set_page(self, page):
+        self.page = page
+        self.link_resolver.page = page
+
 
 class MarkdownPage(Page):
     TYPE = "markdown"

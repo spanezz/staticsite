@@ -60,12 +60,14 @@ class WebWriter:
 
         # Markdown compiler
         from markdown import Markdown
+        from .markdown import StaticSiteExtension
+        self.md_staticsite = StaticSiteExtension()
         self.markdown = Markdown(
             extensions=[
                 "markdown.extensions.extra",
                 "markdown.extensions.codehilite",
                 "markdown.extensions.fenced_code",
-                "markdown.extensions.meta",
+                self.md_staticsite,
             ],
             output_format="html5",
         )
@@ -136,6 +138,7 @@ class WebWriter:
         shutil.copy2(os.path.join(page.site.root, page.src_relpath), dst)
 
     def write_markdown(self, page):
+        self.md_staticsite.set_page(page)
         dst = self.output_abspath(page.dst_relpath + ".html")
         with open(dst, "wt") as out:
             self.markdown.reset()

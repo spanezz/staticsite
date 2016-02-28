@@ -45,28 +45,21 @@ class Page:
             tz_str = 'Z'
         return ts.strftime("%Y-%m-%d %H:%M:%S") + tz_str
 
-#    @property
-#    def relpath_without_extension(self):
-#        return os.path.splitext(self.relpath)[0]
-#
-#    def resolve_link(self, target):
-#        target_relpath = self.resolve_link_relpath(target)
-#        target_page = self.site.pages.get(target_relpath, None)
-#        return target_page
-#
-#    def resolve_link_relpath(self, target):
-#        target = target.lstrip("/")
-#        root = self.relpath_without_extension
-#        while True:
-#            target_relpath = os.path.join(root, target)
-#            abspath = os.path.join(self.site.root, target_relpath)
-#            if os.path.exists(abspath + ".mdwn"):
-#                return target_relpath + ".mdwn"
-#            if os.path.exists(abspath):
-#                return target_relpath
-#            if not root or root == "/":
-#                return None
-#            root = os.path.dirname(root)
+    def resolve_link(self, target):
+        # Absolute URLs are resolved as is
+        if target.startswith("/"):
+            target_relpath = os.path.normpath(target.lstrip("/"))
+            return self.site.pages.get(target_relpath, None)
+
+        root = self.src_relpath
+        while True:
+            target_relpath = os.path.normpath(os.path.join(root, target))
+            res = self.site.pages.get(target_relpath, None)
+            if res is not None: return res
+            if not root or root == "/":
+                return None
+            root = os.path.dirname(root)
+
 
     def analyze(self):
         pass
