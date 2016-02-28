@@ -124,7 +124,7 @@ class Site:
             else:
                 if os.path.isfile(absf):
                     log.debug("Loading static file %s", page_relpath)
-                    self.pages[relpath] = Asset(self, page_relpath)
+                    self.pages[page_relpath] = Asset(self, page_relpath)
 
     def read_tag_descriptions(self, relpath):
         log.info("Loading tag info from %s", relpath)
