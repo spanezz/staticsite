@@ -68,7 +68,7 @@ class WebWriter:
             loader=FileSystemLoader([
                 os.path.join(self.root, "site"),
                 os.path.join(self.root, "theme"),
-            ])
+            ]),
         )
 
         self.page_template = self.jinja2.get_template("page.html")
@@ -82,6 +82,8 @@ class WebWriter:
                 os.unlink(abs)
 
     def write(self, site):
+        self.jinja2.globals["link_taxonomy"] = lambda tname, tval: site.taxonomy_indices[tname][tval].dst_link
+
         outdir = os.path.join(self.root, "web")
 
         # Clear the target directory, but keep the root path so that a web

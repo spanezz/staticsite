@@ -50,7 +50,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             return None
 
         return urlunparse(
-            (parsed.scheme, parsed.netloc, "/" + dest.dst_link, parsed.params, parsed.query, parsed.fragment)
+            (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
         )
 
 

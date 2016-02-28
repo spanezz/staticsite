@@ -45,6 +45,7 @@ class J2Page(Page):
             for v in vals:
                 pages[v].append(p)
 
+        # Generate new J2Page elements for each expansion
         for e in elements:
             slug = self.site.slugify(e)
             new_basename = slug + ext
@@ -54,6 +55,10 @@ class J2Page(Page):
             new_page.meta["taxonomy_slug"] = slug
             new_page.meta["pages"] = sorted(pages.get(e, ()), key=lambda x:x.meta.get("date", None), reverse=True)
             self.site.pages[new_page.src_relpath] = new_page
+
+            # Mark this as taxonomy index
+            if ext == ".html":
+                self.site.taxonomy_indices[metaname][e] = new_page
 
 
     @classmethod
