@@ -64,7 +64,17 @@ class Page:
             root = os.path.dirname(root)
 
 
-    def analyze(self):
+    def read_metadata(self):
+        """
+        Fill in self.meta scanning the page contents
+        """
+        pass
+
+    def transform(self):
+        """
+        Optionally transform the page, like remove it from the site, or
+        generate variants.
+        """
         pass
 
 
@@ -83,10 +93,17 @@ class Site:
 
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPage
-        #from .jinja2 import Jinja2Page
+        from .j2 import J2Page
         self.page_handlers = [
             MarkdownPage,
+            J2Page,
         ]
+
+        self.taxonomies = {}
+        self.taxonomy_indices = {}
+        for n in ("tags", "stories"):
+            self.taxonomies[n] = set()
+            self.taxonomy_indices[n] = {}
 
     def read_tree(self, relpath=None):
         from .asset import Asset
@@ -98,6 +115,8 @@ class Site:
             log.debug("Loading directory %s", relpath)
             abspath = os.path.join(self.root, relpath)
         for f in os.listdir(abspath):
+            if f.startswith("."): continue
+
             if relpath is None:
                 page_relpath = f
             else:
@@ -154,5 +173,24 @@ class Site:
         page.relpath = dest_relpath
 
     def analyze(self):
+        # First pass: read metadata
         for page in self.pages.values():
-            page.analyze()
+            page.read_metadata()
+
+        # Second pass: aggregate metadata
+        for page in self.pages.values():
+            for name, vals in self.taxonomies.items():
+                page_vals = page.meta.get(name, None)
+                if page_vals is None: continue
+                vals.update(page_vals)
+
+        # Third pass: site transformations
+
+        # Use a list because the dictionary can be modified by analyze()
+        # methods
+        for page in list(self.pages.values()):
+            page.transform()
+
+    def slugify(self, text):
+        from .slugify import slugify
+        return slugify(text)

@@ -87,7 +87,7 @@ class MarkdownPage(Page):
     def get_content(self):
         return "\n".join(self.body)
 
-    def analyze(self):
+    def read_metadata(self):
         # Read the contents
         src = os.path.join(self.site.root, self.src_relpath + ".md")
         if self.meta.get("date", None) is None:

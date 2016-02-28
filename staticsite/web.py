@@ -65,7 +65,10 @@ class WebWriter:
         # Jinja2 compiler
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
-            loader=FileSystemLoader(os.path.join(self.root, "theme"))
+            loader=FileSystemLoader([
+                os.path.join(self.root, "site"),
+                os.path.join(self.root, "theme"),
+            ])
         )
 
         self.page_template = self.jinja2.get_template("page.html")
@@ -141,4 +144,17 @@ class WebWriter:
 #            os.makedirs(os.path.dirname(dst), exist_ok=True)
 #            with open(dst, "wt") as out:
 #                print('[[!meta redir="{relpath}"]]'.format(relpath=page.relpath_without_extension), file=out)
+
+
+    def write_jinja2(self, page):
+        dst = self.output_abspath(page.dst_relpath)
+        try:
+            template = self.jinja2.get_template(page.template_relpath)
+        except:
+            log.exception("%s: cannot load template %s", page.src_relpath, page.template_relpath)
+            return
+        with open(dst, "wt") as out:
+            out.write(template.render(
+                **page.meta,
+            ))
 
