@@ -74,10 +74,15 @@ class MarkdownPage(Page):
                 else:
                     self.body.append(line)
 
+        self.parse_front_matter(self.front_matter)
 
+        # Remove leading empty lines
+        while self.body and not self.body[0]:
+            self.body.pop(0)
 
-        #    self.parser.convert(fd.read())
-        #    #self.tree = self.parser.build_etree(fd.read())
+        # Read title from first # title
+        if self.body and self.body[0].startswith("# "):
+            self.meta["title"] = self.body[0][2:].strip()
 
     def parse_front_matter(self, lines):
         if not lines: return
@@ -93,8 +98,10 @@ class MarkdownPage(Page):
         elif lines[0] == "---":
             # YAML
             import yaml
-            yaml.load("\n".join(lines), Loader=yaml.CLoader)
-
+            parsed = yaml.load("\n".join(lines), Loader=yaml.CLoader)
+        else:
+            parsed = {}
+        self.meta.update(**parsed)
 
     def resolve_link_title(self, target_relpath):
         # Resolve mising text from target page title
