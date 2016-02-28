@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import BodyWriter, MarkdownPage
+#from .core import BodyWriter, MarkdownPage
 import os
 import shutil
 import json
@@ -9,15 +9,14 @@ import logging
 
 log = logging.getLogger()
 
-class BodyChecker(BodyWriter):
-    pass
+#class BodyChecker(BodyWriter):
+#    pass
 
 
 class Checker:
     def write(self, site):
         counts = Counter()
         for page in site.pages.values():
-            # TODO: run a checker on the parsed body
             counts[page.TYPE] += 1
             getattr(self, "check_" + page.TYPE)(page)
 
@@ -25,9 +24,10 @@ class Checker:
             print("{} {} pages".format(count, type))
 
 
-    def check_static(self, page):
+    def check_asset(self, page):
         pass
 
     def check_markdown(self, page):
-        checker = BodyChecker()
-        checker.read(page)
+        pass
+        #checker = BodyChecker()
+        #checker.read(page)

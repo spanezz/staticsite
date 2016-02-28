@@ -5,7 +5,7 @@ import os
 import argparse
 import logging
 import json
-from siterefactorlib.core import Site
+from staticsite.core import Site
 
 class CmdlineError(RuntimeError):
     pass
@@ -17,7 +17,6 @@ def main():
     parser.add_argument("destdir", nargs="?", help="destination directory")
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
     parser.add_argument("-t", "--type", action="store", help="output type (dump, hugo, nikola)")
-    parser.add_argument("-e", "--extrainfo", action="store", help="extra information from a json")
 
     args = parser.parse_args()
 
@@ -27,47 +26,24 @@ def main():
     else:
         logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
-    site = Site(os.path.abspath(args.srcdir))
-    if args.extrainfo:
-        site.load_extrainfo(args.extrainfo)
-    site.read_blog()
-    site.read_years()
-    site.read_talks()
-    site.read_tag_descriptions("tags")
-    site.scan()
+    site = Site(os.path.abspath(os.path.join(args.srcdir, "site")))
+    site.read_tree()
+    #site.scan()
+
+    # TODO: redo argparse with subcommands
 
     if args.type == "dump":
-        from siterefactorlib.dump import DumpWriter
+        from staticsite.dump import DumpWriter
         if not args.destdir:
             raise CmdlineError("Please provide a destination directory for the dump command")
         writer = DumpWriter(args.destdir)
-    elif args.type == "ikiwiki":
-        from siterefactorlib.ikiwiki import IkiwikiWriter
-        if not args.destdir:
-            raise CmdlineError("Please provide a destination directory pointing to the root of the ikiwiki setup")
-        writer = IkiwikiWriter(args.destdir)
-    elif args.type == "hugo":
-        from siterefactorlib.hugo import HugoWriter
-        if not args.destdir:
-            raise CmdlineError("Please provide a destination directory pointing to the root of the hugo setup")
-        writer = HugoWriter(args.destdir)
-    elif args.type == "nikola":
-        from siterefactorlib.nikola import NikolaWriter
-        if not args.destdir:
-            raise CmdlineError("Please provide a destination directory pointing to the root of the nikola setup")
-        writer = NikolaWriter(args.destdir)
-    elif args.type == "pelican":
-        from siterefactorlib.pelican import PelicanWriter
-        if not args.destdir:
-            raise CmdlineError("Please provide a destination directory pointing to the root of the pelican setup")
-        writer = PelicanWriter(args.destdir)
-    elif args.type == "web":
-        from siterefactorlib.web import WebWriter
+    elif args.type == "build":
+        from staticsite.web import WebWriter
         if not args.destdir:
             raise CmdlineError("Please provide a destination directory pointing to the root of the web output directory")
         writer = WebWriter(args.destdir)
     elif not args.type:
-        from siterefactorlib.check import Checker
+        from staticsite.check import Checker
         writer = Checker()
     else:
         raise CmdlineError("Output type {} is not supported".format(args.type))
