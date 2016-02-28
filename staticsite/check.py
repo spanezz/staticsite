@@ -14,6 +14,11 @@ log = logging.getLogger()
 
 
 class Checker:
+    def __init__(self):
+        # Markdown compiler
+        from . import markdown as ssite_markdown
+        self.markdown = ssite_markdown.Renderer()
+
     def write(self, site):
         counts = Counter()
         for page in site.pages.values():
@@ -28,6 +33,7 @@ class Checker:
         pass
 
     def check_markdown(self, page):
+        self.markdown.render(page)
+
+    def check_jinja2(self, page):
         pass
-        #checker = BodyChecker()
-        #checker.read(page)

@@ -147,16 +147,26 @@ class MarkdownPage(Page):
             parsed = {}
         self.meta.update(**parsed)
 
-    def resolve_link_title(self, target_relpath):
-        # Resolve mising text from target page title
-        dest_page = self.site.pages.get(target_relpath, None)
-        if dest_page is not None:
-            return dest_page.title
-        else:
-            return None
-
     @classmethod
     def try_create(cls, site, relpath):
         if not relpath.endswith(".md"): return None
         return cls(site, relpath[:-3])
 
+
+class Renderer:
+    def __init__(self):
+        self.md_staticsite = StaticSiteExtension()
+        self.markdown = markdown.Markdown(
+            extensions=[
+                "markdown.extensions.extra",
+                "markdown.extensions.codehilite",
+                "markdown.extensions.fenced_code",
+                self.md_staticsite,
+            ],
+            output_format="html5",
+        )
+
+    def render(self, page):
+        self.md_staticsite.set_page(page)
+        self.markdown.reset()
+        return self.markdown.convert(page.get_content())

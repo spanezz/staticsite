@@ -59,18 +59,8 @@ class WebWriter:
         self.root = root
 
         # Markdown compiler
-        from markdown import Markdown
-        from .markdown import StaticSiteExtension
-        self.md_staticsite = StaticSiteExtension()
-        self.markdown = Markdown(
-            extensions=[
-                "markdown.extensions.extra",
-                "markdown.extensions.codehilite",
-                "markdown.extensions.fenced_code",
-                self.md_staticsite,
-            ],
-            output_format="html5",
-        )
+        from . import markdown as ssite_markdown
+        self.markdown = ssite_markdown.Renderer()
 
         # Jinja2 compiler
         from jinja2 import Environment, FileSystemLoader
@@ -138,11 +128,9 @@ class WebWriter:
         shutil.copy2(os.path.join(page.site.root, page.src_relpath), dst)
 
     def write_markdown(self, page):
-        self.md_staticsite.set_page(page)
+        html = self.markdown.render(page)
         dst = self.output_abspath(page.dst_relpath)
         with open(dst, "wt") as out:
-            self.markdown.reset()
-            html = self.markdown.convert(page.get_content())
             out.write(self.page_template.render(
                 content=html,
                 **page.meta,
