@@ -9,6 +9,3 @@ class Asset(Page):
     def __init__(self, site, relpath):
         super().__init__(site, relpath)
         self.title = os.path.basename(relpath)
-
-
-

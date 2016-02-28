@@ -32,3 +32,16 @@ needing to worry about where it is in the site.
 
 staticsite does not mandate a site structure, and simply generates output based
 on where input files are found.
+
+
+## Page metadata
+
+TODO: Front matter syntax to be defined.
+
+Well known metadata elements:
+
+ - date: python datetime object, timezone aware
+ - title: page title
+ - tags: set of tag names
+ - aliases: relative paths in the destination directory where the page should
+   also show up

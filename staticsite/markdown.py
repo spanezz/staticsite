@@ -7,32 +7,16 @@ import pytz
 import datetime
 import markdown
 
-class MarkdownContent:
-    def __init__(self):
-        # Markdown parser
-        self.parser = markdown.Markdown(
-            extensions=[
-                "markdown.extensions.extra",
-                "markdown.extensions.codehilite",
-                "markdown.extensions.fenced_code",
-                "markdown.extensions.meta",
-            ],
-            output_format="html5"
-        )
-
-    def try_create(self, site, relpath):
-        if not relpath.endswith(".md"): return None
-        return MarkdownPage(self.parser, site, relpath)
-
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, parser, site, relpath):
+    def __init__(self, site, relpath):
         super().__init__(site, relpath)
 
-        self.markdown = parser
+        # Sequence of lines found in the front matter
+        self.front_matter = []
 
-        # Sequence of content.* objects from the parsed page contents
+        # Sequence of lines found in the body
         self.body = []
 
 #        # Rules used to match metadata lines
@@ -57,22 +41,60 @@ class MarkdownPage(Page):
 #            (re.compile(r"(?P<text>[^|]+)\|(?P<target>[^\]]+)"), content.InternalLink),
 #        ]
 
-        self.tree = None
-
     def get_content(self):
-        src = os.path.join(self.site.root, self.orig_relpath)
-        with open(src, "rt") as fd:
-            return fd.read()
+        return "\n".join(self.body)
 
     def analyze(self):
         # Read the contents
-        src = os.path.join(self.site.root, self.relpath)
-        if self.date is None:
-            self.date = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
-        #self.parser.reset()
-        #with open(src, "rt") as fd:
+        src = os.path.join(self.site.root, self.src_relpath + ".md")
+        if self.meta.get("date", None) is None:
+            self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
+
+        # Parse separating front matter and markdown content
+        with open(src, "rt") as fd:
+            front_matter_end = None
+            in_front_matter = True
+
+            for lineno, line in enumerate(fd, 1):
+                line = line.rstrip()
+                if lineno == 1:
+                    if line == "{":
+                        front_matter_end = "}"
+                    elif line == "---":
+                        front_matter_end = "---"
+                    elif line == "+++":
+                        front_matter_end = "+++"
+                    else:
+                        in_front_matter = False
+
+                if in_front_matter:
+                    self.front_matter.append(line)
+                    if lineno > 1 and line == front_matter_end:
+                        in_front_matter = False
+                else:
+                    self.body.append(line)
+
+
+
         #    self.parser.convert(fd.read())
         #    #self.tree = self.parser.build_etree(fd.read())
+
+    def parse_front_matter(self, lines):
+        if not lines: return
+        if lines[0] == "{":
+            # JSON
+            import json
+            parsed = json.loads("\n".join(lines))
+            self.meta.update(**parsed)
+        elif lines[0] == "+++":
+            # TOML
+            import toml
+            parsed = toml.loads("\n".join(lines))
+        elif lines[0] == "---":
+            # YAML
+            import yaml
+            yaml.load("\n".join(lines), Loader=yaml.CLoader)
+
 
     def resolve_link_title(self, target_relpath):
         # Resolve mising text from target page title
@@ -157,3 +179,9 @@ class MarkdownPage(Page):
 #            return
 #
 #        self.body.append(content.Directive(self, lineno, text))
+
+    @classmethod
+    def try_create(cls, site, relpath):
+        if not relpath.endswith(".md"): return None
+        return cls(site, relpath[:-3])
+

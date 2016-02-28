@@ -132,23 +132,17 @@ class WebWriter:
         return abspath
 
     def write_asset(self, page):
-        dst = self.output_abspath(page.relpath)
-        shutil.copy2(os.path.join(page.site.root, page.orig_relpath), dst)
+        dst = self.output_abspath(page.dst_relpath)
+        shutil.copy2(os.path.join(page.site.root, page.src_relpath), dst)
 
     def write_markdown(self, page):
-        #writer = Webpage()
-        #writer.read(page)
-        #if writer.is_empty():
-        #    return
-
-        dst = self.output_abspath(page.relpath_without_extension + ".html")
+        dst = self.output_abspath(page.dst_relpath + ".html")
         with open(dst, "wt") as out:
             self.markdown.reset()
             html = self.markdown.convert(page.get_content())
             out.write(self.page_template.render(
                 content=html,
-                title=page.title,
-                tags=sorted(page.tags),
+                **page.meta,
             ))
 
 #        for relpath in page.aliases:
