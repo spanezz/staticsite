@@ -5,7 +5,10 @@ import os
 import argparse
 import logging
 import json
+import time
 from staticsite.core import Site
+
+log = logging.getLogger()
 
 class CmdlineError(RuntimeError):
     pass
@@ -13,42 +16,54 @@ class CmdlineError(RuntimeError):
 
 def main():
     parser = argparse.ArgumentParser(description="Convert from ikiwiki to hugo.")
-    parser.add_argument("srcdir", help="source directory")
-    parser.add_argument("destdir", nargs="?", help="destination directory")
+    parser.add_argument("rootdir", help="source directory")
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+    parser.add_argument("--debug", action="store_true", help="verbose output")
     parser.add_argument("-t", "--type", action="store", help="output type (dump, hugo, nikola)")
 
     args = parser.parse_args()
 
     FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-    if args.verbose:
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
+    elif args.verbose:
         logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
     else:
         logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
-    site = Site(os.path.abspath(os.path.join(args.srcdir, "site")))
+    site = Site(os.path.abspath(os.path.join(args.rootdir, "site")))
+
+    start = time.perf_counter()
     site.read_tree()
-    #site.scan()
+    end = time.perf_counter()
+    log.info("Read site tree in %fs", end-start)
+
+    start = time.perf_counter()
+    site.analyze()
+    end = time.perf_counter()
+    log.info("Analised site tree in %fs", end-start)
 
     # TODO: redo argparse with subcommands
 
     if args.type == "dump":
-        from staticsite.dump import DumpWriter
-        if not args.destdir:
-            raise CmdlineError("Please provide a destination directory for the dump command")
-        writer = DumpWriter(args.destdir)
+        pass
+        #from staticsite.dump import DumpWriter
+        #if not args.destdir:
+        #    raise CmdlineError("Please provide a destination directory for the dump command")
+        #writer = DumpWriter(args.rootdir)
     elif args.type == "build":
         from staticsite.web import WebWriter
-        if not args.destdir:
-            raise CmdlineError("Please provide a destination directory pointing to the root of the web output directory")
-        writer = WebWriter(args.destdir)
+        writer = WebWriter(args.rootdir)
     elif not args.type:
         from staticsite.check import Checker
         writer = Checker()
     else:
         raise CmdlineError("Output type {} is not supported".format(args.type))
 
+    start = time.perf_counter()
     writer.write(site)
+    end = time.perf_counter()
+    log.info("Processed site in %fs", end-start)
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ class Page:
                 return None
             root = os.path.dirname(root)
 
-    def scan(self):
+    def analyze(self):
         pass
 
 
@@ -86,17 +86,14 @@ class Site:
         # Site pages
         self.pages = {}
 
-        # Pages that only redirect to other pages
-        self.alias_pages = {}
-
         # Description of tags
         self.tag_descriptions = {}
 
         # Map input file patterns to resource handlers
-        from .markdown import MarkdownPage
+        from .markdown import MarkdownContent
         #from .jinja2 import Jinja2Page
         self.page_handlers = [
-            MarkdownPage,
+            MarkdownContent(),
         ]
 
     def read_tree(self, relpath=None):
@@ -106,7 +103,7 @@ class Site:
             log.info("Loading site directory %s", self.root)
             abspath = os.path.join(self.root)
         else:
-            log.info("Loading directory %s", relpath)
+            log.debug("Loading directory %s", relpath)
             abspath = os.path.join(self.root, relpath)
         for f in os.listdir(abspath):
             if relpath is None:
@@ -126,7 +123,7 @@ class Site:
                     break
             else:
                 if os.path.isfile(absf):
-                    log.info("Loading static file %s", page_relpath)
+                    log.debug("Loading static file %s", page_relpath)
                     self.pages[relpath] = Asset(self, page_relpath)
 
     def read_tag_descriptions(self, relpath):
@@ -162,7 +159,7 @@ class Site:
         return Resource(self, relpath, ctime, *args, **kw)
 
     def read_page(self, relpath):
-        log.info("Loading page %s", relpath)
+        log.debug("Loading page %s", relpath)
         with open(os.path.join(self.root, relpath), "rt") as fd:
             content = fd.read().strip()
         # Catch alias pages
@@ -183,19 +180,9 @@ class Site:
         page.aliases.append(page.relpath)
         page.relpath = dest_relpath
 
-    def scan(self):
-        # Remove alias pages from self.pages, adding them instead as aliases to
-        # the Page they refer to
-        for p in self.alias_pages.values():
-            dest_relpath = p.resolve_link_relpath(p.dest)
-            dest = self.pages.get(dest_relpath, None)
-            if dest is None:
-                log.warn("%s: redirects to missing page %s", p.relpath, p.dest)
-            else:
-                dest.aliases.append(p.relpath)
-
+    def analyze(self):
         for page in self.pages.values():
-            page.scan()
+            page.analyze()
 
 
 class BodyWriter:
