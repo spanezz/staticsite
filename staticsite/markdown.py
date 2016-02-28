@@ -80,9 +80,10 @@ class MarkdownPage(Page):
         while self.body and not self.body[0]:
             self.body.pop(0)
 
-        # Read title from first # title
-        if self.body and self.body[0].startswith("# "):
-            self.meta["title"] = self.body[0][2:].strip()
+        # Read title from first # title if not specified in metadata
+        if not self.meta.get("title", ""):
+            if self.body and self.body[0].startswith("# "):
+                self.meta["title"] = self.body[0][2:].strip()
 
     def parse_front_matter(self, lines):
         if not lines: return
