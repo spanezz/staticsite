@@ -97,6 +97,8 @@ class MarkdownPages:
 class MarkdownPage(Page):
     TYPE = "markdown"
 
+    FINDABLE = True
+
     def __init__(self, mdenv, site, relpath):
         super().__init__(site, relpath)
 

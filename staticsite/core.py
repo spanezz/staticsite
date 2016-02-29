@@ -6,6 +6,7 @@ import json
 import sys
 import logging
 import pytz
+import fnmatch
 from collections import defaultdict
 import jinja2
 from . import content
@@ -51,6 +52,9 @@ def load_settings(pathname):
 class Page:
     # In what pass must pages of this type be analyzed.
     ANALYZE_PASS = 1
+
+    # True if the page can be found when search site contents
+    FINDABLE = False
 
     def __init__(self, site, relpath):
         # Site that owns this page
@@ -129,6 +133,7 @@ class Site:
         # Install site's functions into the jinja2 environment
         j2env.globals.update(
             url_for=self.jinja2_url_for,
+            site_pages=self.jinja2_site_pages,
         )
 
 
@@ -153,6 +158,35 @@ class Site:
         else:
             page = arg
         return page.dst_link
+
+    @jinja2.contextfunction
+    def jinja2_site_pages(self, context, path=None, limit=None, sort="-date"):
+        if path is not None:
+            re_path = re.compile(fnmatch.translate(path))
+        else:
+            re_path = None
+
+        if sort is not None:
+            if sort.startswith("-"):
+                sort = sort[1:]
+                sort_reverse = True
+            else:
+                sort_reverse = False
+
+        pages = []
+        for page in self.pages.values():
+            if not page.FINDABLE: continue
+            if re_path is not None and not re_path.match(page.src_relpath): continue
+            if sort is not None and sort not in page.meta: continue
+            pages.append(page)
+
+        if sort is not None:
+            pages.sort(key=lambda p: p.meta.get(sort, None), reverse=sort_reverse)
+
+        if limit is not None:
+            pages = pages[:limit]
+
+        return pages
 
     def enforce_relpath(self, path):
         from pathlib import Path
