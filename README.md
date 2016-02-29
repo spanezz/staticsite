@@ -14,7 +14,7 @@ Output:
 ## Dependencies
 
 ```bash
-apt install python3-unidecode python3-markdown python3-toml python3-yaml python3-jinja2 python3-dateutil
+apt install python3-unidecode python3-markdown python3-toml python3-yaml python3-jinja2 python3-dateutil python3-livereload
 ```
 
 [python-slugify](https://github.com/un33k/python-slugify) is currently not in
@@ -27,6 +27,12 @@ Debian, please package it. At the moment a copy of it is found in
 $ ./ssite build example
 $ cd example/web
 $ python -m SimpleHTTPServer
+```
+
+or even just:
+
+```bash
+$ ./ssite serve example
 ```
 
 Then point your browser at <http://localhost:8000>.

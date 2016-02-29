@@ -188,7 +188,10 @@ class TaxonomyPage(Page):
         res = []
 
         if self.template_index is not None:
-            res.append(os.path.join(self.dst_relpath, self.meta["output_index"]))
+            dest = os.path.join(self.dst_relpath, self.meta["output_index"])
+            if dest.endswith("/"):
+                dest += "index.html"
+            res.append(dest)
 
         for item in self.items.values():
             for type in ("item", "rss", "atom", "archive"):

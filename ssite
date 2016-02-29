@@ -75,31 +75,51 @@ class CheckCommand(SiteCommand):
 
 class ServeCommand(SiteCommand):
     def run(self):
+        import mimetypes
+        mimetypes.init()
+
         self.reload()
 
         from livereload import Server
         server = Server(self.application)
-        server.watch(os.path.join(self.root, "site"), self.reload, delay=0.5)
-        server.watch(os.path.join(self.root, "theme"), self.reload, delay=0.5)
-        server.serve()
+        server.watch(os.path.join(self.root, "site"), self.reload)
+        server.watch(os.path.join(self.root, "theme"), self.reload)
+        server.serve(port=8000, host="localhost")
 
     def application(self, environ, start_response):
+        import mimetypes
+
         path = environ.get("PATH_INFO", None)
         if path is None:
             start_response("404 not found", [("Content-Type", "text/plain")])
             return [b"Not found"]
 
+        normrelpath, page = self.resolve_path(path)
+        if page is not None:
+            for relpath, rendered in page.render().items():
+                relpath = os.path.normpath(os.path.join("/", relpath))
+                if relpath == normrelpath:
+                    start_response("200 OK", [("Content-Type", mimetypes.guess_type(relpath)[0])])
+                    return [rendered.content()]
+
+        start_response("404 not found", [("Content-Type", "text/plain")])
+        return [b"Not found"]
+
+    def resolve_path(self, path):
+        """
+        Return normpath(relpath) from the page found and the page found
+        """
         path = os.path.normpath(path)
         page = self.url_map.get(path, None)
-        if page is None:
-            page = self.url_map.get(os.path.join(path, "index.html"), None)
+        if page is not None:
+            return path, page
 
-        if page is None:
-            start_response("404 not found", [("Content-Type", "text/plain")])
-            return [b"Not found"]
+        path = os.path.join(path, "index.html")
+        page = self.url_map.get(path, None)
+        if page is not None:
+            return path, page
 
-        start_response("200 OK", [("Content-Type", "text/plain")])
-        return [page.meta.get("title", "").encode("utf-8")]
+        return None, None
 
     def reload(self):
         log.info("Loading site")
