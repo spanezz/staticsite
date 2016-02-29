@@ -58,21 +58,6 @@ class WebWriter:
         # Root directory of the destination
         self.root = root
 
-        # Markdown compiler
-        from . import markdown as ssite_markdown
-        self.markdown = ssite_markdown.Renderer()
-
-        # Jinja2 compiler
-        from jinja2 import Environment, FileSystemLoader
-        self.jinja2 = Environment(
-            loader=FileSystemLoader([
-                os.path.join(self.root, "site"),
-                os.path.join(self.root, "theme"),
-            ]),
-        )
-
-        self.page_template = self.jinja2.get_template("page.html")
-
     def clear_outdir(self, outdir):
         for f in os.listdir(outdir):
             abs = os.path.join(outdir, f)
@@ -84,10 +69,9 @@ class WebWriter:
     def write(self, site):
         self.jinja2.globals["link_taxonomy"] = lambda tname, tval: site.taxonomy_indices[tname][tval].dst_link
 
-        outdir = os.path.join(self.root, "web")
-
         # Clear the target directory, but keep the root path so that a web
         # server running on it does not find itself running nowhere
+        outdir = os.path.join(self.root, "web")
         if os.path.exists(outdir):
             self.clear_outdir(outdir)
 
@@ -99,11 +83,43 @@ class WebWriter:
 
         # Generate output
         for page in site.pages.values():
-            getattr(self, "write_" + page.TYPE)(page)
+            page.write(self)
 
         ## Generate tag indices
-        #tags = set()
-        #tags.update(*(x.tags for x in site.pages.values()))
+        #for taxonomy in site.taxonomies.items():
+        #    # Render index
+        #    try:
+        #        template = self.jinja2.get_template(taxonomy.index_template)
+        #    except:
+        #        log.exception("taxonomy %s: cannot load template %s", taxonomy.name, taxonomy.index_template)
+        #        continue
+
+        #    for val in taxonomy.values:
+        #        kwargs = {
+        #            taxonomy.name: taxonomy,
+        #            taxonomy.item_name:
+        #        }
+        #        rendered = template.render(
+
+        #        dst_relpath = os.path.join(taxonomy.output_dir, taxonomy.index_template)
+        #        dst = self.output_abspath(dst_relpath)
+        #        with open(dst, "wt") as out:
+        #            out.write(self.page_template.render(
+        #                content=html,
+        #                **page.meta,
+        #            ))
+
+        #            new_page = J2Page(self.site, os.path.join(dirname, new_basename), self.template_relpath)
+        #            new_page.meta["taxonomy_name"] = metaname
+        #            new_page.meta["taxonomy_item"] = e
+        #            new_page.meta["taxonomy_slug"] = slug
+        #            new_page.meta["pages"] = sorted(pages.get(e, ()), key=lambda x:x.meta.get("date", None), reverse=True)
+        #            self.site.pages[new_page.src_relpath] = new_page
+
+        #            # Mark this as taxonomy index
+        #            if ext == ".html":
+
+
         #for tag in tags:
         #    dst = os.path.join(self.root, "web", "tags", tag + ".mdwn")
         #    os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -116,6 +132,52 @@ class WebWriter:
         #        print(file=out)
         #        print('[[!inline pages="link(tags/{tag})" show="10"]]'.format(tag=tag), file=out)
 
+
+        #def transform(self):
+        #    basename = os.path.basename(self.src_relpath)
+        #    mo = re_metaname.match(basename)
+        #    if not mo:
+        #        return
+
+        #    metaname = mo.group("name")
+        #    ext = mo.group("ext")
+
+        #    # We are a metapage: remove ourself from the site and add instead the
+        #    # resolved versions
+        #    dirname = os.path.dirname(self.src_relpath)
+        #    del self.site.pages[self.src_relpath]
+
+        #    # Resolve the file name into a taxonomy
+        #    elements = self.site.taxonomies.get(metaname, None)
+        #    if elements is None:
+        #        log.warn("%s: taxonomy %s not found", self.src_relpath, metaname)
+        #        return
+
+        #    # Get the pages for each taxonomy value
+        #    pages = defaultdict(list)
+        #    for p in self.site.pages.values():
+        #        vals = p.meta.get(metaname, None)
+        #        if vals is None: continue
+        #        for v in vals:
+        #            pages[v].append(p)
+
+        #    # Generate new J2Page elements for each expansion
+        #    for e in elements:
+        #        slug = self.site.slugify(e)
+        #        new_basename = slug + ext
+        #        new_page = J2Page(self.site, os.path.join(dirname, new_basename), self.template_relpath)
+        #        new_page.meta["taxonomy_name"] = metaname
+        #        new_page.meta["taxonomy_item"] = e
+        #        new_page.meta["taxonomy_slug"] = slug
+        #        new_page.meta["pages"] = sorted(pages.get(e, ()), key=lambda x:x.meta.get("date", None), reverse=True)
+        #        self.site.pages[new_page.src_relpath] = new_page
+
+        #        # Mark this as taxonomy index
+        #        if ext == ".html":
+        #            self.site.taxonomy_indices[metaname][e] = new_page
+
+
+
         ## Generate index of tags
         #dst = os.path.join(self.root, "web", "tags/index.mdwn")
         #os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -127,36 +189,4 @@ class WebWriter:
         abspath = os.path.join(self.root, "web", relpath)
         os.makedirs(os.path.dirname(abspath), exist_ok=True)
         return abspath
-
-    def write_asset(self, page):
-        dst = self.output_abspath(page.dst_relpath)
-        shutil.copy2(os.path.join(page.site.root, page.src_relpath), dst)
-
-    def write_markdown(self, page):
-        html = self.markdown.render(page)
-        dst = self.output_abspath(page.dst_relpath)
-        with open(dst, "wt") as out:
-            out.write(self.page_template.render(
-                content=html,
-                **page.meta,
-            ))
-
-#        for relpath in page.aliases:
-#            dst = os.path.join(self.root, relpath)
-#            os.makedirs(os.path.dirname(dst), exist_ok=True)
-#            with open(dst, "wt") as out:
-#                print('[[!meta redir="{relpath}"]]'.format(relpath=page.relpath_without_extension), file=out)
-
-
-    def write_jinja2(self, page):
-        dst = self.output_abspath(page.dst_relpath)
-        try:
-            template = self.jinja2.get_template(page.template_relpath)
-        except:
-            log.exception("%s: cannot load template %s", page.src_relpath, page.template_relpath)
-            return
-        with open(dst, "wt") as out:
-            out.write(template.render(
-                **page.meta,
-            ))
 

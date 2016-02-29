@@ -6,7 +6,7 @@ import argparse
 import logging
 import json
 import time
-from staticsite.core import Site
+from staticsite.core import Site, load_settings
 
 log = logging.getLogger()
 
@@ -31,7 +31,20 @@ def main():
     else:
         logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
-    site = Site(os.path.abspath(os.path.join(args.rootdir, "site")))
+    # Jinja2 template engine
+    from jinja2 import Environment, FileSystemLoader
+    j2env = Environment(
+        loader=FileSystemLoader([
+            os.path.join(os.path.join(args.rootdir, "site")),
+            os.path.join(os.path.join(args.rootdir, "theme")),
+        ]),
+    )
+
+    site = Site(os.path.abspath(os.path.join(args.rootdir, "site")), j2env)
+
+    settings_file = os.path.join(args.rootdir, "settings.py")
+    if os.path.isfile(settings_file):
+        load_settings(settings_file)
 
     start = time.perf_counter()
     site.read_tree()

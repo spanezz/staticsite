@@ -69,11 +69,39 @@ class StaticSiteExtension(markdown.extensions.Extension):
         self.link_resolver.page = page
 
 
+class MarkdownPages:
+    def __init__(self, j2env):
+        self.jinja2 = j2env
+        self.md_staticsite = StaticSiteExtension()
+        self.markdown = markdown.Markdown(
+            extensions=[
+                "markdown.extensions.extra",
+                "markdown.extensions.codehilite",
+                "markdown.extensions.fenced_code",
+                self.md_staticsite,
+            ],
+            output_format="html5",
+        )
+        self.page_template = self.jinja2.get_template("page.html")
+
+    def render(self, page):
+        self.md_staticsite.set_page(page)
+        self.markdown.reset()
+        return self.markdown.convert(page.get_content())
+
+    def try_create(self, site, relpath):
+        if not relpath.endswith(".md"): return None
+        return MarkdownPage(self, site, relpath[:-3])
+
+
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, site, relpath):
+    def __init__(self, mdenv, site, relpath):
         super().__init__(site, relpath)
+
+        # Shared markdown environment
+        self.mdenv = mdenv
 
         # Sequence of lines found in the front matter
         self.front_matter = []
@@ -117,7 +145,8 @@ class MarkdownPage(Page):
                 else:
                     self.body.append(line)
 
-        self.parse_front_matter(self.front_matter)
+        from .utils import parse_front_matter
+        self.meta.update(**parse_front_matter(self.front_matter))
 
         # Remove leading empty lines
         while self.body and not self.body[0]:
@@ -128,45 +157,22 @@ class MarkdownPage(Page):
             if self.body and self.body[0].startswith("# "):
                 self.meta["title"] = self.body[0][2:].strip()
 
-    def parse_front_matter(self, lines):
-        if not lines: return
-        if lines[0] == "{":
-            # JSON
-            import json
-            parsed = json.loads("\n".join(lines))
-            self.meta.update(**parsed)
-        elif lines[0] == "+++":
-            # TOML
-            import toml
-            parsed = toml.loads("\n".join(lines))
-        elif lines[0] == "---":
-            # YAML
-            import yaml
-            parsed = yaml.load("\n".join(lines), Loader=yaml.CLoader)
-        else:
-            parsed = {}
-        self.meta.update(**parsed)
+    def check(self, checker):
+        self.mdenv.render(self)
 
-    @classmethod
-    def try_create(cls, site, relpath):
-        if not relpath.endswith(".md"): return None
-        return cls(site, relpath[:-3])
-
-
-class Renderer:
-    def __init__(self):
-        self.md_staticsite = StaticSiteExtension()
-        self.markdown = markdown.Markdown(
-            extensions=[
-                "markdown.extensions.extra",
-                "markdown.extensions.codehilite",
-                "markdown.extensions.fenced_code",
-                self.md_staticsite,
-            ],
-            output_format="html5",
+    def write(self, writer):
+        md_html = self.mdenv.render(self)
+        html = self.page_template.render(
+            content=md_html,
+            **self.meta,
         )
+        dst = self.output_abspath(self.dst_relpath)
+        with open(dst, "wt") as out:
+            out.write(html)
 
-    def render(self, page):
-        self.md_staticsite.set_page(page)
-        self.markdown.reset()
-        return self.markdown.convert(page.get_content())
+#        for relpath in page.aliases:
+#            dst = os.path.join(self.root, relpath)
+#            os.makedirs(os.path.dirname(dst), exist_ok=True)
+#            with open(dst, "wt") as out:
+#                print('[[!meta redir="{relpath}"]]'.format(relpath=page.relpath_without_extension), file=out)
+

@@ -3,13 +3,49 @@ import os
 import re
 import datetime
 import json
+import sys
 import logging
 import pytz
+from collections import defaultdict
 from . import content
 
 log = logging.getLogger()
 
 tz_local = pytz.timezone("Europe/Rome")
+
+class Settings:
+    def __init__(self):
+        from . import global_settings
+        self.add_module(global_settings)
+
+    def add_module(self, mod):
+        """
+        Add uppercase settings from mod into this module
+        """
+        for setting in dir(mod):
+            if setting.isupper():
+                setattr(self, setting, getattr(mod, setting))
+
+settings = Settings()
+
+def load_settings(pathname):
+    # http://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
+
+    # Seriously, this should not happen in the standard library. You do not
+    # break stable APIs. You can extend them but not break them. And
+    # especially, you do not break stable APIs and then complain that people
+    # stick to 2.7 until its death, and probably after.
+    if sys.version_info >= (3, 5):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("staticsite.settings", pathname)
+        user_settings = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(user_settings)
+    else:
+        from importlib.machinery import SourceFileLoader
+        user_settings = SourceFileLoader("staticsite.settings", pathname).load_module()
+
+    settings.add_module(user_settings)
+
 
 class Page:
     def __init__(self, site, relpath):
@@ -77,9 +113,12 @@ class Page:
         """
         pass
 
+    def check(self, checker):
+        pass
+
 
 class Site:
-    def __init__(self, root):
+    def __init__(self, root, j2env):
         self.root = root
 
         # Extra ctime information
@@ -92,18 +131,27 @@ class Site:
         self.tag_descriptions = {}
 
         # Map input file patterns to resource handlers
-        from .markdown import MarkdownPage
-        from .j2 import J2Page
+        from .markdown import MarkdownPages
+        from .j2 import J2Pages
         self.page_handlers = [
-            MarkdownPage,
-            J2Page,
+            MarkdownPages(j2env),
+            J2Pages(j2env),
         ]
 
-        self.taxonomies = {}
-        self.taxonomy_indices = {}
-        for n in ("tags", "stories"):
-            self.taxonomies[n] = set()
-            self.taxonomy_indices[n] = {}
+        ## Generate taxonomies from configuration
+        #self.taxonomies = {}
+        #for name, info in settings.TAXONOMIES.items():
+        #    info["name"] = name
+        #    output_dir = info.get("output_dir", None)
+        #    if output_dir is not None:
+        #        info["output_dir"] = self.enforce_relpath(output_dir)
+        #    self.taxonomies[name] = Taxonomy(**info)
+
+    def enforce_relpath(self, path):
+        from pathlib import Path
+        root = Path(self.root).resolve()
+        other = (root / path.lstrip("/")).resolve()
+        return other.relative_to(root)
 
     def read_tree(self, relpath=None):
         from .asset import Asset
@@ -173,18 +221,15 @@ class Site:
         page.relpath = dest_relpath
 
     def analyze(self):
-        # First pass: read metadata
+        # First pass: read and aggregate metadata
         for page in self.pages.values():
             page.read_metadata()
 
-        # Second pass: aggregate metadata
-        for page in self.pages.values():
-            for name, vals in self.taxonomies.items():
-                page_vals = page.meta.get(name, None)
-                if page_vals is None: continue
-                vals.update(page_vals)
+            ## File the page in the right taxonomies
+            #for taxonomy in self.taxonomies.values():
+            #    taxonomy.analyze_page(page)
 
-        # Third pass: site transformations
+        # Second pass: site transformations
 
         # Use a list because the dictionary can be modified by analyze()
         # methods
