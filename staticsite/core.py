@@ -121,7 +121,7 @@ class Page:
 
 
 class Site:
-    def __init__(self, root, j2env):
+    def __init__(self, root):
         self.root = root
 
         # Root of site pages
@@ -145,22 +145,38 @@ class Site:
         # Current datetime
         self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
+        # Jinja2 template engine
+        from jinja2 import Environment, FileSystemLoader
+        self.jinja2 = Environment(
+            loader=FileSystemLoader([
+                os.path.join(os.path.join(self.root, "site")),
+                os.path.join(os.path.join(self.root, "theme")),
+            ]),
+            autoescape=True,
+        )
+
+        # Add settings to jinja2 globals
+        for x in dir(settings):
+            if not x.isupper(): continue
+            self.jinja2.globals[x] = getattr(settings, x)
+
+
         # Install site's functions into the jinja2 environment
-        j2env.globals.update(
+        self.jinja2.globals.update(
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
             now=self.generation_time,
         )
-        j2env.filters["datetime_format"] = self.jinja2_datetime_format
+        self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
 
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
         from .j2 import J2Pages
         from .taxonomy import TaxonomyPages
         self.page_handlers = [
-            MarkdownPages(j2env),
-            J2Pages(j2env),
-            TaxonomyPages(j2env),
+            MarkdownPages(self.jinja2),
+            J2Pages(self.jinja2),
+            TaxonomyPages(self.jinja2),
         ]
 
     @jinja2.contextfilter

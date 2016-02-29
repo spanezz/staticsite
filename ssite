@@ -16,10 +16,16 @@ class CmdlineError(RuntimeError):
 
 def main():
     parser = argparse.ArgumentParser(description="Convert from ikiwiki to hugo.")
-    parser.add_argument("rootdir", help="source directory")
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
     parser.add_argument("--debug", action="store_true", help="verbose output")
-    parser.add_argument("-t", "--type", action="store", help="output type (dump, hugo, nikola)")
+
+    subparsers = parser.add_subparsers(help="sub-command help", dest="command")
+
+    parser_build = subparsers.add_parser("build", help="build the site")
+    parser_build.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
+
+    parser_check = subparsers.add_parser("check", help="check the site, without writing anything")
+    parser_check.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
 
     args = parser.parse_args()
 
@@ -31,28 +37,26 @@ def main():
     else:
         logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
-    # Load settings
-    settings_file = os.path.join(args.rootdir, "settings.py")
+    # Default to current directory if rootdir was not provided
+    if args.rootdir:
+        root = os.path.abspath(args.rootdir)
+    else:
+        root = os.getcwd()
+
+    # Double check that root points to something that looks like a project
+    site_root = os.path.join(root, "site")
+    if not os.path.exists(site_root):
+        raise CmdlineError("{} does not exist".format(site_root))
+
+    # Load settings (optional)
+    settings_file = os.path.join(root, "settings.py")
     if os.path.isfile(settings_file):
         load_settings(settings_file)
 
-    # Jinja2 template engine
-    from jinja2 import Environment, FileSystemLoader
-    j2env = Environment(
-        loader=FileSystemLoader([
-            os.path.join(os.path.join(args.rootdir, "site")),
-            os.path.join(os.path.join(args.rootdir, "theme")),
-        ]),
-        autoescape=True,
-    )
+    # Instantiate site
+    site = Site(root)
 
-    # Add settings to jinja2 globals
-    for x in dir(settings):
-        if not x.isupper(): continue
-        j2env.globals[x] = getattr(settings, x)
-
-    site = Site(os.path.abspath(args.rootdir), j2env)
-
+    # Read and analyze site contents
     start = time.perf_counter()
     site.read_tree()
     site.read_theme_asset_tree("theme/static")
@@ -66,20 +70,14 @@ def main():
 
     # TODO: redo argparse with subcommands
 
-    if args.type == "dump":
-        pass
-        #from staticsite.dump import DumpWriter
-        #if not args.destdir:
-        #    raise CmdlineError("Please provide a destination directory for the dump command")
-        #writer = DumpWriter(args.rootdir)
-    elif args.type == "build":
+    if args.command == "build":
         from staticsite.web import WebWriter
         writer = WebWriter(args.rootdir)
-    elif not args.type:
+    elif args.command == "check":
         from staticsite.check import Checker
         writer = Checker()
     else:
-        raise CmdlineError("Output type {} is not supported".format(args.type))
+        raise CmdlineError("Command {} is not supported".format(args.command))
 
     start = time.perf_counter()
     writer.write(site)
