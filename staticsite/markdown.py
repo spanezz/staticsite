@@ -84,6 +84,7 @@ class MarkdownPages:
             output_format="html5",
         )
         self.page_template = self.jinja2.get_template("page.html")
+        self.redirect_template = self.jinja2.get_template("redirect.html")
 
     def render(self, page):
         self.md_staticsite.set_page(page)
@@ -186,9 +187,11 @@ class MarkdownPage(Page):
         with open(dst, "wt") as out:
             out.write(html)
 
-#        for relpath in page.aliases:
-#            dst = os.path.join(self.root, relpath)
-#            os.makedirs(os.path.dirname(dst), exist_ok=True)
-#            with open(dst, "wt") as out:
-#                print('[[!meta redir="{relpath}"]]'.format(relpath=page.relpath_without_extension), file=out)
-
+        for relpath in self.meta.get("aliases", ()):
+            html = self.mdenv.redirect_template.render(
+                page=self,
+                **self.meta,
+            )
+            dst = writer.output_abspath(relpath + ".html")
+            with open(dst, "wt") as out:
+                out.write(html)
