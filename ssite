@@ -16,16 +16,18 @@ class CmdlineError(RuntimeError):
 
 def main():
     parser = argparse.ArgumentParser(description="Convert from ikiwiki to hugo.")
-    parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
-    parser.add_argument("--debug", action="store_true", help="verbose output")
 
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
     parser_build = subparsers.add_parser("build", help="build the site")
     parser_build.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
+    parser_build.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+    parser_build.add_argument("--debug", action="store_true", help="verbose output")
 
     parser_check = subparsers.add_parser("check", help="check the site, without writing anything")
     parser_check.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
+    parser_check.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+    parser_check.add_argument("--debug", action="store_true", help="verbose output")
 
     args = parser.parse_args()
 
