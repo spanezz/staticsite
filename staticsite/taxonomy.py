@@ -1,9 +1,10 @@
 # coding: utf-8
 
-from .core import Page
+from .core import Page, settings
 import os
 import re
 from collections import defaultdict
+import jinja2
 import logging
 
 log = logging.getLogger()
@@ -15,6 +16,17 @@ class TaxonomyPages:
     def try_create(self, site, relpath):
         if not relpath.endswith(".taxonomy"): return None
         return TaxonomyPage(self, site, relpath[:-9])
+
+
+class TaxonomyItem:
+    def __init__(self, page, name):
+        self.page = page
+        self.name = name
+        self.slug = self.page.site.slugify(name)
+        self.pages = []
+
+    def __str__(self):
+        return self.name
 
 
 class TaxonomyPage(Page):
@@ -30,13 +42,15 @@ class TaxonomyPage(Page):
 
         # Map all possible values for this taxonomy to the pages that reference
         # them
-        self.values = defaultdict(list)
+        self.items = {}
 
         self.template_index = None
+        self.template_item = None
         self.template_feed = None
         self.template_archive = None
 
-        self.meta["output_index"] = "{slug}/"
+        self.meta["output_index"] = ""
+        self.meta["output_item"] = "{slug}/"
         self.meta["output_feed"] = "{slug}/feed.rss"
         self.meta["output_archive"] = "{slug}/archive.html"
 
@@ -49,11 +63,35 @@ class TaxonomyPage(Page):
         #        info["output_dir"] = self.enforce_relpath(output_dir)
         #    self.taxonomies[name] = Taxonomy(**info)
 
-    def link_value(self, output_item, value):
-        dest = self.meta[output_item].format(slug=self.site.slugify(value))
-        if dest.endswith("/"):
-            dest += "index.html"
-        return "/" + os.path.join(self.dst_relpath, dest)
+
+    def link_value(self, context, output_item, value):
+        if isinstance(value, str):
+            item = self.items.get(value, None)
+        else:
+            item = value
+
+        if item is None:
+            log.warn("%s+%s: %s not found in taxonomy %s", context.parent["page"], context.name, value, self.name)
+            return ""
+        dest = self.meta[output_item].format(slug=item.slug)
+        return os.path.join(settings.SITE_ROOT, self.dst_relpath, dest)
+
+    @jinja2.contextfunction
+    def link_index(self, context):
+        dest = self.meta["output_index"]
+        return os.path.join(settings.SITE_ROOT, self.dst_relpath, dest)
+
+    @jinja2.contextfunction
+    def link_item(self, context, value):
+        return self.link_value(context, "output_item", value)
+
+    @jinja2.contextfunction
+    def link_feed(self, context, value):
+        return self.link_value(context, "output_feed", value)
+
+    @jinja2.contextfunction
+    def link_archive(self, context, value):
+        return self.link_value(context, "output_archive", value)
 
     def load_template_from_meta(self, name):
         template_name = self.meta.get(name, None)
@@ -76,16 +114,19 @@ class TaxonomyPage(Page):
         except:
             log.exception("%s.taxonomy: cannot parse taxonomy information", self.src_relpath)
 
+        single_name = self.meta.get("item_name", self.name)
+
         # Instantiate jinja2 templates
-        self.template_index = self.load_template_from_meta("template_index")
+        self.template_index = self.load_template_from_meta("template_" + self.name)
+        self.template_item = self.load_template_from_meta("template_" + single_name)
         self.template_feed = self.load_template_from_meta("template_feed")
         self.template_archive = self.load_template_from_meta("template_archive")
 
         # Extend jinja2 with a function to link to elements of this taxonomy
-        single_name = self.meta.get("item_name", self.name)
-        self.jinja2.globals["url_for_" + single_name] = lambda x: self.link_value("output_index", x)
-        self.jinja2.globals["url_for_" + single_name + "_feed"] = lambda x: self.link_value("output_feed", x)
-        self.jinja2.globals["url_for_" + single_name + "_archive"] = lambda x: self.link_value("output_archive", x)
+        self.jinja2.globals["url_for_" + self.name] = self.link_index
+        self.jinja2.globals["url_for_" + single_name] = self.link_item
+        self.jinja2.globals["url_for_" + single_name + "_feed"] = self.link_feed
+        self.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
 
         # Collect the pages annotated with this taxonomy
         for page in self.site.pages.values():
@@ -93,27 +134,42 @@ class TaxonomyPage(Page):
             vals = page.meta.get(self.name, None)
             if vals is None: continue
             for v in vals:
-                self.values[v].append(page)
+                item = self.items.get(v, None)
+                if item is None:
+                    item = TaxonomyItem(self, v)
+                    self.items[v] = item
+                item.pages.append(page)
 
     def write(self, writer):
         single_name = self.meta.get("item_name", self.name)
 
-        for val, pages in self.values.items():
-            val_slug = self.site.slugify(val)
+        if self.template_index is not None:
+            dest = os.path.join(self.dst_relpath, self.meta["output_index"])
+            if dest.endswith("/"):
+                dest += "index.html"
+            kwargs = {
+                "page": self,
+                self.name: sorted(self.items.values(), key=lambda x: x.name),
+            }
+            kwargs.update(**self.meta)
+            body = self.template_index.render(**kwargs)
+            dst = writer.output_abspath(dest)
+            with open(dst, "wt") as out:
+                out.write(body)
 
-            for type in ("index", "feed", "archive"):
+        for item in self.items.values():
+            for type in ("item", "feed", "archive"):
                 template = getattr(self, "template_" + type, None)
                 if template is None: continue
 
-                dest = self.meta["output_" + type].format(slug=val_slug)
+                dest = self.meta["output_" + type].format(slug=item.slug)
                 if dest.endswith("/"):
                     dest += "index.html"
 
                 kwargs = {
                     "page": self,
-                    single_name: val,
-                    "slug": val_slug,
-                    "pages": sorted(pages, key=lambda x:x.meta["date"], reverse=True),
+                    single_name: item,
+                    "pages": sorted(item.pages, key=lambda x:x.meta["date"], reverse=True),
                 }
                 kwargs.update(**self.meta)
                 body = template.render(**kwargs)

@@ -65,7 +65,7 @@ class Page:
         self.dst_relpath = relpath
 
         # Relative link used to point to this resource in URLs
-        self.dst_link = "/" + relpath
+        self.dst_link = os.path.join(settings.SITE_ROOT, relpath)
 
         # Page metadata. See README for a list.
         self.meta = {}
@@ -148,7 +148,7 @@ class Site:
             cur_page = context.parent["page"]
             page = cur_page.resolve_link(arg)
             if page is None:
-                log.warn("%s: unresolved link %s passed to url_for", cur_page.relpath, arg)
+                log.warn("%s+%s: unresolved link %s passed to url_for", cur_page.src_relpath, context.name, arg)
                 return ""
         else:
             page = arg
