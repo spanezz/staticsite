@@ -1,6 +1,6 @@
 {% macro inline_page(page) -%}
 <div class="well">
-<small>{{page.meta.date}}</small>
+<small><a href="{{url_for(page)}}">{{page.meta.date}} {{page.meta.title}}</a></small>
 
 {{page.content|safe}}
 
