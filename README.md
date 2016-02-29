@@ -6,7 +6,7 @@ Input:
  - a configuration file
  - markdown files
  - jinja2 templates
- - any other file copied verbatim
+ - any other file that should be published as-is
 
 Output:
  - a site with the same structure as the input
@@ -53,9 +53,106 @@ staticsite does not mandate a site structure, and simply generates output based
 on where input files are found.
 
 
+## Settings
+
+At the root of the site there is a configuration file called `settings.py` that
+is interpreted via Python similarly to what happens in
+[Django](https://docs.djangoproject.com/en/1.9/topics/settings/).
+
+Only uppercase settings are used.
+
+Default settings are defined in the module `staticsite/global_settings.py` and
+overridden by `settings.py`.
+
+
+## Markdown files
+
+Markdown files have a `.md` extension and are prefixed by a [Hugo-style front
+matter](https://gohugo.io/content/front-matter/).
+
+The flavour of markdown is what's supported by
+[python-markdown](http://pythonhosted.org/Markdown/) with the
+[Extra](http://pythonhosted.org/Markdown/extensions/extra.html),
+[CodeHilite](http://pythonhosted.org/Markdown/extensions/code_hilite.html)
+and [Fenced Code Blocks](http://pythonhosted.org/Markdown/extensions/fenced_code_blocks.html)
+extensions.
+
+`staticsite` will postprocess the page contents to adjust internal links to
+guarantee that they point where they should.
+
+
+## Jinja2 files
+
+Any files called `<name>.j2.<ext>` will be rendered with
+[Jinja2](http://jinja.pocoo.org/) to generate `<name>.<ext>`.
+
+This can be used to generate complex index pages, blog front pages, RSS2 and
+Atom feeds, and anything Jinja2 is able to generate.
+
+
+## Jinja2 environment
+
+The `theme/` directory is in the Jinja2 search path, and you can `{% import %}`
+or `{% include %}` anything from it.
+
+Any setting defined in `settings.py` is also available to Jinja2, so you can do
+for example:
+
+```jinja2
+<a class="navbar-brand" href="{{SITE_ROOT}}">{{SITE_NAME}}</a>
+```
+
+Extra functions provided to Jinja2 templates:
+
+ * `url_for("path/page")`: returns the URL that links to the page or asset with
+   the given path. The path is resolved relative to the current page, and if
+   not found, relative to the parent page, and so on until the top.
+ * `url_for(page)`: returns the URL that links to the given page.
+ * `site_pages(path=None, limit=None, sort="-date")`: return a list of pages
+   defined in the site that match the given arguments. `path` is a file glob
+   (like `"blog/*"`) that matches the page file name. `limit` is the maximum
+   number of pages to return. `sort` is the `page.meta` field to use to sort
+   the pages. Prefix `sort` with a dash (`-`) for reverse sorting.
+            now=self.generation_time,
+ * `now`: the current date and time.
+
+Extra filters provided to Jinja2 templates:
+
+ * `|jinja2_datetime_format(format=None)` formats a datetime. Formats
+   supported: "rss2", "rfc822", "atom", "rfc3339", "w3ctdf",
+   "[iso8601](https://xkcd.com/1179/)" (default).
+
+Each taxonomy defines extra `url_for_*` functions. For example, given a *tags*
+taxonomy with *tag* as singular name:
+
+ * `url_for_tags()`: links to the taxonomy index.
+ * `url_for_tag(tag)`: links to the tag index.
+ * `url_for_tag_archive(tag)`: links to the tag archive page.
+ * `url_for_tag_rss(tag)`: links to the RSS2 feed for the tag.
+ * `url_for_tag_atom(tag)`: links to the Atom feed for the tag.
+
+When a `page` is passed to Jinja2, it has these members:
+
+ * `page.meta`: all the metadata for the page, like `page.meta.title`,
+   `page.meta.date`, `page.meta.tags` and anything else you have in the front
+   matter.
+
+When a `tag` (or other taxonomy element) is passed to Jinja2, it has these
+members:
+
+ * `tag.name`: the tag name
+ * `tag.slug`: the [slug](https://en.wikipedia.org/wiki/Semantic_URL#Slug) for
+   the tag
+ * `tag.pages`: unordered list of pages with this tag
+
+
 ## Page metadata
 
-TODO: Front matter syntax to be defined.
+The front matter of the post can be written in
+[TOML](https://github.com/toml-lang/toml),
+[YAML](https://en.wikipedia.org/wiki/YAML) or
+[JSON](https://en.wikipedia.org/wiki/JSON), just like in
+[Hugo](https://gohugo.io/content/front-matter/).
 
 Well known metadata elements:
 
@@ -64,3 +161,11 @@ Well known metadata elements:
  - tags: set of tag names
  - aliases: relative paths in the destination directory where the page should
    also show up
+
+
+## Taxonomies
+
+Any number of taxonomies, each described by a `<name>.taxonomy` file where it
+should appear in the site.
+
+See `example/site/tags.taxonomy` for details.
