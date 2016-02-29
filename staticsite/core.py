@@ -29,20 +29,25 @@ class Settings:
 settings = Settings()
 
 def load_settings(pathname):
-    # http://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
+    orig_dwb = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        # http://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
 
-    # Seriously, this should not happen in the standard library. You do not
-    # break stable APIs. You can extend them but not break them. And
-    # especially, you do not break stable APIs and then complain that people
-    # stick to 2.7 until its death, and probably after.
-    if sys.version_info >= (3, 5):
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("staticsite.settings", pathname)
-        user_settings = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(user_settings)
-    else:
-        from importlib.machinery import SourceFileLoader
-        user_settings = SourceFileLoader("staticsite.settings", pathname).load_module()
+        # Seriously, this should not happen in the standard library. You do not
+        # break stable APIs. You can extend them but not break them. And
+        # especially, you do not break stable APIs and then complain that people
+        # stick to 2.7 until its death, and probably after.
+        if sys.version_info >= (3, 5):
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("staticsite.settings", pathname)
+            user_settings = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(user_settings)
+        else:
+            from importlib.machinery import SourceFileLoader
+            user_settings = SourceFileLoader("staticsite.settings", pathname).load_module()
+    finally:
+        sys.dont_write_bytecode = orig_dwb
 
     settings.add_module(user_settings)
 
