@@ -202,3 +202,9 @@ class MarkdownPage(Page):
             dst = writer.output_abspath(relpath + ".html")
             with open(dst, "wt") as out:
                 out.write(html)
+
+    def target_relpaths(self):
+        res = [self.dst_relpath]
+        for relpath in self.meta.get("aliases", ()):
+            res.append(relpath + ".html")
+        return res

@@ -4,6 +4,7 @@ from .core import Page
 import os
 import shutil
 
+
 class Asset(Page):
     TYPE = "asset"
 
@@ -14,6 +15,7 @@ class Asset(Page):
     def write(self, writer):
         dst = writer.output_abspath(self.dst_relpath)
         shutil.copy2(os.path.join(self.site.site_root, self.src_relpath), dst)
+
 
 class ThemeAsset(Page):
     TYPE = "asset"

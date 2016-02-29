@@ -119,6 +119,9 @@ class Page:
     def check(self, checker):
         pass
 
+    def target_relpaths(self):
+        return [self.dst_relpath]
+
 
 class Site:
     def __init__(self, root):

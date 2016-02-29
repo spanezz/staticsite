@@ -183,3 +183,22 @@ class TaxonomyPage(Page):
                 dst = writer.output_abspath(os.path.join(self.dst_relpath, dest))
                 with open(dst, "wt") as out:
                     out.write(body)
+
+    def target_relpaths(self):
+        res = []
+
+        if self.template_index is not None:
+            res.append(os.path.join(self.dst_relpath, self.meta["output_index"]))
+
+        for item in self.items.values():
+            for type in ("item", "rss", "atom", "archive"):
+                template = getattr(self, "template_" + type, None)
+                if template is None: continue
+
+                dest = self.meta["output_" + type].format(slug=item.slug)
+                if dest.endswith("/"):
+                    dest += "index.html"
+
+                res.append(os.path.join(self.dst_relpath, dest))
+
+        return res

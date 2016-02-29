@@ -75,12 +75,12 @@ class CheckCommand(SiteCommand):
 
 class ServeCommand(SiteCommand):
     def run(self):
-        self.site = self.load_site()
+        self.reload()
 
         from livereload import Server
         server = Server(self.application)
-        server.watch(os.path.join(self.root, "site"), self.on_change, delay=0.5)
-        server.watch(os.path.join(self.root, "theme"), self.on_change, delay=0.5)
+        server.watch(os.path.join(self.root, "site"), self.reload, delay=0.5)
+        server.watch(os.path.join(self.root, "theme"), self.reload, delay=0.5)
         server.serve()
 
     def application(self, environ, start_response):
@@ -89,14 +89,29 @@ class ServeCommand(SiteCommand):
             start_response("404 not found", [("Content-Type", "text/plain")])
             return [b"Not found"]
 
-        start_response("200 OK", [("Content-Type", "text/plain")])
-        return [path.encode("utf-8")]
+        path = os.path.normpath(path)
+        page = self.url_map.get(path, None)
+        if page is None:
+            page = self.url_map.get(os.path.join(path, "index.html"), None)
 
-    def on_change(self):
+        if page is None:
+            start_response("404 not found", [("Content-Type", "text/plain")])
+            return [b"Not found"]
+
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [page.meta.get("title", "").encode("utf-8")]
+
+    def reload(self):
+        log.info("Loading site")
         self.site = self.load_site()
         import gc
         gc.collect()
 
+        self.url_map = {}
+        for page in self.site.pages.values():
+            for relpath in page.target_relpaths():
+                relpath = os.path.normpath(os.path.join("/", relpath))
+                self.url_map[relpath] = page
 
 
 def main():
