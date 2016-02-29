@@ -7,6 +7,7 @@ import sys
 import logging
 import pytz
 from collections import defaultdict
+import jinja2
 from . import content
 
 log = logging.getLogger()
@@ -48,6 +49,9 @@ def load_settings(pathname):
 
 
 class Page:
+    # In what pass must pages of this type be analyzed.
+    ANALYZE_PASS = 1
+
     def __init__(self, site, relpath):
         # Site that owns this page
         self.site = site
@@ -99,17 +103,9 @@ class Page:
                 return None
             root = os.path.dirname(root)
 
-
     def read_metadata(self):
         """
         Fill in self.meta scanning the page contents
-        """
-        pass
-
-    def transform(self):
-        """
-        Optionally transform the page, like remove it from the site, or
-        generate variants.
         """
         pass
 
@@ -130,22 +126,33 @@ class Site:
         # Description of tags
         self.tag_descriptions = {}
 
+        # Install site's functions into the jinja2 environment
+        j2env.globals.update(
+            url_for=self.jinja2_url_for,
+        )
+
+
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
         from .j2 import J2Pages
+        from .taxonomy import TaxonomyPages
         self.page_handlers = [
             MarkdownPages(j2env),
             J2Pages(j2env),
+            TaxonomyPages(j2env),
         ]
 
-        ## Generate taxonomies from configuration
-        #self.taxonomies = {}
-        #for name, info in settings.TAXONOMIES.items():
-        #    info["name"] = name
-        #    output_dir = info.get("output_dir", None)
-        #    if output_dir is not None:
-        #        info["output_dir"] = self.enforce_relpath(output_dir)
-        #    self.taxonomies[name] = Taxonomy(**info)
+    @jinja2.contextfunction
+    def jinja2_url_for(self, context, arg):
+        if isinstance(arg, str):
+            cur_page = context.parent["page"]
+            page = cur_page.resolve_link(arg)
+            if page is None:
+                log.warn("%s: unresolved link %s passed to url_for", cur_page.relpath, arg)
+                return ""
+        else:
+            page = arg
+        return page.dst_link
 
     def enforce_relpath(self, path):
         from pathlib import Path
@@ -221,20 +228,15 @@ class Site:
         page.relpath = dest_relpath
 
     def analyze(self):
-        # First pass: read and aggregate metadata
+        # Group pages by pass number
+        by_pass = defaultdict(list)
         for page in self.pages.values():
-            page.read_metadata()
+            by_pass[page.ANALYZE_PASS].append(page)
 
-            ## File the page in the right taxonomies
-            #for taxonomy in self.taxonomies.values():
-            #    taxonomy.analyze_page(page)
-
-        # Second pass: site transformations
-
-        # Use a list because the dictionary can be modified by analyze()
-        # methods
-        for page in list(self.pages.values()):
-            page.transform()
+        # Read metadata
+        for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):
+            for page in pages:
+                page.read_metadata()
 
     def slugify(self, text):
         from .slugify import slugify

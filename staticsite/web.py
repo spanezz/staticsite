@@ -67,8 +67,6 @@ class WebWriter:
                 os.unlink(abs)
 
     def write(self, site):
-        self.jinja2.globals["link_taxonomy"] = lambda tname, tval: site.taxonomy_indices[tname][tval].dst_link
-
         # Clear the target directory, but keep the root path so that a web
         # server running on it does not find itself running nowhere
         outdir = os.path.join(self.root, "web")

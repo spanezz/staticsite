@@ -162,11 +162,12 @@ class MarkdownPage(Page):
 
     def write(self, writer):
         md_html = self.mdenv.render(self)
-        html = self.page_template.render(
+        html = self.mdenv.page_template.render(
+            page=self,
             content=md_html,
             **self.meta,
         )
-        dst = self.output_abspath(self.dst_relpath)
+        dst = writer.output_abspath(self.dst_relpath)
         with open(dst, "wt") as out:
             out.write(html)
 

@@ -9,6 +9,10 @@ import logging
 log = logging.getLogger()
 
 
+class IgnorePage(Exception):
+    pass
+
+
 class J2Pages:
     def __init__(self, j2env):
         self.jinja2 = j2env
@@ -18,7 +22,10 @@ class J2Pages:
         if ".j2." not in basename:
             return None
         dirname = os.path.dirname(relpath)
-        return J2Page(self, site, os.path.join(dirname, basename.replace(".j2", "")), template_relpath=relpath)
+        try:
+            return J2Page(self, site, os.path.join(dirname, basename.replace(".j2", "")), template_relpath=relpath)
+        except IgnorePage:
+            return None
 
 
 class J2Page(Page):
@@ -28,22 +35,17 @@ class J2Page(Page):
         super().__init__(site, relpath)
         self.jinja2 = j2env.jinja2
         self.template_relpath = template_relpath
-
-    def write(self, writer):
         try:
-            template = self.jinja2.get_template(self.template_relpath)
+            self.template = self.jinja2.get_template(self.template_relpath)
         except:
             log.exception("%s: cannot load template %s", self.src_relpath, self.template_relpath)
-            return
-        body = template.render(
+            raise IgnorePage
+
+    def write(self, writer):
+        body = self.template.render(
+            page=self,
             **self.meta,
         )
         dst = writer.output_abspath(self.dst_relpath)
         with open(dst, "wt") as out:
             out.write(body)
-
-    def check(self, checker):
-        try:
-            template = self.jinja2.get_template(self.template_relpath)
-        except:
-            log.exception("%s: cannot load template %s", self.src_relpath, self.template_relpath)
