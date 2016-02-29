@@ -31,7 +31,9 @@ class WebWriter:
 
         # Generate output
         for page in site.pages.values():
-            page.write(self)
+            for relpath, rendered in page.render().items():
+                dst = self.output_abspath(relpath)
+                rendered.write(dst)
 
     def output_abspath(self, relpath):
         abspath = os.path.join(self.root, "web", relpath)

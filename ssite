@@ -52,7 +52,7 @@ class BuildCommand(SiteCommand):
         site = self.load_site()
 
         from staticsite.web import WebWriter
-        writer = WebWriter(args.rootdir)
+        writer = WebWriter(self.root)
 
         start = time.perf_counter()
         writer.write(site)

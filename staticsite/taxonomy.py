@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page, settings
+from .core import Page, settings, RenderedString
 import os
 import re
 from collections import defaultdict
@@ -147,7 +147,9 @@ class TaxonomyPage(Page):
                     self.items[v] = item
                 item.pages.append(page)
 
-    def write(self, writer):
+    def render(self):
+        res = {}
+
         single_name = self.meta.get("item_name", self.name)
 
         if self.template_index is not None:
@@ -160,9 +162,7 @@ class TaxonomyPage(Page):
             }
             kwargs.update(**self.meta)
             body = self.template_index.render(**kwargs)
-            dst = writer.output_abspath(dest)
-            with open(dst, "wt") as out:
-                out.write(body)
+            res[dest] = RenderedString(body)
 
         for item in self.items.values():
             for type in ("item", "rss", "atom", "archive"):
@@ -180,9 +180,9 @@ class TaxonomyPage(Page):
                 }
                 kwargs.update(**self.meta)
                 body = template.render(**kwargs)
-                dst = writer.output_abspath(os.path.join(self.dst_relpath, dest))
-                with open(dst, "wt") as out:
-                    out.write(body)
+                res[os.path.join(self.dst_relpath, dest)] = RenderedString(body)
+
+        return res
 
     def target_relpaths(self):
         res = []

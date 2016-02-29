@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page
+from .core import Page, RenderedString
 import re
 import os
 import pytz
@@ -184,24 +184,24 @@ class MarkdownPage(Page):
             self.md_html = self.mdenv.render(self)
         return self.md_html
 
-    def write(self, writer):
+    def render(self):
+        res = {}
+
         html = self.mdenv.page_template.render(
             page=self,
             content=self.content,
             **self.meta,
         )
-        dst = writer.output_abspath(self.dst_relpath)
-        with open(dst, "wt") as out:
-            out.write(html)
+        res[self.dst_relpath] = RenderedString(html)
 
         for relpath in self.meta.get("aliases", ()):
             html = self.mdenv.redirect_template.render(
                 page=self,
                 **self.meta,
             )
-            dst = writer.output_abspath(relpath + ".html")
-            with open(dst, "wt") as out:
-                out.write(html)
+            res[relpath + ".html"] = RenderedString(html)
+
+        return res
 
     def target_relpaths(self):
         res = [self.dst_relpath]

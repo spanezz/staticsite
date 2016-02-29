@@ -6,6 +6,7 @@ import json
 import sys
 import logging
 import pytz
+import shutil
 import fnmatch
 from collections import defaultdict
 import jinja2
@@ -349,3 +350,27 @@ class Site:
     def slugify(self, text):
         from .slugify import slugify
         return slugify(text)
+
+
+class RenderedFile:
+    def __init__(self, abspath):
+        self.abspath = abspath
+
+    def write(self, dst):
+        shutil.copy2(self.abspath, dst)
+
+    def content(self):
+        with open(self.abspath, "rb") as fd:
+            return fd.read()
+
+
+class RenderedString:
+    def __init__(self, s):
+        self.buf = s.encode("utf-8")
+
+    def write(self, dst):
+        with open(dst, "wb") as out:
+            out.write(self.buf)
+
+    def content(self):
+        return self.buf

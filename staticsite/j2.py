@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page
+from .core import Page, RenderedString
 import os
 import re
 from collections import defaultdict
@@ -41,11 +41,11 @@ class J2Page(Page):
             log.exception("%s: cannot load template %s", self.src_relpath, self.template_relpath)
             raise IgnorePage
 
-    def write(self, writer):
+    def render(self):
         body = self.template.render(
             page=self,
             **self.meta,
         )
-        dst = writer.output_abspath(self.dst_relpath)
-        with open(dst, "wt") as out:
-            out.write(body)
+        return {
+            self.dst_relpath: RenderedString(body),
+        }

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page
+from .core import Page, RenderedFile
 import os
 import shutil
 
@@ -12,9 +12,10 @@ class Asset(Page):
         super().__init__(site, relpath)
         self.title = os.path.basename(relpath)
 
-    def write(self, writer):
-        dst = writer.output_abspath(self.dst_relpath)
-        shutil.copy2(os.path.join(self.site.site_root, self.src_relpath), dst)
+    def render(self):
+        return {
+            self.dst_relpath: RenderedFile(os.path.join(self.site.site_root, self.src_relpath)),
+        }
 
 
 class ThemeAsset(Page):
@@ -25,6 +26,7 @@ class ThemeAsset(Page):
         self.theme_assets_relpath = theme_assets_relpath
         self.title = os.path.basename(relpath)
 
-    def write(self, writer):
-        dst = writer.output_abspath(self.dst_relpath)
-        shutil.copy2(os.path.join(self.site.root, self.theme_assets_relpath, self.src_relpath), dst)
+    def render(self):
+        return {
+            self.dst_relpath: RenderedFile(os.path.join(self.site.root, self.theme_assets_relpath, self.src_relpath)),
+        }
