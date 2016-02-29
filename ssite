@@ -14,6 +14,91 @@ class CmdlineError(RuntimeError):
     pass
 
 
+class SiteCommand:
+    def __init__(self, root):
+        self.root = root
+
+        # Double check that root points to something that looks like a project
+        self.site_root = os.path.join(root, "site")
+        if not os.path.exists(self.site_root):
+            raise CmdlineError("{} does not exist".format(self.site_root))
+
+        # Load settings (optional)
+        settings_file = os.path.join(root, "settings.py")
+        if os.path.isfile(settings_file):
+            load_settings(settings_file)
+
+    def load_site(self):
+        # Instantiate site
+        site = Site(self.root)
+
+        # Read and analyze site contents
+        start = time.perf_counter()
+        site.read_tree()
+        site.read_theme_asset_tree("theme/static")
+        end = time.perf_counter()
+        log.info("Read site tree in %fs", end-start)
+
+        start = time.perf_counter()
+        site.analyze()
+        end = time.perf_counter()
+        log.info("Analised site tree in %fs", end-start)
+
+        return site
+
+
+class BuildCommand(SiteCommand):
+    def run(self):
+        site = self.load_site()
+
+        from staticsite.web import WebWriter
+        writer = WebWriter(args.rootdir)
+
+        start = time.perf_counter()
+        writer.write(site)
+        end = time.perf_counter()
+        log.info("Built site in %fs", end-start)
+
+
+class CheckCommand(SiteCommand):
+    def run(self):
+        site = self.load_site()
+
+        from staticsite.check import Checker
+        checker = Checker()
+
+        start = time.perf_counter()
+        checker.check(site)
+        end = time.perf_counter()
+        log.info("Checked site in %fs", end-start)
+
+
+class ServeCommand(SiteCommand):
+    def run(self):
+        self.site = self.load_site()
+
+        from livereload import Server
+        server = Server(self.application)
+        server.watch(os.path.join(self.root, "site"), self.on_change, delay=0.5)
+        server.watch(os.path.join(self.root, "theme"), self.on_change, delay=0.5)
+        server.serve()
+
+    def application(self, environ, start_response):
+        path = environ.get("PATH_INFO", None)
+        if path is None:
+            start_response("404 not found", [("Content-Type", "text/plain")])
+            return [b"Not found"]
+
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [path.encode("utf-8")]
+
+    def on_change(self):
+        self.site = self.load_site()
+        import gc
+        gc.collect()
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="Convert from ikiwiki to hugo.")
 
@@ -25,6 +110,11 @@ def main():
     parser_build.add_argument("--debug", action="store_true", help="verbose output")
 
     parser_check = subparsers.add_parser("check", help="check the site, without writing anything")
+    parser_check.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
+    parser_check.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+    parser_check.add_argument("--debug", action="store_true", help="verbose output")
+
+    parser_check = subparsers.add_parser("serve", help="serve the site over HTTP, incrementally building it in memory")
     parser_check.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
     parser_check.add_argument("-v", "--verbose", action="store_true", help="verbose output")
     parser_check.add_argument("--debug", action="store_true", help="verbose output")
@@ -45,46 +135,16 @@ def main():
     else:
         root = os.getcwd()
 
-    # Double check that root points to something that looks like a project
-    site_root = os.path.join(root, "site")
-    if not os.path.exists(site_root):
-        raise CmdlineError("{} does not exist".format(site_root))
-
-    # Load settings (optional)
-    settings_file = os.path.join(root, "settings.py")
-    if os.path.isfile(settings_file):
-        load_settings(settings_file)
-
-    # Instantiate site
-    site = Site(root)
-
-    # Read and analyze site contents
-    start = time.perf_counter()
-    site.read_tree()
-    site.read_theme_asset_tree("theme/static")
-    end = time.perf_counter()
-    log.info("Read site tree in %fs", end-start)
-
-    start = time.perf_counter()
-    site.analyze()
-    end = time.perf_counter()
-    log.info("Analised site tree in %fs", end-start)
-
-    # TODO: redo argparse with subcommands
-
     if args.command == "build":
-        from staticsite.web import WebWriter
-        writer = WebWriter(args.rootdir)
+        cmd = BuildCommand(root)
     elif args.command == "check":
-        from staticsite.check import Checker
-        writer = Checker()
+        cmd = CheckCommand(root)
+    elif args.command == "serve":
+        cmd = ServeCommand(root)
     else:
         raise CmdlineError("Command {} is not supported".format(args.command))
 
-    start = time.perf_counter()
-    writer.write(site)
-    end = time.perf_counter()
-    log.info("Processed site in %fs", end-start)
+    cmd.run()
 
 
 if __name__ == "__main__":

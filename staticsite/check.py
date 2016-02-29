@@ -15,7 +15,7 @@ log = logging.getLogger()
 
 
 class Checker:
-    def write(self, site):
+    def check(self, site):
         counts = Counter()
         for page in site.pages.values():
             counts[page.TYPE] += 1
