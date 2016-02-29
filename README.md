@@ -12,6 +12,16 @@ Output:
  - a site with the same structure as the input
 
 
+## Quick start
+
+```bash
+ssite build example
+cd example/web
+python -m SimpleHTTPServer
+```
+
+Then point your browser at <http://localhost:8000>.
+
 ## Semantic linking
 
 All paths in the site material refer to elements in the site directory, and
