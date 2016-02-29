@@ -111,7 +111,7 @@ class TaxonomyPage(Page):
         from .utils import parse_front_matter
 
         # Read taxonomy information
-        src = os.path.join(self.site.root, self.src_relpath + ".taxonomy")
+        src = os.path.join(self.site.site_root, self.src_relpath + ".taxonomy")
         with open(src, "rt") as fd:
             lines = [x.rstrip() for x in fd]
         try:

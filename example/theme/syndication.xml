@@ -1,0 +1,54 @@
+{% macro atom_feed(pages, link, title) -%}
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <author><name>{{SITE_AUTHOR}}</name></author>
+  <link rel="self" href="{{SITE_URL}}{{link}}"/>
+  <id>{{SITE_URL}}{{link}}</id>
+  <generator uri="https://github.com/spanezz/staticsite">staticsite</generator>
+  <updated>{{now|datetime_format("atom")}}</updated>
+  <title>{{title}}</title>
+  {% for page in pages -%}
+  <entry>
+    <title>{{page.meta.title}}</title>
+    <id>{{SITE_URL}}{{url_for(page)}}</id>
+    <link href="{{SITE_URL}}{{url_for(page)}}"/>
+    {% for tag in page.meta.tags -%}
+    <category term="{{tag}}"/>
+    {%- endfor %}
+    <updated>{{page.meta.date|datetime_format("atom")}}</updated>
+    <published>{{page.meta.date|datetime_format("atom")}}</published>
+    <content type="html">{{page.content}}</content>
+  </entry>
+  {%- endfor %}
+</feed>
+{%- endmacro %}
+
+{% macro rss2_feed(pages, link, title) -%}
+<?xml version="1.0"?>
+<rss version="2.0"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:dcterms="http://purl.org/dc/terms/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>{{title}}</title>
+  <link>{{SITE_URL}}{{link}}</link>
+  <atom:link href="{{SITE_URL}}{{link}}" rel="self" type="application/rss+xml"/>
+  <description>{{title}}</description>
+  <generator>staticsite</generator>
+  <pubDate>{{now|datetime_format("rss2")}}</pubDate>
+  {% for page in pages -%}
+  <item>
+    <title>{{page.meta.title}}</title>
+    <guid isPermaLink="false">{{SITE_URL}}{{ url_for(page) }}</guid>
+    <link>{{SITE_URL}}{{ url_for(page) }}</link>
+    {% for tag in page.meta.tags -%}
+    <category>{{tag}}</category>
+    {%- endfor %}
+    <pubDate>{{page.meta.date|datetime_format("rss2")}}</pubDate>
+    <dcterms:modified>{{page.meta.date|datetime_format("w3cdtf")}}</dcterms:modified>
+    <description>{{page.content}}</description>
+  </item>
+  {%- endfor %}
+  </channel>
+</rss>
+{%- endmacro %}

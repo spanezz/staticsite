@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+  {{content|safe}}
+
+  {% for tag in tags %}
+  <a href="{{ url_for_tag(tag) }}" class="label label-default">{{tag}}</a>
+  {% endfor %}
+{% endblock %}

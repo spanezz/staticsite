@@ -124,6 +124,12 @@ class Site:
     def __init__(self, root, j2env):
         self.root = root
 
+        # Root of site pages
+        self.site_root = os.path.join(root, "site")
+
+        # Root of theme resources
+        self.theme_root = os.path.join(root, "theme")
+
         # Extra ctime information
         self.ctimes = None
 
@@ -233,21 +239,15 @@ class Site:
 
         return pages
 
-    def enforce_relpath(self, path):
-        from pathlib import Path
-        root = Path(self.root).resolve()
-        other = (root / path.lstrip("/")).resolve()
-        return other.relative_to(root)
-
     def read_tree(self, relpath=None):
         from .asset import Asset
 
         if relpath is None:
-            log.info("Loading site directory %s", self.root)
-            abspath = os.path.join(self.root)
+            log.info("Loading site directory %s", self.site_root)
+            abspath = self.site_root
         else:
             log.debug("Loading directory %s", relpath)
-            abspath = os.path.join(self.root, relpath)
+            abspath = os.path.join(self.site_root, relpath)
         for f in os.listdir(abspath):
             if f.startswith("."): continue
 
@@ -256,7 +256,7 @@ class Site:
             else:
                 page_relpath = os.path.join(relpath, f)
 
-            absf = os.path.join(self.root, page_relpath)
+            absf = os.path.join(abspath, f)
             if os.path.isdir(absf):
                 self.read_tree(page_relpath)
                 continue
@@ -272,30 +272,40 @@ class Site:
                     p = Asset(self, page_relpath)
                     self.pages[p.src_relpath] = p
 
-#    def read_tag_descriptions(self, relpath):
-#        log.info("Loading tag info from %s", relpath)
-#        abspath = os.path.join(self.root, relpath)
-#        for f in os.listdir(abspath):
-#            # Skip tag index
-#            if f == "index.mdwn": continue
-#            if not f.endswith(".mdwn"): continue
-#            desc = []
-#            tag = os.path.splitext(f)[0]
-#            with open(os.path.join(abspath, f), "rt") as fd:
-#                for line in fd:
-#                    line = line.rstrip()
-#                    if line.startswith("[[!"):
-#                        if re.match(r'\[\[!inline pages="link\(tags/{tag}\)" show="\d+"\]\]'.format(tag=tag), line): continue
-#                        log.warn("%s: found unsupported tag lookup: %s", os.path.join(relpath, f), line)
-#                    else:
-#                        desc.append(line)
-#
-#            # Strip leading and trailing empty lines
-#            while desc and not desc[0]:
-#                desc.pop(0)
-#            while desc and not desc[-1]:
-#                desc.pop(-1)
-#            self.tag_descriptions[tag] = desc
+    def read_theme_asset_tree(self, theme_assets_relpath, relpath=None):
+        """
+        Read static assets from a directory tree.
+
+        theme_assets_relpath is the relative path of the root of the assets
+        tree, rooted on the whole staticsite project (where settings.py is)
+        """
+        from .asset import ThemeAsset
+
+        if relpath is None:
+            log.info("Loading theme static asset directory %s", theme_assets_relpath)
+            abspath = os.path.join(self.root, theme_assets_relpath)
+        else:
+            log.debug("Loading theme static asset directory %s/%s", theme_assets_relpath, relpath)
+            abspath = os.path.join(self.root, theme_assets_relpath, relpath)
+
+        for f in os.listdir(abspath):
+            if f.startswith("."): continue
+
+            if relpath is None:
+                page_relpath = f
+            else:
+                page_relpath = os.path.join(relpath, f)
+
+            absf = os.path.join(abspath, f)
+            if os.path.isdir(absf):
+                self.read_theme_asset_tree(theme_assets_relpath, page_relpath)
+                continue
+
+            if os.path.isfile(absf):
+                log.debug("Loading theme static asset file %s/%s", theme_assets_relpath, page_relpath)
+                p = ThemeAsset(self, page_relpath, theme_assets_relpath)
+                self.pages[p.src_relpath] = p
+
 
     def relocate(self, page, dest_relpath):
         log.info("Relocating %s to %s", page.relpath, dest_relpath)

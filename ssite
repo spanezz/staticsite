@@ -51,10 +51,11 @@ def main():
         if not x.isupper(): continue
         j2env.globals[x] = getattr(settings, x)
 
-    site = Site(os.path.abspath(os.path.join(args.rootdir, "site")), j2env)
+    site = Site(os.path.abspath(args.rootdir), j2env)
 
     start = time.perf_counter()
     site.read_tree()
+    site.read_theme_asset_tree("theme/static")
     end = time.perf_counter()
     log.info("Read site tree in %fs", end-start)
 

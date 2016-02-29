@@ -1,0 +1,10 @@
+{
+    "item_name": "tag",
+    "output_dir": "tags/",
+    "template_tags": "tags.html",
+    "template_tag": "tag.html",
+    "template_atom": "tag.atom",
+    "template_rss": "tag.rss",
+    "template_archive": "tag-archive.html",
+    "output_feed": "{slug}/index.atom"
+}

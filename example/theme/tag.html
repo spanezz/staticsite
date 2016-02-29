@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from 'inline_page.html' import inline_page %}
+
+{% block head %}
+<link href="{{ url_for_tag_rss(tag) }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: {{tag.name}} RSS2 feed"></link>
+<link href="{{ url_for_tag_atom(tag) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{tag.name}} ATOM feed"></link>
+{% endblock %}
+
+{% block content %}
+<h1>Tag {{tag.name}}</h1>
+
+<h2>Last 10 posts for tag {{tag.name}}</h2>
+
+{% for page in pages[:10] %}
+{{inline_page(page)}}
+{% endfor %}
+
+{% endblock %}
+

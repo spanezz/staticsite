@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>{{SITE_NAME}}</h1>
+
+<p>This is the content of the home page for the site.</p>
+
+<p>It does not need to be HTML, it can be <tt>index.md</tt> instead, depending
+on your needs.</p>
+
+<p>With a jinja2 template, you can do interesting things like this:</p>
+
+<h2>Latest 5 <a href="{{ url_for('/blog/index.html') }}">blog posts</a></h2>
+
+<ul>
+  {% for page in site_pages(path="blog/*", limit=5) %}
+  <li><a href="{{ url_for(page) }}">{{page.meta.date}}: {{page.meta.title}}</a></li>
+  {% endfor %}
+</ul>
+
+{% endblock %}
