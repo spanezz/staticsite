@@ -4,7 +4,7 @@
 
 # Title used in HTML <title>. If omitted, using the first toplevel heading
 # (a single #) in the file.
-title = "Example blog post"
+# title = "Example blog post"
 
 # Date of the post. You can use anything understood by dateutil.parser
 # (http://dateutil.readthedocs.org/en/latest/parser.html)

@@ -1,8 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
+  <h1>{{page.meta.title}}</h1>
+
   {{content|safe}}
 
+  <p>
   {% for tag in tags %}
   <a href="{{ url_for_tag(tag) }}" class="label label-default">{{tag}}</a>
   {% endfor %}
+  </p>
+
+  <p><small>{{page.meta.date}}</small></p>
 {% endblock %}

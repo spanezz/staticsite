@@ -165,7 +165,11 @@ class MarkdownPage(Page):
         # Read title from first # title if not specified in metadata
         if not self.meta.get("title", ""):
             if self.body and self.body[0].startswith("# "):
-                self.meta["title"] = self.body[0][2:].strip()
+                self.meta["title"] = self.body.pop(0)[2:].strip()
+
+                # Remove leading empty lines again
+                while self.body and not self.body[0]:
+                    self.body.pop(0)
 
         date = self.meta.get("date", None)
         if date is not None:
