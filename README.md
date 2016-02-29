@@ -24,9 +24,9 @@ Debian, please package it. At the moment a copy of it is found in
 ## Quick start
 
 ```bash
-ssite build example
-cd example/web
-python -m SimpleHTTPServer
+$ ./ssite build example
+$ cd example/web
+$ python -m SimpleHTTPServer
 ```
 
 Then point your browser at <http://localhost:8000>.
