@@ -114,6 +114,9 @@ class MarkdownPage(Page):
         # Destination file name
         self.dst_relpath = os.path.join(self.src_relpath, "index.html")
 
+        # Markdown content of the page rendered into html
+        self.md_html = None
+
     def get_content(self):
         return "\n".join(self.body)
 
@@ -162,11 +165,16 @@ class MarkdownPage(Page):
     def check(self, checker):
         self.mdenv.render(self)
 
+    @property
+    def content(self):
+        if self.md_html is None:
+            self.md_html = self.mdenv.render(self)
+        return self.md_html
+
     def write(self, writer):
-        md_html = self.mdenv.render(self)
         html = self.mdenv.page_template.render(
             page=self,
-            content=md_html,
+            content=self.content,
             **self.meta,
         )
         dst = writer.output_abspath(self.dst_relpath)
