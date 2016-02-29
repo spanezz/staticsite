@@ -11,11 +11,11 @@ def parse_front_matter(lines):
     if lines[0] == "+++":
         # TOML
         import toml
-        return toml.loads("\n".join(lines))
+        return toml.loads("\n".join(lines[1:-1]))
 
     if lines[0] == "---":
         # YAML
         import yaml
-        return yaml.load("\n".join(lines), Loader=yaml.CLoader)
+        return yaml.load("\n".join(lines[1:-1]), Loader=yaml.CLoader)
 
     return {}

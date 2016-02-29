@@ -153,7 +153,10 @@ class MarkdownPage(Page):
                     self.body.append(line)
 
         from .utils import parse_front_matter
-        self.meta.update(**parse_front_matter(self.front_matter))
+        try:
+            self.meta.update(**parse_front_matter(self.front_matter))
+        except:
+            log.exception("%s: failed to parse front matter", self.src_relpath)
 
         # Remove leading empty lines
         while self.body and not self.body[0]:
