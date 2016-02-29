@@ -6,6 +6,7 @@ import os
 import pytz
 import datetime
 import markdown
+import dateutil.parser
 from urllib.parse import urlparse, urlunparse
 import logging
 
@@ -161,6 +162,10 @@ class MarkdownPage(Page):
         if not self.meta.get("title", ""):
             if self.body and self.body[0].startswith("# "):
                 self.meta["title"] = self.body[0][2:].strip()
+
+        date = self.meta.get("date", None)
+        if date is not None:
+            self.meta["date"] = dateutil.parser.parse(date)
 
     def check(self, checker):
         self.mdenv.render(self)

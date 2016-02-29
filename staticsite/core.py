@@ -13,8 +13,6 @@ from . import content
 
 log = logging.getLogger()
 
-tz_local = pytz.timezone("Europe/Rome")
-
 class Settings:
     def __init__(self):
         from . import global_settings
@@ -130,12 +128,19 @@ class Site:
         # Description of tags
         self.tag_descriptions = {}
 
+        # Site time zone
+        self.timezone = pytz.timezone(settings.TIMEZONE)
+
+        # Current datetime
+        self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
+
         # Install site's functions into the jinja2 environment
         j2env.globals.update(
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
+            now=self.generation_time,
         )
-
+        j2env.filters["datetime_format"] = self.jinja2_datetime_format
 
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
@@ -146,6 +151,41 @@ class Site:
             J2Pages(j2env),
             TaxonomyPages(j2env),
         ]
+
+    @jinja2.contextfilter
+    def jinja2_datetime_format(self, context, dt, format=None):
+        if format in ("rss2", "rfc822"):
+            from email.utils import formatdate
+            return formatdate(dt.timestamp())
+        elif format in ("atom", "rfc3339"):
+            dt = dt.astimezone(pytz.utc)
+            return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        elif format == "w3cdtf":
+            from dateutil.tz import tzlocal
+            offset = dt.utcoffset()
+            offset_sec = (offset.days * 24 * 3600 + offset.seconds)
+            offset_hrs = offset_sec // 3600
+            offset_min = offset_sec % 3600
+            if offset:
+                tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
+            else:
+                tz_str = 'Z'
+            return dt.strftime("%Y-%m-%dT%H:%M:%S") + tz_str
+        elif format == "iso8601" or format is None:
+            from dateutil.tz import tzlocal
+            offset = dt.utcoffset()
+            offset_sec = (offset.days * 24 * 3600 + offset.seconds)
+            offset_hrs = offset_sec // 3600
+            offset_min = offset_sec % 3600
+            if offset:
+                tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
+            else:
+                tz_str = 'Z'
+            return dt.strftime("%Y-%m-%d %H:%M:%S") + tz_str
+        else:
+            log.warn("%s+%s: invalid datetime format %r requested", cur_page.src_relpath, context.name, format)
+            return "(unknown datetime format {})".format(format)
+
 
     @jinja2.contextfunction
     def jinja2_url_for(self, context, arg):

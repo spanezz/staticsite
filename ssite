@@ -43,6 +43,7 @@ def main():
             os.path.join(os.path.join(args.rootdir, "site")),
             os.path.join(os.path.join(args.rootdir, "theme")),
         ]),
+        autoescape=True,
     )
 
     # Add settings to jinja2 globals

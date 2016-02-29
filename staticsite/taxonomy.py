@@ -51,7 +51,8 @@ class TaxonomyPage(Page):
 
         self.meta["output_index"] = ""
         self.meta["output_item"] = "{slug}/"
-        self.meta["output_feed"] = "{slug}/feed.rss"
+        self.meta["output_rss"] = "{slug}/index.rss"
+        self.meta["output_atom"] = "{slug}/index.atom"
         self.meta["output_archive"] = "{slug}/archive.html"
 
         ## Generate taxonomies from configuration
@@ -86,8 +87,12 @@ class TaxonomyPage(Page):
         return self.link_value(context, "output_item", value)
 
     @jinja2.contextfunction
-    def link_feed(self, context, value):
-        return self.link_value(context, "output_feed", value)
+    def link_rss(self, context, value):
+        return self.link_value(context, "output_rss", value)
+
+    @jinja2.contextfunction
+    def link_atom(self, context, value):
+        return self.link_value(context, "output_atom", value)
 
     @jinja2.contextfunction
     def link_archive(self, context, value):
@@ -119,13 +124,15 @@ class TaxonomyPage(Page):
         # Instantiate jinja2 templates
         self.template_index = self.load_template_from_meta("template_" + self.name)
         self.template_item = self.load_template_from_meta("template_" + single_name)
-        self.template_feed = self.load_template_from_meta("template_feed")
+        self.template_rss = self.load_template_from_meta("template_rss")
+        self.template_atom = self.load_template_from_meta("template_atom")
         self.template_archive = self.load_template_from_meta("template_archive")
 
         # Extend jinja2 with a function to link to elements of this taxonomy
         self.jinja2.globals["url_for_" + self.name] = self.link_index
         self.jinja2.globals["url_for_" + single_name] = self.link_item
-        self.jinja2.globals["url_for_" + single_name + "_feed"] = self.link_feed
+        self.jinja2.globals["url_for_" + single_name + "_rss"] = self.link_rss
+        self.jinja2.globals["url_for_" + single_name + "_atom"] = self.link_atom
         self.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
 
         # Collect the pages annotated with this taxonomy
@@ -158,7 +165,7 @@ class TaxonomyPage(Page):
                 out.write(body)
 
         for item in self.items.values():
-            for type in ("item", "feed", "archive"):
+            for type in ("item", "rss", "atom", "archive"):
                 template = getattr(self, "template_" + type, None)
                 if template is None: continue
 
