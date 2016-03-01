@@ -62,5 +62,13 @@
     {% block content %}
     {% endblock %}
     </div>
+
+    {% block footer %}
+    <div class="panel panel-default">
+      <div class="panel-footer">
+        Generated with <a href="https://github.com/spanezz/staticsite">staticsite</a> on {{now}}.
+      </div>
+    </div>
+    {% endblock %}
   </body>
 </html>
