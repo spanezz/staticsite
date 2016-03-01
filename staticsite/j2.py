@@ -44,7 +44,7 @@ class J2Page(Page):
     def render(self):
         body = self.template.render(
             page=self,
-            **self.meta,
+            **self.meta
         )
         return {
             self.dst_relpath: RenderedString(body),
