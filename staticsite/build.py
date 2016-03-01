@@ -3,16 +3,22 @@
 import json
 import os
 import re
+import time
 import shutil
+from .commands import SiteCommand, CmdlineError
 import logging
 
 log = logging.getLogger()
 
+class Build(SiteCommand):
+    "build the site into the web/ directory of the project"
 
-class WebWriter:
-    def __init__(self, root):
-        # Root directory of the destination
-        self.root = root
+    def run(self):
+        site = self.load_site()
+        start = time.perf_counter()
+        self.write(site)
+        end = time.perf_counter()
+        log.info("Built site in %fs", end-start)
 
     def clear_outdir(self, outdir):
         for f in os.listdir(outdir):
@@ -39,4 +45,3 @@ class WebWriter:
         abspath = os.path.join(self.root, "web", relpath)
         os.makedirs(os.path.dirname(abspath), exist_ok=True)
         return abspath
-

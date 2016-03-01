@@ -6,183 +6,33 @@ import argparse
 import logging
 import json
 import time
-from staticsite.core import Site, load_settings, settings
 
 log = logging.getLogger()
-
-class CmdlineError(RuntimeError):
-    pass
-
-
-class SiteCommand:
-    def __init__(self, root):
-        self.root = root
-
-        # Double check that root points to something that looks like a project
-        self.site_root = os.path.join(root, "site")
-        if not os.path.exists(self.site_root):
-            raise CmdlineError("{} does not exist".format(self.site_root))
-
-        # Load settings (optional)
-        settings_file = os.path.join(root, "settings.py")
-        if os.path.isfile(settings_file):
-            load_settings(settings_file)
-
-    def load_site(self):
-        # Instantiate site
-        site = Site(self.root)
-
-        # Read and analyze site contents
-        start = time.perf_counter()
-        site.read_tree()
-        site.read_theme_asset_tree("theme/static")
-        end = time.perf_counter()
-        log.info("Read site tree in %fs", end-start)
-
-        start = time.perf_counter()
-        site.analyze()
-        end = time.perf_counter()
-        log.info("Analised site tree in %fs", end-start)
-
-        return site
-
-
-class BuildCommand(SiteCommand):
-    def run(self):
-        site = self.load_site()
-
-        from staticsite.web import WebWriter
-        writer = WebWriter(self.root)
-
-        start = time.perf_counter()
-        writer.write(site)
-        end = time.perf_counter()
-        log.info("Built site in %fs", end-start)
-
-
-class CheckCommand(SiteCommand):
-    def run(self):
-        site = self.load_site()
-
-        from staticsite.check import Checker
-        checker = Checker()
-
-        start = time.perf_counter()
-        checker.check(site)
-        end = time.perf_counter()
-        log.info("Checked site in %fs", end-start)
-
-
-class ServeCommand(SiteCommand):
-    def run(self):
-        import mimetypes
-        mimetypes.init()
-
-        self.reload()
-
-        from livereload import Server
-        server = Server(self.application)
-        server.watch(os.path.join(self.root, "site"), self.reload)
-        server.watch(os.path.join(self.root, "theme"), self.reload)
-        server.serve(port=8000, host="localhost")
-
-    def application(self, environ, start_response):
-        import mimetypes
-
-        path = environ.get("PATH_INFO", None)
-        if path is None:
-            start_response("404 not found", [("Content-Type", "text/plain")])
-            return [b"Not found"]
-
-        normrelpath, page = self.resolve_path(path)
-        if page is not None:
-            for relpath, rendered in page.render().items():
-                relpath = os.path.normpath(os.path.join("/", relpath))
-                if relpath == normrelpath:
-                    start_response("200 OK", [("Content-Type", mimetypes.guess_type(relpath)[0])])
-                    return [rendered.content()]
-
-        start_response("404 not found", [("Content-Type", "text/plain")])
-        return [b"Not found"]
-
-    def resolve_path(self, path):
-        """
-        Return normpath(relpath) from the page found and the page found
-        """
-        path = os.path.normpath(path)
-        page = self.url_map.get(path, None)
-        if page is not None:
-            return path, page
-
-        path = os.path.join(path, "index.html")
-        page = self.url_map.get(path, None)
-        if page is not None:
-            return path, page
-
-        return None, None
-
-    def reload(self):
-        log.info("Loading site")
-        self.site = self.load_site()
-        import gc
-        gc.collect()
-
-        self.url_map = {}
-        for page in self.site.pages.values():
-            for relpath in page.target_relpaths():
-                relpath = os.path.normpath(os.path.join("/", relpath))
-                self.url_map[relpath] = page
-
 
 def main():
     parser = argparse.ArgumentParser(description="Convert from ikiwiki to hugo.")
 
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
-    parser_build = subparsers.add_parser("build", help="build the site")
-    parser_build.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
-    parser_build.add_argument("-v", "--verbose", action="store_true", help="verbose output")
-    parser_build.add_argument("--debug", action="store_true", help="verbose output")
+    from staticsite.check import Check
+    Check.make_subparser(subparsers)
 
-    parser_check = subparsers.add_parser("check", help="check the site, without writing anything")
-    parser_check.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
-    parser_check.add_argument("-v", "--verbose", action="store_true", help="verbose output")
-    parser_check.add_argument("--debug", action="store_true", help="verbose output")
+    from staticsite.build import Build
+    Build.make_subparser(subparsers)
 
-    parser_check = subparsers.add_parser("serve", help="serve the site over HTTP, incrementally building it in memory")
-    parser_check.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
-    parser_check.add_argument("-v", "--verbose", action="store_true", help="verbose output")
-    parser_check.add_argument("--debug", action="store_true", help="verbose output")
+    from staticsite.serve import Serve
+    Serve.make_subparser(subparsers)
 
     args = parser.parse_args()
-
-    FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-    elif args.verbose:
-        logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+    if args.command is None:
+        parser.print_help()
     else:
-        logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
-
-    # Default to current directory if rootdir was not provided
-    if args.rootdir:
-        root = os.path.abspath(args.rootdir)
-    else:
-        root = os.getcwd()
-
-    if args.command == "build":
-        cmd = BuildCommand(root)
-    elif args.command == "check":
-        cmd = CheckCommand(root)
-    elif args.command == "serve":
-        cmd = ServeCommand(root)
-    else:
-        raise CmdlineError("Command {} is not supported".format(args.command))
-
-    cmd.run()
+        handler = args.handler(args)
+        handler.run()
 
 
 if __name__ == "__main__":
+    from staticsite.commands import CmdlineError
     try:
         main()
     except CmdlineError as e:

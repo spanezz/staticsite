@@ -1,20 +1,26 @@
 # coding: utf-8
 
-#from .core import BodyWriter, MarkdownPage
 import os
 import shutil
 import json
 import datetime
+import time
 from collections import Counter
+from .commands import SiteCommand, CmdlineError
 import logging
 
 log = logging.getLogger()
 
-#class BodyChecker(BodyWriter):
-#    pass
+class Check(SiteCommand):
+    "check the site, going through all the motions of rendering it without writing anything"
 
+    def run(self):
+        site = self.load_site()
+        start = time.perf_counter()
+        self.check(site)
+        end = time.perf_counter()
+        log.info("Checked site in %fs", end-start)
 
-class Checker:
     def check(self, site):
         counts = Counter()
         for page in site.pages.values():
