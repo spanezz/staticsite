@@ -34,7 +34,7 @@ class New(SiteCommand):
         relpath = settings.NEW_PAGE.format(
             slug=slug,
             time=site.generation_time,
-            **settings_dict,
+            **settings_dict
         )
 
         abspath = os.path.join(site.site_root, relpath)
