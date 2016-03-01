@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+
+srcname = staticsite
+version = $(shell sed -nre 's/.*version[ ]*=[ ]*"([^"]+)".*/\1/p' setup.py)
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_build:
+	dh_auto_build
+	COLUMNS=200 help2man --name='Static site generator' --section=1 --version-string="$(version)" --no-info ./ssite > ssite.1
+
+debsrc:
+	python3 setup.py sdist
+	mv dist/$(srcname)-$(version).tar.gz ../$(srcname)_$(version).orig.tar.gz
+	gbp buildpackage -S -us -uc

@@ -1,0 +1,23 @@
+Source: staticsite
+Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Uploaders: Enrico Zini <enrico@debian.org>
+Section: web
+Priority: optional
+Build-Depends: debhelper (>= 9),
+               dh-python,
+               python3-all,
+               python3-setuptools,
+	       python3-unidecode, python3-markdown, python3-toml, python3-yaml,
+               python3-jinja2, python3-dateutil, python3-livereload
+Build-Depends-Indep: help2man
+Standards-Version: 3.9.7
+Vcs-Git: https://github.com/spanezz/staticsite.git
+Vcs-Browser: https://github.com/spanezz/staticsite
+
+Package: staticsite
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: Static site generator
+ Static site compiler based on markdown and jinja2.
+ .
+ It is themable, the site structure is free, and it has a live preview server.
