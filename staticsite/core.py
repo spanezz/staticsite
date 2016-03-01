@@ -19,6 +19,13 @@ class Settings:
         from . import global_settings
         self.add_module(global_settings)
 
+    def as_dict(self):
+        res = {}
+        for setting in dir(self):
+            if setting.isupper():
+                res[setting] = getattr(self, setting)
+        return res
+
     def add_module(self, mod):
         """
         Add uppercase settings from mod into this module
@@ -134,9 +141,6 @@ class Site:
         # Root of theme resources
         self.theme_root = os.path.join(root, "theme")
 
-        # Extra ctime information
-        self.ctimes = None
-
         # Site pages
         self.pages = {}
 
@@ -186,33 +190,17 @@ class Site:
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):
         if format in ("rss2", "rfc822"):
-            from email.utils import formatdate
-            return formatdate(dt.timestamp())
+            from .utils import format_date_rfc822
+            return format_date_rfc822(dt)
         elif format in ("atom", "rfc3339"):
-            dt = dt.astimezone(pytz.utc)
-            return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+            from .utils import format_date_rfc3339
+            return format_date_rfc3339(dt)
         elif format == "w3cdtf":
-            from dateutil.tz import tzlocal
-            offset = dt.utcoffset()
-            offset_sec = (offset.days * 24 * 3600 + offset.seconds)
-            offset_hrs = offset_sec // 3600
-            offset_min = offset_sec % 3600
-            if offset:
-                tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
-            else:
-                tz_str = 'Z'
-            return dt.strftime("%Y-%m-%dT%H:%M:%S") + tz_str
+            from .utils import format_date_w3cdtf
+            return format_date_w3cdtf(dt)
         elif format == "iso8601" or format is None:
-            from dateutil.tz import tzlocal
-            offset = dt.utcoffset()
-            offset_sec = (offset.days * 24 * 3600 + offset.seconds)
-            offset_hrs = offset_sec // 3600
-            offset_min = offset_sec % 3600
-            if offset:
-                tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
-            else:
-                tz_str = 'Z'
-            return dt.strftime("%Y-%m-%d %H:%M:%S") + tz_str
+            from .utils import format_date_iso8601
+            return format_date_iso8601(dt)
         else:
             log.warn("%s+%s: invalid datetime format %r requested", cur_page.src_relpath, context.name, format)
             return "(unknown datetime format {})".format(format)

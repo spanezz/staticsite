@@ -22,6 +22,8 @@ class SiteCommand:
     DESC = None
 
     def __init__(self, args):
+        self.args = args
+
         self.setup_logging(args)
 
         # Default to current directory if rootdir was not provided

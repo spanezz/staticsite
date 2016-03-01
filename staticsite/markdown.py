@@ -172,7 +172,7 @@ class MarkdownPage(Page):
                     self.body.pop(0)
 
         date = self.meta.get("date", None)
-        if date is not None:
+        if date is not None and not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
 
     def check(self, checker):

@@ -37,6 +37,32 @@ $ ./ssite serve example
 
 Then point your browser at <http://localhost:8000>.
 
+
+## Creating new posts
+
+```bash
+$ ./ssite new example
+Please enter the post title: An example new post
+(editor opens)
+```
+
+You can customize the path of new posts and the editor command using `settings.py`:
+
+```py
+# Path used to create new pages
+NEW_PAGE = "blog/{time:%Y}/{slug}.md"
+
+# Default format for generating front matter (toml, yaml, json)
+FRONT_MATTER = "toml"
+```
+
+Substitutions are done via the normal python `string.format`, and the arguments
+available are `time`, `slug` and any uppercase value from the site settings.
+
+The editor and editor command line can also be configured, see
+`global_settings.py` for details and examples.
+
+
 ## Semantic linking
 
 All paths in the site material refer to elements in the site directory, and

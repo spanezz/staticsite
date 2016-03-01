@@ -23,12 +23,17 @@ def main():
     from staticsite.serve import Serve
     Serve.make_subparser(subparsers)
 
+    from staticsite.new import New
+    New.make_subparser(subparsers)
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
     else:
         handler = args.handler(args)
-        handler.run()
+        res = handler.run()
+        if res is not None:
+            sys.exit(res)
 
 
 if __name__ == "__main__":
