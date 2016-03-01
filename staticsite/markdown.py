@@ -197,7 +197,7 @@ class MarkdownPage(Page):
         for relpath in self.meta.get("aliases", ()):
             html = self.mdenv.redirect_template.render(
                 page=self,
-                **self.meta,
+                **self.meta
             )
             res[relpath + ".html"] = RenderedString(html)
 
