@@ -190,7 +190,7 @@ class MarkdownPage(Page):
         html = self.mdenv.page_template.render(
             page=self,
             content=self.content,
-            **self.meta,
+            **self.meta
         )
         res[self.dst_relpath] = RenderedString(html)
 
