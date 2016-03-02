@@ -1,13 +1,15 @@
 # coding: utf-8
 
-from .core import Page, RenderedString
+from .core import Archetype, Page, RenderedString
 import re
 import os
+import io
 import pytz
 import datetime
 import markdown
 import dateutil.parser
 from urllib.parse import urlparse, urlunparse
+from .utils import parse_front_matter
 import logging
 
 log = logging.getLogger()
@@ -91,9 +93,79 @@ class MarkdownPages:
         self.markdown.reset()
         return self.markdown.convert(page.get_content())
 
-    def try_create(self, site, relpath):
+    def try_load_page(self, site, relpath):
         if not relpath.endswith(".md"): return None
         return MarkdownPage(self, site, relpath[:-3])
+
+    def try_load_archetype(self, site, relpath, name):
+        if not relpath.endswith(".md"): return None
+        if not (relpath.endswith(name) or relpath.endswith(name + ".md")): return None
+        return MarkdownArchetype(self, site, relpath)
+
+
+def parse_markdown_with_front_matter(fd):
+    """
+    Parse lines of markdown with front matter.
+
+    Returns two arrays: one with the lines of front matter and one with the
+    lines of markdown.
+    """
+    front_matter = []
+    body = []
+
+    front_matter_end = None
+    in_front_matter = True
+
+    for lineno, line in enumerate(fd, 1):
+        line = line.rstrip()
+        if lineno == 1:
+            if line == "{":
+                front_matter_end = "}"
+            elif line == "---":
+                front_matter_end = "---"
+            elif line == "+++":
+                front_matter_end = "+++"
+            else:
+                in_front_matter = False
+
+        if in_front_matter:
+            front_matter.append(line)
+            if lineno > 1 and line == front_matter_end:
+                in_front_matter = False
+        else:
+            body.append(line)
+
+    return front_matter, body
+
+
+class MarkdownArchetype(Archetype):
+    def __init__(self, mdenv, site, relpath):
+        super().__init__(site, relpath)
+        self.mdenv = mdenv
+
+    def render(self, **kw):
+        """
+        Process the archetype returning its parsed front matter in a dict, and
+        its contents in a string
+        """
+        # Render the archetype with jinja2
+        abspath = os.path.join(self.site.archetypes_root, self.relpath)
+        with open(abspath, "rt") as fd:
+            template = self.site.jinja2.from_string(fd.read())
+
+        rendered = template.render(**kw)
+
+        with io.StringIO(rendered) as fd:
+            # Reparse it separating front matter and markdown content
+            front_matter, body = parse_markdown_with_front_matter(fd)
+
+            try:
+                style, meta = parse_front_matter(front_matter)
+            except:
+                log.exception("archetype %s: failed to parse front matter", self.relpath)
+
+        return style, meta, body
+
 
 
 class MarkdownPage(Page):
@@ -130,31 +202,11 @@ class MarkdownPage(Page):
 
         # Parse separating front matter and markdown content
         with open(src, "rt") as fd:
-            front_matter_end = None
-            in_front_matter = True
+            self.front_matter, self.body = parse_markdown_with_front_matter(fd)
 
-            for lineno, line in enumerate(fd, 1):
-                line = line.rstrip()
-                if lineno == 1:
-                    if line == "{":
-                        front_matter_end = "}"
-                    elif line == "---":
-                        front_matter_end = "---"
-                    elif line == "+++":
-                        front_matter_end = "+++"
-                    else:
-                        in_front_matter = False
-
-                if in_front_matter:
-                    self.front_matter.append(line)
-                    if lineno > 1 and line == front_matter_end:
-                        in_front_matter = False
-                else:
-                    self.body.append(line)
-
-        from .utils import parse_front_matter
         try:
-            self.meta.update(**parse_front_matter(self.front_matter))
+            style, meta = parse_front_matter(self.front_matter)
+            self.meta.update(**meta)
         except:
             log.exception("%s: failed to parse front matter", self.src_relpath)
 

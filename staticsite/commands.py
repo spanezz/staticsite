@@ -1,6 +1,7 @@
 # coding: utf-8
 
-from staticsite.core import Site, load_settings, settings
+from .core import load_settings, settings
+from .site import Site
 import sys
 import os
 import time

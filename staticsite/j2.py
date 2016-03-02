@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page, RenderedString
+from .core import Archetype, Page, RenderedString
 import os
 import re
 from collections import defaultdict
@@ -17,10 +17,9 @@ class J2Pages:
     def __init__(self, j2env):
         self.jinja2 = j2env
 
-    def try_create(self, site, relpath):
+    def try_load_page(self, site, relpath):
         basename = os.path.basename(relpath)
-        if ".j2." not in basename:
-            return None
+        if ".j2." not in basename: return None
         dirname = os.path.dirname(relpath)
         try:
             return J2Page(self, site, os.path.join(dirname, basename.replace(".j2", "")), template_relpath=relpath)

@@ -13,7 +13,7 @@ class TaxonomyPages:
     def __init__(self, j2env):
         self.jinja2 = j2env
 
-    def try_create(self, site, relpath):
+    def try_load_page(self, site, relpath):
         if not relpath.endswith(".taxonomy"): return None
         return TaxonomyPage(self, site, relpath[:-9])
 
@@ -115,7 +115,8 @@ class TaxonomyPage(Page):
         with open(src, "rt") as fd:
             lines = [x.rstrip() for x in fd]
         try:
-            self.meta.update(**parse_front_matter(lines))
+            style, meta = parse_front_matter(lines)
+            self.meta.update(**meta)
         except:
             log.exception("%s.taxonomy: cannot parse taxonomy information", self.src_relpath)
 

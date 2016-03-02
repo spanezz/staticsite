@@ -46,18 +46,13 @@ Please enter the post title: An example new post
 (editor opens)
 ```
 
-You can customize the path of new posts and the editor command using `settings.py`:
+By default, `archetypes/default.md` is used as a template for new posts, and
+you can use the `-a` or `--archetype` option to pick another one.
 
-```py
-# Path used to create new pages
-NEW_PAGE = "blog/{time:%Y}/{slug}.md"
-
-# Default format for generating front matter (toml, yaml, json)
-FRONT_MATTER = "toml"
-```
-
-Substitutions are done via the normal python `string.format`, and the arguments
-available are `time`, `slug` and any uppercase value from the site settings.
+The archetype is processed via the same Jinja2 logic as the rest of the site,
+plus the `title` and `slug` variables for the article. The `path` value in the
+front matter is used to decide where to write the file, and is removed before
+writing the post.
 
 The editor and editor command line can also be configured, see
 `global_settings.py` for details and examples.

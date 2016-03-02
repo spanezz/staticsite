@@ -7,12 +7,6 @@ SITE_ROOT = "/"
 # Time zone used for timestamps on the site
 TIMEZONE = "UTC"
 
-# Path used to create new pages
-NEW_PAGE = "blog/{time:%Y}/{slug}.md"
-
-# Default format for generating front matter
-FRONT_MATTER = "toml"
-
 # Editor used to edit new pages
 import os
 EDITOR = os.environ.get("EDITOR", "sensible-editor")
