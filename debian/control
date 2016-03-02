@@ -1,6 +1,5 @@
 Source: staticsite
-Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
-Uploaders: Enrico Zini <enrico@debian.org>
+Maintainer: Enrico Zini <enrico@debian.org>
 Section: web
 Priority: optional
 Build-Depends: debhelper (>= 9),
