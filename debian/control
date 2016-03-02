@@ -7,7 +7,8 @@ Build-Depends: debhelper (>= 9),
                python3-all,
                python3-setuptools,
 	       python3-unidecode, python3-markdown, python3-toml, python3-yaml,
-               python3-jinja2, python3-dateutil, python3-livereload
+	       python3-jinja2, python3-dateutil, python3-livereload,
+               python3-pytz
 Build-Depends-Indep: help2man
 Standards-Version: 3.9.7
 Vcs-Git: https://github.com/spanezz/staticsite.git
