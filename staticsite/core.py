@@ -71,6 +71,13 @@ class Page:
     # True if the page can be found when search site contents
     FINDABLE = False
 
+    # Preferred order of rendering, not for functional purposes for for
+    # purposes of collecting reasonable timings. This can be used for example
+    # to render markdown pages before taxonomies, so that the time of rendering
+    # markdown is counted as such and not as time needed for rendering
+    # taxonomies.
+    RENDER_PREFERRED_ORDER = 1
+
     def __init__(self, site, relpath):
         # Site that owns this page
         self.site = site

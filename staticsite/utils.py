@@ -1,5 +1,10 @@
 # coding: utf-8
 import pytz
+import contextlib
+import time
+import logging
+
+log = logging.getLogger()
 
 def parse_front_matter(lines):
     """
@@ -67,3 +72,17 @@ def format_date_iso8601(dt):
     else:
         tz_str = 'Z'
     return dt.strftime("%Y-%m-%d %H:%M:%S") + tz_str
+
+@contextlib.contextmanager
+def timings(fmtstr, *args, **kw):
+    """
+    Times the running of a command, and writes a log entry afterwards.
+
+    The log entry is passed an extra command at the beginning with the elapsed
+    time in floating point seconds.
+    """
+    start = time.perf_counter()
+    yield
+    end = time.perf_counter()
+    log.info(fmtstr, end - start, *args, extra=kw)
+

@@ -4,7 +4,7 @@ import os
 import shutil
 import json
 import datetime
-import time
+from .utils import timings
 from collections import Counter
 from .commands import SiteCommand, CmdlineError
 import logging
@@ -16,10 +16,8 @@ class Check(SiteCommand):
 
     def run(self):
         site = self.load_site()
-        start = time.perf_counter()
-        self.check(site)
-        end = time.perf_counter()
-        log.info("Checked site in %fs", end-start)
+        with timings("Checked site in %fs"):
+            self.check(site)
 
     def check(self, site):
         counts = Counter()

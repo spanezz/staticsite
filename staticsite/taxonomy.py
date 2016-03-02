@@ -32,6 +32,7 @@ class TaxonomyItem:
 class TaxonomyPage(Page):
     TYPE = "taxonomy"
     ANALYZE_PASS = 2
+    RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, j2env, site, relpath):
         super().__init__(site, relpath)

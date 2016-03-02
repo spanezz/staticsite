@@ -30,6 +30,8 @@ class J2Pages:
 class J2Page(Page):
     TYPE = "jinja2"
 
+    RENDER_PREFERRED_ORDER = 2
+
     def __init__(self, j2env, site, relpath, template_relpath):
         super().__init__(site, relpath)
         self.jinja2 = j2env.jinja2

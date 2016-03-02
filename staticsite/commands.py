@@ -2,9 +2,9 @@
 
 from .core import load_settings, settings
 from .site import Site
+from .utils import timings
 import sys
 import os
-import time
 import logging
 
 log = logging.getLogger()
@@ -57,16 +57,12 @@ class SiteCommand:
         site = Site(self.root)
 
         # Read and analyze site contents
-        start = time.perf_counter()
-        site.read_tree()
-        site.read_theme_asset_tree("theme/static")
-        end = time.perf_counter()
-        log.info("Read site tree in %fs", end-start)
+        with timings("Read site tree in %fs"):
+            site.read_tree()
+            site.read_theme_asset_tree("theme/static")
 
-        start = time.perf_counter()
-        site.analyze()
-        end = time.perf_counter()
-        log.info("Analised site tree in %fs", end-start)
+        with timings("Analysed site tree in %fs"):
+            site.analyze()
 
         return site
 
