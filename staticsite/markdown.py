@@ -251,12 +251,12 @@ class MarkdownPage(Page):
                 page=self,
                 **self.meta
             )
-            res[relpath + ".html"] = RenderedString(html)
+            res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res
 
     def target_relpaths(self):
         res = [self.dst_relpath]
         for relpath in self.meta.get("aliases", ()):
-            res.append(relpath + ".html")
+            res.append(os.path.join(relpath, "index.html"))
         return res
