@@ -46,6 +46,8 @@ Please enter the post title: An example new post
 (editor opens)
 ```
 
+`staticsite` uses [Hugo-style archetypes](https://gohugo.io/content/archetypes/).
+
 By default, `archetypes/default.md` is used as a template for new posts, and
 you can use the `-a` or `--archetype` option to pick another one.
 
