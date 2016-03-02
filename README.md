@@ -26,7 +26,7 @@ Debian, please package it. At the moment a copy of it is found in
 ```bash
 $ ./ssite build example
 $ cd example/web
-$ python -m SimpleHTTPServer
+$ python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
 or even just:
