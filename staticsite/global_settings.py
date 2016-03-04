@@ -11,5 +11,7 @@ TIMEZONE = "UTC"
 import os
 EDITOR = os.environ.get("EDITOR", "sensible-editor")
 
-# Command used to run the editor, as passed to subprocess.check_command
+# Command used to run the editor, as passed to subprocess.check_command.
+# Each list element is expanded with string.format. All settings are available
+# for expansion, and {name} is the absolute path of the file to edit.
 EDIT_COMMAND = ["{EDITOR}", "{name}"]
