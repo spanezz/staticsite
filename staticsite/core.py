@@ -97,6 +97,10 @@ class Page:
         self.meta = {}
 
     @property
+    def src_abspath(self):
+        return os.path.join(self.site.site_root, self.src_relpath)
+
+    @property
     def date_as_iso8601(self):
         from dateutil.tz import tzlocal
         ts = self.meta.get("date", None)

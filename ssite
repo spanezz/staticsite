@@ -26,6 +26,9 @@ def main():
     from staticsite.new import New
     New.make_subparser(subparsers)
 
+    from staticsite.edit import Edit
+    Edit.make_subparser(subparsers)
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()

@@ -191,6 +191,10 @@ class MarkdownPage(Page):
         # Markdown content of the page rendered into html
         self.md_html = None
 
+    @property
+    def src_abspath(self):
+        return os.path.join(self.site.site_root, self.src_relpath + ".md")
+
     def get_content(self):
         return "\n".join(self.body)
 
