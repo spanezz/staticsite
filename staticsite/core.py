@@ -78,9 +78,12 @@ class Page:
     # taxonomies.
     RENDER_PREFERRED_ORDER = 1
 
-    def __init__(self, site, relpath):
+    def __init__(self, site, root_abspath, relpath):
         # Site that owns this page
         self.site = site
+
+        # Absolute path of the root on which relpath is rooted
+        self.root_abspath = root_abspath
 
         # Relative path of the page in the source directory, as used to
         # reference the page in links
@@ -101,7 +104,7 @@ class Page:
 
     @property
     def src_abspath(self):
-        return os.path.join(self.site.site_root, self.src_relpath)
+        return os.path.join(self.root_abspath, self.src_relpath)
 
     @property
     def date_as_iso8601(self):

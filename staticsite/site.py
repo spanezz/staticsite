@@ -41,7 +41,6 @@ class Site:
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
             loader=FileSystemLoader([
-                os.path.join(os.path.join(self.root, "site")),
                 os.path.join(os.path.join(self.root, "theme")),
             ]),
             autoescape=True,
@@ -131,73 +130,50 @@ class Site:
 
         return pages
 
-    def read_tree(self, relpath=None):
+    def read_site_tree(self, tree_root):
+        """
+        Read static assets and pages from a directory and all its subdirectories
+        """
         from .asset import Asset
 
-        if relpath is None:
-            log.info("Loading site directory %s", self.site_root)
-            abspath = self.site_root
-        else:
-            log.debug("Loading directory %s", relpath)
-            abspath = os.path.join(self.site_root, relpath)
-        for f in os.listdir(abspath):
-            if f.startswith("."): continue
+        log.info("Loading pages from %s", tree_root)
 
-            if relpath is None:
-                page_relpath = f
-            else:
-                page_relpath = os.path.join(relpath, f)
+        for root, dnames, fnames in os.walk(tree_root):
+            for f in fnames:
+                if f.startswith("."): continue
 
-            absf = os.path.join(abspath, f)
-            if os.path.isdir(absf):
-                self.read_tree(page_relpath)
-                continue
+                page_abspath = os.path.join(root, f)
+                page_relpath = os.path.relpath(page_abspath, tree_root)
 
-            for handler in self.page_handlers:
-                p = handler.try_load_page(self, page_relpath)
-                if p is not None:
-                    self.pages[p.link_relpath] = p
-                    break
-            else:
-                if os.path.isfile(absf):
+                for handler in self.page_handlers:
+                    p = handler.try_load_page(self, tree_root, page_relpath)
+                    if p is not None:
+                        self.pages[p.link_relpath] = p
+                        break
+                else:
+                    if os.path.isfile(page_abspath):
+                        log.debug("Loading static file %s", page_relpath)
+                        p = Asset(self, tree_root, page_relpath)
+                        self.pages[p.link_relpath] = p
+
+    def read_asset_tree(self, tree_root):
+        """
+        Read static assets from a directory and all its subdirectories
+        """
+        from .asset import Asset
+
+        log.info("Loading assets from %s", tree_root)
+
+        for root, dnames, fnames in os.walk(tree_root):
+            for f in fnames:
+                if f.startswith("."): continue
+
+                page_abspath = os.path.join(root, f)
+                if os.path.isfile(page_abspath):
+                    page_relpath = os.path.relpath(page_abspath, tree_root)
                     log.debug("Loading static file %s", page_relpath)
-                    p = Asset(self, page_relpath)
+                    p = Asset(self, tree_root, page_relpath)
                     self.pages[p.link_relpath] = p
-
-    def read_theme_asset_tree(self, theme_assets_relpath, relpath=None):
-        """
-        Read static assets from a directory tree.
-
-        theme_assets_relpath is the relative path of the root of the assets
-        tree, rooted on the whole staticsite project (where settings.py is)
-        """
-        from .asset import ThemeAsset
-
-        if relpath is None:
-            log.info("Loading theme static asset directory %s", theme_assets_relpath)
-            abspath = os.path.join(self.root, theme_assets_relpath)
-        else:
-            log.debug("Loading theme static asset directory %s/%s", theme_assets_relpath, relpath)
-            abspath = os.path.join(self.root, theme_assets_relpath, relpath)
-
-        for f in os.listdir(abspath):
-            if f.startswith("."): continue
-
-            if relpath is None:
-                page_relpath = f
-            else:
-                page_relpath = os.path.join(relpath, f)
-
-            absf = os.path.join(abspath, f)
-            if os.path.isdir(absf):
-                self.read_theme_asset_tree(theme_assets_relpath, page_relpath)
-                continue
-
-            if os.path.isfile(absf):
-                log.debug("Loading theme static asset file %s/%s", theme_assets_relpath, page_relpath)
-                p = ThemeAsset(self, page_relpath, theme_assets_relpath)
-                self.pages[p.src_relpath] = p
-
 
     def relocate(self, page, dest_relpath):
         log.info("Relocating %s to %s", page.relpath, dest_relpath)

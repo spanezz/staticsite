@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Archetype, Page, RenderedString
+from .core import Archetype, Page, RenderedString, settings
 import re
 import os
 import io
@@ -93,9 +93,9 @@ class MarkdownPages:
         self.markdown.reset()
         return self.markdown.convert(page.get_content())
 
-    def try_load_page(self, site, relpath):
+    def try_load_page(self, site, root_abspath, relpath):
         if not relpath.endswith(".md"): return None
-        return MarkdownPage(self, site, relpath)
+        return MarkdownPage(self, site, root_abspath, relpath)
 
     def try_load_archetype(self, site, relpath, name):
         if not relpath.endswith(".md"): return None
@@ -173,8 +173,8 @@ class MarkdownPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, mdenv, site, relpath):
-        super().__init__(site, relpath)
+    def __init__(self, mdenv, site, root_abspath, relpath):
+        super().__init__(site, root_abspath, relpath)
 
         self.link_relpath = os.path.splitext(self.link_relpath)[0]
 
@@ -188,7 +188,9 @@ class MarkdownPage(Page):
         self.body = []
 
         # Destination file name
-        self.dst_relpath = os.path.join(self.src_relpath, "index.html")
+        self.dst_relpath = os.path.join(self.link_relpath, "index.html")
+
+        self.dst_link = os.path.join(settings.SITE_ROOT, self.link_relpath)
 
         # Markdown content of the page rendered into html
         self.md_html = None
@@ -251,7 +253,6 @@ class MarkdownPage(Page):
         for relpath in self.meta.get("aliases", ()):
             html = self.mdenv.redirect_template.render(
                 page=self,
-                **self.meta
             )
             res[os.path.join(relpath, "index.html")] = RenderedString(html)
 

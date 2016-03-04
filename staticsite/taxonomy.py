@@ -13,9 +13,9 @@ class TaxonomyPages:
     def __init__(self, j2env):
         self.jinja2 = j2env
 
-    def try_load_page(self, site, relpath):
+    def try_load_page(self, site, root_abspath, relpath):
         if not relpath.endswith(".taxonomy"): return None
-        return TaxonomyPage(self, site, relpath[:-9])
+        return TaxonomyPage(self, site, root_abspath, relpath[:-9])
 
 
 class TaxonomyItem:
@@ -34,8 +34,8 @@ class TaxonomyPage(Page):
     ANALYZE_PASS = 2
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, j2env, site, relpath):
-        super().__init__(site, relpath)
+    def __init__(self, j2env, site, root_abspath, relpath):
+        super().__init__(site, root_abspath, relpath)
         self.jinja2 = j2env.jinja2
 
         # Taxonomy name (e.g. "tags")
