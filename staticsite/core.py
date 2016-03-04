@@ -86,6 +86,9 @@ class Page:
         # reference the page in links
         self.src_relpath = relpath
 
+        # Relative path used to link to this page in the sources
+        self.link_relpath = relpath
+
         # Relative path of the page in the target directory, as used to
         # generate the output page
         self.dst_relpath = relpath

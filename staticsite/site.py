@@ -156,13 +156,13 @@ class Site:
             for handler in self.page_handlers:
                 p = handler.try_load_page(self, page_relpath)
                 if p is not None:
-                    self.pages[p.src_relpath] = p
+                    self.pages[p.link_relpath] = p
                     break
             else:
                 if os.path.isfile(absf):
                     log.debug("Loading static file %s", page_relpath)
                     p = Asset(self, page_relpath)
-                    self.pages[p.src_relpath] = p
+                    self.pages[p.link_relpath] = p
 
     def read_theme_asset_tree(self, theme_assets_relpath, relpath=None):
         """

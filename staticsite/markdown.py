@@ -95,7 +95,7 @@ class MarkdownPages:
 
     def try_load_page(self, site, relpath):
         if not relpath.endswith(".md"): return None
-        return MarkdownPage(self, site, relpath[:-3])
+        return MarkdownPage(self, site, relpath)
 
     def try_load_archetype(self, site, relpath, name):
         if not relpath.endswith(".md"): return None
@@ -176,6 +176,8 @@ class MarkdownPage(Page):
     def __init__(self, mdenv, site, relpath):
         super().__init__(site, relpath)
 
+        self.link_relpath = os.path.splitext(self.link_relpath)[0]
+
         # Shared markdown environment
         self.mdenv = mdenv
 
@@ -191,16 +193,12 @@ class MarkdownPage(Page):
         # Markdown content of the page rendered into html
         self.md_html = None
 
-    @property
-    def src_abspath(self):
-        return os.path.join(self.site.site_root, self.src_relpath + ".md")
-
     def get_content(self):
         return "\n".join(self.body)
 
     def read_metadata(self):
         # Read the contents
-        src = os.path.join(self.site.site_root, self.src_relpath + ".md")
+        src = os.path.join(self.site.site_root, self.src_relpath)
         if self.meta.get("date", None) is None:
             self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
 
