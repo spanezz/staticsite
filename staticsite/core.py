@@ -174,3 +174,29 @@ class RenderedString:
 
     def content(self):
         return self.buf
+
+
+class PageFS:
+    def __init__(self):
+        self.paths = {}
+
+    def add_page(self, page, dst_relpath=None):
+        if dst_relpath is None:
+            dst_relpath = page.dst_relpath
+        self.paths[dst_relpath] = page
+
+    def get_page(self, relpath):
+        if not relpath:
+            relpath = "/index.html"
+        dst_relpath = os.path.normpath(relpath).lstrip("/")
+        page = self.paths.get(dst_relpath, None)
+        if page is not None:
+            return dst_relpath, page
+
+        dst_relpath = os.path.join(dst_relpath, "index.html")
+        page = self.paths.get(dst_relpath, None)
+        if page is not None:
+            return dst_relpath, page
+
+        return None, None
+

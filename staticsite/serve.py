@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from .commands import SiteCommand, CmdlineError
-from staticsite.core import settings
+from staticsite.core import settings, PageFS
 import os
 import mimetypes
 import gc
@@ -29,40 +29,22 @@ class Serve(SiteCommand):
             start_response("404 not found", [("Content-Type", "text/plain")])
             return [b"Not found"]
 
-        normrelpath, page = self.resolve_path(path)
+        dst_relpath, page = self.pages.get_page(os.path.normpath(path).lstrip("/"))
         if page is not None:
             for relpath, rendered in page.render().items():
-                relpath = os.path.normpath(os.path.join("/", relpath))
-                if relpath == normrelpath:
+                if relpath == dst_relpath:
                     start_response("200 OK", [("Content-Type", mimetypes.guess_type(relpath)[0])])
                     return [rendered.content()]
 
         start_response("404 not found", [("Content-Type", "text/plain")])
         return [b"Not found"]
 
-    def resolve_path(self, path):
-        """
-        Return normpath(relpath) from the page found and the page found
-        """
-        path = os.path.normpath(path)
-        page = self.url_map.get(path, None)
-        if page is not None:
-            return path, page
-
-        path = os.path.join(path, "index.html")
-        page = self.url_map.get(path, None)
-        if page is not None:
-            return path, page
-
-        return None, None
-
     def reload(self):
         log.info("Loading site")
         self.site = self.load_site()
         gc.collect()
 
-        self.url_map = {}
+        self.pages = PageFS()
         for page in self.site.pages.values():
             for relpath in page.target_relpaths():
-                relpath = os.path.normpath(os.path.join("/", relpath))
-                self.url_map[relpath] = page
+                self.pages.add_page(page, relpath)
