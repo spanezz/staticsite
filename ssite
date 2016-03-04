@@ -10,7 +10,7 @@ import time
 log = logging.getLogger()
 
 def main():
-    parser = argparse.ArgumentParser(description="Convert from ikiwiki to hugo.")
+    parser = argparse.ArgumentParser(description="Static site generator.")
 
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
