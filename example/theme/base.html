@@ -11,6 +11,7 @@
     <link href="{{ url_for('/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('/css/site.css') }}" rel="stylesheet">
     <link href="{{ url_for('/css/github.css') }}" rel="stylesheet">
+    {% block favicon %}<link rel="icon" href="{{ url_for('images/favicon.ico') }}">{% endblock %}
     {% block head %}
     {% endblock %}
   </head>
