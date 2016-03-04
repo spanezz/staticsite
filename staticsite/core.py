@@ -124,7 +124,7 @@ class Page:
             target_relpath = os.path.normpath(target.lstrip("/"))
             return self.site.pages.get(target_relpath, None)
 
-        root = self.src_relpath
+        root = os.path.dirname(self.src_relpath)
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
             res = self.site.pages.get(target_relpath, None)
