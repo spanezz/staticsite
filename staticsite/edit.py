@@ -116,5 +116,5 @@ class Edit(SiteCommand):
     def make_subparser(cls, subparsers):
         parser = super().make_subparser(subparsers)
         parser.add_argument("match", nargs="*", help="keywords used to look for the page to edit")
-        parser.add_argument("-n", "--noedit", help="do not run an editor, only output the file name of the new post")
+        parser.add_argument("-n", "--noedit", action="store_true", help="do not run an editor, only output the file name of the new post")
         return parser
