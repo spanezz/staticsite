@@ -75,6 +75,8 @@ class Site:
             TaxonomyPages(self.jinja2),
         ]
 
+        self.dir_template = self.jinja2.get_template("dir.html")
+
     def jinja2_taxonomies(self):
         return self.taxonomies
 
@@ -200,17 +202,44 @@ class Site:
     def analyze(self):
         self.taxonomies = []
 
-        # Group pages by pass number
+        by_dir = defaultdict(list)
         by_pass = defaultdict(list)
         for page in self.pages.values():
+            # Group pages by pass number
             by_pass[page.ANALYZE_PASS].append(page)
+            # Collect taxonomies
             if page.TYPE == "taxonomy":
                 self.taxonomies.append(page)
+            # Harvest content for directory indices
+            if page.FINDABLE and page.src_relpath:
+                relpath = page.src_relpath
+                while True:
+                    relpath = os.path.dirname(relpath)
+                    by_dir[relpath].append(page)
+                    if not relpath: break
+
+        # Build directory indices
+        from .dir import DirPage
+        for relpath, pages in by_dir.items():
+            # We only build indices where there is not already a page
+            if relpath in self.pages: continue
+            self.pages[relpath] = DirPage(self, relpath, pages)
+
+        # Add directory indices to their parent directory indices
+        for relpath, pages in by_dir.items():
+            page = self.pages[relpath]
+            if page.TYPE != "dir": continue
+            parent_relpath = os.path.dirname(relpath)
+            if not parent_relpath: continue
+            parent = self.pages[parent_relpath]
+            if parent.TYPE != "dir": continue
+            parent.add_subdir(page)
 
         # Read metadata
         for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):
             for page in pages:
                 page.read_metadata()
+
 
     def slugify(self, text):
         from .slugify import slugify
