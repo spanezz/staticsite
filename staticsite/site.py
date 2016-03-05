@@ -19,9 +19,6 @@ class Site:
         # Root of site pages
         self.site_root = os.path.join(root, "site")
 
-        # Root of theme resources
-        self.theme_root = os.path.join(root, "theme")
-
         # Root of archetypes repository
         self.archetypes_root = os.path.join(root, "archetypes")
 

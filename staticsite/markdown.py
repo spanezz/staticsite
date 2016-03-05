@@ -200,7 +200,7 @@ class MarkdownPage(Page):
 
     def read_metadata(self):
         # Read the contents
-        src = os.path.join(self.site.site_root, self.src_relpath)
+        src = self.src_abspath
         if self.meta.get("date", None) is None:
             self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
 

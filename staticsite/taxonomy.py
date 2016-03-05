@@ -15,7 +15,7 @@ class TaxonomyPages:
 
     def try_load_page(self, site, root_abspath, relpath):
         if not relpath.endswith(".taxonomy"): return None
-        return TaxonomyPage(self, site, root_abspath, relpath[:-9])
+        return TaxonomyPage(self, site, root_abspath, relpath)
 
 
 class TaxonomyItem:
@@ -38,8 +38,12 @@ class TaxonomyPage(Page):
         super().__init__(site, root_abspath, relpath)
         self.jinja2 = j2env.jinja2
 
+        self.link_relpath = os.path.splitext(self.link_relpath)[0]
+        self.dst_relpath = self.link_relpath
+        self.dst_link = os.path.join(settings.SITE_ROOT, self.link_relpath)
+
         # Taxonomy name (e.g. "tags")
-        self.name = os.path.basename(self.src_relpath)
+        self.name = os.path.basename(self.link_relpath)
 
         # Map all possible values for this taxonomy to the pages that reference
         # them
@@ -81,7 +85,10 @@ class TaxonomyPage(Page):
     @jinja2.contextfunction
     def link_index(self, context):
         dest = self.meta["output_index"]
-        return os.path.join(settings.SITE_ROOT, self.dst_relpath, dest)
+        if not dest:
+            return os.path.join(settings.SITE_ROOT, self.dst_relpath)
+        else:
+            return os.path.join(settings.SITE_ROOT, self.dst_relpath, dest)
 
     @jinja2.contextfunction
     def link_item(self, context, value):
@@ -112,7 +119,7 @@ class TaxonomyPage(Page):
         from .utils import parse_front_matter
 
         # Read taxonomy information
-        src = os.path.join(self.site.site_root, self.src_relpath + ".taxonomy")
+        src = self.src_abspath
         with open(src, "rt") as fd:
             lines = [x.rstrip() for x in fd]
         try:
