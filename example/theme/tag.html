@@ -9,7 +9,7 @@
 {% block content %}
 <h1>Tag {{tag.name}}</h1>
 
-<h2>Last 10 posts for tag {{tag.name}}</h2>
+<h2>Latest posts for tag {{tag.name}}</h2>
 
 {% for page in pages[:10] %}
 {{inline_page(page)}}
