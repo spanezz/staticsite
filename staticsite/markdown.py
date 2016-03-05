@@ -174,7 +174,11 @@ class MarkdownPage(Page):
     FINDABLE = True
 
     def __init__(self, mdenv, site, root_abspath, relpath):
-        linkpath = os.path.splitext(relpath)[0]
+        dirname, basename = os.path.split(relpath)
+        if basename == "index.md":
+            linkpath = dirname
+        else:
+            linkpath = os.path.splitext(relpath)[0]
         super().__init__(
             site=site,
             root_abspath=root_abspath,

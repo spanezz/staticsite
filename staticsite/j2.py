@@ -32,8 +32,7 @@ class J2Page(Page):
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, j2env, site, root_abspath, relpath):
-        basename = os.path.basename(relpath)
-        dirname = os.path.dirname(relpath)
+        dirname, basename = os.path.split(relpath)
         dst_basename = basename.replace(".j2", "")
         dst_relpath = os.path.join(dirname, dst_basename)
 
