@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import load_settings, settings
+from .core import settings
 from .site import Site
 from .utils import timings
 import sys
@@ -41,7 +41,7 @@ class SiteCommand:
         # Load settings (optional)
         settings_file = os.path.join(self.root, "settings.py")
         if os.path.isfile(settings_file):
-            load_settings(settings_file)
+            settings.load(settings_file)
 
     def setup_logging(self, args):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
