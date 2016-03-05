@@ -29,12 +29,9 @@ class Serve(SiteCommand):
             start_response("404 not found", [("Content-Type", "text/plain")])
             return [b"Not found"]
 
-        dst_relpath, page = self.pages.get_page(os.path.normpath(path).lstrip("/"))
-        if page is not None:
-            for relpath, rendered in page.render().items():
-                if relpath == dst_relpath:
-                    start_response("200 OK", [("Content-Type", mimetypes.guess_type(relpath)[0])])
-                    return [rendered.content()]
+        content = self.pages.serve_path(path, environ, start_response)
+        if content is not None:
+            return content
 
         start_response("404 not found", [("Content-Type", "text/plain")])
         return [b"Not found"]
@@ -45,6 +42,4 @@ class Serve(SiteCommand):
         gc.collect()
 
         self.pages = PageFS()
-        for page in self.site.pages.values():
-            for relpath in page.target_relpaths():
-                self.pages.add_page(page, relpath)
+        self.pages.add_site(self.site)

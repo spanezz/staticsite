@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 import shutil
+import mimetypes
 from . import content
 
 log = logging.getLogger()
@@ -177,8 +178,19 @@ class RenderedString:
 
 
 class PageFS:
+    """
+    VFS-like abstraction that maps the names of files that pages would render
+    with the corresponding pages.
+
+    This can be used to render pages on demand.
+    """
     def __init__(self):
         self.paths = {}
+
+    def add_site(self, site):
+        for page in site.pages.values():
+            for relpath in page.target_relpaths():
+                self.add_page(page, relpath)
 
     def add_page(self, page, dst_relpath=None):
         if dst_relpath is None:
@@ -200,3 +212,29 @@ class PageFS:
 
         return None, None
 
+    def serve_path(self, path, environ, start_response):
+        """
+        Render a page on the fly and serve it.
+
+        Call start_response with the page headers and return the bytes() with
+        the page contents.
+
+        start_response is the start_response from WSGI
+
+        Returns None without calling start_response if no page was found.
+        """
+        dst_relpath, page = self.get_page(os.path.normpath(path).lstrip("/"))
+        if page is None: return None
+
+        for relpath, rendered in page.render().items():
+            if relpath == dst_relpath:
+                break
+        else:
+            return None
+
+        content = rendered.content()
+        start_response("200 OK", [
+            ("Content-Type", mimetypes.guess_type(relpath)[0]),
+            ("Content-Length", str(len(content))),
+        ])
+        return [content]
