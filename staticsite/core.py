@@ -71,6 +71,39 @@ class Archetype:
 
 
 class Page:
+    """
+    A source page in the site.
+
+    This can be a static asset, a file to be rendered, a taxonomy, a
+    directory listing, or anything else.
+
+    All pages have a number of members to describe their behaviour in the site:
+
+    `site`:
+        the Site that contains the page
+    `root_abspath`:
+        the absolute path of the root of the directory tree under which the
+        page was found. This is where src_relpath is rooted.
+    `src_relpath`:
+        the relative path under `root_abspath` for the source file of the page
+    `src_linkpath`:
+        the path used by other pages to link to this page, when referencing its
+        source. For example, blog/2016/example.md is linked as
+        blog/2016/example.
+    `dst_relpath`:
+        relative path of the file that will be generated for this page when it
+        gets rendered.
+        FIXME: now that a resource can generate multiple files, this is not
+        really needed.
+    `dst_link`:
+        absolute path in the site namespace used to link to this page in
+        webpages.
+        FIXME: now that a resource can generate multiple files, this is not
+        really needed.
+    `meta`:
+        a dictionary with the page metadata. See the README for documentation
+        about its contents.
+    """
     # In what pass must pages of this type be analyzed.
     ANALYZE_PASS = 1
 
@@ -84,29 +117,15 @@ class Page:
     # taxonomies.
     RENDER_PREFERRED_ORDER = 1
 
-    def __init__(self, site, root_abspath, relpath):
-        # Site that owns this page
+    def __init__(self, site, root_abspath, src_relpath, src_linkpath, dst_relpath, dst_link):
         self.site = site
-
-        # Absolute path of the root on which relpath is rooted
         self.root_abspath = root_abspath
-
-        # Relative path of the page in the source directory, as used to
-        # reference the page in links
-        self.src_relpath = relpath
-
-        # Relative path used to link to this page in the sources
-        self.link_relpath = relpath
-
-        # Relative path of the page in the target directory, as used to
-        # generate the output page
-        self.dst_relpath = relpath
-
-        # Relative link used to point to this resource in URLs
-        self.dst_link = os.path.join(settings.SITE_ROOT, relpath)
-
-        # Page metadata. See README for a list.
+        self.src_relpath = src_relpath
+        self.src_linkpath = src_linkpath
+        self.dst_relpath = dst_relpath
+        self.dst_link = dst_link
         self.meta = {}
+        log.debug("%s: new page, src_link: %s", src_relpath, src_linkpath)
 
     @property
     def src_abspath(self):
@@ -131,9 +150,20 @@ class Page:
         return ts.strftime("%Y-%m-%d %H:%M:%S") + tz_str
 
     def resolve_link(self, target):
+        dirname, basename = os.path.split(target)
+        if basename == "index.html":
+            #log.debug("%s: resolve %s using %s", self.src_relpath, target, dirname)
+            target = dirname
+        #else:
+            #log.debug("%s: resolve %s using %s", self.src_relpath, target, target)
+
         # Absolute URLs are resolved as is
         if target.startswith("/"):
-            target_relpath = os.path.normpath(target.lstrip("/"))
+            if target == "/":
+                target_relpath = ""
+            else:
+                target_relpath = os.path.normpath(target.lstrip("/"))
+            #log.debug("%s: resolve absolute path using %s", self.src_relpath, target_relpath)
             return self.site.pages.get(target_relpath, None)
 
         root = os.path.dirname(self.src_relpath)

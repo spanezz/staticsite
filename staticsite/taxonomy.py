@@ -35,15 +35,20 @@ class TaxonomyPage(Page):
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, j2env, site, root_abspath, relpath):
-        super().__init__(site, root_abspath, relpath)
+        linkpath = os.path.splitext(relpath)[0]
+
+        super().__init__(
+            site=site,
+            root_abspath=root_abspath,
+            src_relpath=relpath,
+            src_linkpath=linkpath,
+            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
+
         self.jinja2 = j2env.jinja2
 
-        self.link_relpath = os.path.splitext(self.link_relpath)[0]
-        self.dst_relpath = self.link_relpath
-        self.dst_link = os.path.join(settings.SITE_ROOT, self.link_relpath)
-
         # Taxonomy name (e.g. "tags")
-        self.name = os.path.basename(self.link_relpath)
+        self.name = os.path.basename(linkpath)
 
         # Map all possible values for this taxonomy to the pages that reference
         # them

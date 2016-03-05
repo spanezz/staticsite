@@ -161,13 +161,13 @@ class Site:
                 for handler in self.page_handlers:
                     p = handler.try_load_page(self, tree_root, page_relpath)
                     if p is not None:
-                        self.pages[p.link_relpath] = p
+                        self.pages[p.src_linkpath] = p
                         break
                 else:
                     if os.path.isfile(page_abspath):
                         log.debug("Loading static file %s", page_relpath)
                         p = Asset(self, tree_root, page_relpath)
-                        self.pages[p.link_relpath] = p
+                        self.pages[p.src_linkpath] = p
 
     def read_asset_tree(self, tree_root):
         """
@@ -186,7 +186,7 @@ class Site:
                     page_relpath = os.path.relpath(page_abspath, tree_root)
                     log.debug("Loading static file %s", page_relpath)
                     p = Asset(self, tree_root, page_relpath)
-                    self.pages[p.link_relpath] = p
+                    self.pages[p.src_linkpath] = p
 
     def relocate(self, page, dest_relpath):
         log.info("Relocating %s to %s", page.relpath, dest_relpath)

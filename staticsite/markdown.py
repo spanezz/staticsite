@@ -174,9 +174,14 @@ class MarkdownPage(Page):
     FINDABLE = True
 
     def __init__(self, mdenv, site, root_abspath, relpath):
-        super().__init__(site, root_abspath, relpath)
-
-        self.link_relpath = os.path.splitext(self.link_relpath)[0]
+        linkpath = os.path.splitext(relpath)[0]
+        super().__init__(
+            site=site,
+            root_abspath=root_abspath,
+            src_relpath=relpath,
+            src_linkpath=linkpath,
+            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
 
         # Shared markdown environment
         self.mdenv = mdenv
@@ -186,11 +191,6 @@ class MarkdownPage(Page):
 
         # Sequence of lines found in the body
         self.body = []
-
-        # Destination file name
-        self.dst_relpath = os.path.join(self.link_relpath, "index.html")
-
-        self.dst_link = os.path.join(settings.SITE_ROOT, self.link_relpath)
 
         # Markdown content of the page rendered into html
         self.md_html = None

@@ -32,16 +32,25 @@ class J2Page(Page):
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, j2env, site, root_abspath, relpath):
-        super().__init__(site, root_abspath, relpath)
-        self.jinja2 = j2env.jinja2
-        basename = os.path.basename(self.src_relpath)
-        dirname = os.path.dirname(self.src_relpath)
-        self.dst_relpath = os.path.join(dirname, basename.replace(".j2", ""))
-        if os.path.basename(self.dst_relpath) == "index.html":
-            self.link_relpath = os.path.dirname(self.dst_relpath)
+        basename = os.path.basename(relpath)
+        dirname = os.path.dirname(relpath)
+        dst_basename = basename.replace(".j2", "")
+        dst_relpath = os.path.join(dirname, dst_basename)
+
+        if dst_basename == "index.html":
+            linkpath = dirname
         else:
-            self.link_relpath = self.dst_relpath
-        self.dst_link = os.path.join(settings.SITE_ROOT, self.link_relpath)
+            linkpath = os.path.join(dirname, dst_basename)
+
+        super().__init__(
+            site=site,
+            root_abspath=root_abspath,
+            src_relpath=relpath,
+            src_linkpath=linkpath,
+            dst_relpath=dst_relpath,
+            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
+
+        self.jinja2 = j2env.jinja2
 
     def render(self):
         with open(self.src_abspath, "rt") as fd:

@@ -5,4 +5,4 @@
   fit your needs.
 -#}
 {% from 'syndication.xml' import rss2_feed -%}
-{{rss2_feed(site_pages(path="blog/*", limit=10), link=url_for("blog/index.html"), title=SITE_NAME + ": blog")}}
+{{rss2_feed(site_pages(path="blog/*", limit=10), link=url_for("blog"), title=SITE_NAME + ": blog")}}
