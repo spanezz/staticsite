@@ -13,7 +13,7 @@ import logging
 log = logging.getLogger()
 
 class Site:
-    def __init__(self, root):
+    def __init__(self, root, theme_root=None):
         self.root = root
 
         # Root of site pages
@@ -34,11 +34,14 @@ class Site:
         # Current datetime
         self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
+        if theme_root is None:
+            theme_root = os.path.join(self.root, "theme")
+
         # Jinja2 template engine
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
             loader=FileSystemLoader([
-                os.path.join(os.path.join(self.root, "theme")),
+                theme_root,
             ]),
             autoescape=True,
         )
