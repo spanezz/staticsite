@@ -57,6 +57,7 @@ class Site:
 
         # Install site's functions into the jinja2 environment
         self.jinja2.globals.update(
+            has_page=self.jinja2_has_page,
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
             now=self.generation_time,
@@ -95,6 +96,11 @@ class Site:
             log.warn("%s+%s: invalid datetime format %r requested", cur_page.src_relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
+    @jinja2.contextfunction
+    def jinja2_has_page(self, context, arg):
+        cur_page = context.parent["page"]
+        page = cur_page.resolve_link(arg)
+        return page is not None
 
     @jinja2.contextfunction
     def jinja2_url_for(self, context, arg):

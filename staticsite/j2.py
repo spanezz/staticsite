@@ -36,9 +36,12 @@ class J2Page(Page):
         self.jinja2 = j2env.jinja2
         basename = os.path.basename(self.src_relpath)
         dirname = os.path.dirname(self.src_relpath)
-        self.link_relpath = os.path.join(dirname, basename.replace(".j2", ""))
-        self.dst_relpath = self.link_relpath
-        self.dst_link = os.path.join(settings.SITE_ROOT, self.dst_relpath)
+        self.dst_relpath = os.path.join(dirname, basename.replace(".j2", ""))
+        if os.path.basename(self.dst_relpath) == "index.html":
+            self.link_relpath = os.path.dirname(self.dst_relpath)
+        else:
+            self.link_relpath = self.dst_relpath
+        self.dst_link = os.path.join(settings.SITE_ROOT, self.link_relpath)
 
     def render(self):
         with open(self.src_abspath, "rt") as fd:
