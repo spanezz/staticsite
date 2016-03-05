@@ -34,6 +34,9 @@ class Site:
         # Current datetime
         self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
+        # Taxonomies found in the site
+        self.taxonomies = []
+
         if theme_root is None:
             theme_root = os.path.join(self.root, "theme")
 
@@ -57,6 +60,7 @@ class Site:
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
             now=self.generation_time,
+            taxonomies=self.jinja2_taxonomies,
         )
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
 
@@ -69,6 +73,9 @@ class Site:
             J2Pages(self.jinja2),
             TaxonomyPages(self.jinja2),
         ]
+
+    def jinja2_taxonomies(self):
+        return self.taxonomies
 
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):
@@ -185,10 +192,14 @@ class Site:
         page.relpath = dest_relpath
 
     def analyze(self):
+        self.taxonomies = []
+
         # Group pages by pass number
         by_pass = defaultdict(list)
         for page in self.pages.values():
             by_pass[page.ANALYZE_PASS].append(page)
+            if page.TYPE == "taxonomy":
+                self.taxonomies.append(page)
 
         # Read metadata
         for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):
