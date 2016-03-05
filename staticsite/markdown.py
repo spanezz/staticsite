@@ -48,6 +48,13 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         if not parsed.path:
             return None
         dest = self.page.resolve_link(parsed.path)
+        # Also allow .md extension in
+        if dest is None and parsed.path.endswith(".md"):
+            dirname, basename = os.path.split(parsed.path)
+            if basename == "index.md":
+                dest = self.page.resolve_link(dirname)
+            else:
+                dest = self.page.resolve_link(parsed.path[:-3])
         if dest is None:
             log.warn("%s: internal link %r does not resolve to any site page", self.page.src_relpath, url)
             return None
