@@ -64,6 +64,7 @@ class Site:
             taxonomies=self.jinja2_taxonomies,
         )
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
+        self.jinja2.filters["basename"] = self.jinja2_basename
 
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
@@ -79,6 +80,9 @@ class Site:
 
     def jinja2_taxonomies(self):
         return self.taxonomies
+
+    def jinja2_basename(self, val):
+        return os.path.basename(val)
 
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):
