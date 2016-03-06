@@ -9,6 +9,7 @@
   [settings.md](doc/settings.md) for details.
 * Added `--theme`, `--content` and `--archetypes` to command line to override
   the corresponding settings.
+* Fixed a bug in taxonomy generation
 
 # New in version 0.2
 
