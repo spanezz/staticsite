@@ -10,6 +10,7 @@ import shlex
 from collections import OrderedDict
 from .commands import SiteCommand, CmdlineError
 from .core import settings
+from .archetypes import Archetypes
 import logging
 
 log = logging.getLogger()
@@ -20,7 +21,9 @@ class New(SiteCommand):
     def run(self):
         site = self.load_site()
 
-        archetype = site.load_archetype(self.args.archetype)
+        archetypes = Archetypes(site, os.path.join(self.root, "archetypes"))
+
+        archetype = archetypes.find(self.args.archetype)
         if archetype is None:
             raise CmdlineError("archetype {} not found".format(self.args.archetype))
         log.info("Using archetype %s", archetype.relpath)
@@ -40,7 +43,7 @@ class New(SiteCommand):
         if relpath is None:
             raise CmdlineError("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
 
-        abspath = os.path.join(site.site_root, relpath)
+        abspath = os.path.join(self.site_root, relpath)
 
         if self.args.overwrite or not os.path.exists(abspath):
             from .utils import write_front_matter

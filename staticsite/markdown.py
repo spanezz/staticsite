@@ -117,10 +117,10 @@ class MarkdownPages:
         if not relpath.endswith(".md"): return None
         return MarkdownPage(self, root_abspath, relpath)
 
-    def try_load_archetype(self, site, relpath, name):
+    def try_load_archetype(self, archetypes, relpath, name):
         if not relpath.endswith(".md"): return None
         if not (relpath.endswith(name) or relpath.endswith(name + ".md")): return None
-        return MarkdownArchetype(self, site, relpath)
+        return MarkdownArchetype(self, archetypes, relpath)
 
 
 def parse_markdown_with_front_matter(fd):
@@ -159,9 +159,10 @@ def parse_markdown_with_front_matter(fd):
 
 
 class MarkdownArchetype(Archetype):
-    def __init__(self, mdenv, site, relpath):
-        super().__init__(site, relpath)
+    def __init__(self, mdenv, archetypes, relpath):
+        super().__init__(mdenv.site, relpath)
         self.mdenv = mdenv
+        self.archetypes = archetypes
 
     def render(self, **kw):
         """
@@ -169,9 +170,9 @@ class MarkdownArchetype(Archetype):
         its contents in a string
         """
         # Render the archetype with jinja2
-        abspath = os.path.join(self.site.archetypes_root, self.relpath)
+        abspath = os.path.join(self.archetypes.root, self.relpath)
         with open(abspath, "rt") as fd:
-            template = self.site.jinja2.from_string(fd.read())
+            template = self.site.theme.jinja2.from_string(fd.read())
 
         rendered = template.render(**kw)
 

@@ -54,7 +54,7 @@ class SiteCommand:
 
     def load_site(self):
         # Instantiate site
-        site = Site(self.root)
+        site = Site()
 
         # Read and analyze site contents
         with timings("Read site tree in %fs"):
