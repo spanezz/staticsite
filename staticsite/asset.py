@@ -1,7 +1,9 @@
 # coding: utf-8
 
 from .core import Page, RenderedFile, settings
+import datetime
 import os
+import pytz
 import shutil
 
 
@@ -17,6 +19,10 @@ class Asset(Page):
             dst_relpath=relpath,
             dst_link=os.path.join(settings.SITE_ROOT, relpath))
         self.title = os.path.basename(relpath)
+
+    def read_metadata(self):
+        dt = pytz.utc.localize(datetime.datetime.fromtimestamp(os.path.getmtime(self.src_abspath)))
+        self.meta["date"] = dt
 
     def render(self):
         return {
