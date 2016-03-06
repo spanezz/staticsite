@@ -27,16 +27,22 @@ class SiteCommand:
 
         self.setup_logging(args)
 
-        # Default to current directory if rootdir was not provided
-        if args.rootdir:
-            self.root = os.path.abspath(args.rootdir)
+        # Default to current directory if project was not provided.
+        # If the project was provided and is a .py file, load it as settings.
+        if args.project:
+            if os.path.isfile(args.project) and args.project.endswith(".py"):
+                self.settings_abspath = os.path.abspath(args.project)
+                self.root = os.path.dirname(self.settings_abspath)
+            else:
+                self.root = os.path.abspath(args.project)
+                self.settings_abspath = os.path.join(self.root, "settings.py")
         else:
             self.root = os.getcwd()
+            self.settings_abspath = os.path.join(self.root, "settings.py")
 
         # Load settings (optional)
-        settings_file = os.path.join(self.root, "settings.py")
-        if os.path.isfile(settings_file):
-            settings.load(settings_file)
+        if os.path.isfile(self.settings_abspath):
+            settings.load(self.settings_abspath)
 
         # Double check that root points to something that looks like a project
         self.content_root = os.path.join(self.root, settings.CONTENT)
@@ -81,7 +87,7 @@ class SiteCommand:
             desc = cls.__doc__.strip()
 
         parser = subparsers.add_parser(name, help=desc)
-        parser.add_argument("rootdir", nargs="?", help="project directory (default: the current directory)")
+        parser.add_argument("project", nargs="?", help="project directory or .py configuration file (default: the current directory)")
         parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
         parser.add_argument("--debug", action="store_true", help="verbose output")
         parser.set_defaults(handler=cls)
