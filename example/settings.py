@@ -11,4 +11,8 @@ SITE_URL = "https://www.example.org"
 TIMEZONE = "Europe/Rome"
 
 # Directory with the source content of the site
-CONTENT = "content/"
+CONTENT = "content"
+
+# Theme used to render the content
+# Default: the one installed in the system
+THEME = "theme"
