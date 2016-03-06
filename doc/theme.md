@@ -14,7 +14,7 @@ These templates are directly used by `staticsite`:
   location where a page can now be found.
 
 These templates are expected to be present by at least Jinja2 templates present
-inside `site/`:
+inside `content/`:
 
 * `base.html` is used for the common parts of all pages.
 * `inline_page.html` is used for rendering other pages inline, for example in

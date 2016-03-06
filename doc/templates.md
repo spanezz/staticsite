@@ -1,6 +1,6 @@
 # Jinja2 templates in staticsite
 
-## Jinja2 files in `site/`
+## Jinja2 files in `content/`
 
 Any files called `<name>.j2.<ext>` will be rendered with
 [Jinja2](http://jinja.pocoo.org/) to generate `<name>.<ext>`.

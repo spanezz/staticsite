@@ -3,7 +3,7 @@
 Any number of taxonomies, each described by a `<name>.taxonomy` file where it
 should appear in the site.
 
-See `example/site/tags.taxonomy` for details.
+See `example/content/tags.taxonomy` for details.
 
 ```toml
 +++
