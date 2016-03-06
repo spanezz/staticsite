@@ -44,6 +44,11 @@ class SiteCommand:
         if os.path.isfile(self.settings_abspath):
             settings.load(self.settings_abspath)
 
+        # Command line overrides for settings
+        if self.args.theme: settings.THEME = self.args.theme
+        if self.args.content: settings.CONTENT = self.args.content
+        if self.args.archetypes: settings.ARCHETYPES = self.args.archetypes
+
         # Double check that root points to something that looks like a project
         self.content_root = os.path.join(self.root, settings.CONTENT)
         if not os.path.exists(self.content_root):
@@ -88,6 +93,9 @@ class SiteCommand:
 
         parser = subparsers.add_parser(name, help=desc)
         parser.add_argument("project", nargs="?", help="project directory or .py configuration file (default: the current directory)")
+        parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
+        parser.add_argument("--content", help="content directory location. Overrides settings.CONTENT")
+        parser.add_argument("--archetypes", help="archetypes directory location. Override settings.ARCHETYPES")
         parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
         parser.add_argument("--debug", action="store_true", help="verbose output")
         parser.set_defaults(handler=cls)

@@ -7,6 +7,8 @@
   at various other directories in the file system.
 * archetypes directory configurable in `settings.py`. See
   [settings.md](doc/settings.md) for details.
+* Added `--theme`, `--content` and `--archetypes` to command line to override
+  the corresponding settings.
 
 # New in version 0.2
 
