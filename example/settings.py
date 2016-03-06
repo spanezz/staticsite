@@ -10,6 +10,11 @@ SITE_URL = "https://www.example.org"
 # Time zone used for site posts
 TIMEZONE = "Europe/Rome"
 
+# Root directory of the site in the URLs we generate.
+# If you are publishing the site at /prefix instead of root of the domain,
+# override this with /prefix
+# SITE_ROOT = "/"
+
 # Directory with the source content of the site
 CONTENT = "content"
 
