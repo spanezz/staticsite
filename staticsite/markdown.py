@@ -80,8 +80,8 @@ class StaticSiteExtension(markdown.extensions.Extension):
 
 
 class MarkdownPages:
-    def __init__(self, j2env):
-        self.jinja2 = j2env
+    def __init__(self, site):
+        self.site = site
         self.md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
             extensions=[
@@ -92,17 +92,17 @@ class MarkdownPages:
             ],
             output_format="html5",
         )
-        self.page_template = self.jinja2.get_template("page.html")
-        self.redirect_template = self.jinja2.get_template("redirect.html")
+        self.page_template = self.site.theme.jinja2.get_template("page.html")
+        self.redirect_template = self.site.theme.jinja2.get_template("redirect.html")
 
     def render(self, page):
         self.md_staticsite.set_page(page)
         self.markdown.reset()
         return self.markdown.convert(page.get_content())
 
-    def try_load_page(self, site, root_abspath, relpath):
+    def try_load_page(self, root_abspath, relpath):
         if not relpath.endswith(".md"): return None
-        return MarkdownPage(self, site, root_abspath, relpath)
+        return MarkdownPage(self, root_abspath, relpath)
 
     def try_load_archetype(self, site, relpath, name):
         if not relpath.endswith(".md"): return None
@@ -180,14 +180,14 @@ class MarkdownPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, mdenv, site, root_abspath, relpath):
+    def __init__(self, mdenv, root_abspath, relpath):
         dirname, basename = os.path.split(relpath)
         if basename == "index.md":
             linkpath = dirname
         else:
             linkpath = os.path.splitext(relpath)[0]
         super().__init__(
-            site=site,
+            site=mdenv.site,
             root_abspath=root_abspath,
             src_relpath=relpath,
             src_linkpath=linkpath,

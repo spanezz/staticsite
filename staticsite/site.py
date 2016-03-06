@@ -1,11 +1,8 @@
 # coding: utf-8
-
-import jinja2
 import os
 import re
 import pytz
 import datetime
-import fnmatch
 from collections import defaultdict
 from .core import settings
 import logging
@@ -14,8 +11,6 @@ log = logging.getLogger()
 
 class Site:
     def __init__(self, root, theme_root=None):
-        self.root = root
-
         # Root of site pages
         self.site_root = os.path.join(root, "site")
 
@@ -37,119 +32,23 @@ class Site:
         # Taxonomies found in the site
         self.taxonomies = []
 
-        if theme_root is None:
-            theme_root = os.path.join(self.root, "theme")
-
-        # Jinja2 template engine
-        from jinja2 import Environment, FileSystemLoader
-        self.jinja2 = Environment(
-            loader=FileSystemLoader([
-                theme_root,
-            ]),
-            autoescape=True,
-        )
-
-        # Add settings to jinja2 globals
-        for x in dir(settings):
-            if not x.isupper(): continue
-            self.jinja2.globals[x] = getattr(settings, x)
-
-
-        # Install site's functions into the jinja2 environment
-        self.jinja2.globals.update(
-            has_page=self.jinja2_has_page,
-            url_for=self.jinja2_url_for,
-            site_pages=self.jinja2_site_pages,
-            now=self.generation_time,
-            taxonomies=self.jinja2_taxonomies,
-        )
-        self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
-        self.jinja2.filters["basename"] = self.jinja2_basename
+        from .theme import Theme
+        if theme_root is not None:
+            self.theme = Theme(self, theme_root)
+        else:
+            self.theme = Theme(self, os.path.join(root, "theme"))
 
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
         from .j2 import J2Pages
         from .taxonomy import TaxonomyPages
         self.page_handlers = [
-            MarkdownPages(self.jinja2),
-            J2Pages(self.jinja2),
-            TaxonomyPages(self.jinja2),
+            MarkdownPages(self),
+            J2Pages(self),
+            TaxonomyPages(self),
         ]
 
-        self.dir_template = self.jinja2.get_template("dir.html")
-
-    def jinja2_taxonomies(self):
-        return self.taxonomies
-
-    def jinja2_basename(self, val):
-        return os.path.basename(val)
-
-    @jinja2.contextfilter
-    def jinja2_datetime_format(self, context, dt, format=None):
-        if format in ("rss2", "rfc822"):
-            from .utils import format_date_rfc822
-            return format_date_rfc822(dt)
-        elif format in ("atom", "rfc3339"):
-            from .utils import format_date_rfc3339
-            return format_date_rfc3339(dt)
-        elif format == "w3cdtf":
-            from .utils import format_date_w3cdtf
-            return format_date_w3cdtf(dt)
-        elif format == "iso8601" or not format:
-            from .utils import format_date_iso8601
-            return format_date_iso8601(dt)
-        else:
-            log.warn("%s+%s: invalid datetime format %r requested", cur_page.src_relpath, context.name, format)
-            return "(unknown datetime format {})".format(format)
-
-    @jinja2.contextfunction
-    def jinja2_has_page(self, context, arg):
-        cur_page = context.parent["page"]
-        page = cur_page.resolve_link(arg)
-        return page is not None
-
-    @jinja2.contextfunction
-    def jinja2_url_for(self, context, arg):
-        if isinstance(arg, str):
-            cur_page = context.parent["page"]
-            page = cur_page.resolve_link(arg)
-            if page is None:
-                log.warn("%s+%s: unresolved link %s passed to url_for", cur_page.src_relpath, context.name, arg)
-                return ""
-        else:
-            page = arg
-        return page.dst_link
-
-    @jinja2.contextfunction
-    def jinja2_site_pages(self, context, path=None, limit=None, sort="-date"):
-        if path is not None:
-            re_path = re.compile(fnmatch.translate(path))
-        else:
-            re_path = None
-
-        if sort is not None:
-            if sort.startswith("-"):
-                sort = sort[1:]
-                sort_reverse = True
-            else:
-                sort_reverse = False
-
-        pages = []
-        for page in self.pages.values():
-            if not page.FINDABLE: continue
-            if re_path is not None and not re_path.match(page.src_relpath): continue
-            if sort is not None and sort not in page.meta: continue
-            pages.append(page)
-
-        if sort is not None:
-            pages.sort(key=lambda p: p.meta.get(sort, None), reverse=sort_reverse)
-
-        if limit is not None:
-            pages = pages[:limit]
-
-        return pages
-
-    def read_site_tree(self, tree_root):
+    def read_contents_tree(self, tree_root):
         """
         Read static assets and pages from a directory and all its subdirectories
         """
@@ -165,7 +64,7 @@ class Site:
                 page_relpath = os.path.relpath(page_abspath, tree_root)
 
                 for handler in self.page_handlers:
-                    p = handler.try_load_page(self, tree_root, page_relpath)
+                    p = handler.try_load_page(tree_root, page_relpath)
                     if p is not None:
                         self.pages[p.src_linkpath] = p
                         break
@@ -216,11 +115,15 @@ class Site:
                 self.taxonomies.append(page)
             # Harvest content for directory indices
             if page.FINDABLE and page.src_relpath:
-                relpath = page.src_relpath
+                dir_relpath = os.path.dirname(page.src_relpath)
+                by_dir[dir_relpath].append(page)
                 while True:
-                    relpath = os.path.dirname(relpath)
-                    by_dir[relpath].append(page)
-                    if not relpath: break
+                    dir_relpath = os.path.dirname(dir_relpath)
+                    # Do a lookup to make sure an entry exists for this
+                    # directory level, even though without pages
+                    by_dir[dir_relpath]
+                    if not dir_relpath: break
+
 
         # Build directory indices
         from .dir import DirPage
@@ -235,11 +138,7 @@ class Site:
         for relpath, pages in by_dir.items():
             page = self.pages[relpath]
             if page.TYPE != "dir": continue
-            parent_relpath = os.path.dirname(relpath)
-            if not parent_relpath: continue
-            parent = self.pages[parent_relpath]
-            if parent.TYPE != "dir": continue
-            parent.add_subdir(page)
+            page.attach_to_parent()
 
         # Read metadata
         for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):

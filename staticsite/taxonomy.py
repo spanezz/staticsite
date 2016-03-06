@@ -10,12 +10,12 @@ import logging
 log = logging.getLogger()
 
 class TaxonomyPages:
-    def __init__(self, j2env):
-        self.jinja2 = j2env
+    def __init__(self, site):
+        self.site = site
 
-    def try_load_page(self, site, root_abspath, relpath):
+    def try_load_page(self, root_abspath, relpath):
         if not relpath.endswith(".taxonomy"): return None
-        return TaxonomyPage(self, site, root_abspath, relpath)
+        return TaxonomyPage(self, root_abspath, relpath)
 
 
 class TaxonomyItem:
@@ -34,18 +34,16 @@ class TaxonomyPage(Page):
     ANALYZE_PASS = 2
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, j2env, site, root_abspath, relpath):
+    def __init__(self, tenv, root_abspath, relpath):
         linkpath = os.path.splitext(relpath)[0]
 
         super().__init__(
-            site=site,
+            site=tenv.site,
             root_abspath=root_abspath,
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(settings.SITE_ROOT, linkpath))
-
-        self.jinja2 = j2env.jinja2
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
@@ -115,7 +113,7 @@ class TaxonomyPage(Page):
         template_name = self.meta.get(name, None)
         if template_name is None: return None
         try:
-            return self.jinja2.get_template(template_name)
+            return self.site.theme.jinja2.get_template(template_name)
         except:
             log.exception("%s: cannot load %s %s", self.src_relpath, name, template_name)
             return None
@@ -143,11 +141,11 @@ class TaxonomyPage(Page):
         self.template_archive = self.load_template_from_meta("template_archive")
 
         # Extend jinja2 with a function to link to elements of this taxonomy
-        self.jinja2.globals["url_for_" + self.name] = self.link_index
-        self.jinja2.globals["url_for_" + single_name] = self.link_item
-        self.jinja2.globals["url_for_" + single_name + "_rss"] = self.link_rss
-        self.jinja2.globals["url_for_" + single_name + "_atom"] = self.link_atom
-        self.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
+        self.site.theme.jinja2.globals["url_for_" + self.name] = self.link_index
+        self.site.theme.jinja2.globals["url_for_" + single_name] = self.link_item
+        self.site.theme.jinja2.globals["url_for_" + single_name + "_rss"] = self.link_rss
+        self.site.theme.jinja2.globals["url_for_" + single_name + "_atom"] = self.link_atom
+        self.site.theme.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
 
         # Collect the pages annotated with this taxonomy
         for page in self.site.pages.values():
