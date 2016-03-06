@@ -7,6 +7,7 @@ import time
 import shutil
 from collections import defaultdict
 from .commands import SiteCommand, CmdlineError
+from .core import settings
 from .utils import timings
 import logging
 
@@ -14,6 +15,10 @@ log = logging.getLogger()
 
 class Build(SiteCommand):
     "build the site into the web/ directory of the project"
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.output_root = os.path.join(self.root, settings.OUTPUT)
 
     def run(self):
         site = self.load_site()
@@ -33,10 +38,9 @@ class Build(SiteCommand):
         """
         # Clear the target directory, but keep the root path so that a web
         # server running on it does not find itself running nowhere
-        outdir = os.path.join(self.root, "web")
-        if os.path.exists(outdir):
+        if os.path.exists(self.output_root):
             with timings("Cleaned output directory in %fs"):
-                self.clear_outdir(outdir)
+                self.clear_outdir(self.output_root)
 
         with timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
@@ -113,6 +117,6 @@ class Build(SiteCommand):
         return sums, counts
 
     def output_abspath(self, relpath):
-        abspath = os.path.join(self.root, "web", relpath)
+        abspath = os.path.join(self.output_root, relpath)
         os.makedirs(os.path.dirname(abspath), exist_ok=True)
         return abspath

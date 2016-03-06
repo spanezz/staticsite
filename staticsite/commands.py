@@ -48,6 +48,7 @@ class SiteCommand:
         if self.args.theme: settings.THEME = self.args.theme
         if self.args.content: settings.CONTENT = self.args.content
         if self.args.archetypes: settings.ARCHETYPES = self.args.archetypes
+        if self.args.output: settings.OUTPUT = os.path.abspath(self.args.output)
 
         # Double check that root points to something that looks like a project
         self.content_root = os.path.join(self.root, settings.CONTENT)
@@ -96,6 +97,7 @@ class SiteCommand:
         parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
         parser.add_argument("--content", help="content directory location. Overrides settings.CONTENT")
         parser.add_argument("--archetypes", help="archetypes directory location. Override settings.ARCHETYPES")
+        parser.add_argument("-o", "--output", help="output directory location. Override settings.OUTPUT")
         parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
         parser.add_argument("--debug", action="store_true", help="verbose output")
         parser.set_defaults(handler=cls)

@@ -18,6 +18,9 @@ CONTENT = "content"
 # Default: the one installed in the system
 THEME = "/usr/share/doc/staticsite/example/theme/"
 
+# Directory where the static site will be written by build
+OUTPUT = "web"
+
 # Time zone used for timestamps on the site
 TIMEZONE = "UTC"
 

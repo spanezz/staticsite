@@ -24,3 +24,6 @@ THEME = "theme"
 
 # Directory with "archetypes" (templates used by ssite new)
 #ARCHETYPES = "archetypes"
+
+# Directory where the static site will be written by build
+#OUTPUT = "web"
