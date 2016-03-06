@@ -56,6 +56,9 @@ class Site:
         if os.path.isdir(theme_static):
             self.read_asset_tree(theme_static)
 
+    def load_content(self, content_root):
+        self.read_contents_tree(content_root)
+
     def add_page(self, page):
         self.pages[page.src_linkpath] = page
 

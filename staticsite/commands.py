@@ -57,9 +57,9 @@ class SiteCommand:
         site = Site()
 
         # Read and analyze site contents
-        with timings("Read site tree in %fs"):
+        with timings("Read site in %fs"):
             site.load_theme(os.path.join(self.root, "theme"))
-            site.read_contents_tree(os.path.join(self.root, "site"))
+            site.load_content(os.path.join(self.root, "site"))
 
         with timings("Analysed site tree in %fs"):
             site.analyze()
