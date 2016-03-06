@@ -1,0 +1,16 @@
+# staticsite user-relevant changes
+
+# New in version 0.2
+
+* Configurable site layout, using `CONTENT` and `THEME` in `settings.py`. See
+  [the settings reference](doc/settings.md) for details.
+* The example `settings.py` has been updated to use `content` for site
+  contents, like [Hugo](https://gohugo.io) does.
+* Directory indices: if in your contents you have `dir/foo.md` without
+  `dir/index.md` or `dir/index.j2.html", then a directory index for dir will be
+  generated automatically, showing links to all site pages in that directory.
+* Documentation has been expanded and split into separate files under `doc/`
+* New template function `taxonomies()` that returns a list of taxonomies. See
+  [templates.md](doc/templates.md).
+* New template filter `|basename` that returns the basename of a path. See
+  [templates.md](doc/templates.md).
