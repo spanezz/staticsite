@@ -45,9 +45,9 @@ class SiteCommand:
             settings.load(self.settings_abspath)
 
         # Command line overrides for settings
-        if self.args.theme: settings.THEME = self.args.theme
-        if self.args.content: settings.CONTENT = self.args.content
-        if self.args.archetypes: settings.ARCHETYPES = self.args.archetypes
+        if self.args.theme: settings.THEME = os.path.abspath(self.args.theme)
+        if self.args.content: settings.CONTENT = os.path.abspath(self.args.content)
+        if self.args.archetypes: settings.ARCHETYPES = os.path.abspath(self.args.archetypes)
         if self.args.output: settings.OUTPUT = os.path.abspath(self.args.output)
 
         # Double check that root points to something that looks like a project
