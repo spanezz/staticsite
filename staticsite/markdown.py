@@ -92,8 +92,21 @@ class MarkdownPages:
             ],
             output_format="html5",
         )
-        self.page_template = self.site.theme.jinja2.get_template("page.html")
-        self.redirect_template = self.site.theme.jinja2.get_template("redirect.html")
+        # Cached templates
+        self._page_template = None
+        self._redirect_template = None
+
+    @property
+    def page_template(self):
+        if not self._page_template:
+            self._page_template = self.site.theme.jinja2.get_template("page.html")
+        return self._page_template
+
+    @property
+    def redirect_template(self):
+        if not self._redirect_template:
+            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
+        return self._redirect_template
 
     def render(self, page):
         self.md_staticsite.set_page(page)

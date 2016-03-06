@@ -32,11 +32,8 @@ class Site:
         # Taxonomies found in the site
         self.taxonomies = []
 
-        from .theme import Theme
-        if theme_root is not None:
-            self.theme = Theme(self, theme_root)
-        else:
-            self.theme = Theme(self, os.path.join(root, "theme"))
+        # Theme used to render pages
+        self.theme = None
 
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
@@ -47,6 +44,23 @@ class Site:
             J2Pages(self),
             TaxonomyPages(self),
         ]
+
+    def load_theme(self, theme_root):
+        """
+        Load a theme from the given directory.
+
+        This needs to be called once (and only once) before analyze() is
+        called.
+        """
+        if self.theme is not None:
+            raise RuntimeError("cannot load theme from {} because it was already loaded from {}".format(theme_root, self.theme.root))
+
+        from .theme import Theme
+        self.theme = Theme(self, theme_root)
+
+        theme_static = os.path.join(theme_root, "static")
+        if os.path.isdir(theme_static):
+            self.read_asset_tree(theme_static)
 
     def read_contents_tree(self, tree_root):
         """
