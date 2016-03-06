@@ -1,6 +1,6 @@
 # staticsite user-relevant changes
 
-# New in master
+# New in version 0.3
 
 * Allow to point to .py configuration instead of project on command line.
   This means you can potentially have a farm of .py site descriptions pointing
