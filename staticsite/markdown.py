@@ -188,7 +188,6 @@ class MarkdownArchetype(Archetype):
         return style, meta, body
 
 
-
 class MarkdownPage(Page):
     TYPE = "markdown"
 

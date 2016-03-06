@@ -56,6 +56,9 @@ class Site:
         if os.path.isdir(theme_static):
             self.read_asset_tree(theme_static)
 
+    def add_page(self, page):
+        self.pages[page.src_linkpath] = page
+
     def read_contents_tree(self, tree_root):
         """
         Read static assets and pages from a directory and all its subdirectories
@@ -74,13 +77,13 @@ class Site:
                 for handler in self.page_handlers:
                     p = handler.try_load_page(tree_root, page_relpath)
                     if p is not None:
-                        self.pages[p.src_linkpath] = p
+                        self.add_page(p)
                         break
                 else:
                     if os.path.isfile(page_abspath):
                         log.debug("Loading static file %s", page_relpath)
                         p = Asset(self, tree_root, page_relpath)
-                        self.pages[p.src_linkpath] = p
+                        self.add_page(p)
 
     def read_asset_tree(self, tree_root):
         """
@@ -99,7 +102,7 @@ class Site:
                     page_relpath = os.path.relpath(page_abspath, tree_root)
                     log.debug("Loading static file %s", page_relpath)
                     p = Asset(self, tree_root, page_relpath)
-                    self.pages[p.src_linkpath] = p
+                    self.add_page(p)
 
     def relocate(self, page, dest_relpath):
         log.info("Relocating %s to %s", page.relpath, dest_relpath)

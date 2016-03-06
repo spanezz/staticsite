@@ -4,6 +4,9 @@
 # override this with /prefix
 SITE_ROOT = "/"
 
+# Default site name. Override it with your site name.
+SITE_NAME = "Site name not set"
+
 # Time zone used for timestamps on the site
 TIMEZONE = "UTC"
 
