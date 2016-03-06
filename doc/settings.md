@@ -28,6 +28,14 @@ TIMEZONE = "Europe/Rome"
 # If you are publishing the site at /prefix instead of root of the domain,
 # override this with /prefix
 SITE_ROOT = "/"
+
+# Directory with the source content of the site
+# Default: the project directory itself
+CONTENT = "."
+
+# Theme used to render the stie
+# Default: the one installed in the system
+THEME = "/usr/share/doc/staticsite/example/theme/"
 ```
 
 

@@ -9,3 +9,6 @@ SITE_URL = "https://www.example.org"
 
 # Time zone used for site posts
 TIMEZONE = "Europe/Rome"
+
+# Directory with the source content of the site
+CONTENT = "content/"

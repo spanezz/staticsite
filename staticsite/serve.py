@@ -19,8 +19,8 @@ class Serve(SiteCommand):
 
         from livereload import Server
         server = Server(self.application)
-        server.watch(os.path.join(self.root, "site"), self.reload)
-        server.watch(os.path.join(self.root, "theme"), self.reload)
+        server.watch(self.content_root, self.reload)
+        server.watch(self.theme_root, self.reload)
         server.serve(port=8000, host="localhost")
 
     def application(self, environ, start_response):

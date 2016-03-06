@@ -33,15 +33,19 @@ class SiteCommand:
         else:
             self.root = os.getcwd()
 
-        # Double check that root points to something that looks like a project
-        self.site_root = os.path.join(self.root, "site")
-        if not os.path.exists(self.site_root):
-            raise CmdlineError("{} does not exist".format(self.site_root))
-
         # Load settings (optional)
         settings_file = os.path.join(self.root, "settings.py")
         if os.path.isfile(settings_file):
             settings.load(settings_file)
+
+        # Double check that root points to something that looks like a project
+        self.content_root = os.path.join(self.root, settings.CONTENT)
+        if not os.path.exists(self.content_root):
+            raise CmdlineError("Content directory {} does not exist".format(self.content_root))
+
+        self.theme_root = os.path.join(self.root, settings.THEME)
+        if not os.path.exists(self.theme_root):
+            raise CmdlineError("Theme directory {} does not exist".format(self.theme_root))
 
     def setup_logging(self, args):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
@@ -58,8 +62,8 @@ class SiteCommand:
 
         # Read and analyze site contents
         with timings("Read site in %fs"):
-            site.load_theme(os.path.join(self.root, "theme"))
-            site.load_content(os.path.join(self.root, "site"))
+            site.load_theme(self.theme_root)
+            site.load_content(self.content_root)
 
         with timings("Analysed site tree in %fs"):
             site.analyze()
