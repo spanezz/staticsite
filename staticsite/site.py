@@ -227,7 +227,9 @@ class Site:
         for relpath, pages in by_dir.items():
             # We only build indices where there is not already a page
             if relpath in self.pages: continue
-            self.pages[relpath] = DirPage(self, relpath, pages)
+            page = DirPage(self, relpath, pages)
+            self.pages[relpath] = page
+            by_pass[page.ANALYZE_PASS].append(page)
 
         # Add directory indices to their parent directory indices
         for relpath, pages in by_dir.items():

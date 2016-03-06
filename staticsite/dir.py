@@ -14,7 +14,7 @@ class DirPage(Page):
     A directory index
     """
     TYPE = "dir"
-    ANALYZE_PASS = 2
+    ANALYZE_PASS = 3
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site, relpath, pages):
@@ -26,7 +26,7 @@ class DirPage(Page):
             dst_relpath=os.path.join(relpath, "index.html"),
             dst_link=os.path.join(settings.SITE_ROOT, relpath))
 
-        self.pages = pages
+        self.pages = list(pages)
         self.subdirs = []
 
     def add_subdir(self, page):
@@ -37,10 +37,12 @@ class DirPage(Page):
         return None
 
     def get_date(self):
+        # Sort by decreasing date
         res = self.meta.get("date", None)
         if res is None:
-            res = max(p.meta["date"] for p in pages)
-            res = max(res, *(d.get_date() for d in self.subdirs))
+            self.pages.sort(key=lambda x:x.meta["date"], reverse=True)
+            res = self.pages[0]
+            res = max([res.meta["date"]] + [d.get_date() for d in self.subdirs])
             self.meta["date"] = res
         return res
 
