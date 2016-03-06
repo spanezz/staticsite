@@ -5,6 +5,8 @@
 * Allow to point to .py configuration instead of project on command line.
   This means you can potentially have a farm of .py site descriptions pointing
   at various other directories in the file system.
+* archetypes directory configurable in `settings.py`. See
+  [settings.md](doc/settings.md) for details.
 
 # New in version 0.2
 

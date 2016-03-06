@@ -35,6 +35,9 @@ CONTENT = "content"
 # Theme used to render the stie
 # Default: the one installed in the system
 THEME = "theme"
+
+# Directory with "archetypes" (templates used by ssite new)
+ARCHETYPES = "archetypes"
 ```
 
 

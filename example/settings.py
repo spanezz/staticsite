@@ -21,3 +21,6 @@ TIMEZONE = "Europe/Rome"
 # Theme used to render the content
 # Default: the one installed in the system
 THEME = "theme"
+
+# Directory with "archetypes" (templates used by ssite new)
+#ARCHETYPES = "archetypes"

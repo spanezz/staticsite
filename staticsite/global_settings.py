@@ -7,6 +7,9 @@ SITE_ROOT = "/"
 # Default site name. Override it with your site name.
 SITE_NAME = "Site name not set"
 
+# Directory with "archetypes" (templates used by ssite new)
+ARCHETYPES = "archetypes"
+
 # Directory with the source content of the site
 # Default: the project directory itself
 CONTENT = "content"
