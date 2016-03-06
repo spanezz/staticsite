@@ -1,6 +1,6 @@
 # theme: controlling the appearance of the site
 
-Inside `theme/` there are the [Jinja2](http://jinja.pocoo.org/) templates that
+Inside `theme` there are the [Jinja2](http://jinja.pocoo.org/) templates that
 control how pages are rendered.
 
 The theme contents are independent from the contents of the site, and it should
@@ -13,8 +13,8 @@ These templates are directly used by `staticsite`:
 * `redirect.html` is used to render placeholder pages that redirect to the new
   location where a page can now be found.
 
-These templates are expected to be present by at least Jinja2 templates present
-inside `content/`:
+These templates are expected to be present by the Jinja2 templates
+inside `content`:
 
 * `base.html` is used for the common parts of all pages.
 * `inline_page.html` is used for rendering other pages inline, for example in

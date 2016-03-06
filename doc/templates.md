@@ -1,17 +1,17 @@
 # Jinja2 templates in staticsite
 
-## Jinja2 files in `content/`
+## Jinja2 files in `content`
 
 Any files called `<name>.j2.<ext>` will be rendered with
 [Jinja2](http://jinja.pocoo.org/) to generate `<name>.<ext>`.
 
 This can be used to generate complex index pages, blog front pages, RSS2 and
-Atom feeds, and anything Jinja2 is able to generate.
+Atom feeds, and anything else Jinja2 is able to generate.
 
 
 ## Jinja2 environment
 
-The `theme/` directory is in the Jinja2 search path, and you can `{% import %}`
+The `theme` directory is in the Jinja2 search path, and you can `{% import %}`
 or `{% include %}` anything from it.
 
 Any setting defined in `settings.py` is also available to Jinja2, so you can do
