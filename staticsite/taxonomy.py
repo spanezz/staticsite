@@ -42,7 +42,7 @@ class TaxonomyPage(Page):
             root_abspath=root_abspath,
             src_relpath=relpath,
             src_linkpath=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_relpath=linkpath,
             dst_link=os.path.join(settings.SITE_ROOT, linkpath))
 
         # Taxonomy name (e.g. "tags")
