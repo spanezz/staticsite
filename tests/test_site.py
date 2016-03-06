@@ -54,7 +54,7 @@ class TestSite(TestCase):
         self.assertEquals(dir_dir1.subdirs, [dir_dir2])
         self.assertEquals(dir_dir2.pages, [])
         self.assertEquals(dir_dir2.subdirs, [dir_dir3])
-        self.assertEquals(dir_dir3.pages, [page_dir3])
+        self.assertEquals(dir_dir3.pages, [page_sub3])
         self.assertEquals(dir_dir3.subdirs, [])
 
         #self.assertIn(site.pages[""].pages

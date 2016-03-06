@@ -29,8 +29,14 @@ class DirPage(Page):
         self.pages = list(pages)
         self.subdirs = []
 
-    def add_subdir(self, page):
-        self.subdirs.append(page)
+    def attach_to_parent(self):
+        if not self.src_relpath: return
+        parent_relpath = os.path.dirname(self.src_relpath)
+        parent = self.site.pages[parent_relpath]
+        if parent.TYPE != "dir": return
+        if self in parent.subdirs: return
+        parent.subdirs.append(self)
+        parent.attach_to_parent()
 
     @property
     def src_abspath(self):
@@ -41,9 +47,12 @@ class DirPage(Page):
         res = self.meta.get("date", None)
         if res is None:
             self.pages.sort(key=lambda x:x.meta["date"], reverse=True)
-            res = self.pages[0]
-            res = max([res.meta["date"]] + [d.get_date() for d in self.subdirs])
-            self.meta["date"] = res
+            if self.pages:
+                dates = [self.pages[0].meta["date"]]
+            else:
+                dates = []
+            dates.extend(d.get_date() for d in self.subdirs)
+            self.meta["date"] = res = max(dates)
         return res
 
     def read_metadata(self):
@@ -51,9 +60,10 @@ class DirPage(Page):
         self.meta["title"] = os.path.basename(self.src_relpath) or settings.SITE_NAME
 
     def render(self):
-        body = self.site.dir_template.render(
+        self.subdirs.sort(key=lambda x:x.meta["title"])
+        body = self.site.theme.dir_template.render(
             page=self,
-            pages=self.pages,
+            pages=self.subdirs + self.pages,
         )
         return {
             self.dst_relpath: RenderedString(body)

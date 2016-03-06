@@ -129,11 +129,11 @@ class Site:
                 dir_relpath = os.path.dirname(page.src_relpath)
                 by_dir[dir_relpath].append(page)
                 while True:
+                    if not dir_relpath: break
                     dir_relpath = os.path.dirname(dir_relpath)
                     # Do a lookup to make sure an entry exists for this
                     # directory level, even though without pages
                     by_dir[dir_relpath]
-                    if not dir_relpath: break
 
 
         # Build directory indices

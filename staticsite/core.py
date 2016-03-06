@@ -187,6 +187,12 @@ class Page:
     def target_relpaths(self):
         return [self.dst_relpath]
 
+    def __str__(self):
+        return self.src_relpath
+
+    def __repr__(self):
+        return "{}:{}".format(self.TYPE, self.src_relpath)
+
 
 class RenderedFile:
     def __init__(self, abspath):
