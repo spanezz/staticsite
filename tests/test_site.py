@@ -2,6 +2,8 @@
 from unittest import TestCase
 from staticsite.site import Site
 from staticsite.core import Page
+from . import datafile_abspath
+import os
 import datetime
 
 class TestPage(Page):
@@ -33,7 +35,7 @@ class TestSite(TestCase):
         site.add_page(page_root)
         site.add_page(page_sub)
         site.add_page(page_sub3)
-        site.load_theme("example/theme")
+        site.load_theme(datafile_abspath("theme"))
         site.analyze()
 
         # We have a root dir index and dir indices for all subdirs
@@ -56,5 +58,3 @@ class TestSite(TestCase):
         self.assertEquals(dir_dir2.subdirs, [dir_dir3])
         self.assertEquals(dir_dir3.pages, [page_sub3])
         self.assertEquals(dir_dir3.subdirs, [])
-
-        #self.assertIn(site.pages[""].pages

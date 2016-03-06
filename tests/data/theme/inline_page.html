@@ -1,0 +1,12 @@
+{% macro inline_page(page) -%}
+<div class="well">
+<small><a href="{{url_for(page)}}">{{page.meta.date}}</a></small>
+
+<h1><a href="{{url_for(page)}}">{{page.meta.title}}</a></h1>
+{{page.content|safe}}
+
+{% for tag in page.meta.tags|sort %}
+<a href="{{ url_for_tag(tag) }}" class="label label-default">{{tag}}</a>
+{% endfor %}
+</div>
+{%- endmacro %}
