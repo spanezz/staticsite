@@ -61,7 +61,13 @@ class DirPage(Page):
 
     def render(self):
         self.subdirs.sort(key=lambda x:x.meta["title"])
+        parent_page = None
+        if self.src_relpath:
+            parent = os.path.dirname(self.src_relpath)
+            parent_page = self.site.pages.get(parent, None)
+
         body = self.site.theme.dir_template.render(
+            parent_page=parent_page,
             page=self,
             pages=self.subdirs + self.pages,
         )
