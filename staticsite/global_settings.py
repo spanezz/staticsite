@@ -9,7 +9,7 @@ SITE_NAME = "Site name not set"
 
 # Directory with the source content of the site
 # Default: the project directory itself
-CONTENT = "."
+CONTENT = "content"
 
 # Theme used to render the stie
 # Default: the one installed in the system

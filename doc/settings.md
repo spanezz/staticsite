@@ -30,7 +30,6 @@ TIMEZONE = "Europe/Rome"
 SITE_ROOT = "/"
 
 # Directory with the source content of the site
-# Default: the project directory itself
 CONTENT = "content"
 
 # Theme used to render the stie
