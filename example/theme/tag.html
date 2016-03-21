@@ -6,6 +6,11 @@
 <link href="{{ url_for_tag_atom(tag) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{tag.name}} ATOM feed"></link>
 {% endblock %}
 
+{% block nav %}
+{{super()}}
+<li><a href="{{ url_for_tag_archive(tag) }}">Archive</a></li>
+{% endblock %}
+
 {% block content %}
 <h1>Tag {{tag.name}}</h1>
 

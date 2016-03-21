@@ -6,18 +6,15 @@
 <link href="{{ url_for("index.atom") }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: blog ATOM feed"></link>
 {% endblock %}
 
-{% block nav %}
-{{super()}}
-<li><a href="{{ url_for('/blog/archive.html') }}">Archive</a></li>
-{% endblock %}
-
 {% block content %}
 <h1>Blog entries</h1>
 
-<p>This the example front page for the blog.</p>
+<h2>Archive of all posts</h2>
 
-{% for page in site_pages(path="blog/*", limit=10) %}
-{{inline_page(page)}}
+<ul>
+{% for page in site_pages(path="blog/*") %}
+<li>[{{page.meta.date.date()}}] <a href="{{url_for(page)}}">{{page.meta.title}}</a></li>
 {% endfor %}
+</ul>
 
 {% endblock %}
