@@ -34,6 +34,8 @@ Extra functions provided to Jinja2 templates:
    the pages. Prefix `sort` with a dash (`-`) for reverse sorting.
             now=self.generation_time,
  * `now`: the current date and time.
+ * `next_month`: midnight of the first day of next month. Useful in archetypes
+   front matter to collect content into monthly pages.
  * `taxonomies()`: a list of all known taxonomies.
 
 Extra filters provided to Jinja2 templates:

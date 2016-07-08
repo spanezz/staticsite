@@ -3,6 +3,7 @@ import jinja2
 import os
 import re
 import fnmatch
+import datetime
 from .core import settings
 import logging
 
@@ -35,6 +36,7 @@ class Theme:
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
             now=self.site.generation_time,
+            next_month=(self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(day=1, hour=0, minute=0, second=0, microsecond=0),
             taxonomies=self.jinja2_taxonomies,
         )
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
