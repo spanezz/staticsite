@@ -71,6 +71,7 @@ class SiteCommand:
     def load_site(self):
         # Instantiate site
         site = Site()
+        site.draft = self.args.draft
 
         # Read and analyze site contents
         with timings("Read site in %fs"):
@@ -99,6 +100,7 @@ class SiteCommand:
         parser.add_argument("--archetypes", help="archetypes directory location. Override settings.ARCHETYPES")
         parser.add_argument("-o", "--output", help="output directory location. Override settings.OUTPUT")
         parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+        parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
         parser.add_argument("--debug", action="store_true", help="verbose output")
         parser.set_defaults(handler=cls)
 

@@ -29,6 +29,9 @@ class Site:
         # Theme used to render pages
         self.theme = None
 
+        # If true, do not ignore pages with dates in the future
+        self.draft = False
+
         # Map input file patterns to resource handlers
         from .markdown import MarkdownPages
         from .j2 import J2Pages
@@ -61,7 +64,7 @@ class Site:
 
     def add_page(self, page):
         ts = page.meta.get("date", None)
-        if ts is not None and ts > self.generation_time:
+        if not self.draft and ts is not None and ts > self.generation_time:
             log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
             return
         self.pages[page.src_linkpath] = page
