@@ -60,6 +60,10 @@ class Site:
         self.read_contents_tree(content_root)
 
     def add_page(self, page):
+        ts = page.meta.get("date", None)
+        if ts is not None and ts > self.generation_time:
+            log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
+            return
         self.pages[page.src_linkpath] = page
 
     def read_contents_tree(self, tree_root):

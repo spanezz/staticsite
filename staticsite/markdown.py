@@ -219,10 +219,6 @@ class MarkdownPage(Page):
         # Markdown content of the page rendered into html
         self.md_html = None
 
-    def get_content(self):
-        return "\n".join(self.body)
-
-    def read_metadata(self):
         # Read the contents
         src = self.src_abspath
         if self.meta.get("date", None) is None:
@@ -254,6 +250,9 @@ class MarkdownPage(Page):
         date = self.meta.get("date", None)
         if date is not None and not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
+
+    def get_content(self):
+        return "\n".join(self.body)
 
     def check(self, checker):
         self.mdenv.render(self)
