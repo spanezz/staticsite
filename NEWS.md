@@ -5,6 +5,8 @@
 * Pages with dates in the future are considered drafts not yet to be published.
   Added option --draft to include them in the rendering.
 * Added `{{next_month}}` to the template variables.
+* Default editor configuration appends a `+` to the command line to open the
+  file with the cursor at the end.
 
 # New in version 0.3
 
