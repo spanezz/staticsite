@@ -1,5 +1,10 @@
 # staticsite user-relevant changes
 
+# New in version 0.4
+
+* Pages with dates in the future are considered drafts not yet to be published.
+  Added option --draft to include them in the rendering.
+
 # New in version 0.3
 
 * Allow to point to .py configuration instead of project on command line.
