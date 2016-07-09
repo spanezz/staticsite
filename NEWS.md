@@ -9,6 +9,7 @@
   file with the cursor at the end.
 * If the archetype does not need a title or a slug, the `-t` argument to `ssite
   serve` is optional and no title will be asked interactively.
+* Documented how to use staticsite to blog a monthly collection of links.
 
 # New in version 0.3
 
