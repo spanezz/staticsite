@@ -7,6 +7,8 @@
 * Added `{{next_month}}` to the template variables.
 * Default editor configuration appends a `+` to the command line to open the
   file with the cursor at the end.
+* If the archetype does not need a title or a slug, the `-t` argument to `ssite
+  serve` is optional and no title will be asked interactively.
 
 # New in version 0.3
 
