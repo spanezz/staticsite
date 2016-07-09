@@ -168,5 +168,5 @@ class Site:
 
 
     def slugify(self, text):
-        from .slugify import slugify
+        import slugify
         return slugify(text)

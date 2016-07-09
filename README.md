@@ -17,12 +17,9 @@ Output:
 
 ```sh
 apt install python3-tz python3-unidecode python3-markdown python3-toml \
-            python3-yaml python3-jinja2 python3-dateutil python3-livereload
+            python3-yaml python3-jinja2 python3-dateutil python3-livereload \
+            python3-slugify
 ```
-
-[python-slugify](https://github.com/un33k/python-slugify) is currently not in
-Debian, [please package it](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=816727).
-At the moment a copy of it is found in `staticsite/slugify/`.
 
 ## Quick start
 

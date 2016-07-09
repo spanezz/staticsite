@@ -8,9 +8,10 @@ Build-Depends: debhelper (>= 9),
                python3-setuptools,
 	       python3-unidecode, python3-markdown, python3-toml, python3-yaml,
 	       python3-jinja2, python3-dateutil, python3-livereload,
-               python3-tz
+               python3-tz, python3-slugify
 Build-Depends-Indep: help2man
 Standards-Version: 3.9.7
+Homepage: https://github.com/spanezz/staticsite
 Vcs-Git: https://github.com/spanezz/staticsite.git
 Vcs-Browser: https://github.com/spanezz/staticsite
 
@@ -18,6 +19,10 @@ Package: staticsite
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}
 Description: Static site generator
- Static site compiler based on markdown and jinja2.
+ Static site generator based on markdown and jinja2.
  .
- It is themable, the site structure is free, and it has a live preview server.
+ Features:
+  - themable
+  - free content structure
+  - hugo-style archetypes and front matter
+  - live preview server

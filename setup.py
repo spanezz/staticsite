@@ -12,6 +12,6 @@ setup(
     author_email = ["enrico@enricozini.org"],
     url = "https://github.com/spanezz/staticsite",
     license = "http://www.gnu.org/licenses/gpl-3.0.html",
-    packages = ["staticsite", "staticsite.slugify"],
+    packages = ["staticsite"],
     scripts = ['ssite']
 )
