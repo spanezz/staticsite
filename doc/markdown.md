@@ -50,7 +50,9 @@ The front matter of the post can be written in
 
 This is a list of all metadata elements that are currently in use:
 
- - `date`: a python datetime object, timezone aware
+ - `date`: a python datetime object, timezone aware. If the date is in the
+   future when `ssite` runs, the page will be consider a draft and will be
+   ignored. Use `ssite --draft` to also consider draft pages.
  - `title`: the page title. If omitted, the first `#` title is used.
  - `tags`: list of tags for the page. If you define a new taxonomy, its name in
    the metadata will be used in the same way.

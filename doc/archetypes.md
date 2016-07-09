@@ -21,4 +21,29 @@ writing the page.
 The editor and editor command line can also be configured, see
 `global_settings.py` for details and examples.
 
+# Archetypes tips
+
+## Monthly collection of links
+
+`example/archetypes/links.md` is an example of how to use archetypes to publish
+a monthly collection of links:
+
+```jinja2
++++
+path = "blog/{{next_month.strftime("%Y")}}/links-{{next_month.strftime("%m")}}.md"
+date = "{{next_month|datetime_format()}}"
+tags = ["ssite new -a linkslinks"]
++++
+# Links for {{next_month.strftime("%B %Y")}}
+…
+```
+
+Use `ssite new -a links` to add a link to the collection.
+
+The path and title of the page will be generated based on next month only, and
+the page will not be published while links are being collected. When the next
+month comes, the page will be published and `ssite new -a links` will start a
+new page.
+
+
 [Back to README](../README.md)
