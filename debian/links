@@ -1,0 +1,18 @@
+/usr/share/javascript/jquery/jquery.js /usr/share/doc/staticsite/example/theme/static/js/jquery.js
+/usr/share/javascript/jquery/jquery.min.js /usr/share/doc/staticsite/example/theme/static/js/jquery.min.js
+
+/usr/share/javascript/bootstrap/js/bootstrap.js /usr/share/doc/staticsite/example/theme/static/js/bootstrap.js
+/usr/share/javascript/bootstrap/js/bootstrap.min.js /usr/share/doc/staticsite/example/theme/static/js/bootstrap.min.js
+
+/usr/share/javascript/bootstrap/fonts/glyphicons-halflings-regular.eot /usr/share/doc/staticsite/example/theme/static/fonts/glyphicons-halflings-regular.eot
+/usr/share/javascript/bootstrap/fonts/glyphicons-halflings-regular.svg /usr/share/doc/staticsite/example/theme/static/fonts/glyphicons-halflings-regular.svg
+/usr/share/javascript/bootstrap/fonts/glyphicons-halflings-regular.ttf /usr/share/doc/staticsite/example/theme/static/fonts/glyphicons-halflings-regular.ttf
+/usr/share/javascript/bootstrap/fonts/glyphicons-halflings-regular.woff /usr/share/doc/staticsite/example/theme/static/fonts/glyphicons-halflings-regular.woff
+/usr/share/javascript/bootstrap/fonts/glyphicons-halflings-regular.woff2 /usr/share/doc/staticsite/example/theme/static/fonts/glyphicons-halflings-regular.woff2
+
+/usr/share/javascript/bootstrap/css/bootstrap.css /usr/share/doc/staticsite/example/theme/static/css/bootstrap.css
+/usr/share/javascript/bootstrap/css/bootstrap.css.map /usr/share/doc/staticsite/example/theme/static/css/bootstrap.css.map
+/usr/share/javascript/bootstrap/css/bootstrap.min.css /usr/share/doc/staticsite/example/theme/static/css/bootstrap.min.css
+/usr/share/javascript/bootstrap/css/bootstrap-theme.css /usr/share/doc/staticsite/example/theme/static/css/bootstrap-theme.css
+/usr/share/javascript/bootstrap/css/bootstrap-theme.css.map /usr/share/doc/staticsite/example/theme/static/css/bootstrap-theme.css.map
+/usr/share/javascript/bootstrap/css/bootstrap-theme.min.css /usr/share/doc/staticsite/example/theme/static/css/bootstrap-theme.min.css
