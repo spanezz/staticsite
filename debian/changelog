@@ -1,5 +1,5 @@
-staticsite (0.4-1) UNRELEASED; urgency=low
+staticsite (0.4-1) unstable; urgency=low
 
   * Initial version. Closes: #830582.
 
- -- Enrico Zini <enrico@debian.org>  Wed, 02 Mar 2016 13:40:04 +0100
+ -- Enrico Zini <enrico@debian.org>  Sun, 10 Jul 2016 12:22:22 +0200
