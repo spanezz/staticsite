@@ -1,6 +1,7 @@
 staticsite (0.5-1) UNRELEASED; urgency=medium
 
   * New upstream version
+  * Added copyright of example assets to debian/copyright
 
  -- Enrico Zini <enrico@debian.org>  Sat, 20 Aug 2016 10:57:55 +0200
 
