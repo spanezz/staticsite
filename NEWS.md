@@ -1,5 +1,7 @@
 # staticsite user-relevant changes
 
+# New in version 0.5
+
 # New in version 0.4
 
 * Pages with dates in the future are considered drafts not yet to be published.
