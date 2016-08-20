@@ -9,5 +9,5 @@ tags = ["links"]
 
 : Static site generator.
 
-[1] https://github.com/spanezz/staticsite
-[1a] https://web.archive.org/web/20160709103430/https://github.com/spanezz/staticsite
+[1]: https://github.com/spanezz/staticsite
+[1a]: https://web.archive.org/web/20160709103430/https://github.com/spanezz/staticsite

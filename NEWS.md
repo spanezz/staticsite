@@ -2,6 +2,8 @@
 
 # New in version 0.5
 
+* Fixed markdown syntax for link targets in `example/archetypes/links.md`
+
 # New in version 0.4
 
 * Pages with dates in the future are considered drafts not yet to be published.
