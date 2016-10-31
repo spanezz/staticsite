@@ -56,6 +56,9 @@ class Theme:
 
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):
+        if not isinstance(dt, datetime.datetime):
+            import dateutil.parser
+            dt = dateutil.parser.parse(dt)
         if format in ("rss2", "rfc822"):
             from .utils import format_date_rfc822
             return format_date_rfc822(dt)
