@@ -69,7 +69,7 @@ class Theme:
             from .utils import format_date_iso8601
             return format_date_iso8601(dt)
         else:
-            log.warn("%s+%s: invalid datetime format %r requested", cur_page.src_relpath, context.name, format)
+            log.warn("%s+%s: invalid datetime format %r requested", context.parent["page"].src_relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
     @jinja2.contextfunction
