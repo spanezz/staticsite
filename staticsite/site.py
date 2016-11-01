@@ -36,8 +36,9 @@ class Site:
         from .markdown import MarkdownPages
         from .j2 import J2Pages
         from .taxonomy import TaxonomyPages
+        self.markdown_renderer = MarkdownPages(self)
         self.page_handlers = [
-            MarkdownPages(self),
+            self.markdown_renderer,
             J2Pages(self),
             TaxonomyPages(self),
         ]

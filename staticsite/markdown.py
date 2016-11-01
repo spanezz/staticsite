@@ -108,10 +108,17 @@ class MarkdownPages:
             self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
         return self._redirect_template
 
-    def render(self, page):
+    def render(self, page, content=None):
+        """
+        Render markdown in the context of the given page.
+
+        It renders the page content by default, unless `content` is set to a
+        different markdown string.
+        """
+        if content is None: content = page.get_content()
         self.md_staticsite.set_page(page)
         self.markdown.reset()
-        return self.markdown.convert(page.get_content())
+        return self.markdown.convert(content)
 
     def try_load_page(self, root_abspath, relpath):
         if not relpath.endswith(".md"): return None

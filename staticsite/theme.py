@@ -40,6 +40,7 @@ class Theme:
             taxonomies=self.jinja2_taxonomies,
         )
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
+        self.jinja2.filters["markdown"] = self.jinja2_markdown
         self.jinja2.filters["basename"] = self.jinja2_basename
 
         self.dir_template = self.jinja2.get_template("dir.html")
@@ -49,6 +50,10 @@ class Theme:
 
     def jinja2_basename(self, val):
         return os.path.basename(val)
+
+    @jinja2.contextfilter
+    def jinja2_markdown(self, context, mdtext):
+        return jinja2.Markup(self.site.markdown_renderer.render(context.parent["page"], mdtext))
 
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):

@@ -2,7 +2,7 @@
 from unittest import TestCase
 from staticsite.site import Site
 from staticsite.core import Page
-from . import datafile_abspath
+from . import datafile_abspath, example_site, TestArgs
 import os
 import datetime
 
@@ -58,3 +58,22 @@ class TestSite(TestCase):
         self.assertEquals(dir_dir2.subdirs, [dir_dir3])
         self.assertEquals(dir_dir3.pages, [page_sub3])
         self.assertEquals(dir_dir3.subdirs, [])
+
+class TestMarkdownInJinja2(TestCase):
+    def test_jinja2_markdown(self):
+        with example_site() as root:
+            page = os.path.join(root, "content/test.j2.html")
+            with open(page, "wt") as fd:
+                fd.write("{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")
+
+            from staticsite.build import Build
+            args = TestArgs(project=root)
+            build = Build(args)
+            build.run()
+
+            output = os.path.join(root, "web/test.html")
+            self.assertTrue(os.path.exists(output))
+            with open(output, "rt") as fd:
+                content = fd.read()
+
+            self.assertEqual(content, '<p><em>This</em> is an <a href="http://example.org">example</a></p>')
