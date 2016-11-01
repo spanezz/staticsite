@@ -27,24 +27,27 @@ class SiteCommand:
 
         self.setup_logging(args)
 
+        settings_files = ['settings.py', '.staticsite.py']
+
         # Default to current directory if project was not provided.
         # If the project was provided and is a .py file, load it as settings.
         if args.project:
             if os.path.isfile(args.project) and args.project.endswith(".py"):
-                self.settings_abspath = os.path.abspath(args.project)
-                self.root = os.path.dirname(self.settings_abspath)
+                settings_file = os.path.abspath(args.project)
+                self.root, settings_file = os.path.split(settings_file)
+                settings_files.insert(0, settings_file)
             else:
                 self.root = os.path.abspath(args.project)
-                self.settings_abspath = os.path.join(self.root, "settings.py")
         else:
             self.root = os.getcwd()
-            self.settings_abspath = os.path.join(self.root, "settings.py")
 
         self.settings = Settings()
 
         # Load settings (optional)
-        if os.path.isfile(self.settings_abspath):
-            self.settings.load(self.settings_abspath)
+        settings_files = (os.path.join(self.root, f) for f in settings_files)
+        settings_file = next(filter(os.path.isfile, settings_files), None)
+        if settings_file:
+            self.settings.load(settings_file)
 
         # Command line overrides for settings
         if self.args.theme: self.settings.THEME = os.path.abspath(self.args.theme)
