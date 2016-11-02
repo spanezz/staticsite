@@ -44,6 +44,7 @@ Extra filters provided to Jinja2 templates:
    supported: "rss2", "rfc822", "atom", "rfc3339", "w3ctdf",
    "[iso8601](https://xkcd.com/1179/)" (default).
  * `basename` returns the file name part of a pathname.
+ * `markdown` renders the string using [markdown](markdown.md).
 
 Each taxonomy defines extra `url_for_*` functions. For example, given a *tags*
 taxonomy with *tag* as singular name:
