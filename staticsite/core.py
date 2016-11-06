@@ -4,7 +4,6 @@ import sys
 import logging
 import shutil
 import mimetypes
-from . import content
 
 log = logging.getLogger()
 
