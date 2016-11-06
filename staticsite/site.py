@@ -173,7 +173,6 @@ class Site:
             for page in pages:
                 page.read_metadata()
 
-
     def slugify(self, text):
         from slugify import slugify
         return slugify(text)
