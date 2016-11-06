@@ -121,15 +121,6 @@ class Site:
                     p = Asset(self, tree_root, page_relpath)
                     self.add_page(p)
 
-    def relocate(self, page, dest_relpath):
-        log.info("Relocating %s to %s", page.relpath, dest_relpath)
-        if dest_relpath in self.pages:
-            log.warn("Cannot relocate %s to existing page %s", page.relpath, dest_relpath)
-            return
-        self.pages[dest_relpath] = page
-        page.aliases.append(page.relpath)
-        page.relpath = dest_relpath
-
     def analyze(self):
         self.taxonomies = []
 
