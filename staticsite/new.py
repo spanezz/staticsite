@@ -9,7 +9,6 @@ import subprocess
 import shlex
 from collections import OrderedDict
 from .commands import SiteCommand, CmdlineError
-from .core import settings
 from .archetypes import Archetypes
 import logging
 
@@ -81,8 +80,8 @@ class New(SiteCommand):
             log.info("%s already exists: reusing it", abspath)
 
         if not self.args.noedit:
-            settings_dict = settings.as_dict()
-            cmd = [x.format(name=abspath, slug=slug, **settings_dict) for x in settings.EDIT_COMMAND]
+            settings_dict = site.settings.as_dict()
+            cmd = [x.format(name=abspath, slug=slug, **settings_dict) for x in site.settings.EDIT_COMMAND]
             try:
                 subprocess.check_call(cmd)
             except subprocess.CalledProcessError as e:

@@ -9,7 +9,6 @@ import subprocess
 import shlex
 from collections import OrderedDict
 from .commands import SiteCommand, CmdlineError
-from .core import settings
 import logging
 
 log = logging.getLogger()
@@ -103,8 +102,8 @@ class Edit(SiteCommand):
         abspath = page.src_abspath
 
         if not self.args.noedit:
-            settings_dict = settings.as_dict()
-            cmd = [x.format(name=abspath, **settings_dict) for x in settings.EDIT_COMMAND]
+            settings_dict = site.settings.as_dict()
+            cmd = [x.format(name=abspath, **settings_dict) for x in site.settings.EDIT_COMMAND]
             try:
                 subprocess.check_call(cmd)
             except subprocess.CalledProcessError as e:

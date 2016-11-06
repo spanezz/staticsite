@@ -4,13 +4,17 @@ import re
 import pytz
 import datetime
 from collections import defaultdict
-from .core import settings
+from .core import Settings
 import logging
 
 log = logging.getLogger()
 
 class Site:
-    def __init__(self):
+    def __init__(self, settings=None):
+        # Site settings
+        if settings is None: settings = Settings()
+        self.settings = settings
+
         # Site pages
         self.pages = {}
 
@@ -61,9 +65,21 @@ class Site:
             self.read_asset_tree(theme_static)
 
     def load_content(self, content_root):
+        """
+        Load site page and assets from the given directory.
+
+        Can be called multiple times.
+        """
         self.read_contents_tree(content_root)
 
     def add_page(self, page):
+        """
+        Add a Page object to the site.
+
+        Use this only when the normal Site content loading functions are not
+        enough. This is exported as a public function mainly for the benefit of
+        unit tests.
+        """
         ts = page.meta.get("date", None)
         if not self.draft and ts is not None and ts > self.generation_time:
             log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
@@ -115,16 +131,13 @@ class Site:
                     p = Asset(self, tree_root, page_relpath)
                     self.add_page(p)
 
-    def relocate(self, page, dest_relpath):
-        log.info("Relocating %s to %s", page.relpath, dest_relpath)
-        if dest_relpath in self.pages:
-            log.warn("Cannot relocate %s to existing page %s", page.relpath, dest_relpath)
-            return
-        self.pages[dest_relpath] = page
-        page.aliases.append(page.relpath)
-        page.relpath = dest_relpath
-
     def analyze(self):
+        """
+        Iterate through all Pages in the site to build aggregated content like
+        taxonomies and directory indices.
+
+        Call this after all Pages have been added to the site.
+        """
         self.taxonomies = []
 
         by_dir = defaultdict(list)
@@ -146,7 +159,6 @@ class Site:
                     # directory level, even though without pages
                     by_dir[dir_relpath]
 
-
         # Build directory indices
         from .dir import DirPage
         for relpath, pages in by_dir.items():
@@ -167,7 +179,10 @@ class Site:
             for page in pages:
                 page.read_metadata()
 
-
     def slugify(self, text):
+        """
+        Return the slug version of an arbitrary string, that can be used as an
+        url component or file name.
+        """
         from slugify import slugify
         return slugify(text)

@@ -7,7 +7,6 @@ import time
 import shutil
 from collections import defaultdict
 from .commands import SiteCommand, CmdlineError
-from .core import settings
 from .utils import timings
 import logging
 
@@ -18,11 +17,17 @@ class Build(SiteCommand):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.output_root = os.path.join(self.root, settings.OUTPUT)
 
     def run(self):
         site = self.load_site()
-        self.write(site)
+        builder = Builder(self.root, site)
+        builder.write()
+
+
+class Builder:
+    def __init__(self, root, site):
+        self.site = site
+        self.output_root = os.path.join(root, site.settings.OUTPUT)
 
     def clear_outdir(self, outdir):
         for f in os.listdir(outdir):
@@ -32,7 +37,7 @@ class Build(SiteCommand):
             else:
                 os.unlink(abs)
 
-    def write(self, site):
+    def write(self):
         """
         Generate output
         """
@@ -45,9 +50,9 @@ class Build(SiteCommand):
         with timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
             # if cpu_count > 1:
-            #     self.write_multi_process(site, cpu_count)
+            #     self.write_multi_process(cpu_count)
             # else:
-            #     self.write_single_process(site)
+            #     self.write_single_process()
 
             # I tried trivial parallelisation with child processes but the benefits
             # do not seem significant:
@@ -61,12 +66,12 @@ class Build(SiteCommand):
             #     real  0m6.251s
             #     user  0m5.760s
             #     sys   0m0.468s
-            self.write_single_process(site)
+            self.write_single_process()
 
-    def write_multi_process(self, site, child_count):
+    def write_multi_process(self, child_count):
         log.info("Generating pages using %d child processes", child_count)
 
-        pages = list(site.pages.values())
+        pages = list(self.site.pages.values())
 
         # From http://code.activestate.com/recipes/576785-partition-an-iterable-into-n-lists/
         chunks = [pages[i::child_count] for i in range(child_count)]
@@ -89,8 +94,8 @@ class Build(SiteCommand):
             (pid, status) = os.wait()
             pids.discard(pid)
 
-    def write_single_process(self, site):
-        sums, counts = self.write_pages(site.pages.values())
+    def write_single_process(self):
+        sums, counts = self.write_pages(self.site.pages.values())
         for type in sorted(sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)", type, counts[type], sums[type], counts[type]/sums[type] * 60)
 

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page, settings, RenderedString
+from .core import Page, RenderedString
 import os
 import re
 from collections import defaultdict
@@ -43,7 +43,7 @@ class TaxonomyPage(Page):
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=linkpath,
-            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(tenv.site.settings.SITE_ROOT, linkpath))
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
@@ -65,7 +65,7 @@ class TaxonomyPage(Page):
 
         ## Generate taxonomies from configuration
         #self.taxonomies = {}
-        #for name, info in settings.TAXONOMIES.items():
+        #for name, info in self.site.settings.TAXONOMIES.items():
         #    info["name"] = name
         #    output_dir = info.get("output_dir", None)
         #    if output_dir is not None:
@@ -83,15 +83,15 @@ class TaxonomyPage(Page):
             log.warn("%s+%s: %s not found in taxonomy %s", context.parent["page"], context.name, value, self.name)
             return ""
         dest = self.meta[output_item].format(slug=item.slug)
-        return os.path.join(settings.SITE_ROOT, self.dst_relpath, dest)
+        return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath, dest)
 
     @jinja2.contextfunction
     def link_index(self, context):
         dest = self.meta["output_index"]
         if not dest:
-            return os.path.join(settings.SITE_ROOT, self.dst_relpath)
+            return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath)
         else:
-            return os.path.join(settings.SITE_ROOT, self.dst_relpath, dest)
+            return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath, dest)
 
     @jinja2.contextfunction
     def link_item(self, context, value):

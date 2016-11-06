@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import settings
+from .core import Settings
 from .site import Site
 from .utils import timings
 import sys
@@ -40,22 +40,24 @@ class SiteCommand:
             self.root = os.getcwd()
             self.settings_abspath = os.path.join(self.root, "settings.py")
 
+        self.settings = Settings()
+
         # Load settings (optional)
         if os.path.isfile(self.settings_abspath):
-            settings.load(self.settings_abspath)
+            self.settings.load(self.settings_abspath)
 
         # Command line overrides for settings
-        if self.args.theme: settings.THEME = os.path.abspath(self.args.theme)
-        if self.args.content: settings.CONTENT = os.path.abspath(self.args.content)
-        if self.args.archetypes: settings.ARCHETYPES = os.path.abspath(self.args.archetypes)
-        if self.args.output: settings.OUTPUT = os.path.abspath(self.args.output)
+        if self.args.theme: self.settings.THEME = os.path.abspath(self.args.theme)
+        if self.args.content: self.settings.CONTENT = os.path.abspath(self.args.content)
+        if self.args.archetypes: self.settings.ARCHETYPES = os.path.abspath(self.args.archetypes)
+        if self.args.output: self.settings.OUTPUT = os.path.abspath(self.args.output)
 
         # Double check that root points to something that looks like a project
-        self.content_root = os.path.join(self.root, settings.CONTENT)
+        self.content_root = os.path.join(self.root, self.settings.CONTENT)
         if not os.path.exists(self.content_root):
             raise CmdlineError("Content directory {} does not exist".format(self.content_root))
 
-        self.theme_root = os.path.join(self.root, settings.THEME)
+        self.theme_root = os.path.join(self.root, self.settings.THEME)
         if not os.path.exists(self.theme_root):
             raise CmdlineError("Theme directory {} does not exist".format(self.theme_root))
 
@@ -70,7 +72,7 @@ class SiteCommand:
 
     def load_site(self):
         # Instantiate site
-        site = Site()
+        site = Site(settings=self.settings)
         site.draft = self.args.draft
 
         # Read and analyze site contents
