@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from .commands import SiteCommand, CmdlineError
-from staticsite.core import settings, PageFS
+from staticsite.core import PageFS
 import os
 import mimetypes
 import gc
