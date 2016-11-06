@@ -54,10 +54,6 @@ class Settings:
         self.add_module(user_settings)
 
 
-settings = Settings()
-
-
-
 class Archetype:
     def __init__(self, site, relpath):
         self.site = site

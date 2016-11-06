@@ -4,17 +4,15 @@ import re
 import pytz
 import datetime
 from collections import defaultdict
-from .core import settings
+from .core import Settings
 import logging
 
 log = logging.getLogger()
 
 class Site:
-    def __init__(self):
+    def __init__(self, settings=None):
         # Site settings
-        # FIXME: after all code has been ported to access settings via Site,
-        #        core.settings will be gone and settings will be loaded by Site
-        #        itself.
+        if settings is None: settings = Settings()
         self.settings = settings
 
         # Site pages
