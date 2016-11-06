@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page, settings, RenderedString
+from .core import Page, RenderedString
 import os
 import re
 from collections import defaultdict
@@ -24,7 +24,7 @@ class DirPage(Page):
             src_relpath=relpath,
             src_linkpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(settings.SITE_ROOT, relpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, relpath))
 
         self.pages = list(pages)
         self.subdirs = []
@@ -57,7 +57,7 @@ class DirPage(Page):
 
     def read_metadata(self):
         self.meta["date"] = self.get_date()
-        self.meta["title"] = os.path.basename(self.src_relpath) or settings.SITE_NAME
+        self.meta["title"] = os.path.basename(self.src_relpath) or self.site.settings.SITE_NAME
 
     def render(self):
         self.subdirs.sort(key=lambda x:x.meta["title"])

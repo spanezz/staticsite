@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Archetype, Page, RenderedString, settings
+from .core import Archetype, Page, RenderedString
 import os
 import re
 from collections import defaultdict
@@ -47,7 +47,7 @@ class J2Page(Page):
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=dst_relpath,
-            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
 
     def read_metadata(self):
         self.meta["date"] = self.site.generation_time

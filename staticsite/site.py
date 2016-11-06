@@ -11,6 +11,12 @@ log = logging.getLogger()
 
 class Site:
     def __init__(self):
+        # Site settings
+        # FIXME: after all code has been ported to access settings via Site,
+        #        core.settings will be gone and settings will be loaded by Site
+        #        itself.
+        self.settings = settings
+
         # Site pages
         self.pages = {}
 

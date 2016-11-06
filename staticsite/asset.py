@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Page, RenderedFile, settings
+from .core import Page, RenderedFile
 import datetime
 import os
 import pytz
@@ -23,7 +23,7 @@ class Asset(Page):
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=relpath,
-            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
         self.title = os.path.basename(relpath)
 
         dt = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(self.src_abspath)))

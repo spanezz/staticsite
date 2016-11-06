@@ -4,7 +4,6 @@ import os
 import re
 import fnmatch
 import datetime
-from .core import settings
 import logging
 
 log = logging.getLogger()
@@ -26,9 +25,9 @@ class Theme:
         )
 
         # Add settings to jinja2 globals
-        for x in dir(settings):
+        for x in dir(self.site.settings):
             if not x.isupper(): continue
-            self.jinja2.globals[x] = getattr(settings, x)
+            self.jinja2.globals[x] = getattr(self.site.settings, x)
 
         # Install site's functions into the jinja2 environment
         self.jinja2.globals.update(

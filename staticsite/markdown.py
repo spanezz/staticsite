@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from .core import Archetype, Page, RenderedString, settings
+from .core import Archetype, Page, RenderedString
 import re
 import os
 import io
@@ -212,7 +212,7 @@ class MarkdownPage(Page):
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(mdenv.site.settings.SITE_ROOT, linkpath))
 
         # Shared markdown environment
         self.mdenv = mdenv
