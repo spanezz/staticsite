@@ -1,4 +1,6 @@
-.egt
-MANIFEST
+/.egt
+/MANIFEST
 *.swp
 *.pyc
+/.coverage
+/htmlcov
