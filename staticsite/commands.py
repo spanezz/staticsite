@@ -43,6 +43,11 @@ class SiteCommand:
 
         self.settings = Settings()
 
+        # "Repo mode", adjust paths if README.md exists in the root
+        if os.path.isfile(os.path.join(self.root, 'README.md')):
+                self.settings.CONTENT = self.root
+                self.settings.OUTPUT = self.root + '.site.out'
+
         # Load settings (optional)
         settings_files = (os.path.join(self.root, f) for f in settings_files)
         settings_file = next(filter(os.path.isfile, settings_files), None)
