@@ -71,6 +71,8 @@ class Theme:
         elif format == "iso8601" or not format:
             from .utils import format_date_iso8601
             return format_date_iso8601(dt)
+        elif format[0] == '%':
+            return dt.strftime(format)
         else:
             log.warn("%s+%s: invalid datetime format %r requested", context.parent["page"].src_relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
