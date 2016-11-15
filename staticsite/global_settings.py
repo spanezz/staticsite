@@ -32,3 +32,11 @@ EDITOR = os.environ.get("EDITOR", "sensible-editor")
 # Each list element is expanded with string.format. All settings are available
 # for expansion, and {name} is the absolute path of the file to edit.
 EDIT_COMMAND = ["{EDITOR}", "{name}", "+"]
+
+# extensions for python-markdown and their config used for this site
+MARKDOWN_EXTENSIONS = [
+    "markdown.extensions.extra",
+    "markdown.extensions.codehilite",
+    "markdown.extensions.fenced_code",
+]
+MARKDOWN_EXTENSION_CONFIGS = {}
