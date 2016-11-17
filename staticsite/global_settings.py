@@ -14,7 +14,7 @@ ARCHETYPES = "archetypes"
 # Default: the project directory itself
 CONTENT = "content"
 
-# Theme used to render the stie
+# Theme used to render the site
 # Default: the one installed in the system
 THEME = "/usr/share/doc/staticsite/example/theme/"
 
