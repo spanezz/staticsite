@@ -51,7 +51,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         # Also allow .md extension in
         if dest is None and parsed.path.endswith(".md"):
             dirname, basename = os.path.split(parsed.path)
-            if basename == "index.md":
+            if basename in ("index.md", "README.md"):
                 dest = self.page.resolve_link(dirname)
             else:
                 dest = self.page.resolve_link(parsed.path[:-3])
@@ -202,7 +202,7 @@ class MarkdownPage(Page):
 
     def __init__(self, mdenv, root_abspath, relpath):
         dirname, basename = os.path.split(relpath)
-        if basename == "index.md":
+        if basename in ("index.md", "README.md"):
             linkpath = dirname
         else:
             linkpath = os.path.splitext(relpath)[0]

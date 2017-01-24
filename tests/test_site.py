@@ -90,3 +90,19 @@ class TestBuild(TestCase):
             output = os.path.join(root, "web/.secrets")
             self.assertFalse(os.path.exists(output))
 
+    def test_different_index(self):
+        with example_site() as root:
+            args = TestArgs(project=root)
+            build = Build(args)
+            build.run()
+
+            output = os.path.join(root, "web/pages/index.html")
+            with open(output, "rt") as fd:
+                content = fd.read()
+            self.assertIn('<a href="/pages/doc/sub">Docs</a>', content)
+
+            output = os.path.join(root, "web/pages/doc/sub/index.html")
+            with open(output, "rt") as fd:
+                content = fd.read()
+            self.assertIn('<a href="/pages">Back to README</a>', content)
+
