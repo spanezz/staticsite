@@ -2,6 +2,7 @@ staticsite (0.5-1) UNRELEASED; urgency=medium
 
   * New upstream version
   * Added copyright of example assets to debian/copyright
+  * Made livereload an optional dependency
 
  -- Enrico Zini <enrico@debian.org>  Sat, 20 Aug 2016 10:57:55 +0200
 
