@@ -3,6 +3,7 @@
 from .commands import SiteCommand, CmdlineError
 from staticsite.core import PageFS
 import os
+import sys
 import mimetypes
 import gc
 import logging
@@ -17,7 +18,11 @@ class Serve(SiteCommand):
 
         self.reload()
 
-        from livereload import Server
+        try:
+            from livereload import Server
+        except ImportError:
+            print("Please install the python3 livereload module to use this function.", file=sys.stderr)
+            return
         server = Server(self.application)
         server.watch(self.content_root, self.reload)
         server.watch(self.theme_root, self.reload)
