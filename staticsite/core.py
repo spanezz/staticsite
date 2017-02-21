@@ -164,6 +164,8 @@ class Page:
         root = os.path.dirname(self.src_relpath)
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
+            if target_relpath == ".":
+                target_relpath = ""
             res = self.site.pages.get(target_relpath, None)
             if res is not None: return res
             if not root or root == "/":

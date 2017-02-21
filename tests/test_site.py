@@ -1,5 +1,6 @@
 # coding: utf-8
 from unittest import TestCase
+from staticsite.build import Build
 from staticsite.site import Site
 from staticsite.core import Page
 from . import datafile_abspath, example_site, TestArgs
@@ -66,7 +67,6 @@ class TestMarkdownInJinja2(TestCase):
             with open(page, "wt") as fd:
                 fd.write("{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")
 
-            from staticsite.build import Build
             args = TestArgs(project=root)
             build = Build(args)
             build.run()
@@ -77,3 +77,32 @@ class TestMarkdownInJinja2(TestCase):
                 content = fd.read()
 
             self.assertEqual(content, '<p><em>This</em> is an <a href="http://example.org">example</a></p>')
+
+class TestBuild(TestCase):
+    def test_dots(self):
+        with example_site() as root:
+            args = TestArgs(project=root)
+            build = Build(args)
+            build.run()
+
+            output = os.path.join(root, "web/.secret")
+            self.assertFalse(os.path.exists(output))
+            output = os.path.join(root, "web/.secrets")
+            self.assertFalse(os.path.exists(output))
+
+    def test_different_links(self):
+        with example_site() as root:
+            args = TestArgs(project=root)
+            build = Build(args)
+            build.run()
+
+            output = os.path.join(root, "web/pages/index.html")
+            with open(output, "rt") as fd:
+                content = fd.read()
+            self.assertIn('<a href="/pages/doc/sub">Docs</a>', content)
+            self.assertIn('<a href="/">Back home</a>', content)
+
+            output = os.path.join(root, "web/pages/doc/sub/index.html")
+            with open(output, "rt") as fd:
+                content = fd.read()
+            self.assertIn('<a href="/pages">Back to README</a>', content)

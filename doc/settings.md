@@ -7,7 +7,7 @@ is interpreted via Python similarly to what happens in
 Only uppercase settings are used.
 
 Default settings are defined in the module `staticsite/global_settings.py` and
-overridden by `settings.py`.
+overridden by `settings.py` or `.staticsite.py`.
 
 ## Common settings
 
