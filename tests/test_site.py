@@ -45,20 +45,20 @@ class TestSite(TestCase):
         dir_dir2 = site.pages["dir1/dir2"]
         dir_dir3 = site.pages["dir1/dir2/dir3"]
 
-        self.assertEquals(dir_root.TYPE, "dir")
-        self.assertEquals(dir_dir1.TYPE, "dir")
-        self.assertEquals(dir_dir3.TYPE, "dir")
-        self.assertEquals(dir_dir3.TYPE, "dir")
+        self.assertEqual(dir_root.TYPE, "dir")
+        self.assertEqual(dir_dir1.TYPE, "dir")
+        self.assertEqual(dir_dir3.TYPE, "dir")
+        self.assertEqual(dir_dir3.TYPE, "dir")
 
         # Check the contents of all dirs
-        self.assertEquals(dir_root.pages, [page_root])
-        self.assertEquals(dir_root.subdirs, [dir_dir1])
-        self.assertEquals(dir_dir1.pages, [page_sub])
-        self.assertEquals(dir_dir1.subdirs, [dir_dir2])
-        self.assertEquals(dir_dir2.pages, [])
-        self.assertEquals(dir_dir2.subdirs, [dir_dir3])
-        self.assertEquals(dir_dir3.pages, [page_sub3])
-        self.assertEquals(dir_dir3.subdirs, [])
+        self.assertEqual(dir_root.pages, [page_root])
+        self.assertEqual(dir_root.subdirs, [dir_dir1])
+        self.assertEqual(dir_dir1.pages, [page_sub])
+        self.assertEqual(dir_dir1.subdirs, [dir_dir2])
+        self.assertEqual(dir_dir2.pages, [])
+        self.assertEqual(dir_dir2.subdirs, [dir_dir3])
+        self.assertEqual(dir_dir3.pages, [page_sub3])
+        self.assertEqual(dir_dir3.subdirs, [])
 
 class TestMarkdownInJinja2(TestCase):
     def test_jinja2_markdown(self):
