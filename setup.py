@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools import setup
 import sys
 
 setup(
     name = "staticsite",
-    requires=[ 'unidecode', 'markdown', 'toml', 'PyYAML', 'jinja2', 'python_dateutil', 'livereload', 'python_slugify', 'pytz' ],
+    install_requires=[ 'unidecode', 'markdown', 'toml', 'PyYAML', 'jinja2', 'python_dateutil', 'python_slugify', 'pytz' ],
+    # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
+    extras_require={
+        'serve': ['livereload'],
+    },
     version = "0.5",
     description = "Static site generator",
     author = ["Enrico Zini"],
