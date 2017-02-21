@@ -26,7 +26,7 @@ class Asset(Page):
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
         self.title = os.path.basename(relpath)
 
-        dt = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(self.src_abspath)))
+        dt = datetime.datetime.utcfromtimestamp(os.path.getmtime(self.src_abspath)).replace(tzinfo=pytz.utc)
         self.meta["date"] = dt
 
     def render(self):
