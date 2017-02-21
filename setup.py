@@ -5,7 +5,7 @@ import sys
 
 setup(
     name = "staticsite",
-    requires=[ 'unidecode', 'markdown', 'toml', 'PyYAML', 'jinja2', 'python_dateutil', 'livereload', 'python_slugify' ],
+    requires=[ 'unidecode', 'markdown', 'toml', 'PyYAML', 'jinja2', 'python_dateutil', 'livereload', 'python_slugify', 'pytz' ],
     version = "0.5",
     description = "Static site generator",
     author = ["Enrico Zini"],
