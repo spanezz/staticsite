@@ -61,6 +61,6 @@ This is a list of all metadata elements that are currently in use:
    used to maintain existing links when moving a page to a different location.
  - `series`: name identifying a [series of articles](series.md) that is article
    is a part of.
- - `series_title`, `series_prev`, `series_next`: see [series of articles](series.md)
+ - `series_title`, `series_prev`, `series_next`, `series_first`, `series_last`: see [series of articles](series.md)
 
 [Back to README](../README.md)
