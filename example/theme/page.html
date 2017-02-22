@@ -1,4 +1,41 @@
 {% extends "base.html" %}
+
+{# Render navigation for page series #}
+{% block nav %}
+{{super()}}
+{% if series %}
+  <li>
+    <a href="{{url_for(series_first)}}"><span class="glyphicon glyphicon-fast-backward"></a>
+  </li>
+
+  {% if series_prev %}
+  <li>
+    <a href="{{url_for(series_prev)}}"><span class="glyphicon glyphicon-chevron-left"></a>
+  {% else %}
+  <li class="disabled">
+    <a href="#"><span class="glyphicon glyphicon-chevron-left"></a>
+  {% endif %}
+  </li>
+
+  <li><a href="#">{{series_title}} {{series_index}}/{{series_length}}</a></li>
+
+  {% if series_next %}
+  <li>
+    <a href="{{url_for(series_next)}}"><span class="glyphicon glyphicon-chevron-right"></a>
+  {% else %}
+  <li class="disabled">
+    <a href="#"><span class="glyphicon glyphicon-chevron-right"></a>
+  {% endif %}
+  </li>
+
+  {% if series_last %}
+  <li>
+    <a href="{{url_for(series_last)}}"><span class="glyphicon glyphicon-fast-forward"></a>
+  </li>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
 {% block content %}
   <div class="page-header">
     <h1>{{page.meta.title}}</h1>
