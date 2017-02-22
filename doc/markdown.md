@@ -59,5 +59,8 @@ This is a list of all metadata elements that are currently in use:
  - `aliases`: relative paths in the destination directory where the page should
    also show up. [Like in Hugo](https://gohugo.io/extras/aliases/), this can be
    used to maintain existing links when moving a page to a different location.
+ - `series`: name identifying a [series of articles](series.md) that is article
+   is a part of.
+ - `series_title`, `series_prev`, `series_next`, `series_first`, `series_last`, `series_index`, `series_length`: see [series of articles](series.md)
 
 [Back to README](../README.md)

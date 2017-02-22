@@ -5,6 +5,7 @@ import pytz
 import datetime
 from collections import defaultdict
 from .core import Settings
+from .series import Series
 import logging
 
 log = logging.getLogger()
@@ -20,6 +21,9 @@ class Site:
 
         # Description of tags
         self.tag_descriptions = {}
+
+        # Series repository
+        self.series = {}
 
         # Site time zone
         self.timezone = pytz.timezone(settings.TIMEZONE)
@@ -85,6 +89,12 @@ class Site:
             log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
             return
         self.pages[page.src_linkpath] = page
+
+    def add_page_to_series(self, page, series_name):
+        series = self.series.get(series_name, None)
+        if series is None:
+            self.series[series_name] = series = Series(series_name)
+        series.add_page(page)
 
     def read_contents_tree(self, tree_root):
         """
@@ -182,6 +192,15 @@ class Site:
         for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):
             for page in pages:
                 page.read_metadata()
+
+                # If the page is part of a series, take note of it
+                series_name = page.meta.get("series", None)
+                if series_name is not None:
+                    self.add_page_to_series(page, series_name)
+
+        # Finalize series
+        for series in self.series.values():
+            series.finalize()
 
     def slugify(self, text):
         """
