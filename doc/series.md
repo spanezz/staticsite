@@ -8,6 +8,8 @@ and can have links to the previous and next page in the series.
 
 Each page in the series gets extra metadata, automatically computed:
 
+ - `series_index`: position of this page in the series (starts from 1)
+ - `series_length`: number of pages in the series
  - `series_first`: first page in the series
  - `series_last`: last page in the series
  - `series_prev`: previous page in the series, if available

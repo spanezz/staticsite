@@ -21,6 +21,8 @@ class Series:
             cur = self.pages[idx]
 
             # Assign series_prev and series_next metadata elements to pages
+            cur.meta["series_index"] = idx + 1
+            cur.meta["series_length"] = len(self.pages)
             cur.meta["series_first"] = first
             cur.meta["series_last"] = last
             cur.meta["series_prev"] = self.pages[idx - 1] if idx > 0 else None
