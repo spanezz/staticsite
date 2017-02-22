@@ -53,6 +53,7 @@ Useful tips:
 * [doc/markdown.md: Markdown pages reference](doc/markdown.md)
 * [doc/templates.md: Jinja2 templates reference](doc/templates.md)
 * [doc/taxonomies.md: taxonomy reference](doc/taxonomies.md)
+* [doc/series.md: page series reference](doc/series.md)
 
 
 ## License
