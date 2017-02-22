@@ -14,14 +14,15 @@ class TestSeries(TestCase):
 
         seriesa1 = TestPage(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa")
         seriesa2 = TestPage(site, "seriesa2", date=datetime.datetime(2016, 1, 2), series="seriesa")
-        seriesb2 = TestPage(site, "seriesb2", date=datetime.datetime(2016, 1, 2), series="seriesb")
         seriesb1 = TestPage(site, "seriesb1", date=datetime.datetime(2016, 1, 1), series="seriesb")
+        seriesb2 = TestPage(site, "seriesb2", date=datetime.datetime(2016, 1, 2), series="seriesb")
         noseries = TestPage(site, "noseries", date=datetime.datetime(2016, 1, 1))
 
         site.add_page(seriesa1)
         site.add_page(seriesa2)
-        site.add_page(seriesb1)
+        # Invert adding seriesb pages to check date-based ordering
         site.add_page(seriesb2)
+        site.add_page(seriesb1)
         site.add_page(noseries)
         site.load_theme(datafile_abspath("theme"))
         site.analyze()

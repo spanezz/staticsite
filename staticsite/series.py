@@ -10,4 +10,4 @@ class Series:
         self.pages.append(page)
 
     def finalize(self):
-        pass
+        self.pages.sort(key=lambda p: p.meta["date"])
