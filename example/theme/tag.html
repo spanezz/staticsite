@@ -11,6 +11,14 @@
 <li><a href="{{ url_for_tag_archive(tag) }}">Archive</a></li>
 {% endblock %}
 
+{% block nav_extra %}
+<p class="navbar-text navbar-right">
+  <a href="{{ url_for_tag_rss(tag) }}">
+    <img src="{{ url_for('/images/feed-icon-16x16.png') }}">
+  </a>
+</p>
+{% endblock %}
+
 {% block content %}
 <h1>Tag {{tag.name}}</h1>
 
@@ -21,4 +29,3 @@
 {% endfor %}
 
 {% endblock %}
-

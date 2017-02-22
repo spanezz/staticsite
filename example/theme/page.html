@@ -17,7 +17,7 @@
   {% endif %}
   </li>
 
-  <li><a href="#">{{series_title}} {{series_index}}/{{series_length}}</a></li>
+  <li><a href="{{url_for_tag_archive(page.meta.series)|default("#")}}">{{series_title}} {{series_index}}/{{series_length}}</a></li>
 
   {% if series_next %}
   <li>
@@ -33,6 +33,16 @@
     <a href="{{url_for(series_last)}}"><span class="glyphicon glyphicon-fast-forward"></a>
   </li>
   {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block nav_extra %}
+{% if series %}
+<p class="navbar-text navbar-right">
+  <a href="{{ url_for_tag_rss(page.meta.series) }}">
+    <img src="{{ url_for('/images/feed-icon-16x16.png') }}">
+  </a>
+</p>
 {% endif %}
 {% endblock %}
 

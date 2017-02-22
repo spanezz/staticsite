@@ -28,3 +28,6 @@ deal with multiple previous/next links one for each series.
 [Page templates](templates.md) in the series can check for the `series` and the
 other `series_*` metadata to build navigation links for pages that are part of
 a series.
+
+If you name the series with the same name as a [taxonomy](taxonomies.md), you
+can easily link to an index for all the series with its own RSS feed.
