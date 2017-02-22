@@ -3,35 +3,17 @@ from unittest import TestCase
 from staticsite.build import Build
 from staticsite.site import Site
 from staticsite.core import Page
-from . import datafile_abspath, example_site, TestArgs
+from . import datafile_abspath, example_site, TestArgs, TestPage
 import os
 import datetime
-
-class TestPage(Page):
-    TYPE = "test"
-    FINDABLE = True
-
-    def __init__(self, site, relpath, dt):
-        super().__init__(
-            site=site,
-            root_abspath="/",
-            src_relpath=relpath,
-            src_linkpath=relpath,
-            dst_relpath=relpath,
-            dst_link=relpath)
-        self.dt = dt
-
-    def read_metadata(self):
-        self.meta["date"] = self.dt
-
 
 class TestSite(TestCase):
     def test_dirs(self):
         site = Site()
 
-        page_root = TestPage(site, "page_root", datetime.datetime(2016, 1, 1))
-        page_sub = TestPage(site, "dir1/page_sub", datetime.datetime(2016, 2, 1))
-        page_sub3 = TestPage(site, "dir1/dir2/dir3/page_sub3", datetime.datetime(2016, 3, 1))
+        page_root = TestPage(site, "page_root", date=datetime.datetime(2016, 1, 1))
+        page_sub = TestPage(site, "dir1/page_sub", date=datetime.datetime(2016, 2, 1))
+        page_sub3 = TestPage(site, "dir1/dir2/dir3/page_sub3", date=datetime.datetime(2016, 3, 1))
 
         site.add_page(page_root)
         site.add_page(page_sub)

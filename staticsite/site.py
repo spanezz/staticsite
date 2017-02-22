@@ -5,6 +5,7 @@ import pytz
 import datetime
 from collections import defaultdict
 from .core import Settings
+from .series import Series
 import logging
 
 log = logging.getLogger()
@@ -20,6 +21,9 @@ class Site:
 
         # Description of tags
         self.tag_descriptions = {}
+
+        # Series repository
+        self.series = defaultdict(Series)
 
         # Site time zone
         self.timezone = pytz.timezone(settings.TIMEZONE)
@@ -182,6 +186,15 @@ class Site:
         for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):
             for page in pages:
                 page.read_metadata()
+
+                # If the page is part of a series, take note of it
+                series = page.meta.get("series", None)
+                if series is not None:
+                    self.series[series].add_page(page)
+
+        # Finalize series
+        for series in self.series.values():
+            series.finalize()
 
     def slugify(self, text):
         """

@@ -1,5 +1,6 @@
 # coding: utf-8
 import os
+from staticsite.core import Page
 from contextlib import contextmanager
 
 def datafile_abspath(relpath):
@@ -24,3 +25,21 @@ class TestArgs:
 
     def __getattr__(self, k):
         return self._args.get(k, None)
+
+
+class TestPage(Page):
+    TYPE = "test"
+    FINDABLE = True
+
+    def __init__(self, site, relpath, **meta):
+        super().__init__(
+            site=site,
+            root_abspath="/",
+            src_relpath=relpath,
+            src_linkpath=relpath,
+            dst_relpath=relpath,
+            dst_link=relpath)
+        self._future_meta = meta
+
+    def read_metadata(self):
+        self.meta.update(**self._future_meta)
