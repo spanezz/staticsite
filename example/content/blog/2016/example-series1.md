@@ -12,6 +12,9 @@ date = "2016-03-01 00:00:00+01:00"
 # Name of the series. All pages with the same series name will be part of this
 # series, ordered by date.
 series = "exampleseries"
+
+# Also use a tag to automatically get an index for the series
+tags = [ "exampleseries" ]
 +++
 
 # Example series of blog posts
