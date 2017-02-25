@@ -23,7 +23,7 @@
 
 <ul>
 {% for p in pages %}
-<li><a href="{{url_for(p)}}">{{p.meta.title}}</a></li>
+<li><a href="{{url_for(p)}}">{{p.meta.date.strftime("%Y-%m-%d")}} - {{p.meta.title}}</a></li>
 {% endfor %}
 </ul>
 
