@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block head %}
+{{super()}}
+{% if series %}
+<link href="{{ url_for_tag_rss(series) }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: {{series}} RSS2 feed"></link>
+<link href="{{ url_for_tag_atom(series) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{series}} ATOM feed"></link>
+{% endif %}
+{% endblock %}
+
 {# Render navigation for page series #}
 {% block nav %}
 {{super()}}

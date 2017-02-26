@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
+{{super()}}
 <link href="{{ url_for_tag_rss(tag) }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: {{tag.name}} RSS2 feed"></link>
 <link href="{{ url_for_tag_atom(tag) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{tag.name}} ATOM feed"></link>
 {% endblock %}
