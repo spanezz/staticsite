@@ -15,7 +15,7 @@ class TaxonomyPages:
 
     def try_load_page(self, root_abspath, relpath):
         if not relpath.endswith(".taxonomy"): return None
-        return TaxonomyPage(self, root_abspath, relpath)
+        return TaxonomyPage(self.site, root_abspath, relpath)
 
 
 class TaxonomyItem:
@@ -34,16 +34,16 @@ class TaxonomyPage(Page):
     ANALYZE_PASS = 2
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, tenv, root_abspath, relpath):
+    def __init__(self, site, root_abspath, relpath):
         linkpath = os.path.splitext(relpath)[0]
 
         super().__init__(
-            site=tenv.site,
+            site=site,
             root_abspath=root_abspath,
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=linkpath,
-            dst_link=os.path.join(tenv.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
@@ -72,6 +72,25 @@ class TaxonomyPage(Page):
         #        info["output_dir"] = self.enforce_relpath(output_dir)
         #    self.taxonomies[name] = Taxonomy(**info)
 
+        # Read taxonomy information
+        self._read_taxonomy_description()
+
+        # Items that automatically identify a series
+        self.series_items = frozenset(self.meta.get("series", ()))
+
+    def _read_taxonomy_description(self):
+        """
+        Parse the taxonomy file to read its description
+        """
+        from .utils import parse_front_matter
+        src = self.src_abspath
+        with open(src, "rt") as fd:
+            lines = [x.rstrip() for x in fd]
+        try:
+            style, meta = parse_front_matter(lines)
+            self.meta.update(**meta)
+        except:
+            log.exception("%s.taxonomy: cannot parse taxonomy information", self.src_relpath)
 
     def link_value(self, context, output_item, value):
         if isinstance(value, str):
@@ -119,18 +138,6 @@ class TaxonomyPage(Page):
             return None
 
     def read_metadata(self):
-        from .utils import parse_front_matter
-
-        # Read taxonomy information
-        src = self.src_abspath
-        with open(src, "rt") as fd:
-            lines = [x.rstrip() for x in fd]
-        try:
-            style, meta = parse_front_matter(lines)
-            self.meta.update(**meta)
-        except:
-            log.exception("%s.taxonomy: cannot parse taxonomy information", self.src_relpath)
-
         single_name = self.meta.get("item_name", self.name)
 
         # Instantiate jinja2 templates
@@ -147,17 +154,21 @@ class TaxonomyPage(Page):
         self.site.theme.jinja2.globals["url_for_" + single_name + "_atom"] = self.link_atom
         self.site.theme.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
 
-        # Collect the pages annotated with this taxonomy
-        for page in self.site.pages.values():
-            if page.ANALYZE_PASS > 1 : continue
-            vals = page.meta.get(self.name, None)
-            if vals is None: continue
-            for v in vals:
-                item = self.items.get(v, None)
-                if item is None:
-                    item = TaxonomyItem(self, v)
-                    self.items[v] = item
-                item.pages.append(page)
+    def add_page(self, page, elements):
+        """
+        Add a page to this taxonomy. Elements is a sequence of elements for
+        this taxonomy.
+        """
+        series = []
+        for v in elements:
+            item = self.items.get(v, None)
+            if item is None:
+                item = TaxonomyItem(self, v)
+                self.items[v] = item
+            item.pages.append(page)
+            if v in self.series_items and (not series or series[0] != v):
+                series.append(v)
+        return series
 
     def render(self):
         res = {}
