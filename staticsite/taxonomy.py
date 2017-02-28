@@ -147,17 +147,17 @@ class TaxonomyPage(Page):
         self.site.theme.jinja2.globals["url_for_" + single_name + "_atom"] = self.link_atom
         self.site.theme.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
 
-        # Collect the pages annotated with this taxonomy
-        for page in self.site.pages.values():
-            if page.ANALYZE_PASS > 1 : continue
-            vals = page.meta.get(self.name, None)
-            if vals is None: continue
-            for v in vals:
-                item = self.items.get(v, None)
-                if item is None:
-                    item = TaxonomyItem(self, v)
-                    self.items[v] = item
-                item.pages.append(page)
+    def add_page(self, page, elements):
+        """
+        Add a page to this taxonomy. Elements is a sequence of elements for
+        this taxonomy.
+        """
+        for v in elements:
+            item = self.items.get(v, None)
+            if item is None:
+                item = TaxonomyItem(self, v)
+                self.items[v] = item
+            item.pages.append(page)
 
     def render(self):
         res = {}

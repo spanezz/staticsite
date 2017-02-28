@@ -193,11 +193,6 @@ class Site:
             for page in pages:
                 page.read_metadata()
 
-                # If the page is part of a series, take note of it
-                series_name = page.meta.get("series", None)
-                if series_name is not None:
-                    self.add_page_to_series(page, series_name)
-
         # Finalize series
         for series in self.series.values():
             series.finalize()

@@ -176,7 +176,30 @@ class Page:
         """
         Fill in self.meta scanning the page contents
         """
-        pass
+        # Assign page to its taxonomies
+        taxonomy_series = []
+        for taxonomy in self.site.taxonomies:
+            vals = self.meta.get(taxonomy.name, None)
+            if not vals: continue
+            taxonomy_series_name = taxonomy.add_page(self, vals)
+            # Allow a taxonomy to auto-define a series
+            if taxonomy_series_name is not None and (not taxonomy_series or taxonomy_series_name != taxonomy_series[0]):
+                series.append(series_name)
+
+        # If the page is part of a series, take note of it
+        series_name = self.meta.get("series", None)
+        if series_name is None:
+            if not taxonomy_series:
+                pass
+            elif len(taxonomy_series) == 1:
+                series_name = taxonomy_series[0]
+            else:
+                log.warn("%s: %d series defined via tags (%s) but only one can be used: use the 'series' metadata to choose which one",
+                        self.src_relpath, len(taxonomy_series), ", ".join(taxonomy_series))
+
+        # Assign page to its series
+        if series_name is not None:
+            self.site.add_page_to_series(self, series_name)
 
     def check(self, checker):
         pass

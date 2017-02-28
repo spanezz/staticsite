@@ -43,3 +43,4 @@ class TestPage(Page):
 
     def read_metadata(self):
         self.meta.update(**self._future_meta)
+        super().read_metadata()
