@@ -41,6 +41,10 @@ template_archive = "tag-archive.html"
 # Templates for rendering the Atom and RSS2 feeds for each tag
 template_atom = "tag.atom"
 template_rss = "tag.rss"
+
+# When pages are added with these items of this taxonomy, also add them to a
+series with the same name as the tag
+serires = ["links", "songs"]
 +++
 ```
 

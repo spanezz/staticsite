@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 from staticsite.core import Page
+from staticsite.taxonomy import TaxonomyPage
 from contextlib import contextmanager
 
 def datafile_abspath(relpath):
@@ -44,3 +45,12 @@ class TestPage(Page):
     def read_metadata(self):
         self.meta.update(**self._future_meta)
         super().read_metadata()
+
+
+class TestTaxonomyPage(TaxonomyPage):
+    def __init__(self, site, name, meta={}):
+        self._future_meta = meta
+        super().__init__(site, "/tmp/", name + ".taxonomy")
+
+    def _read_taxonomy_description(self):
+        self.meta.update(**self._future_meta)
