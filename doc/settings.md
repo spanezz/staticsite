@@ -32,7 +32,7 @@ SITE_ROOT = "/"
 # Directory with the source content of the site
 CONTENT = "content"
 
-# Theme used to render the stie
+# Theme used to render the site
 # Default: the one installed in the system
 THEME = "theme"
 

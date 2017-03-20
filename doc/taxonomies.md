@@ -44,7 +44,7 @@ template_rss = "tag.rss"
 
 # When pages are added with these items of this taxonomy, also add them to a
 series with the same name as the tag
-serires = ["links", "songs"]
+series = ["links", "songs"]
 +++
 ```
 
