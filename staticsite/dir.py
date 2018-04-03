@@ -52,7 +52,10 @@ class DirPage(Page):
             else:
                 dates = []
             dates.extend(d.get_date() for d in self.subdirs)
-            self.meta["date"] = res = max(dates)
+            if not dates:
+                self.meta["date"] = res = None
+            else:
+                self.meta["date"] = res = max(dates)
         return res
 
     def read_metadata(self):
