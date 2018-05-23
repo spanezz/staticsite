@@ -1,14 +1,12 @@
-# coding: utf-8
-
-from .commands import SiteCommand, CmdlineError
+from .commands import SiteCommand
 from staticsite.core import PageFS
-import os
 import sys
 import mimetypes
 import gc
 import logging
 
 log = logging.getLogger()
+
 
 class Serve(SiteCommand):
     "serve the site over HTTP, building it in memory on demand"
@@ -24,8 +22,12 @@ class Serve(SiteCommand):
             print("Please install the python3 livereload module to use this function.", file=sys.stderr)
             return
         server = Server(self.application)
-        server.watch(self.content_root, self.reload)
-        server.watch(self.theme_root, self.reload)
+
+        # see https://github.com/lepture/python-livereload/issues/171
+        def do_reload():
+            self.reload()
+        server.watch(self.content_root, do_reload)
+        server.watch(self.theme_root, do_reload)
         server.serve(port=8000, host="localhost")
 
     def application(self, environ, start_response):
