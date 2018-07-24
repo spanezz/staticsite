@@ -1,3 +1,4 @@
+import os
 # Root directory of the site in the URLs we generate.
 #
 # If you are publishing the site at /prefix instead of root of the domain,
@@ -14,9 +15,9 @@ ARCHETYPES = "archetypes"
 # Default: the project directory itself
 CONTENT = "content"
 
-# Theme used to render the site
+# Theme used to render the site. A sequence of strings is tried in order.
 # Default: the one installed in the system
-THEME = "/usr/share/doc/staticsite/example/theme/"
+THEME = ("/usr/share/doc/staticsite/example/theme/", "theme")
 
 # Directory where the static site will be written by build
 OUTPUT = "web"
@@ -25,7 +26,6 @@ OUTPUT = "web"
 TIMEZONE = "UTC"
 
 # Editor used to edit new pages
-import os
 EDITOR = os.environ.get("EDITOR", "sensible-editor")
 
 # Command used to run the editor, as passed to subprocess.check_command.

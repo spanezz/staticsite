@@ -9,6 +9,7 @@ import logging
 
 log = logging.getLogger()
 
+
 class CmdlineError(RuntimeError):
     pass
 
@@ -55,19 +56,32 @@ class SiteCommand:
             self.settings.load(settings_file)
 
         # Command line overrides for settings
-        if self.args.theme: self.settings.THEME = os.path.abspath(self.args.theme)
-        if self.args.content: self.settings.CONTENT = os.path.abspath(self.args.content)
-        if self.args.archetypes: self.settings.ARCHETYPES = os.path.abspath(self.args.archetypes)
-        if self.args.output: self.settings.OUTPUT = os.path.abspath(self.args.output)
+        if self.args.theme:
+            self.settings.THEME = (os.path.abspath(self.args.theme),)
+        if self.args.content:
+            self.settings.CONTENT = os.path.abspath(self.args.content)
+        if self.args.archetypes:
+            self.settings.ARCHETYPES = os.path.abspath(self.args.archetypes)
+        if self.args.output:
+            self.settings.OUTPUT = os.path.abspath(self.args.output)
 
         # Double check that root points to something that looks like a project
         self.content_root = os.path.join(self.root, self.settings.CONTENT)
         if not os.path.exists(self.content_root):
             raise CmdlineError("Content directory {} does not exist".format(self.content_root))
 
-        self.theme_root = os.path.join(self.root, self.settings.THEME)
-        if not os.path.exists(self.theme_root):
-            raise CmdlineError("Theme directory {} does not exist".format(self.theme_root))
+        # Pick the first valid theme directory
+        self.theme_root = None
+        candidate_themes = self.settings.THEME
+        if isinstance(candidate_themes, str):
+            candidate_themes = (candidate_themes,)
+        for themedir in candidate_themes:
+            themedir = os.path.join(self.root, themedir)
+            if os.path.isdir(themedir):
+                self.theme_root = themedir
+                break
+        if self.theme_root is None:
+            raise CmdlineError("None of the configured theme directories ({}) seem to exist".format(", ".join(self.settings.THEME)))
 
     def setup_logging(self, args):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"

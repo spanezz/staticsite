@@ -4,6 +4,7 @@ from staticsite.build import Build
 from . import example_site, TestArgs
 import os
 
+
 class TestConfigfile(TestCase):
     def _test_project(self, root, title='Example web site', cfg=''):
         args = TestArgs(project=root + cfg)

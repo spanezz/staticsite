@@ -18,12 +18,12 @@ TIMEZONE = "Europe/Rome"
 # Directory with the source content of the site
 # CONTENT = "content"
 
-# Theme used to render the content
+# Theme used to render the site. A sequence of strings is tried in order.
 # Default: the one installed in the system
 THEME = "theme"
 
 # Directory with "archetypes" (templates used by ssite new)
-#ARCHETYPES = "archetypes"
+# ARCHETYPES = "archetypes"
 
 # Directory where the static site will be written by build
-#OUTPUT = "web"
+# OUTPUT = "web"
