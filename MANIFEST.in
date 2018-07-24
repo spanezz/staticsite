@@ -2,6 +2,8 @@ include MANIFEST.in
 include LICENSE
 include README.md
 include NEWS.md
+include coverage.sh
+include .coveragerc
 recursive-include example *
 recursive-include doc *
 recursive-include tests *
