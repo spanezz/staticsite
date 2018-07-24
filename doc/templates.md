@@ -30,8 +30,9 @@ Extra functions provided to Jinja2 templates:
  * `site_pages(path=None, limit=None, sort="-date")`: return a list of pages
    defined in the site that match the given arguments. `path` is a file glob
    (like `"blog/*"`) that matches the page file name. `limit` is the maximum
-   number of pages to return. `sort` is the `page.meta` field to use to sort
-   the pages. Prefix `sort` with a dash (`-`) for reverse sorting.
+   number of pages to return. `sort` is either the `page.meta` field or the
+   keyword `url` for the destination link of the page to use to sort the pages.
+   Prefix `sort` with a dash (`-`) for reverse sorting.
             now=self.generation_time,
  * `now`: the current date and time.
  * `next_month`: midnight of the first day of next month. Useful in archetypes
