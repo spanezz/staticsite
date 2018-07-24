@@ -42,7 +42,9 @@ Extra filters provided to Jinja2 templates:
 
  * `|datetime_format(format=None)` formats a datetime. Formats
    supported: "rss2", "rfc822", "atom", "rfc3339", "w3ctdf",
-   "[iso8601](https://xkcd.com/1179/)" (default).
+   "[iso8601](https://xkcd.com/1179/)" (default). If the format
+   starts with `%` it is considered a [strftime](http://strftime.org/)
+   format string.
  * `basename` returns the file name part of a pathname.
  * `markdown` renders the string using [markdown](markdown.md).
 

@@ -56,6 +56,9 @@ class Theme:
 
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):
+        if not isinstance(dt, datetime.datetime):
+            import dateutil.parser
+            dt = dateutil.parser.parse(dt)
         if format in ("rss2", "rfc822"):
             from .utils import format_date_rfc822
             return format_date_rfc822(dt)
@@ -68,6 +71,8 @@ class Theme:
         elif format == "iso8601" or not format:
             from .utils import format_date_iso8601
             return format_date_iso8601(dt)
+        elif format[0] == '%':
+            return dt.strftime(format)
         else:
             log.warn("%s+%s: invalid datetime format %r requested", context.parent["page"].src_relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
