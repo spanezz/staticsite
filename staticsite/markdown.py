@@ -84,12 +84,10 @@ class MarkdownPages:
         self.site = site
         self.md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
-            extensions=[
-                "markdown.extensions.extra",
-                "markdown.extensions.codehilite",
-                "markdown.extensions.fenced_code",
+            extensions=site.settings.MARKDOWN_EXTENSIONS + [
                 self.md_staticsite,
             ],
+            extension_configs=site.settings.MARKDOWN_EXTENSION_CONFIGS,
             output_format="html5",
         )
         # Cached templates
