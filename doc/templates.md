@@ -27,13 +27,14 @@ Extra functions provided to Jinja2 templates:
    the given path. The path is resolved relative to the current page, and if
    not found, relative to the parent page, and so on until the top.
  * `url_for(page)`: returns the URL that links to the given page.
- * `site_pages(path=None, limit=None, sort="-date")`: return a list of pages
-   defined in the site that match the given arguments. `path` is a file glob
-   (like `"blog/*"`) that matches the page file name. `limit` is the maximum
-   number of pages to return. `sort` is either the `page.meta` field or the
-   keyword `url` for the destination link of the page to use to sort the pages.
-   Prefix `sort` with a dash (`-`) for reverse sorting.
-            now=self.generation_time,
+ * `site_pages(path=None, limit=None, sort="-date", **kw)`: return a list of
+   pages defined in the site that match the given arguments. `path` is a file
+   glob (like `"blog/*"`) that matches the page file name. `limit` is the
+   maximum number of pages to return. `sort` is either the `page.meta` field or
+   the keyword `url` for the destination link of the page to use to sort the
+   pages. Prefix `sort` with a dash (`-`) for reverse sorting.
+   You can provide taxonomy names and list of taxonomy values as extra keyword
+   values, to filter by taxonomy.
  * `now`: the current date and time.
  * `next_month`: midnight of the first day of next month. Useful in archetypes
    front matter to collect content into monthly pages.

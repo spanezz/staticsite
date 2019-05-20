@@ -100,7 +100,7 @@ class Theme:
         return page.dst_link
 
     @jinja2.contextfunction
-    def jinja2_site_pages(self, context, path=None, limit=None, tags=None, sort="-date"):
+    def jinja2_site_pages(self, context, path=None, limit=None, sort="-date", **kw):
         if path is not None:
             re_path = re.compile(fnmatch.translate(path))
         else:
@@ -113,8 +113,12 @@ class Theme:
             else:
                 sort_reverse = False
 
-        if tags is not None:
-            tags = frozenset(tags)
+        taxonomy_filters = []
+        for taxonomy in self.site.taxonomies:
+            t_filter = kw.get(taxonomy.name)
+            if t_filter is None:
+                continue
+            taxonomy_filters.append((taxonomy.name, frozenset(t_filter)))
 
         pages = []
         for page in self.site.pages.values():
@@ -124,9 +128,9 @@ class Theme:
                 continue
             if sort is not None and sort != "url" and sort not in page.meta:
                 continue
-            if tags is not None:
-                page_tags = frozenset(page.meta.get("tags", ()))
-                if not tags.issubset(page_tags):
+            for name, t_filter in taxonomy_filters:
+                page_tags = frozenset(page.meta.get(name, ()))
+                if not t_filter.issubset(page_tags):
                     continue
             pages.append(page)
 
