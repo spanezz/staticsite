@@ -1,4 +1,3 @@
-# coding: utf-8
 import jinja2
 import os
 import re
@@ -7,6 +6,7 @@ import datetime
 import logging
 
 log = logging.getLogger()
+
 
 class Theme:
     def __init__(self, site, root):
@@ -26,7 +26,8 @@ class Theme:
 
         # Add settings to jinja2 globals
         for x in dir(self.site.settings):
-            if not x.isupper(): continue
+            if not x.isupper():
+                continue
             self.jinja2.globals[x] = getattr(self.site.settings, x)
 
         # Install site's functions into the jinja2 environment
@@ -35,7 +36,9 @@ class Theme:
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
             now=self.site.generation_time,
-            next_month=(self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+            next_month=(
+                self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(
+                    day=1, hour=0, minute=0, second=0, microsecond=0),
             taxonomies=self.jinja2_taxonomies,
         )
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
@@ -74,7 +77,8 @@ class Theme:
         elif format[0] == '%':
             return dt.strftime(format)
         else:
-            log.warn("%s+%s: invalid datetime format %r requested", context.parent["page"].src_relpath, context.name, format)
+            log.warn("%s+%s: invalid datetime format %r requested",
+                     context.parent["page"].src_relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
     @jinja2.contextfunction
@@ -111,20 +115,24 @@ class Theme:
 
         pages = []
         for page in self.site.pages.values():
-            if not page.FINDABLE: continue
-            if re_path is not None and not re_path.match(page.src_relpath): continue
-            if sort is not None and sort != "url" and sort not in page.meta: continue
+            if not page.FINDABLE:
+                continue
+            if re_path is not None and not re_path.match(page.src_relpath):
+                continue
+            if sort is not None and sort != "url" and sort not in page.meta:
+                continue
             pages.append(page)
 
         if sort is not None:
             if sort == "url":
-                sort_by = lambda p: p.dst_link
+                def sort_by(p):
+                    return p.dst_link
             else:
-                sort_by = lambda p: p.meta.get(sort, None)
+                def sort_by(p):
+                    return p.meta.get(sort, None)
             pages.sort(key=sort_by, reverse=sort_reverse)
 
         if limit is not None:
             pages = pages[:limit]
 
         return pages
-
