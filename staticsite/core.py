@@ -1,4 +1,3 @@
-# coding: utf-8
 import os
 import sys
 import logging
@@ -6,6 +5,7 @@ import shutil
 import mimetypes
 
 log = logging.getLogger()
+
 
 class Settings:
     def __init__(self):
@@ -59,10 +59,10 @@ class Archetype:
         self.site = site
         self.relpath = relpath
 
-    def as_template(self, **kw):
-        abspath = os.path.join(site.archetypes_root, self.relpath)
-        with open(abspath, "rt") as fd:
-            return self.site.jinja2.from_string(fd.read(), **kw)
+    # def as_template(self, **kw):
+    #     abspath = os.path.join(site.archetypes_root, self.relpath)
+    #     with open(abspath, "rt") as fd:
+    #         return self.site.jinja2.from_string(fd.read(), **kw)
 
 
 class Page:
@@ -130,7 +130,8 @@ class Page:
     def date_as_iso8601(self):
         from dateutil.tz import tzlocal
         ts = self.meta.get("date", None)
-        if ts is None: return None
+        if ts is None:
+            return None
         # TODO: Take timezone from config instead of tzlocal()
         tz = tzlocal()
         ts = ts.astimezone(tz)
@@ -147,10 +148,10 @@ class Page:
     def resolve_link(self, target):
         dirname, basename = os.path.split(target)
         if basename == "index.html":
-            #log.debug("%s: resolve %s using %s", self.src_relpath, target, dirname)
+            # log.debug("%s: resolve %s using %s", self.src_relpath, target, dirname)
             target = dirname
-        #else:
-            #log.debug("%s: resolve %s using %s", self.src_relpath, target, target)
+        # else:
+            # log.debug("%s: resolve %s using %s", self.src_relpath, target, target)
 
         # Absolute URLs are resolved as is
         if target.startswith("/"):
@@ -158,7 +159,7 @@ class Page:
                 target_relpath = ""
             else:
                 target_relpath = os.path.normpath(target.lstrip("/"))
-            #log.debug("%s: resolve absolute path using %s", self.src_relpath, target_relpath)
+            # log.debug("%s: resolve absolute path using %s", self.src_relpath, target_relpath)
             return self.site.pages.get(target_relpath, None)
 
         root = os.path.dirname(self.src_relpath)
@@ -167,7 +168,8 @@ class Page:
             if target_relpath == ".":
                 target_relpath = ""
             res = self.site.pages.get(target_relpath, None)
-            if res is not None: return res
+            if res is not None:
+                return res
             if not root or root == "/":
                 return None
             root = os.path.dirname(root)
@@ -180,11 +182,13 @@ class Page:
         taxonomy_series = []
         for taxonomy in self.site.taxonomies:
             vals = self.meta.get(taxonomy.name, None)
-            if not vals: continue
+            if not vals:
+                continue
             taxonomy_series_names = taxonomy.add_page(self, vals)
             # Allow a taxonomy to auto-define a series
             for taxonomy_series_name in taxonomy_series_names:
-                if taxonomy_series_name is not None and (not taxonomy_series or taxonomy_series_name != taxonomy_series[0]):
+                if taxonomy_series_name is not None and (
+                        not taxonomy_series or taxonomy_series_name != taxonomy_series[0]):
                     taxonomy_series.append(taxonomy_series_name)
 
         # If the page is part of a series, take note of it
@@ -195,8 +199,10 @@ class Page:
             elif len(taxonomy_series) == 1:
                 series_name = taxonomy_series[0]
             else:
-                log.warn("%s: %d series defined via taxonomies (%s) but only one can be used; I cannot choose, so I'll use none. Use the 'series' metadata to choose which one",
-                        self.src_relpath, len(taxonomy_series), ", ".join(taxonomy_series))
+                log.warn(
+                    "%s: %d series defined via taxonomies (%s) but only one can be used;"
+                    " I cannot choose, so I'll use none. Use the 'series' metadata to choose which one",
+                    self.src_relpath, len(taxonomy_series), ", ".join(taxonomy_series))
 
         # Assign page to its series
         if series_name is not None:
@@ -287,7 +293,8 @@ class PageFS:
         Returns None without calling start_response if no page was found.
         """
         dst_relpath, page = self.get_page(os.path.normpath(path).lstrip("/"))
-        if page is None: return None
+        if page is None:
+            return None
 
         for relpath, rendered in page.render().items():
             if relpath == dst_relpath:
