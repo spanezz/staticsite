@@ -128,9 +128,12 @@ class Theme:
                 continue
             if sort is not None and sort != "url" and sort not in page.meta:
                 continue
+            fail_taxonomies = False
             for name, t_filter in taxonomy_filters:
                 page_tags = frozenset(page.meta.get(name, ()))
                 if not t_filter.issubset(page_tags):
+                    fail_taxonomies = True
+            if fail_taxonomies:
                     continue
             pages.append(page)
 

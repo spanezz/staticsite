@@ -1,5 +1,9 @@
 # staticsite user-relevant changes
 
+# New in version 0.6
+
+* Allow to filter by taxonomies in `site_pages()`
+
 # New in version 0.5
 
 * Fixed markdown syntax for link targets in `example/archetypes/links.md`
