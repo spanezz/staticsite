@@ -2,19 +2,19 @@
 
 from .core import Page, RenderedString
 import os
-import re
-from collections import defaultdict
 import jinja2
 import logging
 
 log = logging.getLogger()
+
 
 class TaxonomyPages:
     def __init__(self, site):
         self.site = site
 
     def try_load_page(self, root_abspath, relpath):
-        if not relpath.endswith(".taxonomy"): return None
+        if not relpath.endswith(".taxonomy"):
+            return None
         return TaxonomyPage(self.site, root_abspath, relpath)
 
 
@@ -63,14 +63,14 @@ class TaxonomyPage(Page):
         self.meta["output_atom"] = "{slug}/index.atom"
         self.meta["output_archive"] = "{slug}/archive.html"
 
-        ## Generate taxonomies from configuration
-        #self.taxonomies = {}
-        #for name, info in self.site.settings.TAXONOMIES.items():
-        #    info["name"] = name
-        #    output_dir = info.get("output_dir", None)
-        #    if output_dir is not None:
-        #        info["output_dir"] = self.enforce_relpath(output_dir)
-        #    self.taxonomies[name] = Taxonomy(**info)
+        # # Generate taxonomies from configuration
+        # self.taxonomies = {}
+        # for name, info in self.site.settings.TAXONOMIES.items():
+        #     info["name"] = name
+        #     output_dir = info.get("output_dir", None)
+        #     if output_dir is not None:
+        #         info["output_dir"] = self.enforce_relpath(output_dir)
+        #     self.taxonomies[name] = Taxonomy(**info)
 
         # Read taxonomy information
         self._read_taxonomy_description()
@@ -89,7 +89,7 @@ class TaxonomyPage(Page):
         try:
             style, meta = parse_front_matter(lines)
             self.meta.update(**meta)
-        except:
+        except Exception:
             log.exception("%s.taxonomy: cannot parse taxonomy information", self.src_relpath)
 
     def link_value(self, context, output_item, value):
@@ -130,10 +130,11 @@ class TaxonomyPage(Page):
 
     def load_template_from_meta(self, name):
         template_name = self.meta.get(name, None)
-        if template_name is None: return None
+        if template_name is None:
+            return None
         try:
             return self.site.theme.jinja2.get_template(template_name)
-        except:
+        except Exception:
             log.exception("%s: cannot load %s %s", self.src_relpath, name, template_name)
             return None
 
@@ -190,7 +191,8 @@ class TaxonomyPage(Page):
         for item in self.items.values():
             for type in ("item", "rss", "atom", "archive"):
                 template = getattr(self, "template_" + type, None)
-                if template is None: continue
+                if template is None:
+                    continue
 
                 dest = self.meta["output_" + type].format(slug=item.slug)
                 if dest.endswith("/"):
@@ -199,7 +201,7 @@ class TaxonomyPage(Page):
                 kwargs = {
                     "page": self,
                     single_name: item,
-                    "pages": sorted(item.pages, key=lambda x:x.meta["date"], reverse=True),
+                    "pages": sorted(item.pages, key=lambda x: x.meta["date"], reverse=True),
                 }
                 kwargs.update(**self.meta)
                 body = template.render(**kwargs)
@@ -219,7 +221,8 @@ class TaxonomyPage(Page):
         for item in self.items.values():
             for type in ("item", "rss", "atom", "archive"):
                 template = getattr(self, "template_" + type, None)
-                if template is None: continue
+                if template is None:
+                    continue
 
                 dest = self.meta["output_" + type].format(slug=item.slug)
                 if dest.endswith("/"):
