@@ -5,6 +5,7 @@
 * Allow to filter by taxonomies in `site_pages()`
 * New settings `SYSTEM_ASSETS` to list directories in `/usr/share/javascript`
   to include to site assets
+* Generate unique IDs in footnotes by default. Thanks DonKult!
 
 # New in version 0.5
 

@@ -39,7 +39,14 @@ MARKDOWN_EXTENSIONS = [
     "markdown.extensions.codehilite",
     "markdown.extensions.fenced_code",
 ]
-MARKDOWN_EXTENSION_CONFIGS = {}
+MARKDOWN_EXTENSION_CONFIGS = {
+    'markdown.extensions.extra': {
+        'markdown.extensions.footnotes': {
+            # See https://github.com/spanezz/staticsite/issues/13
+            'UNIQUE_IDS': True,
+        },
+    },
+}
 
 # List of asset directories included from /usr/share/javascript
 SYSTEM_ASSETS = []
