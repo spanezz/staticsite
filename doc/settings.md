@@ -41,6 +41,9 @@ ARCHETYPES = "archetypes"
 
 # Directory where the static site will be written by build
 OUTPUT = "web"
+
+# List of asset directories included from /usr/share/javascript
+SYSTEM_ASSETS = []
 ```
 
 
