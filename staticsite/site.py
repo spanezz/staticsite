@@ -1,6 +1,4 @@
-# coding: utf-8
 import os
-import re
 import pytz
 import datetime
 from collections import defaultdict
@@ -10,10 +8,12 @@ import logging
 
 log = logging.getLogger()
 
+
 class Site:
     def __init__(self, settings=None):
         # Site settings
-        if settings is None: settings = Settings()
+        if settings is None:
+            settings = Settings()
         self.settings = settings
 
         # Site pages
@@ -59,7 +59,8 @@ class Site:
         called.
         """
         if self.theme is not None:
-            raise RuntimeError("cannot load theme from {} because it was already loaded from {}".format(theme_root, self.theme.root))
+            raise RuntimeError("cannot load theme from {} because it was already loaded from {}".format(
+                theme_root, self.theme.root))
 
         from .theme import Theme
         self.theme = Theme(self, theme_root)
@@ -110,7 +111,8 @@ class Site:
                     del dnames[i]
 
             for f in fnames:
-                if f.startswith("."): continue
+                if f.startswith("."):
+                    continue
 
                 page_abspath = os.path.join(root, f)
                 page_relpath = os.path.relpath(page_abspath, tree_root)
@@ -136,7 +138,8 @@ class Site:
 
         for root, dnames, fnames in os.walk(tree_root):
             for f in fnames:
-                if f.startswith("."): continue
+                if f.startswith("."):
+                    continue
 
                 page_abspath = os.path.join(root, f)
                 if os.path.isfile(page_abspath):
@@ -167,7 +170,8 @@ class Site:
                 dir_relpath = os.path.dirname(page.src_relpath)
                 by_dir[dir_relpath].append(page)
                 while True:
-                    if not dir_relpath: break
+                    if not dir_relpath:
+                        break
                     dir_relpath = os.path.dirname(dir_relpath)
                     # Do a lookup to make sure an entry exists for this
                     # directory level, even though without pages
@@ -177,7 +181,8 @@ class Site:
         from .dir import DirPage
         for relpath, pages in by_dir.items():
             # We only build indices where there is not already a page
-            if relpath in self.pages: continue
+            if relpath in self.pages:
+                continue
             page = DirPage(self, relpath, pages)
             self.pages[relpath] = page
             by_pass[page.ANALYZE_PASS].append(page)
@@ -185,11 +190,12 @@ class Site:
         # Add directory indices to their parent directory indices
         for relpath, pages in by_dir.items():
             page = self.pages[relpath]
-            if page.TYPE != "dir": continue
+            if page.TYPE != "dir":
+                continue
             page.attach_to_parent()
 
         # Read metadata
-        for passnum, pages in sorted(by_pass.items(), key=lambda x:x[0]):
+        for passnum, pages in sorted(by_pass.items(), key=lambda x: x[0]):
             for page in pages:
                 page.read_metadata()
 

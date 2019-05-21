@@ -1,10 +1,7 @@
-# coding: utf-8
-
 from .core import Page, RenderedFile
 import datetime
 import os
 import pytz
-import shutil
 
 
 class Asset(Page):
