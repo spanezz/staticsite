@@ -4,6 +4,7 @@ import logging
 
 log = logging.getLogger()
 
+
 class Archetypes:
     def __init__(self, site, root):
         self.site = site
@@ -28,7 +29,8 @@ class Archetypes:
 
         for root, dnames, fnames in os.walk(self.root):
             for f in fnames:
-                if f.startswith("."): continue
+                if f.startswith("."):
+                    continue
                 relpath = os.path.relpath(os.path.join(root, f), self.root)
                 for handler in handlers:
                     a = handler.try_load_archetype(self, relpath, name)
