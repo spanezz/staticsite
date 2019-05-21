@@ -6,6 +6,7 @@
 * New settings `SYSTEM_ASSETS` to list directories in `/usr/share/javascript`
   to include to site assets
 * Generate unique IDs in footnotes by default. Thanks DonKult!
+* Implement rendering raw JSON, YAML, or TOML data files
 
 # New in version 0.5
 
