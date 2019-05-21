@@ -82,46 +82,46 @@ class DataPage(Page):
         if date is not None and not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
 
+        self._content = None
+
     @property
     def content(self):
-        if self.md_html is None:
-            self.md_html = self.mdenv.render(self)
-        return self.md_html
+        if self._content is None:
+            data_type = self.meta.get("type")
+            template = None
+
+            if data_type is not None:
+                template_name = "data-" + data_type + ".html"
+                try:
+                    template = self.site.theme.jinja2.get_template(template_name)
+                except jinja2.TemplateNotFound:
+                    pass
+                except Exception:
+                    log.exception("%s: cannot load template %s", self.src_relpath, template_name)
+                    return {}
+
+            if template is None:
+                # Fallback to data.html
+                try:
+                    template = self.site.theme.jinja2.get_template("data.html")
+                except Exception:
+                    log.exception("%s: cannot load template", self.src_relpath)
+                    return {}
+
+            self._content = template.render(
+                page=self,
+                data=self.data,
+            )
+
+        return self._content
 
     def render(self):
-        data_type = self.meta.get("type")
-        template = None
-
-        if data_type is not None:
-            template_name = "data-" + data_type + ".html"
-            try:
-                template = self.site.theme.jinja2.get_template(template_name)
-            except jinja2.TemplateNotFound:
-                pass
-            except Exception:
-                log.exception("%s: cannot load template %s", self.src_relpath, template_name)
-                return {}
-
-        if template is None:
-            # Fallback to data.html
-            try:
-                template = self.site.theme.jinja2.get_template("data.html")
-            except Exception:
-                log.exception("%s: cannot load template", self.src_relpath)
-                return {}
-
-        content = template.render(
-            page=self,
-            data=self.data,
-        )
-
-        page_template = self.site.theme.jinja2.get_template("page.html")
-
         res = {}
 
+        page_template = self.site.theme.jinja2.get_template("page.html")
         html = page_template.render(
             page=self,
-            content=content,
+            content=self._content,
             **self.meta
         )
         res[self.dst_relpath] = RenderedString(html)
