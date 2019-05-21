@@ -69,6 +69,13 @@ class Site:
         if os.path.isdir(theme_static):
             self.read_asset_tree(theme_static)
 
+        for name in self.settings.SYSTEM_ASSETS:
+            root = os.path.join("/usr/share/javascript", name)
+            if not os.path.isdir(root):
+                log.warning("%s: system asset directory not found", root)
+                continue
+            self.read_asset_tree("/usr/share/javascript", name)
+
     def load_content(self, content_root):
         """
         Load site page and assets from the given directory.
@@ -128,25 +135,32 @@ class Site:
                         p = Asset(self, tree_root, page_relpath)
                         self.add_page(p)
 
-    def read_asset_tree(self, tree_root):
+    def read_asset_tree(self, tree_root, subdir=None):
         """
         Read static assets from a directory and all its subdirectories
         """
         from .asset import Asset
 
-        log.info("Loading assets from %s", tree_root)
+        if subdir is None:
+            search_root = tree_root
+        else:
+            search_root = os.path.join(tree_root, subdir)
 
-        for root, dnames, fnames in os.walk(tree_root):
+        log.info("Loading assets from %s", search_root)
+
+        for root, dnames, fnames in os.walk(search_root):
             for f in fnames:
                 if f.startswith("."):
                     continue
 
                 page_abspath = os.path.join(root, f)
-                if os.path.isfile(page_abspath):
-                    page_relpath = os.path.relpath(page_abspath, tree_root)
-                    log.debug("Loading static file %s", page_relpath)
-                    p = Asset(self, tree_root, page_relpath)
-                    self.add_page(p)
+                if not os.path.isfile(page_abspath):
+                    continue
+
+                page_relpath = os.path.relpath(page_abspath, tree_root)
+                log.debug("Loading static file %s", page_relpath)
+                p = Asset(self, tree_root, page_relpath)
+                self.add_page(p)
 
     def analyze(self):
         """

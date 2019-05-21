@@ -40,3 +40,6 @@ MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
 ]
 MARKDOWN_EXTENSION_CONFIGS = {}
+
+# List of asset directories included from /usr/share/javascript
+SYSTEM_ASSETS = []
