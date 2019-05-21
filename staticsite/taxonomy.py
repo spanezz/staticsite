@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from .core import Page, RenderedString
 import os
 import jinja2

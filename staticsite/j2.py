@@ -1,9 +1,5 @@
-# coding: utf-8
-
-from .core import Archetype, Page, RenderedString
+from .core import Page, RenderedString
 import os
-import re
-from collections import defaultdict
 import logging
 
 log = logging.getLogger()
@@ -19,7 +15,8 @@ class J2Pages:
 
     def try_load_page(self, root_abspath, relpath):
         basename = os.path.basename(relpath)
-        if ".j2." not in basename: return None
+        if ".j2." not in basename:
+            return None
         try:
             return J2Page(self, root_abspath, relpath)
         except IgnorePage:
@@ -57,7 +54,7 @@ class J2Page(Page):
             template_body = fd.read()
         try:
             template = self.site.theme.jinja2.from_string(template_body)
-        except:
+        except Exception:
             log.exception("%s: cannot load template", self.src_relpath)
             raise IgnorePage
         body = template.render(

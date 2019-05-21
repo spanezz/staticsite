@@ -1,7 +1,4 @@
-# coding: utf-8
-
 from .core import Archetype, Page, RenderedString
-import re
 import os
 import io
 import pytz
@@ -13,6 +10,7 @@ from .utils import parse_front_matter
 import logging
 
 log = logging.getLogger()
+
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
     def run(self, root):
@@ -113,18 +111,22 @@ class MarkdownPages:
         It renders the page content by default, unless `content` is set to a
         different markdown string.
         """
-        if content is None: content = page.get_content()
+        if content is None:
+            content = page.get_content()
         self.md_staticsite.set_page(page)
         self.markdown.reset()
         return self.markdown.convert(content)
 
     def try_load_page(self, root_abspath, relpath):
-        if not relpath.endswith(".md"): return None
+        if not relpath.endswith(".md"):
+            return None
         return MarkdownPage(self, root_abspath, relpath)
 
     def try_load_archetype(self, archetypes, relpath, name):
-        if not relpath.endswith(".md"): return None
-        if not (relpath.endswith(name) or relpath.endswith(name + ".md")): return None
+        if not relpath.endswith(".md"):
+            return None
+        if not (relpath.endswith(name) or relpath.endswith(name + ".md")):
+            return None
         return MarkdownArchetype(self, archetypes, relpath)
 
 
@@ -187,7 +189,7 @@ class MarkdownArchetype(Archetype):
 
             try:
                 style, meta = parse_front_matter(front_matter)
-            except:
+            except Exception:
                 log.exception("archetype %s: failed to parse front matter", self.relpath)
 
         return style, meta, body
@@ -236,7 +238,7 @@ class MarkdownPage(Page):
         try:
             style, meta = parse_front_matter(self.front_matter)
             self.meta.update(**meta)
-        except:
+        except Exception:
             log.exception("%s: failed to parse front matter", self.src_relpath)
 
         # Remove leading empty lines
