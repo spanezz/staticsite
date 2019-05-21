@@ -1,13 +1,9 @@
-# coding: utf-8
-
 from .core import Page, RenderedString
 import os
-import re
-from collections import defaultdict
-import jinja2
 import logging
 
 log = logging.getLogger()
+
 
 class DirPage(Page):
     """
@@ -30,11 +26,14 @@ class DirPage(Page):
         self.subdirs = []
 
     def attach_to_parent(self):
-        if not self.src_relpath: return
+        if not self.src_relpath:
+            return
         parent_relpath = os.path.dirname(self.src_relpath)
         parent = self.site.pages[parent_relpath]
-        if parent.TYPE != "dir": return
-        if self in parent.subdirs: return
+        if parent.TYPE != "dir":
+            return
+        if self in parent.subdirs:
+            return
         parent.subdirs.append(self)
         parent.attach_to_parent()
 
@@ -46,7 +45,7 @@ class DirPage(Page):
         # Sort by decreasing date
         res = self.meta.get("date", None)
         if res is None:
-            self.pages.sort(key=lambda x:x.meta["date"], reverse=True)
+            self.pages.sort(key=lambda x: x.meta["date"], reverse=True)
             if self.pages:
                 dates = [self.pages[0].meta["date"]]
             else:
@@ -63,7 +62,7 @@ class DirPage(Page):
         self.meta["title"] = os.path.basename(self.src_relpath) or self.site.settings.SITE_NAME
 
     def render(self):
-        self.subdirs.sort(key=lambda x:x.meta["title"])
+        self.subdirs.sort(key=lambda x: x.meta["title"])
         parent_page = None
         if self.src_relpath:
             parent = os.path.dirname(self.src_relpath)
