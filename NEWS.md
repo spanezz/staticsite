@@ -3,6 +3,8 @@
 # New in version 0.6
 
 * Allow to filter by taxonomies in `site_pages()`
+* New settings `SYSTEM_ASSETS` to list directories in `/usr/share/javascript`
+  to include to site assets
 
 # New in version 0.5
 
