@@ -98,7 +98,7 @@ class DataPage(Page):
                     pass
                 except Exception:
                     log.exception("%s: cannot load template %s", self.src_relpath, template_name)
-                    return {}
+                    return "cannot load template {}".format(template_name)
 
             if template is None:
                 # Fallback to data.html
@@ -106,7 +106,7 @@ class DataPage(Page):
                     template = self.site.theme.jinja2.get_template("data.html")
                 except Exception:
                     log.exception("%s: cannot load template", self.src_relpath)
-                    return {}
+                    return "cannot load template data.html"
 
             self._content = template.render(
                 page=self,
@@ -121,7 +121,7 @@ class DataPage(Page):
         page_template = self.site.theme.jinja2.get_template("page.html")
         html = page_template.render(
             page=self,
-            content=self._content,
+            content=self.content,
             **self.meta
         )
         res[self.dst_relpath] = RenderedString(html)
