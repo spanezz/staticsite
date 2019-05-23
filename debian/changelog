@@ -1,3 +1,9 @@
+staticsite (0.6-1) UNRELEASED; urgency=medium
+
+  * New upstream version
+
+ -- Enrico Zini <enrico@debian.org>  Thu, 23 May 2019 16:58:57 +0200
+
 staticsite (0.5-1) unstable; urgency=medium
 
   * New upstream version
