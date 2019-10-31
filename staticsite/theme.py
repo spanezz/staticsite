@@ -8,6 +8,66 @@ import logging
 log = logging.getLogger()
 
 
+class PageFilter:
+    def __init__(self, site, path=None, limit=None, sort=None, **kw):
+        self.site = site
+
+        if path is not None:
+            self.re_path = re.compile(fnmatch.translate(path))
+        else:
+            self.re_path = None
+
+        self.sort = sort
+        if sort is not None:
+            if sort.startswith("-"):
+                self.sort = sort[1:]
+                self.sort_reverse = True
+            else:
+                self.sort_reverse = False
+
+        self.taxonomy_filters = []
+        for taxonomy in self.site.taxonomies:
+            t_filter = kw.get(taxonomy.name)
+            if t_filter is None:
+                continue
+            self.taxonomy_filters.append((taxonomy.name, frozenset(t_filter)))
+
+        self.limit = limit
+
+    def filter(self, all_pages):
+        pages = []
+
+        for page in all_pages:
+            if not page.FINDABLE:
+                continue
+            if self.re_path is not None and not self.re_path.match(page.src_relpath):
+                continue
+            if self.sort is not None and self.sort != "url" and self.sort not in page.meta:
+                continue
+            fail_taxonomies = False
+            for name, t_filter in self.taxonomy_filters:
+                page_tags = frozenset(page.meta.get(name, ()))
+                if not t_filter.issubset(page_tags):
+                    fail_taxonomies = True
+            if fail_taxonomies:
+                    continue
+            pages.append(page)
+
+        if self.sort is not None:
+            if self.sort == "url":
+                def sort_by(p):
+                    return p.dst_link
+            else:
+                def sort_by(p):
+                    return p.meta.get(self.sort, None)
+            pages.sort(key=sort_by, reverse=self.sort_reverse)
+
+        if self.limit is not None:
+            pages = pages[:self.limit]
+
+        return pages
+
+
 class Theme:
     def __init__(self, site, root):
         self.site = site
@@ -35,6 +95,7 @@ class Theme:
             has_page=self.jinja2_has_page,
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
+            site_data_pages=self.jinja2_site_data_pages,
             now=self.site.generation_time,
             next_month=(
                 self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(
@@ -101,52 +162,10 @@ class Theme:
 
     @jinja2.contextfunction
     def jinja2_site_pages(self, context, path=None, limit=None, sort="-date", **kw):
-        if path is not None:
-            re_path = re.compile(fnmatch.translate(path))
-        else:
-            re_path = None
+        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
+        return page_filter.filter(self.site.pages.values())
 
-        if sort is not None:
-            if sort.startswith("-"):
-                sort = sort[1:]
-                sort_reverse = True
-            else:
-                sort_reverse = False
-
-        taxonomy_filters = []
-        for taxonomy in self.site.taxonomies:
-            t_filter = kw.get(taxonomy.name)
-            if t_filter is None:
-                continue
-            taxonomy_filters.append((taxonomy.name, frozenset(t_filter)))
-
-        pages = []
-        for page in self.site.pages.values():
-            if not page.FINDABLE:
-                continue
-            if re_path is not None and not re_path.match(page.src_relpath):
-                continue
-            if sort is not None and sort != "url" and sort not in page.meta:
-                continue
-            fail_taxonomies = False
-            for name, t_filter in taxonomy_filters:
-                page_tags = frozenset(page.meta.get(name, ()))
-                if not t_filter.issubset(page_tags):
-                    fail_taxonomies = True
-            if fail_taxonomies:
-                    continue
-            pages.append(page)
-
-        if sort is not None:
-            if sort == "url":
-                def sort_by(p):
-                    return p.dst_link
-            else:
-                def sort_by(p):
-                    return p.meta.get(sort, None)
-            pages.sort(key=sort_by, reverse=sort_reverse)
-
-        if limit is not None:
-            pages = pages[:limit]
-
-        return pages
+    @jinja2.contextfunction
+    def jinja2_site_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
+        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
+        return page_filter.filter(self.site.data_pages.by_type.get(type, []))

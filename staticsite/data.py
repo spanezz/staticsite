@@ -5,6 +5,7 @@ import jinja2
 import re
 import os
 import datetime
+from collections import defaultdict
 import logging
 
 log = logging.getLogger()
@@ -16,12 +17,20 @@ re_ext = re.compile(r"\.(json|toml|yaml)$")
 class DataPages:
     def __init__(self, site):
         self.site = site
+        self.by_type = defaultdict(list)
 
     def try_load_page(self, root_abspath, relpath):
         mo = re_ext.search(relpath)
         if not mo:
             return None
-        return DataPage(self.site, root_abspath, relpath, mo.group(1))
+        page = DataPage(self.site, root_abspath, relpath, mo.group(1))
+        data_type = page.meta.get("type")
+        self.by_type[data_type].append(page)
+        return page
+
+    def finalize(self):
+        for type, pages in self.by_type.items():
+            pages.sort(key=lambda x: x.meta["date"])
 
 
 class DataPage(Page):

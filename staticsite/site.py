@@ -40,16 +40,20 @@ class Site:
         # If true, do not ignore pages with dates in the future
         self.draft = False
 
-        # Map input file patterns to resource handlers
+        from .data import DataPages
+        self.data_pages = DataPages(self)
+
         from .markdown import MarkdownPages
+        self.markdown_renderer = MarkdownPages(self)
+
         from .j2 import J2Pages
         from .taxonomy import TaxonomyPages
-        from .data import DataPages
-        self.markdown_renderer = MarkdownPages(self)
+
+        # Map input file patterns to resource handlers
         self.page_handlers = [
             self.markdown_renderer,
             J2Pages(self),
-            DataPages(self),
+            self.data_pages,
             TaxonomyPages(self),
         ]
 
@@ -218,6 +222,9 @@ class Site:
         # Finalize series
         for series in self.series.values():
             series.finalize()
+
+        # Finalize data pages
+        self.data_pages.finalize()
 
     def slugify(self, text):
         """
