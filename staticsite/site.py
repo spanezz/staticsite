@@ -175,7 +175,7 @@ class Site:
 
         log.info("Loading pages from %s", tree_root)
 
-        for root, dnames, fnames in os.walk(tree_root):
+        for root, dnames, fnames in os.walk(tree_root,followlinks=True):
             for i, d in enumerate(dnames):
                 if d.startswith("."):
                     del dnames[i]
@@ -211,7 +211,7 @@ class Site:
 
         log.info("Loading assets from %s", search_root)
 
-        for root, dnames, fnames in os.walk(search_root):
+        for root, dnames, fnames in os.walk(search_root,followlinks=True):
             for f in fnames:
                 if f.startswith("."):
                     continue
