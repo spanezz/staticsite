@@ -108,6 +108,49 @@ class Theme:
 
         self.dir_template = self.jinja2.get_template("dir.html")
 
+        self.load_plugins()
+
+    def load_plugins(self):
+        """
+        Load plugin files from the plugins/ theme directory
+        """
+        plugin_dir = os.path.join(self.root, "plugins")
+        if not os.path.isdir(plugin_dir):
+            return
+
+        for fn in os.listdir(plugin_dir):
+            if not fn.endswith(".py"):
+                continue
+            self.load_plugin(os.path.join(plugin_dir, fn))
+
+    def load_plugin(self, fname):
+        """
+        Load plugin code from the given file
+        """
+        with open(fname) as fd:
+            try:
+                code = compile(fd.read(), fname, 'exec')
+            except Exception:
+                log.exception("%s: plugin file failed to compile", fname)
+                return
+
+        plugin_env = {}
+        try:
+            exec(code, plugin_env)
+        except Exception:
+            log.exception("%s: plugin file failed to execute", fname)
+            return
+
+        plugin_load = plugin_env.get("load")
+        if plugin_load is None:
+            log.warn("%s: plugin did not define a load function", fname)
+            return
+
+        try:
+            plugin_load(self)
+        except Exception:
+            log.exception("%s: plugin load function failed", fname)
+
     def jinja2_taxonomies(self):
         return self.site.taxonomies
 
