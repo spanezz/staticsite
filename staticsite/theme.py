@@ -4,6 +4,7 @@ import re
 import fnmatch
 import datetime
 import logging
+from pathlib import Path
 
 log = logging.getLogger()
 
@@ -73,7 +74,10 @@ class Theme:
         self.site = site
 
         # Absolute path to the root of the theme directory
-        self.root = os.path.abspath(root)
+        self.root = Path(os.path.abspath(root))
+
+        # Load feature plugins from the theme directory
+        self.load_features()
 
         # Jinja2 template engine
         from jinja2 import Environment, FileSystemLoader
@@ -113,48 +117,32 @@ class Theme:
 
         self.dir_template = self.jinja2.get_template("dir.html")
 
-        self.load_plugins()
-
-    def load_plugins(self):
+    def load_features(self):
         """
-        Load plugin files from the plugins/ theme directory
+        Load feature modules from the features/ theme directory
         """
-        plugin_dir = os.path.join(self.root, "plugins")
-        if not os.path.isdir(plugin_dir):
+        import pkgutil
+        import importlib
+        features_dir = self.root / "features"
+        if not features_dir.is_dir():
             return
 
-        for fn in os.listdir(plugin_dir):
-            if not fn.endswith(".py"):
-                continue
-            self.load_plugin(os.path.join(plugin_dir, fn))
-
-    def load_plugin(self, fname):
-        """
-        Load plugin code from the given file
-        """
-        with open(fname) as fd:
+        for info in pkgutil.iter_modules([features_dir.as_posix()]):
             try:
-                code = compile(fd.read(), fname, 'exec')
+                spec = info.module_finder.find_spec(info.name)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
             except Exception:
-                log.exception("%s: plugin file failed to compile", fname)
-                return
+                log.exception("%r: failed to load feature module", info)
+                continue
 
-        plugin_env = {}
-        try:
-            exec(code, plugin_env)
-        except Exception:
-            log.exception("%s: plugin file failed to execute", fname)
-            return
+            features = getattr(mod, "FEATURES", None)
+            if features is None:
+                log.warn("%r: feature module did not define a FEATURES dict", info)
 
-        plugin_load = plugin_env.get("load")
-        if plugin_load is None:
-            log.warn("%s: plugin did not define a load function", fname)
-            return
-
-        try:
-            plugin_load(self)
-        except Exception:
-            log.exception("%s: plugin load function failed", fname)
+            # Register features with site
+            for name, cls in features.items():
+                self.site.features[name] = cls(self.site)
 
     def jinja2_taxonomies(self):
         return self.site.taxonomies
