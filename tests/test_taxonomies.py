@@ -48,5 +48,5 @@ class TestTaxonomies(TestCase):
 
         self.assertCountEqual(tax1.items["a"].pages, [page1, page2, page3])
         self.assertCountEqual(tax1.items["b"].pages, [page1, page3])
-        self.assertEqual(series["a"].pages, [page2, page3])
+        self.assertEqual(series["a"].pages, [page1, page2, page3])
         self.assertNotIn("b", series)

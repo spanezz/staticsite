@@ -72,9 +72,6 @@ class TaxonomyPage(Page):
         # Read taxonomy information
         self._read_taxonomy_description()
 
-        # Items that automatically identify a series
-        self.series_items = frozenset(self.meta.get("series_tags", ()))
-
     def _read_taxonomy_description(self):
         """
         Parse the taxonomy file to read its description
@@ -157,16 +154,12 @@ class TaxonomyPage(Page):
         Add a page to this taxonomy. Elements is a sequence of elements for
         this taxonomy.
         """
-        series = []
         for v in elements:
             item = self.items.get(v, None)
             if item is None:
                 item = TaxonomyItem(self, v)
                 self.items[v] = item
             item.pages.append(page)
-            if v in self.series_items and (not series or series[0] != v):
-                series.append(v)
-        return series
 
     def render(self):
         res = {}
