@@ -45,7 +45,6 @@ class J2Page(Page):
             dst_relpath=dst_relpath,
             dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
 
-    def read_metadata(self):
         self.meta["date"] = self.site.generation_time
 
     def render(self):
