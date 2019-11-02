@@ -27,7 +27,7 @@ class PageFilter:
                 self.sort_reverse = False
 
         self.taxonomy_filters = []
-        for taxonomy in self.site.taxonomies:
+        for taxonomy in self.site.features["taxonomies"].taxonomies:
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:
                 continue
@@ -103,7 +103,6 @@ class Theme:
             next_month=(
                 self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(
                     day=1, hour=0, minute=0, second=0, microsecond=0),
-            taxonomies=self.jinja2_taxonomies,
         )
 
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
@@ -143,9 +142,6 @@ class Theme:
             # Register features with site
             for name, cls in features.items():
                 self.site.add_feature(name, cls)
-
-    def jinja2_taxonomies(self):
-        return self.site.taxonomies
 
     def jinja2_basename(self, val):
         return os.path.basename(val)

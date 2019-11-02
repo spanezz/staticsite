@@ -55,8 +55,6 @@ class Site:
         # Taxonomies found in the site
         from .taxonomy import TaxonomyPages
         self.add_feature("taxonomies", TaxonomyPages)
-        # TODO: remove as hardcoded member, moving it to TaxonomyPages
-        self.taxonomies = []
 
         from .series import SeriesFeature
         self.add_feature("series", SeriesFeature)
@@ -104,7 +102,7 @@ class Site:
         """
         self.read_contents_tree(content_root)
 
-    def add_page(self, page):
+    def add_page(self, page: Page):
         """
         Add a Page object to the site.
 
@@ -126,6 +124,16 @@ class Site:
                     trigger_features.add(feature)
         for feature in trigger_features:
             feature.add_page(page)
+
+    def add_test_page(self, feature: str, **kw) -> Page:
+        """
+        Add a test page instantiated using the given feature.
+
+        :return:the Page added
+        """
+        page = self.features[feature].build_test_page(**kw)
+        self.add_page(page)
+        return page
 
     def read_contents_tree(self, tree_root):
         """
@@ -192,16 +200,11 @@ class Site:
 
         Call this after all Pages have been added to the site.
         """
-        self.taxonomies = []
-
         by_dir = defaultdict(list)
         by_pass = defaultdict(list)
         for page in self.pages.values():
             # Group pages by pass number
             by_pass[page.ANALYZE_PASS].append(page)
-            # Collect taxonomies
-            if page.TYPE == "taxonomy":
-                self.taxonomies.append(page)
             # Harvest content for directory indices
             if page.FINDABLE and page.src_relpath:
                 dir_relpath = os.path.dirname(page.src_relpath)
@@ -230,11 +233,6 @@ class Site:
             if page.TYPE != "dir":
                 continue
             page.attach_to_parent()
-
-        # Read metadata
-        for passnum, pages in sorted(by_pass.items(), key=lambda x: x[0]):
-            for page in pages:
-                page.read_metadata()
 
         # Call finalize hook on features
         for feature in self.features.values():

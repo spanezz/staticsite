@@ -113,17 +113,6 @@ class Page:
                 return None
             root = os.path.dirname(root)
 
-    def read_metadata(self):
-        """
-        Fill in self.meta scanning the page contents
-        """
-        # Assign page to its taxonomies
-        for taxonomy in self.site.taxonomies:
-            vals = self.meta.get(taxonomy.name, None)
-            if not vals:
-                continue
-            taxonomy.add_page(self, vals)
-
     def check(self, checker):
         pass
 

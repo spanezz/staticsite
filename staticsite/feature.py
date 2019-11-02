@@ -28,6 +28,12 @@ class Feature:
         """
         return None
 
+    def build_test_page(self, **kw) -> Page:
+        """
+        Build a test page
+        """
+        raise NotImplementedError
+
     def finalize(self):
         """
         Hook called after all the pages have been loaded

@@ -1,6 +1,6 @@
 from unittest import TestCase
 from staticsite.site import Site
-from . import TestPage, TestTaxonomyPage
+from . import TestPage
 import os
 import datetime
 
@@ -13,8 +13,7 @@ class TestTaxonomies(TestCase):
         site = Site()
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
 
-        tax1 = TestTaxonomyPage(site, "tags", meta={})
-        site.add_page(tax1)
+        tax1 = site.add_test_page("taxonomies", name="tags")
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)
@@ -32,8 +31,7 @@ class TestTaxonomies(TestCase):
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
         series = site.features["series"].series
 
-        tax1 = TestTaxonomyPage(site, "tags", meta={"series_tags": ["a", "b"]})
-        site.add_page(tax1)
+        tax1 = site.add_test_page("taxonomies", name="tags", series_tags=["a", "b"])
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)

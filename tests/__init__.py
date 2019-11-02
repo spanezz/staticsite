@@ -45,12 +45,3 @@ class TestPage(Page):
             dst_relpath=relpath,
             dst_link=relpath)
         self.meta.update(**meta)
-
-
-class TestTaxonomyPage(TaxonomyPage):
-    def __init__(self, site, name, meta={}):
-        self._future_meta = meta
-        super().__init__(site, "/tmp/", name + ".taxonomy")
-
-    def _read_taxonomy_description(self):
-        self.meta.update(**self._future_meta)
