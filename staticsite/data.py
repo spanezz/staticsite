@@ -21,12 +21,22 @@ class DataPages(Feature):
         super().__init__(site)
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
+        self.page_class_by_type = {}
+
+    def register_page_class(self, type: str, cls):
+        self.page_class_by_type[type] = cls
 
     def try_load_page(self, root_abspath, relpath):
         mo = re_ext.search(relpath)
         if not mo:
             return None
-        page = DataPage(self.site, root_abspath, relpath, mo.group(1))
+        data = load_data(os.path.join(root_abspath, relpath), relpath, mo.group(1))
+        type = data.get("type", None)
+        if type is None:
+            log.error("%s: data type not found: ignoring page", relpath)
+            return None
+        cls = self.page_class_by_type.get(type, DataPage)
+        page = cls(self.site, root_abspath, relpath, data)
         data_type = page.meta.get("type")
         self.by_type[data_type].append(page)
         return page
@@ -42,11 +52,41 @@ class DataPages(Feature):
         return page_filter.filter(self.by_type.get(type, []))
 
 
+def load_data(abspath, relpath, fmt):
+    if fmt == "json":
+        import json
+        with open(abspath, "rt") as fd:
+            try:
+                return json.load(fd)
+            except Exception:
+                log.exception("%s: failed to parse %s content", relpath, fmt)
+                return
+    elif fmt == "toml":
+        import toml
+        with open(abspath, "rt") as fd:
+            try:
+                return toml.load(fd)
+            except Exception:
+                log.exception("%s: failed to parse %s content", relpath, fmt)
+                return
+    elif fmt == "yaml":
+        import yaml
+        with open(abspath, "rt") as fd:
+            try:
+                return yaml.load(fd, Loader=yaml.CLoader)
+            except Exception:
+                log.exception("%s: failed to parse %s content", relpath, fmt)
+                return
+    else:
+        log.error("%s: unsupported format: %s", relpath, fmt)
+        return
+
+
 class DataPage(Page):
     TYPE = "data"
     FINDABLE = True
 
-    def __init__(self, site, root_abspath, relpath, fmt):
+    def __init__(self, site, root_abspath, relpath, data):
         dirname, basename = os.path.split(relpath)
         if basename.startswith("index.") or basename.startswith("README."):
             linkpath = dirname
@@ -62,36 +102,12 @@ class DataPage(Page):
 
         # Read and parse the contents
         src = self.src_abspath
-        if self.meta.get("date", None) is None:
-            self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
-
-        if fmt == "json":
-            import json
-            with open(src, "rt") as fd:
-                try:
-                    data = json.load(fd)
-                except Exception:
-                    log.exception("%s: failed to parse %s content", self.src_relpath, fmt)
-                    return
-        elif fmt == "toml":
-            import toml
-            with open(src, "rt") as fd:
-                try:
-                    data = toml.load(fd)
-                except Exception:
-                    log.exception("%s: failed to parse %s content", self.src_relpath, fmt)
-                    return
-        elif fmt == "yaml":
-            import yaml
-            with open(src, "rt") as fd:
-                try:
-                    data = yaml.load(fd, Loader=yaml.CLoader)
-                except Exception:
-                    log.exception("%s: failed to parse %s content", self.src_relpath, fmt)
-                    return
+        if src is None:
+            if self.meta.get("date", None) is None:
+                self.meta["date"] = self.site.generation_time
         else:
-            log.error("%s: unsupported format: %s", self.src_relpath, fmt)
-            return
+            if self.meta.get("date", None) is None:
+                self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
 
         self.meta.update(data)
         self.data = data
