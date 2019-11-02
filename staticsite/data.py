@@ -31,6 +31,8 @@ class DataPages(Feature):
         if not mo:
             return None
         data = load_data(os.path.join(root_abspath, relpath), relpath, mo.group(1))
+        if data is None:
+            return None
         type = data.get("type", None)
         if type is None:
             log.error("%s: data type not found: ignoring page", relpath)
