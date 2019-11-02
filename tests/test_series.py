@@ -8,6 +8,7 @@ import datetime
 class TestSeries(TestCase):
     def test_site(self):
         site = Site()
+        site.load_theme(datafile_abspath("theme"))
         series = site.features["series"].series
 
         seriesa1 = TestPage(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa", title="Series A")
@@ -34,7 +35,6 @@ class TestSeries(TestCase):
         # Single-page series
         site.add_page(seriesc1)
         site.add_page(noseries)
-        site.load_theme(datafile_abspath("theme"))
         site.analyze()
 
         # Check that series have been built

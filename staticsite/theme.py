@@ -142,7 +142,7 @@ class Theme:
 
             # Register features with site
             for name, cls in features.items():
-                self.site.features[name] = cls(self.site)
+                self.site.add_feature(name, cls)
 
     def jinja2_taxonomies(self):
         return self.site.taxonomies

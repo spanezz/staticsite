@@ -28,9 +28,6 @@ class Site:
         # Current datetime
         self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
-        # Taxonomies found in the site
-        self.taxonomies = []
-
         # Theme used to render pages
         self.theme = None
 
@@ -40,22 +37,39 @@ class Site:
         # Feature implementation registry
         self.features: Dict[str, Feature] = {}
 
+        # Metadata names that trigger feature hooks when loading pages
+        self.feature_metadata_hooks: Dict[str, Feature] = defaultdict(list)
+
+        # Load default features
         from .markdown import MarkdownPages
+        self.add_feature("md", MarkdownPages)
         # TODO: remove as hardcoded member
-        self.markdown_renderer = MarkdownPages(self)
-        self.features["md"] = self.markdown_renderer
+        self.markdown_renderer = self.features["md"]
 
         from .j2 import J2Pages
-        self.features["j2"] = J2Pages(self)
+        self.add_feature("j2", J2Pages)
 
         from .data import DataPages
-        self.features["data"] = DataPages(self)
+        self.add_feature("data", DataPages)
 
+        # Taxonomies found in the site
         from .taxonomy import TaxonomyPages
-        self.features["taxonomies"] = TaxonomyPages(self)
+        self.add_feature("taxonomies", TaxonomyPages)
+        # TODO: remove as hardcoded member, moving it to TaxonomyPages
+        self.taxonomies = []
 
         from .series import SeriesFeature
-        self.features["series"] = SeriesFeature(self)
+        self.add_feature("series", SeriesFeature)
+
+    def add_feature(self, name, cls):
+        """
+        Add a feature class to the site
+        """
+        feature = cls(self)
+        self.features[name] = feature
+        # Index features for metadata hooks
+        for name in feature.for_metadata:
+            self.feature_metadata_hooks[name].append(feature)
 
     def load_theme(self, theme_root):
         """
@@ -103,6 +117,15 @@ class Site:
             log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
             return
         self.pages[page.src_linkpath] = page
+
+        # Run feature metadata hooks for the given page, if any
+        trigger_features = set()
+        for name, features in self.feature_metadata_hooks.items():
+            if name in page.meta:
+                for feature in features:
+                    trigger_features.add(feature)
+        for feature in trigger_features:
+            feature.add_page(page)
 
     def read_contents_tree(self, tree_root):
         """

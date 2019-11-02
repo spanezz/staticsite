@@ -7,13 +7,20 @@ log = logging.getLogger()
 class SeriesFeature(Feature):
     def __init__(self, site):
         super().__init__(site)
+        self.for_metadata.append("series")
         self.series = {}
 
     def finalize(self):
         for series in self.series.values():
             series.finalize()
 
-    def add_page(self, page, series_name):
+    def add_page(self, page):
+        series_name = page.meta.get("series", None)
+        if series_name is None:
+            return
+        self.add_page_to_series(page, series_name)
+
+    def add_page_to_series(self, page, series_name):
         series = self.series.get(series_name, None)
         if series is None:
             self.series[series_name] = series = Series(series_name)

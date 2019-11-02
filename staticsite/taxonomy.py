@@ -73,7 +73,7 @@ class TaxonomyPage(Page):
         self._read_taxonomy_description()
 
         # Items that automatically identify a series
-        self.series_items = frozenset(self.meta.get("series", ()))
+        self.series_items = frozenset(self.meta.get("series_tags", ()))
 
     def _read_taxonomy_description(self):
         """

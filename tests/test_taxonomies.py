@@ -32,7 +32,7 @@ class TestTaxonomies(TestCase):
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
         series = site.features["series"].series
 
-        tax1 = TestTaxonomyPage(site, "tags", meta={"series": ["a", "b"]})
+        tax1 = TestTaxonomyPage(site, "tags", meta={"series_tags": ["a", "b"]})
         site.add_page(tax1)
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])

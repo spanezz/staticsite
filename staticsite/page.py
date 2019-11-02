@@ -143,10 +143,10 @@ class Page:
                     " I cannot choose, so I'll use none. Use the 'series' metadata to choose which one",
                     self.src_relpath, len(taxonomy_series), ", ".join(taxonomy_series))
 
-        # Assign page to its series
-        if series_name is not None:
-            self.meta["series"] = series_name
-            self.site.features["series"].add_page(self, series_name)
+            # Assign page to its series
+            if series_name is not None:
+                self.meta["series"] = series_name
+                self.site.features["series"].add_page_to_series(self, series_name)
 
     def check(self, checker):
         pass
