@@ -18,8 +18,9 @@ re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 class DataPages(Feature):
     def __init__(self, site):
-        self.site = site
+        super().__init__(site)
         self.by_type = defaultdict(list)
+        self.j2_globals["data_pages"] = self.jinja2_data_pages
 
     def try_load_page(self, root_abspath, relpath):
         mo = re_ext.search(relpath)
@@ -33,6 +34,12 @@ class DataPages(Feature):
     def finalize(self):
         for type, pages in self.by_type.items():
             pages.sort(key=lambda x: x.meta["date"])
+
+    @jinja2.contextfunction
+    def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
+        from .theme import PageFilter
+        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
+        return page_filter.filter(self.by_type.get(type, []))
 
 
 class DataPage(Page):

@@ -9,9 +9,6 @@ log = logging.getLogger()
 
 
 class TaxonomyPages(Feature):
-    def __init__(self, site):
-        self.site = site
-
     def try_load_page(self, root_abspath, relpath):
         if not relpath.endswith(".taxonomy"):
             return None

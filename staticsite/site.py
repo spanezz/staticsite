@@ -6,7 +6,6 @@ from collections import defaultdict
 from .core import Settings
 from .page import Page
 from .series import Series
-from .feature import Feature
 import logging
 
 log = logging.getLogger()
@@ -14,6 +13,8 @@ log = logging.getLogger()
 
 class Site:
     def __init__(self, settings: Optional[Settings] = None):
+        from .feature import Feature
+
         # Site settings
         if settings is None:
             settings = Settings()
@@ -52,9 +53,7 @@ class Site:
         self.features["j2"] = J2Pages(self)
 
         from .data import DataPages
-        # TODO: remove as hardcoded member
-        self.data_pages = DataPages(self)
-        self.features["data"] = self.data_pages
+        self.features["data"] = DataPages(self)
 
         from .taxonomy import TaxonomyPages
         self.features["taxonomies"] = TaxonomyPages(self)
@@ -225,8 +224,9 @@ class Site:
         for series in self.series.values():
             series.finalize()
 
-        # Finalize data pages
-        self.data_pages.finalize()
+        # Call finalize hook on features
+        for feature in self.features.values():
+            feature.finalize()
 
     def slugify(self, text):
         """

@@ -12,9 +12,6 @@ class IgnorePage(Exception):
 
 
 class J2Pages(Feature):
-    def __init__(self, site):
-        self.site = site
-
     def try_load_page(self, root_abspath, relpath):
         basename = os.path.basename(relpath)
         if ".j2." not in basename:

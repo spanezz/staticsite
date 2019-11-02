@@ -95,16 +95,21 @@ class Theme:
             has_page=self.jinja2_has_page,
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
-            site_data_pages=self.jinja2_site_data_pages,
             now=self.site.generation_time,
             next_month=(
                 self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(
                     day=1, hour=0, minute=0, second=0, microsecond=0),
             taxonomies=self.jinja2_taxonomies,
         )
+
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
         self.jinja2.filters["markdown"] = self.jinja2_markdown
         self.jinja2.filters["basename"] = self.jinja2_basename
+
+        # Add feature-provided globals and filters
+        for feature in self.site.features.values():
+            self.jinja2.globals.update(feature.j2_globals)
+            self.jinja2.filters.update(feature.j2_filters)
 
         self.dir_template = self.jinja2.get_template("dir.html")
 
@@ -207,8 +212,3 @@ class Theme:
     def jinja2_site_pages(self, context, path=None, limit=None, sort="-date", **kw):
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
         return page_filter.filter(self.site.pages.values())
-
-    @jinja2.contextfunction
-    def jinja2_site_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
-        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
-        return page_filter.filter(self.site.data_pages.by_type.get(type, []))

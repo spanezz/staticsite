@@ -81,7 +81,7 @@ class StaticSiteExtension(markdown.extensions.Extension):
 
 class MarkdownPages(Feature):
     def __init__(self, site):
-        self.site = site
+        super().__init__(site)
         self.md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
             extensions=site.settings.MARKDOWN_EXTENSIONS + [
