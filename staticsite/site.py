@@ -43,8 +43,6 @@ class Site:
         # Load default features
         from .markdown import MarkdownPages
         self.add_feature("md", MarkdownPages)
-        # TODO: remove as hardcoded member
-        self.markdown_renderer = self.features["md"]
 
         from .j2 import J2Pages
         self.add_feature("j2", J2Pages)
