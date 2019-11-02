@@ -146,7 +146,7 @@ class Page:
         # Assign page to its series
         if series_name is not None:
             self.meta["series"] = series_name
-            self.site.add_page_to_series(self, series_name)
+            self.site.features["series"].add_page(self, series_name)
 
     def check(self, checker):
         pass

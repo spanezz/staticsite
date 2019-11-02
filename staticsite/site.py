@@ -5,7 +5,6 @@ import datetime
 from collections import defaultdict
 from .core import Settings
 from .page import Page
-from .series import Series
 import logging
 
 log = logging.getLogger()
@@ -22,9 +21,6 @@ class Site:
 
         # Site pages
         self.pages: Dict[str, Page] = {}
-
-        # Series repository
-        self.series = {}
 
         # Site time zone
         self.timezone = pytz.timezone(settings.TIMEZONE)
@@ -57,6 +53,9 @@ class Site:
 
         from .taxonomy import TaxonomyPages
         self.features["taxonomies"] = TaxonomyPages(self)
+
+        from .series import SeriesFeature
+        self.features["series"] = SeriesFeature(self)
 
     def load_theme(self, theme_root):
         """
@@ -104,12 +103,6 @@ class Site:
             log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
             return
         self.pages[page.src_linkpath] = page
-
-    def add_page_to_series(self, page, series_name):
-        series = self.series.get(series_name, None)
-        if series is None:
-            self.series[series_name] = series = Series(series_name)
-        series.add_page(page)
 
     def read_contents_tree(self, tree_root):
         """
@@ -219,10 +212,6 @@ class Site:
         for passnum, pages in sorted(by_pass.items(), key=lambda x: x[0]):
             for page in pages:
                 page.read_metadata()
-
-        # Finalize series
-        for series in self.series.values():
-            series.finalize()
 
         # Call finalize hook on features
         for feature in self.features.values():

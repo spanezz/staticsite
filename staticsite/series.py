@@ -1,6 +1,23 @@
 import logging
+from .feature import Feature
 
 log = logging.getLogger()
+
+
+class SeriesFeature(Feature):
+    def __init__(self, site):
+        super().__init__(site)
+        self.series = {}
+
+    def finalize(self):
+        for series in self.series.values():
+            series.finalize()
+
+    def add_page(self, page, series_name):
+        series = self.series.get(series_name, None)
+        if series is None:
+            self.series[series_name] = series = Series(series_name)
+        series.add_page(page)
 
 
 class Series:

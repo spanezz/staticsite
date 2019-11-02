@@ -8,6 +8,7 @@ import datetime
 class TestSeries(TestCase):
     def test_site(self):
         site = Site()
+        series = site.features["series"].series
 
         seriesa1 = TestPage(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa", title="Series A")
         seriesa2 = TestPage(site, "seriesa2", date=datetime.datetime(2016, 1, 2), series="seriesa", title="A2")
@@ -37,15 +38,15 @@ class TestSeries(TestCase):
         site.analyze()
 
         # Check that series have been built
-        self.assertIn("seriesa", site.series)
-        self.assertIn("seriesb", site.series)
-        self.assertIn("seriesc", site.series)
-        self.assertEquals(len(site.series), 3)
+        self.assertIn("seriesa", series)
+        self.assertIn("seriesb", series)
+        self.assertIn("seriesc", series)
+        self.assertEquals(len(series), 3)
 
         # Check the contents of series
-        self.assertEquals(site.series["seriesa"].pages, [seriesa1, seriesa2, seriesa3, seriesa4])
-        self.assertEquals(site.series["seriesb"].pages, [seriesb1, seriesb2])
-        self.assertEquals(site.series["seriesc"].pages, [seriesc1])
+        self.assertEquals(series["seriesa"].pages, [seriesa1, seriesa2, seriesa3, seriesa4])
+        self.assertEquals(series["seriesb"].pages, [seriesb1, seriesb2])
+        self.assertEquals(series["seriesc"].pages, [seriesc1])
 
         # Check computed series metadata
         self.assertEquals(seriesa1.meta["series_title"], "Series A")

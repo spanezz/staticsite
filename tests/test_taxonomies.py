@@ -30,6 +30,7 @@ class TestTaxonomies(TestCase):
         """
         site = Site()
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
+        series = site.features["series"].series
 
         tax1 = TestTaxonomyPage(site, "tags", meta={"series": ["a", "b"]})
         site.add_page(tax1)
@@ -47,5 +48,5 @@ class TestTaxonomies(TestCase):
 
         self.assertCountEqual(tax1.items["a"].pages, [page1, page2, page3])
         self.assertCountEqual(tax1.items["b"].pages, [page1, page3])
-        self.assertEqual(site.series["a"].pages, [page2, page3])
-        self.assertNotIn("b", site.series)
+        self.assertEqual(series["a"].pages, [page2, page3])
+        self.assertNotIn("b", series)

@@ -6,7 +6,9 @@ from . import site
 class Feature:
     def __init__(self, site: "site.Site"):
         self.site = site
+        # Feature-provided jinja2 globals
         self.j2_globals: Dict[str, Callable] = {}
+        # Feature-provided jinja2 filters
         self.j2_filters: Dict[str, Callable] = {}
 
     def try_load_page(self, root_abspath: str, relpath: str) -> Optional[Page]:
