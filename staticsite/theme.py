@@ -83,7 +83,7 @@ class Theme:
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
             loader=FileSystemLoader([
-                self.root,
+                self.root.as_posix(),
             ]),
             autoescape=True,
         )
@@ -125,18 +125,18 @@ class Theme:
         if not features_dir.is_dir():
             return
 
-        for info in pkgutil.iter_modules([features_dir.as_posix()]):
+        for module_finder, name, ispkg in pkgutil.iter_modules([features_dir.as_posix()]):
             try:
-                spec = info.module_finder.find_spec(info.name)
+                spec = module_finder.find_spec(name)
                 mod = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mod)
             except Exception:
-                log.exception("%r: failed to load feature module", info)
+                log.exception("%r: failed to load feature module", name)
                 continue
 
             features = getattr(mod, "FEATURES", None)
             if features is None:
-                log.warn("%r: feature module did not define a FEATURES dict", info)
+                log.warn("%r: feature module did not define a FEATURES dict", name)
 
             # Register features with site
             for name, cls in features.items():
