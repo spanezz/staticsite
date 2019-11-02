@@ -19,9 +19,6 @@ class Site:
         # Site pages
         self.pages = {}
 
-        # Description of tags
-        self.tag_descriptions = {}
-
         # Series repository
         self.series = {}
 
