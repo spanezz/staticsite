@@ -1,4 +1,4 @@
-# coding: utf-8
+import pytz
 import os
 from staticsite.page import Page
 from staticsite.taxonomy import TaxonomyPage
@@ -34,6 +34,9 @@ class TestPage(Page):
     FINDABLE = True
 
     def __init__(self, site, relpath, **meta):
+        if "date" in meta and meta["date"].tzinfo is None:
+            meta["date"] = meta["date"].replace(tzinfo=pytz.utc)
+
         super().__init__(
             site=site,
             root_abspath="/",
@@ -41,17 +44,4 @@ class TestPage(Page):
             src_linkpath=relpath,
             dst_relpath=relpath,
             dst_link=relpath)
-        self._future_meta = meta
-
-    def read_metadata(self):
-        self.meta.update(**self._future_meta)
-        super().read_metadata()
-
-
-class TestTaxonomyPage(TaxonomyPage):
-    def __init__(self, site, name, meta={}):
-        self._future_meta = meta
-        super().__init__(site, "/tmp/", name + ".taxonomy")
-
-    def _read_taxonomy_description(self):
-        self.meta.update(**self._future_meta)
+        self.meta.update(**meta)

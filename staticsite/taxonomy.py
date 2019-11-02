@@ -1,5 +1,6 @@
 from .page import Page
 from .core import RenderedString
+from .feature import Feature
 import os
 import jinja2
 import logging
@@ -7,14 +8,39 @@ import logging
 log = logging.getLogger()
 
 
-class TaxonomyPages:
+class TaxonomyPages(Feature):
     def __init__(self, site):
-        self.site = site
+        super().__init__(site)
+        self.taxonomies = []
+        self.j2_globals["taxonomies"] = self.jinja2_taxonomies
 
     def try_load_page(self, root_abspath, relpath):
         if not relpath.endswith(".taxonomy"):
             return None
-        return TaxonomyPage(self.site, root_abspath, relpath)
+        page = TaxonomyPage(self.site, root_abspath, relpath)
+        self.taxonomies.append(page)
+        return page
+
+    def build_test_page(self, name, **kw) -> Page:
+        page = TestTaxonomyPage(self.site, root_abspath="/", relpath=name + ".taxonomy")
+        page.meta.update(**kw)
+        self.taxonomies.append(page)
+        return page
+
+    def finalize(self):
+        # Assign pages to their taxonomies
+        for page in self.site.pages.values():
+            for taxonomy in self.taxonomies:
+                vals = page.meta.get(taxonomy.name, None)
+                if not vals:
+                    continue
+                taxonomy.add_page(page, vals)
+
+        for taxonomy in self.taxonomies:
+            taxonomy.finalize()
+
+    def jinja2_taxonomies(self):
+        return self.taxonomies
 
 
 class TaxonomyItem:
@@ -73,9 +99,6 @@ class TaxonomyPage(Page):
 
         # Read taxonomy information
         self._read_taxonomy_description()
-
-        # Items that automatically identify a series
-        self.series_items = frozenset(self.meta.get("series", ()))
 
     def _read_taxonomy_description(self):
         """
@@ -137,7 +160,7 @@ class TaxonomyPage(Page):
             log.exception("%s: cannot load %s %s", self.src_relpath, name, template_name)
             return None
 
-    def read_metadata(self):
+    def finalize(self):
         single_name = self.meta.get("item_name", self.name)
 
         # Instantiate jinja2 templates
@@ -159,16 +182,12 @@ class TaxonomyPage(Page):
         Add a page to this taxonomy. Elements is a sequence of elements for
         this taxonomy.
         """
-        series = []
         for v in elements:
             item = self.items.get(v, None)
             if item is None:
                 item = TaxonomyItem(self, v)
                 self.items[v] = item
             item.pages.append(page)
-            if v in self.series_items and (not series or series[0] != v):
-                series.append(v)
-        return series
 
     def render(self):
         res = {}
@@ -230,3 +249,8 @@ class TaxonomyPage(Page):
                 res.append(os.path.join(self.dst_relpath, dest))
 
         return res
+
+
+class TestTaxonomyPage(TaxonomyPage):
+    def _read_taxonomy_description(self):
+        pass

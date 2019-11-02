@@ -1,5 +1,6 @@
 from .page import Page
 from .core import RenderedString
+from .feature import Feature
 import os
 import logging
 
@@ -10,10 +11,7 @@ class IgnorePage(Exception):
     pass
 
 
-class J2Pages:
-    def __init__(self, site):
-        self.site = site
-
+class J2Pages(Feature):
     def try_load_page(self, root_abspath, relpath):
         basename = os.path.basename(relpath)
         if ".j2." not in basename:
@@ -47,7 +45,6 @@ class J2Page(Page):
             dst_relpath=dst_relpath,
             dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
 
-    def read_metadata(self):
         self.meta["date"] = self.site.generation_time
 
     def render(self):

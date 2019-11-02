@@ -1,26 +1,26 @@
+from typing import Optional, Dict
 import os
 import pytz
 import datetime
 from collections import defaultdict
 from .core import Settings
-from .series import Series
+from .page import Page
 import logging
 
 log = logging.getLogger()
 
 
 class Site:
-    def __init__(self, settings=None):
+    def __init__(self, settings: Optional[Settings] = None):
+        from .feature import Feature
+
         # Site settings
         if settings is None:
             settings = Settings()
-        self.settings = settings
+        self.settings: Settings = settings
 
         # Site pages
-        self.pages = {}
-
-        # Series repository
-        self.series = {}
+        self.pages: Dict[str, Page] = {}
 
         # Site time zone
         self.timezone = pytz.timezone(settings.TIMEZONE)
@@ -28,31 +28,46 @@ class Site:
         # Current datetime
         self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
-        # Taxonomies found in the site
-        self.taxonomies = []
-
         # Theme used to render pages
         self.theme = None
 
         # If true, do not ignore pages with dates in the future
-        self.draft = False
+        self.draft: bool = False
 
-        from .data import DataPages
-        self.data_pages = DataPages(self)
+        # Feature implementation registry
+        self.features: Dict[str, Feature] = {}
 
+        # Metadata names that trigger feature hooks when loading pages
+        self.feature_metadata_hooks: Dict[str, Feature] = defaultdict(list)
+
+        # Load default features
         from .markdown import MarkdownPages
-        self.markdown_renderer = MarkdownPages(self)
+        self.add_feature("md", MarkdownPages)
 
         from .j2 import J2Pages
-        from .taxonomy import TaxonomyPages
+        self.add_feature("j2", J2Pages)
 
-        # Map input file patterns to resource handlers
-        self.page_handlers = [
-            self.markdown_renderer,
-            J2Pages(self),
-            self.data_pages,
-            TaxonomyPages(self),
-        ]
+        from .data import DataPages
+        self.add_feature("data", DataPages)
+
+        from .taxonomy import TaxonomyPages
+        self.add_feature("taxonomies", TaxonomyPages)
+
+        from .dir import DirPages
+        self.add_feature("dirs", DirPages)
+
+        from .series import SeriesFeature
+        self.add_feature("series", SeriesFeature)
+
+    def add_feature(self, name, cls):
+        """
+        Add a feature class to the site
+        """
+        feature = cls(self)
+        self.features[name] = feature
+        # Index features for metadata hooks
+        for name in feature.for_metadata:
+            self.feature_metadata_hooks[name].append(feature)
 
     def load_theme(self, theme_root):
         """
@@ -87,7 +102,7 @@ class Site:
         """
         self.read_contents_tree(content_root)
 
-    def add_page(self, page):
+    def add_page(self, page: Page):
         """
         Add a Page object to the site.
 
@@ -101,11 +116,24 @@ class Site:
             return
         self.pages[page.src_linkpath] = page
 
-    def add_page_to_series(self, page, series_name):
-        series = self.series.get(series_name, None)
-        if series is None:
-            self.series[series_name] = series = Series(series_name)
-        series.add_page(page)
+        # Run feature metadata hooks for the given page, if any
+        trigger_features = set()
+        for name, features in self.feature_metadata_hooks.items():
+            if name in page.meta:
+                for feature in features:
+                    trigger_features.add(feature)
+        for feature in trigger_features:
+            feature.add_page(page)
+
+    def add_test_page(self, feature: str, **kw) -> Page:
+        """
+        Add a test page instantiated using the given feature.
+
+        :return:the Page added
+        """
+        page = self.features[feature].build_test_page(**kw)
+        self.add_page(page)
+        return page
 
     def read_contents_tree(self, tree_root):
         """
@@ -127,7 +155,7 @@ class Site:
                 page_abspath = os.path.join(root, f)
                 page_relpath = os.path.relpath(page_abspath, tree_root)
 
-                for handler in self.page_handlers:
+                for handler in self.features.values():
                     p = handler.try_load_page(tree_root, page_relpath)
                     if p is not None:
                         self.add_page(p)
@@ -172,56 +200,9 @@ class Site:
 
         Call this after all Pages have been added to the site.
         """
-        self.taxonomies = []
-
-        by_dir = defaultdict(list)
-        by_pass = defaultdict(list)
-        for page in self.pages.values():
-            # Group pages by pass number
-            by_pass[page.ANALYZE_PASS].append(page)
-            # Collect taxonomies
-            if page.TYPE == "taxonomy":
-                self.taxonomies.append(page)
-            # Harvest content for directory indices
-            if page.FINDABLE and page.src_relpath:
-                dir_relpath = os.path.dirname(page.src_relpath)
-                by_dir[dir_relpath].append(page)
-                while True:
-                    if not dir_relpath:
-                        break
-                    dir_relpath = os.path.dirname(dir_relpath)
-                    # Do a lookup to make sure an entry exists for this
-                    # directory level, even though without pages
-                    by_dir[dir_relpath]
-
-        # Build directory indices
-        from .dir import DirPage
-        for relpath, pages in by_dir.items():
-            # We only build indices where there is not already a page
-            if relpath in self.pages:
-                continue
-            page = DirPage(self, relpath, pages)
-            self.pages[relpath] = page
-            by_pass[page.ANALYZE_PASS].append(page)
-
-        # Add directory indices to their parent directory indices
-        for relpath, pages in by_dir.items():
-            page = self.pages[relpath]
-            if page.TYPE != "dir":
-                continue
-            page.attach_to_parent()
-
-        # Read metadata
-        for passnum, pages in sorted(by_pass.items(), key=lambda x: x[0]):
-            for page in pages:
-                page.read_metadata()
-
-        # Finalize series
-        for series in self.series.values():
-            series.finalize()
-
-        # Finalize data pages
-        self.data_pages.finalize()
+        # Call finalize hook on features
+        for feature in self.features.values():
+            feature.finalize()
 
     def slugify(self, text):
         """

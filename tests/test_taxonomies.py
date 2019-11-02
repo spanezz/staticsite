@@ -1,6 +1,6 @@
 from unittest import TestCase
 from staticsite.site import Site
-from . import TestPage, TestTaxonomyPage
+from . import TestPage
 import os
 import datetime
 
@@ -13,8 +13,7 @@ class TestTaxonomies(TestCase):
         site = Site()
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
 
-        tax1 = TestTaxonomyPage(site, "tags", meta={})
-        site.add_page(tax1)
+        tax1 = site.add_test_page("taxonomies", name="tags")
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)
@@ -30,9 +29,9 @@ class TestTaxonomies(TestCase):
         """
         site = Site()
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
+        series = site.features["series"].series
 
-        tax1 = TestTaxonomyPage(site, "tags", meta={"series": ["a", "b"]})
-        site.add_page(tax1)
+        tax1 = site.add_test_page("taxonomies", name="tags", series_tags=["a", "b"])
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)
@@ -47,5 +46,5 @@ class TestTaxonomies(TestCase):
 
         self.assertCountEqual(tax1.items["a"].pages, [page1, page2, page3])
         self.assertCountEqual(tax1.items["b"].pages, [page1, page3])
-        self.assertEqual(site.series["a"].pages, [page2, page3])
-        self.assertNotIn("b", site.series)
+        self.assertEqual(series["a"].pages, [page1, page2, page3])
+        self.assertNotIn("b", series)

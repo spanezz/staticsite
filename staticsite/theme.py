@@ -4,6 +4,7 @@ import re
 import fnmatch
 import datetime
 import logging
+from pathlib import Path
 
 log = logging.getLogger()
 
@@ -26,7 +27,7 @@ class PageFilter:
                 self.sort_reverse = False
 
         self.taxonomy_filters = []
-        for taxonomy in self.site.taxonomies:
+        for taxonomy in self.site.features["taxonomies"].taxonomies:
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:
                 continue
@@ -73,7 +74,10 @@ class Theme:
         self.site = site
 
         # Absolute path to the root of the theme directory
-        self.root = os.path.abspath(root)
+        self.root = Path(os.path.abspath(root))
+
+        # Load feature plugins from the theme directory
+        self.load_features()
 
         # Jinja2 template engine
         from jinja2 import Environment, FileSystemLoader
@@ -95,71 +99,51 @@ class Theme:
             has_page=self.jinja2_has_page,
             url_for=self.jinja2_url_for,
             site_pages=self.jinja2_site_pages,
-            site_data_pages=self.jinja2_site_data_pages,
             now=self.site.generation_time,
             next_month=(
                 self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(
                     day=1, hour=0, minute=0, second=0, microsecond=0),
-            taxonomies=self.jinja2_taxonomies,
         )
+
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
-        self.jinja2.filters["markdown"] = self.jinja2_markdown
         self.jinja2.filters["basename"] = self.jinja2_basename
+
+        # Add feature-provided globals and filters
+        for feature in self.site.features.values():
+            self.jinja2.globals.update(feature.j2_globals)
+            self.jinja2.filters.update(feature.j2_filters)
 
         self.dir_template = self.jinja2.get_template("dir.html")
 
-        self.load_plugins()
-
-    def load_plugins(self):
+    def load_features(self):
         """
-        Load plugin files from the plugins/ theme directory
+        Load feature modules from the features/ theme directory
         """
-        plugin_dir = os.path.join(self.root, "plugins")
-        if not os.path.isdir(plugin_dir):
+        import pkgutil
+        import importlib
+        features_dir = self.root / "features"
+        if not features_dir.is_dir():
             return
 
-        for fn in os.listdir(plugin_dir):
-            if not fn.endswith(".py"):
-                continue
-            self.load_plugin(os.path.join(plugin_dir, fn))
-
-    def load_plugin(self, fname):
-        """
-        Load plugin code from the given file
-        """
-        with open(fname) as fd:
+        for info in pkgutil.iter_modules([features_dir.as_posix()]):
             try:
-                code = compile(fd.read(), fname, 'exec')
+                spec = info.module_finder.find_spec(info.name)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
             except Exception:
-                log.exception("%s: plugin file failed to compile", fname)
-                return
+                log.exception("%r: failed to load feature module", info)
+                continue
 
-        plugin_env = {}
-        try:
-            exec(code, plugin_env)
-        except Exception:
-            log.exception("%s: plugin file failed to execute", fname)
-            return
+            features = getattr(mod, "FEATURES", None)
+            if features is None:
+                log.warn("%r: feature module did not define a FEATURES dict", info)
 
-        plugin_load = plugin_env.get("load")
-        if plugin_load is None:
-            log.warn("%s: plugin did not define a load function", fname)
-            return
-
-        try:
-            plugin_load(self)
-        except Exception:
-            log.exception("%s: plugin load function failed", fname)
-
-    def jinja2_taxonomies(self):
-        return self.site.taxonomies
+            # Register features with site
+            for name, cls in features.items():
+                self.site.add_feature(name, cls)
 
     def jinja2_basename(self, val):
         return os.path.basename(val)
-
-    @jinja2.contextfilter
-    def jinja2_markdown(self, context, mdtext):
-        return jinja2.Markup(self.site.markdown_renderer.render(context.parent["page"], mdtext))
 
     @jinja2.contextfilter
     def jinja2_datetime_format(self, context, dt, format=None):
@@ -207,8 +191,3 @@ class Theme:
     def jinja2_site_pages(self, context, path=None, limit=None, sort="-date", **kw):
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
         return page_filter.filter(self.site.pages.values())
-
-    @jinja2.contextfunction
-    def jinja2_site_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
-        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
-        return page_filter.filter(self.site.data_pages.by_type.get(type, []))

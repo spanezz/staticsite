@@ -1,5 +1,7 @@
 from .core import Archetype, RenderedString
 from .page import Page
+from .feature import Feature
+import jinja2
 import os
 import io
 import pytz
@@ -78,9 +80,9 @@ class StaticSiteExtension(markdown.extensions.Extension):
         self.link_resolver.page = page
 
 
-class MarkdownPages:
+class MarkdownPages(Feature):
     def __init__(self, site):
-        self.site = site
+        super().__init__(site)
         self.md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
             extensions=site.settings.MARKDOWN_EXTENSIONS + [
@@ -92,6 +94,12 @@ class MarkdownPages:
         # Cached templates
         self._page_template = None
         self._redirect_template = None
+
+        self.j2_filters["markdown"] = self.jinja2_markdown
+
+    @jinja2.contextfilter
+    def jinja2_markdown(self, context, mdtext):
+        return jinja2.Markup(self.render(context.parent["page"], mdtext))
 
     @property
     def page_template(self):
