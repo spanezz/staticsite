@@ -1,12 +1,8 @@
-# coding: utf-8
 from unittest import TestCase
-from staticsite.build import Build
 from staticsite.site import Site
-from staticsite.core import Page
-from . import datafile_abspath, example_site, TestArgs, TestPage, TestTaxonomyPage
+from . import TestPage, TestTaxonomyPage
 import os
 import datetime
-import tempfile
 
 
 class TestTaxonomies(TestCase):

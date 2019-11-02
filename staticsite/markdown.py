@@ -1,4 +1,5 @@
-from .core import Archetype, Page, RenderedString
+from .core import Archetype, RenderedString
+from .page import Page
 import os
 import io
 import pytz

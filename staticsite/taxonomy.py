@@ -1,4 +1,5 @@
-from .core import Page, RenderedString
+from .page import Page
+from .core import RenderedString
 import os
 import jinja2
 import logging

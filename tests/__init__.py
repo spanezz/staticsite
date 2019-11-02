@@ -1,8 +1,9 @@
 # coding: utf-8
 import os
-from staticsite.core import Page
+from staticsite.page import Page
 from staticsite.taxonomy import TaxonomyPage
 from contextlib import contextmanager
+
 
 def datafile_abspath(relpath):
     test_root = os.path.dirname(__file__)

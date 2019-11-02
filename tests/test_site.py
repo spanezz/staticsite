@@ -1,11 +1,10 @@
-# coding: utf-8
 from unittest import TestCase
 from staticsite.build import Build
 from staticsite.site import Site
-from staticsite.core import Page
 from . import datafile_abspath, example_site, TestArgs, TestPage
 import os
 import datetime
+
 
 class TestSite(TestCase):
     def test_dirs(self):
@@ -42,6 +41,7 @@ class TestSite(TestCase):
         self.assertEqual(dir_dir3.pages, [page_sub3])
         self.assertEqual(dir_dir3.subdirs, [])
 
+
 class TestMarkdownInJinja2(TestCase):
     def test_jinja2_markdown(self):
         with example_site() as root:
@@ -59,6 +59,7 @@ class TestMarkdownInJinja2(TestCase):
                 content = fd.read()
 
             self.assertEqual(content, '<p><em>This</em> is an <a href="http://example.org">example</a></p>')
+
 
 class TestBuild(TestCase):
     def test_dots(self):

@@ -1,10 +1,7 @@
 # coding: utf-8
 from unittest import TestCase
-from staticsite.build import Build
 from staticsite.site import Site
-from staticsite.core import Page
-from . import datafile_abspath, example_site, TestArgs, TestPage
-import os
+from . import datafile_abspath, TestPage
 import datetime
 
 
@@ -14,10 +11,12 @@ class TestSeries(TestCase):
 
         seriesa1 = TestPage(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa", title="Series A")
         seriesa2 = TestPage(site, "seriesa2", date=datetime.datetime(2016, 1, 2), series="seriesa", title="A2")
-        seriesa3 = TestPage(site, "seriesa3", date=datetime.datetime(2016, 1, 3), series="seriesa", title="A3", series_title="Series A part Two")
+        seriesa3 = TestPage(site, "seriesa3", date=datetime.datetime(2016, 1, 3), series="seriesa", title="A3",
+                            series_title="Series A part Two")
         seriesa4 = TestPage(site, "seriesa4", date=datetime.datetime(2016, 1, 4), series="seriesa", title="A4")
 
-        seriesb1 = TestPage(site, "seriesb1", date=datetime.datetime(2016, 1, 1), series="seriesb", title="Series B", series_title="Series B part One")
+        seriesb1 = TestPage(site, "seriesb1", date=datetime.datetime(2016, 1, 1), series="seriesb", title="Series B",
+                            series_title="Series B part One")
         seriesb2 = TestPage(site, "seriesb2", date=datetime.datetime(2016, 1, 2), series="seriesb", title="B2")
 
         seriesc1 = TestPage(site, "seriesc1", date=datetime.datetime(2016, 1, 1), series="seriesc")
@@ -113,4 +112,3 @@ class TestSeries(TestCase):
         self.assertNotIn("series_last", noseries.meta)
         self.assertNotIn("series_index", noseries.meta)
         self.assertNotIn("series_length", noseries.meta)
-
