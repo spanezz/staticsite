@@ -1,23 +1,26 @@
+from typing import Optional, Dict
 import os
 import pytz
 import datetime
 from collections import defaultdict
 from .core import Settings
+from .page import Page
 from .series import Series
+from .feature import Feature
 import logging
 
 log = logging.getLogger()
 
 
 class Site:
-    def __init__(self, settings=None):
+    def __init__(self, settings: Optional[Settings] = None):
         # Site settings
         if settings is None:
             settings = Settings()
-        self.settings = settings
+        self.settings: Settings = settings
 
         # Site pages
-        self.pages = {}
+        self.pages: Dict[str, Page] = {}
 
         # Series repository
         self.series = {}
@@ -35,24 +38,26 @@ class Site:
         self.theme = None
 
         # If true, do not ignore pages with dates in the future
-        self.draft = False
+        self.draft: bool = False
 
-        from .data import DataPages
-        self.data_pages = DataPages(self)
+        # Feature implementation registry
+        self.features: Dict[str, Feature] = {}
 
         from .markdown import MarkdownPages
+        # TODO: remove as hardcoded member
         self.markdown_renderer = MarkdownPages(self)
+        self.features["md"] = self.markdown_renderer
 
         from .j2 import J2Pages
-        from .taxonomy import TaxonomyPages
+        self.features["j2"] = J2Pages(self)
 
-        # Map input file patterns to resource handlers
-        self.page_handlers = [
-            self.markdown_renderer,
-            J2Pages(self),
-            self.data_pages,
-            TaxonomyPages(self),
-        ]
+        from .data import DataPages
+        # TODO: remove as hardcoded member
+        self.data_pages = DataPages(self)
+        self.features["data"] = self.data_pages
+
+        from .taxonomy import TaxonomyPages
+        self.features["taxonomies"] = TaxonomyPages(self)
 
     def load_theme(self, theme_root):
         """
@@ -127,7 +132,7 @@ class Site:
                 page_abspath = os.path.join(root, f)
                 page_relpath = os.path.relpath(page_abspath, tree_root)
 
-                for handler in self.page_handlers:
+                for handler in self.features.values():
                     p = handler.try_load_page(tree_root, page_relpath)
                     if p is not None:
                         self.add_page(p)

@@ -1,5 +1,6 @@
 from .core import Archetype, RenderedString
 from .page import Page
+from .feature import Feature
 import os
 import io
 import pytz
@@ -78,7 +79,7 @@ class StaticSiteExtension(markdown.extensions.Extension):
         self.link_resolver.page = page
 
 
-class MarkdownPages:
+class MarkdownPages(Feature):
     def __init__(self, site):
         self.site = site
         self.md_staticsite = StaticSiteExtension()

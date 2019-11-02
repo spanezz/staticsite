@@ -1,5 +1,6 @@
 from .page import Page
 from .core import RenderedString
+from .feature import Feature
 import os
 import logging
 
@@ -10,7 +11,7 @@ class IgnorePage(Exception):
     pass
 
 
-class J2Pages:
+class J2Pages(Feature):
     def __init__(self, site):
         self.site = site
 

@@ -1,4 +1,5 @@
 from .page import Page
+from .feature import Feature
 from .core import RenderedString
 import pytz
 import dateutil.parser
@@ -15,7 +16,7 @@ log = logging.getLogger()
 re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
-class DataPages:
+class DataPages(Feature):
     def __init__(self, site):
         self.site = site
         self.by_type = defaultdict(list)

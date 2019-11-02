@@ -1,5 +1,6 @@
 from .page import Page
 from .core import RenderedString
+from .feature import Feature
 import os
 import jinja2
 import logging
@@ -7,7 +8,7 @@ import logging
 log = logging.getLogger()
 
 
-class TaxonomyPages:
+class TaxonomyPages(Feature):
     def __init__(self, site):
         self.site = site
 
