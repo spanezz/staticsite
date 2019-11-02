@@ -1,9 +1,43 @@
 from .page import Page
 from .core import RenderedString
+from .feature import Feature
+from collections import defaultdict
 import os
 import logging
 
 log = logging.getLogger()
+
+
+class DirPages(Feature):
+    def finalize(self):
+        by_dir = defaultdict(list)
+        for page in self.site.pages.values():
+            # Harvest content for directory indices
+            if page.FINDABLE and page.src_relpath:
+                dir_relpath = os.path.dirname(page.src_relpath)
+                by_dir[dir_relpath].append(page)
+                while dir_relpath:
+                    dir_relpath = os.path.dirname(dir_relpath)
+                    # Do a lookup to make sure an entry exists for this
+                    # directory level, even though without pages
+                    by_dir[dir_relpath]
+
+        # Build directory indices
+        dir_pages = []
+        for relpath, pages in by_dir.items():
+            # We only build indices where there is not already a page
+            if relpath in self.site.pages:
+                continue
+            page = DirPage(self.site, relpath, pages)
+            dir_pages.append(page)
+            self.site.pages[relpath] = page
+
+        # Add directory indices to their parent directory indices
+        for page in dir_pages:
+            page.attach_to_parent()
+
+        for page in dir_pages:
+            page.finalize()
 
 
 class DirPage(Page):
@@ -58,7 +92,7 @@ class DirPage(Page):
                 self.meta["date"] = res = max(dates)
         return res
 
-    def read_metadata(self):
+    def finalize(self):
         self.meta["date"] = self.get_date()
         self.meta["title"] = os.path.basename(self.src_relpath) or self.site.settings.SITE_NAME
 

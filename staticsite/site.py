@@ -52,9 +52,11 @@ class Site:
         from .data import DataPages
         self.add_feature("data", DataPages)
 
-        # Taxonomies found in the site
         from .taxonomy import TaxonomyPages
         self.add_feature("taxonomies", TaxonomyPages)
+
+        from .dir import DirPages
+        self.add_feature("dirs", DirPages)
 
         from .series import SeriesFeature
         self.add_feature("series", SeriesFeature)
@@ -200,40 +202,6 @@ class Site:
 
         Call this after all Pages have been added to the site.
         """
-        by_dir = defaultdict(list)
-        by_pass = defaultdict(list)
-        for page in self.pages.values():
-            # Group pages by pass number
-            by_pass[page.ANALYZE_PASS].append(page)
-            # Harvest content for directory indices
-            if page.FINDABLE and page.src_relpath:
-                dir_relpath = os.path.dirname(page.src_relpath)
-                by_dir[dir_relpath].append(page)
-                while True:
-                    if not dir_relpath:
-                        break
-                    dir_relpath = os.path.dirname(dir_relpath)
-                    # Do a lookup to make sure an entry exists for this
-                    # directory level, even though without pages
-                    by_dir[dir_relpath]
-
-        # Build directory indices
-        from .dir import DirPage
-        for relpath, pages in by_dir.items():
-            # We only build indices where there is not already a page
-            if relpath in self.pages:
-                continue
-            page = DirPage(self, relpath, pages)
-            self.pages[relpath] = page
-            by_pass[page.ANALYZE_PASS].append(page)
-
-        # Add directory indices to their parent directory indices
-        for relpath, pages in by_dir.items():
-            page = self.pages[relpath]
-            if page.TYPE != "dir":
-                continue
-            page.attach_to_parent()
-
         # Call finalize hook on features
         for feature in self.features.values():
             feature.finalize()
