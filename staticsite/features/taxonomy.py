@@ -1,6 +1,6 @@
-from .page import Page
-from .core import RenderedString
-from .feature import Feature
+from staticsite.page import Page
+from staticsite.core import RenderedString
+from staticsite.feature import Feature
 import os
 import jinja2
 import logging
@@ -104,7 +104,7 @@ class TaxonomyPage(Page):
         """
         Parse the taxonomy file to read its description
         """
-        from .utils import parse_front_matter
+        from staticsite.utils import parse_front_matter
         src = self.src_abspath
         with open(src, "rt") as fd:
             lines = [x.rstrip() for x in fd]

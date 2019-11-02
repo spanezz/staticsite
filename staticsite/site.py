@@ -41,22 +41,22 @@ class Site:
         self.feature_metadata_hooks = defaultdict(list)  # type: Dict[str, Feature]
 
         # Load default features
-        from .markdown import MarkdownPages
+        from .features.markdown import MarkdownPages
         self.add_feature("md", MarkdownPages)
 
-        from .j2 import J2Pages
+        from .features.j2 import J2Pages
         self.add_feature("j2", J2Pages)
 
-        from .data import DataPages
+        from .features.data import DataPages
         self.add_feature("data", DataPages)
 
-        from .taxonomy import TaxonomyPages
+        from .features.taxonomy import TaxonomyPages
         self.add_feature("taxonomies", TaxonomyPages)
 
-        from .dir import DirPages
+        from .features.dir import DirPages
         self.add_feature("dirs", DirPages)
 
-        from .series import SeriesFeature
+        from .features.series import SeriesFeature
         self.add_feature("series", SeriesFeature)
 
     def add_feature(self, name, cls):

@@ -1,6 +1,7 @@
-from .core import Archetype, RenderedString
-from .page import Page
-from .feature import Feature
+from staticsite.core import Archetype, RenderedString
+from staticsite.page import Page
+from staticsite.feature import Feature
+from staticsite.utils import parse_front_matter
 import jinja2
 import os
 import io
@@ -9,7 +10,6 @@ import datetime
 import markdown
 import dateutil.parser
 from urllib.parse import urlparse, urlunparse
-from .utils import parse_front_matter
 import logging
 
 log = logging.getLogger()

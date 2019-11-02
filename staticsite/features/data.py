@@ -1,11 +1,12 @@
-from .page import Page
-from .feature import Feature
-from .core import RenderedString
+from staticsite.core import Archetype, RenderedString
+from staticsite.page import Page
+from staticsite.feature import Feature
 import pytz
 import dateutil.parser
 import jinja2
 import re
 import os
+import io
 import datetime
 from collections import defaultdict
 import logging
@@ -42,6 +43,13 @@ class DataPages(Feature):
         data_type = page.meta.get("type")
         self.by_type[data_type].append(page)
         return page
+
+    def try_load_archetype(self, archetypes, relpath, name):
+        mo = re_ext.search(relpath)
+        if not mo:
+            return None
+        # return DataArchetype(self, archetypes, relpath)
+        return None
 
     def finalize(self):
         for type, pages in self.by_type.items():
@@ -178,3 +186,33 @@ class DataPage(Page):
         for relpath in self.meta.get("aliases", ()):
             res.append(os.path.join(relpath, "index.html"))
         return res
+
+
+#class DataArchetype(Archetype):
+#    def __init__(self, data_pages, archetypes, relpath):
+#        super().__init__(data_pages.site, relpath)
+#        self.archetypes = archetypes
+#
+#    def render(self, **kw):
+#        """
+#        Process the archetype returning its parsed front matter in a dict, and
+#        its contents in a string
+#        """
+#        # Render the archetype with jinja2
+#        abspath = os.path.join(self.archetypes.root, self.relpath)
+#        with open(abspath, "rt") as fd:
+#            template = self.site.theme.jinja2.from_string(fd.read())
+#
+#        rendered = template.render(**kw)
+#
+#        with io.StringIO(rendered) as fd:
+#            data = load_data(
+#            # Reparse it separating front matter and markdown content
+#            front_matter, body = parse_markdown_with_front_matter(fd)
+#
+#            try:
+#                style, meta = parse_front_matter(front_matter)
+#            except Exception:
+#                log.exception("archetype %s: failed to parse front matter", self.relpath)
+#
+#        return style, meta, body

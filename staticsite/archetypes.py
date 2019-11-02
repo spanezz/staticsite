@@ -18,22 +18,13 @@ class Archetypes:
 
         Returns None if nothing matches.
         """
-        # Map input file patterns to resource handlers
-        from .markdown import MarkdownPages
-        handlers = [
-            # Only resources that have a front matter can be used here, because
-            # we need to read the front matter to determine the destination
-            # path
-            MarkdownPages(self.site),
-        ]
-
         for root, dnames, fnames in os.walk(self.root):
             for f in fnames:
                 if f.startswith("."):
                     continue
                 relpath = os.path.relpath(os.path.join(root, f), self.root)
-                for handler in handlers:
-                    a = handler.try_load_archetype(self, relpath, name)
+                for name, feature in self.site.features.items():
+                    a = feature.try_load_archetype(self, relpath, name)
                     if a is not None:
                         return a
         return None

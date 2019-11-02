@@ -1,5 +1,5 @@
+from staticsite.feature import Feature
 import logging
-from .feature import Feature
 
 log = logging.getLogger()
 

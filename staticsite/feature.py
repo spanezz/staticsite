@@ -28,6 +28,14 @@ class Feature:
         """
         return None
 
+    def try_load_archetype(self, archetypes, relpath, name):
+        """
+        Try loading an archetype page.
+
+        Returns None if this path is not handled by this feature
+        """
+        return None
+
     def build_test_page(self, **kw) -> Page:
         """
         Build a test page

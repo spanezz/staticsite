@@ -1,7 +1,6 @@
 import pytz
 import os
 from staticsite.page import Page
-from staticsite.taxonomy import TaxonomyPage
 from contextlib import contextmanager
 
 
