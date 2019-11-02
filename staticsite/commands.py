@@ -81,7 +81,9 @@ class SiteCommand:
                 self.theme_root = themedir
                 break
         if self.theme_root is None:
-            raise CmdlineError("None of the configured theme directories ({}) seem to exist".format(", ".join(self.settings.THEME)))
+            raise CmdlineError(
+                    "None of the configured theme directories ({}) seem to exist".format(
+                        ", ".join(self.settings.THEME)))
 
     def setup_logging(self, args):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
@@ -118,7 +120,8 @@ class SiteCommand:
             desc = cls.__doc__.strip()
 
         parser = subparsers.add_parser(name, help=desc)
-        parser.add_argument("project", nargs="?", help="project directory or .py configuration file (default: the current directory)")
+        parser.add_argument("project", nargs="?",
+                            help="project directory or .py configuration file (default: the current directory)")
         parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
         parser.add_argument("--content", help="content directory location. Overrides settings.CONTENT")
         parser.add_argument("--archetypes", help="archetypes directory location. Override settings.ARCHETYPES")
