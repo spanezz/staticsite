@@ -4,7 +4,7 @@ import os
 import pytz
 import datetime
 from collections import defaultdict
-from .core import Settings
+from .settings import Settings
 from .page import Page
 import logging
 

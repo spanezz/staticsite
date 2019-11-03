@@ -1,5 +1,5 @@
 from staticsite.page import Page
-from staticsite.core import RenderedString
+from staticsite.rendered import RenderedString
 from staticsite.feature import Feature
 from collections import defaultdict
 import os

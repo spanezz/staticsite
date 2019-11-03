@@ -1,9 +1,9 @@
-# coding: utf-8
 from unittest import TestCase
-from staticsite.core import Settings
+from staticsite.settings import Settings
 from staticsite import global_settings
 from . import datafile_abspath
 import os
+
 
 class TestSettings(TestCase):
     def test_defaults(self):

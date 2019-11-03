@@ -1,7 +1,6 @@
 from __future__ import annotations
 import sys
 import logging
-import shutil
 
 log = logging.getLogger()
 
@@ -51,27 +50,3 @@ class Settings:
             sys.dont_write_bytecode = orig_dwb
 
         self.add_module(user_settings)
-
-
-class RenderedFile:
-    def __init__(self, abspath):
-        self.abspath = abspath
-
-    def write(self, dst):
-        shutil.copy2(self.abspath, dst)
-
-    def content(self):
-        with open(self.abspath, "rb") as fd:
-            return fd.read()
-
-
-class RenderedString:
-    def __init__(self, s):
-        self.buf = s.encode("utf-8")
-
-    def write(self, dst):
-        with open(dst, "wb") as out:
-            out.write(self.buf)
-
-    def content(self):
-        return self.buf

@@ -1,4 +1,4 @@
-from staticsite.core import Settings
+from staticsite.settings import Settings
 from staticsite.site import Site
 from staticsite.utils import timings
 import sys
