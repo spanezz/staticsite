@@ -4,3 +4,4 @@
 *.pyc
 /.coverage
 /htmlcov
+/staticsite.egg-info/
