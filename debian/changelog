@@ -1,8 +1,12 @@
-staticsite (0.6-1) UNRELEASED; urgency=medium
+staticsite (1.0-1) unstable; urgency=medium
 
   * New upstream version
+     - Big clean up of code structure
+     - Support for site-specific pluggable features
+     - Implemented data pages to provide pure datasets as page sources
+     - Cache rendered Markdown to speed up site rebuilds
 
- -- Enrico Zini <enrico@debian.org>  Thu, 23 May 2019 16:58:57 +0200
+ -- Enrico Zini <enrico@debian.org>  Sun, 03 Nov 2019 21:21:54 +0100
 
 staticsite (0.5-1) unstable; urgency=medium
 

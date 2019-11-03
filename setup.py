@@ -9,6 +9,7 @@ setup(
     # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
     extras_require={
         'serve': ['livereload'],
+        'fast_caching': ['lmdb'],
     },
     version="1.0",
     description="Static site generator",
