@@ -35,6 +35,7 @@ def override_tz(val):
 class TestSite(TestCase):
     def test_timestamps(self):
         site = Site()
+        site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
         site.load()
 
         with override_tz("Pacific/Samoa"):
