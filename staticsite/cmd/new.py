@@ -42,7 +42,7 @@ class New(SiteCommand):
     def run(self):
         site = self.load_site()
 
-        archetypes = Archetypes(site, os.path.join(self.root, "archetypes"))
+        archetypes = Archetypes(site, os.path.join(site.settings.PROJECT_ROOT, "archetypes"))
 
         archetype = archetypes.find(self.args.archetype)
         if archetype is None:

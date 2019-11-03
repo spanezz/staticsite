@@ -91,7 +91,7 @@ class Serve(SiteCommand):
         def do_reload():
             self.reload()
         server.watch(self.content_root, do_reload)
-        server.watch(self.theme_root, do_reload)
+        server.watch(self.site.theme.root, do_reload)
         server.serve(port=8000, host="localhost")
 
     def application(self, environ, start_response):

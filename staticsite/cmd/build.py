@@ -17,14 +17,14 @@ class Build(SiteCommand):
 
     def run(self):
         site = self.load_site()
-        builder = Builder(self.root, site)
+        builder = Builder(site)
         builder.write()
 
 
 class Builder:
-    def __init__(self, root, site):
+    def __init__(self, site):
         self.site = site
-        self.output_root = os.path.join(root, site.settings.OUTPUT)
+        self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
 
     def clear_outdir(self, outdir):
         for f in os.listdir(outdir):

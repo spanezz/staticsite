@@ -9,7 +9,9 @@ import datetime
 class TestSite(TestCase):
     def test_dirs(self):
         site = Site()
+        site.settings.THEME = datafile_abspath("theme")
         site.load_features()
+        site.load_theme()
 
         page_root = TestPage(site, "page_root", date=datetime.datetime(2016, 1, 1))
         page_sub = TestPage(site, "dir1/page_sub", date=datetime.datetime(2016, 2, 1))
@@ -18,7 +20,6 @@ class TestSite(TestCase):
         site.add_page(page_root)
         site.add_page(page_sub)
         site.add_page(page_sub3)
-        site.load_theme(datafile_abspath("theme"))
         site.analyze()
 
         # We have a root dir index and dir indices for all subdirs

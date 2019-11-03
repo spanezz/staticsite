@@ -71,7 +71,22 @@ class Site:
         for name in feature.for_metadata:
             self.feature_metadata_hooks[name].append(feature)
 
-    def load_theme(self, theme_root):
+    def find_theme_root(self):
+        # Pick the first valid theme directory
+        candidate_themes = self.settings.THEME
+        if isinstance(candidate_themes, str):
+            candidate_themes = (candidate_themes,)
+
+        for theme_root in candidate_themes:
+            theme_root = os.path.join(self.settings.PROJECT_ROOT, theme_root)
+            if os.path.isdir(theme_root):
+                return theme_root
+
+        raise RuntimeError(
+                "None of the configured theme directories ({}) seem to exist".format(
+                    ", ".join(self.settings.THEME)))
+
+    def load_theme(self):
         """
         Load a theme from the given directory.
 
@@ -79,8 +94,10 @@ class Site:
         called.
         """
         if self.theme is not None:
-            raise RuntimeError("cannot load theme from {} because it was already loaded from {}".format(
-                theme_root, self.theme.root))
+            raise RuntimeError(
+                    F"load_theme called while a theme was already loaded from {self.theme.root}")
+
+        theme_root = self.find_theme_root()
 
         from .theme import Theme
         self.theme = Theme(self, theme_root)

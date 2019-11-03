@@ -1,4 +1,8 @@
 import os
+
+# Root directory used to resolve relative path in site sources
+PROJECT_ROOT = "."
+
 # Root directory of the site in the URLs we generate.
 #
 # If you are publishing the site at /prefix instead of root of the domain,

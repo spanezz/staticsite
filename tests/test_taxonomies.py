@@ -11,8 +11,9 @@ class TestTaxonomies(TestCase):
         Test simply assigning pages to taxonomies
         """
         site = Site()
+        site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
         site.load_features()
-        site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
+        site.load_theme()
 
         tax1 = site.add_test_page("taxonomies", name="tags")
 
@@ -29,8 +30,9 @@ class TestTaxonomies(TestCase):
         Test autogenerating series from taxonomies
         """
         site = Site()
+        site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
         site.load_features()
-        site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
+        site.load_theme()
         series = site.features["series"].series
 
         tax1 = site.add_test_page("taxonomies", name="tags", series_tags=["a", "b"])
