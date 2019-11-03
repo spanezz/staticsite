@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from .core import Settings
 from .site import Site
 from .utils import timings

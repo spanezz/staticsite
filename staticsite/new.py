@@ -1,18 +1,12 @@
-# coding: utf-8
-
 import os
-import shutil
-import json
-import datetime
-import time
 import subprocess
 import shlex
-from collections import OrderedDict
 from .commands import SiteCommand, CmdlineError
 from .archetypes import Archetypes
 import logging
 
 log = logging.getLogger()
+
 
 class LazyTitle:
     """
@@ -94,6 +88,8 @@ class New(SiteCommand):
         parser = super().make_subparser(subparsers)
         parser.add_argument("-a", "--archetype", default="default", help="page archetype")
         parser.add_argument("-t", "--title", help="page title")
-        parser.add_argument("-n", "--noedit", action="store_true", help="do not run an editor, only output the file name of the new post")
-        parser.add_argument("--overwrite", action="store_true", help="if a post already exists, overwrite it instead of reusing it")
+        parser.add_argument("-n", "--noedit", action="store_true",
+                            help="do not run an editor, only output the file name of the new post")
+        parser.add_argument("--overwrite", action="store_true",
+                            help="if a post already exists, overwrite it instead of reusing it")
         return parser
