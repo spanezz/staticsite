@@ -1,5 +1,14 @@
 # staticsite user-relevant changes
 
+# New in version 1.0
+
+* Refactored codebase to introduce the concept of pluggable Features. Most
+  staticsite features are now implemented as pluggable features, and new
+  features can be provided with python modules placed in the
+  `$THEMEDIR/features/` directory
+* Implemented data pages, as yaml, toml, or json, that provide pure datasets.
+  `data-$type.html` jinja2 templates can be used to render their contents.
+
 # New in version 0.6
 
 * Allow to filter by taxonomies in `site_pages()`
