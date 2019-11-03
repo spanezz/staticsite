@@ -32,9 +32,6 @@ class Site:
         # Theme used to render pages
         self.theme = None
 
-        # If true, do not ignore pages with dates in the future
-        self.draft: bool = False
-
         # Feature implementation registry
         self.features: Dict[str, Feature] = {}
 
@@ -113,13 +110,26 @@ class Site:
                 continue
             self.read_asset_tree("/usr/share/javascript", name)
 
-    def load_content(self, content_root):
+    def load_content(self, content_root=None):
         """
         Load site page and assets from the given directory.
 
         Can be called multiple times.
+
+        :arg content_root: path to read contents from. If missing,
+                           settings.CONTENT is used.
         """
+        if content_root is None:
+            content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
         self.read_contents_tree(content_root)
+
+    def load(self):
+        """
+        Load all site components
+        """
+        self.load_features()
+        self.load_theme()
+        self.load_content()
 
     def add_page(self, page: Page):
         """
@@ -130,7 +140,7 @@ class Site:
         unit tests.
         """
         ts = page.meta.get("date", None)
-        if not self.draft and ts is not None and ts > self.generation_time:
+        if not self.settings.DRAFT_MODE and ts is not None and ts > self.generation_time:
             log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
             return
         self.pages[page.src_linkpath] = page

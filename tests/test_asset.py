@@ -35,7 +35,7 @@ def override_tz(val):
 class TestSite(TestCase):
     def test_timestamps(self):
         site = Site()
-        site.load_features()
+        site.load()
 
         with override_tz("Pacific/Samoa"):
             with tempfile.NamedTemporaryFile() as f:

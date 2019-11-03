@@ -78,7 +78,7 @@ class Serve(SiteCommand):
     def run(self):
         mimetypes.init()
 
-        self.reload()
+        site = self.reload()
 
         try:
             from livereload import Server
@@ -90,8 +90,9 @@ class Serve(SiteCommand):
         # see https://github.com/lepture/python-livereload/issues/171
         def do_reload():
             self.reload()
-        server.watch(self.content_root, do_reload)
-        server.watch(self.site.theme.root, do_reload)
+        content_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.CONTENT)
+        server.watch(content_root, do_reload)
+        server.watch(site.theme.root, do_reload)
         server.serve(port=8000, host="localhost")
 
     def application(self, environ, start_response):
@@ -109,8 +110,8 @@ class Serve(SiteCommand):
 
     def reload(self):
         log.info("Loading site")
-        self.site = self.load_site()
-        gc.collect()
-
+        site = self.load_site()
         self.pages = PageFS()
-        self.pages.add_site(self.site)
+        self.pages.add_site(site)
+        gc.collect()
+        return site

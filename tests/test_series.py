@@ -8,8 +8,7 @@ class TestSeries(TestCase):
     def test_site(self):
         site = Site()
         site.settings.THEME = datafile_abspath("theme")
-        site.load_features()
-        site.load_theme()
+        site.load()
         series = site.features["series"].series
 
         seriesa1 = TestPage(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa", title="Series A")

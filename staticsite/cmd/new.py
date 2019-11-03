@@ -56,7 +56,8 @@ class New(SiteCommand):
         if relpath is None:
             raise CmdlineError("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
 
-        abspath = os.path.join(self.content_root, relpath)
+        content_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.CONTENT)
+        abspath = os.path.join(content_root, relpath)
         if self.args.overwrite or not os.path.exists(abspath):
             os.makedirs(os.path.dirname(abspath), exist_ok=True)
             with open(abspath, "wt") as out:

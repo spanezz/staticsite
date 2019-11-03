@@ -62,11 +62,8 @@ class SiteCommand:
             self.settings.ARCHETYPES = os.path.abspath(self.args.archetypes)
         if self.args.output:
             self.settings.OUTPUT = os.path.abspath(self.args.output)
-
-        # Double check that root points to something that looks like a project
-        self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
-        if not os.path.exists(self.content_root):
-            raise CmdlineError("Content directory {} does not exist".format(self.content_root))
+        if self.args.draft:
+            self.settings.DRAFT_MODE = True
 
     def setup_logging(self, args):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
@@ -80,17 +77,10 @@ class SiteCommand:
     def load_site(self):
         # Instantiate site
         site = Site(settings=self.settings)
-        site.draft = self.args.draft
-        site.load_features()
-
-        # Read and analyze site contents
         with timings("Read site in %fs"):
-            site.load_theme()
-            site.load_content(self.content_root)
-
+            site.load()
         with timings("Analysed site tree in %fs"):
             site.analyze()
-
         return site
 
     @classmethod

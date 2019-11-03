@@ -54,3 +54,6 @@ MARKDOWN_EXTENSION_CONFIGS = {
 
 # List of asset directories included from /usr/share/javascript
 SYSTEM_ASSETS = []
+
+# If true, do not ignore pages with dates in the future
+DRAFT_MODE = False

@@ -10,8 +10,7 @@ class TestSite(TestCase):
     def test_dirs(self):
         site = Site()
         site.settings.THEME = datafile_abspath("theme")
-        site.load_features()
-        site.load_theme()
+        site.load()
 
         page_root = TestPage(site, "page_root", date=datetime.datetime(2016, 1, 1))
         page_sub = TestPage(site, "dir1/page_sub", date=datetime.datetime(2016, 2, 1))
