@@ -230,3 +230,7 @@ class Site:
         """
         from slugify import slugify
         return slugify(text)
+
+    def get_archetypes(self):
+        from .archetypes import Archetypes
+        return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))

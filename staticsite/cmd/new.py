@@ -2,7 +2,6 @@ import os
 import subprocess
 import shlex
 from .command import SiteCommand, CmdlineError
-from staticsite.archetypes import Archetypes
 import logging
 
 log = logging.getLogger()
@@ -42,7 +41,7 @@ class New(SiteCommand):
     def run(self):
         site = self.load_site()
 
-        archetypes = Archetypes(site, os.path.join(site.settings.PROJECT_ROOT, "archetypes"))
+        archetypes = site.get_archetypes()
 
         archetype = archetypes.find(self.args.archetype)
         if archetype is None:
