@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Tuple, Dict, Any
 import os
 import sys
 import logging
@@ -55,9 +57,24 @@ class Settings:
 
 
 class Archetype:
-    def __init__(self, site, relpath):
-        self.site = site
+    def __init__(self, archetypes, relpath):
+        self.archetypes = archetypes
+        self.site = archetypes.site
         self.relpath = relpath
+
+    def render(self, **kw) -> Tuple[Dict[str, Any], str]:
+        """
+        Render the archetype with the given context information.
+
+        Returns the metadata of the rendered page, and the rendered page
+        contents.
+        """
+        # By default, render the archetype with jinja2
+        abspath = os.path.join(self.archetypes.root, self.relpath)
+        with open(abspath, "rt") as fd:
+            template = self.site.theme.jinja2.from_string(fd.read())
+        rendered = template.render(**kw)
+        return {}, rendered
 
     # def as_template(self, **kw):
     #     abspath = os.path.join(site.archetypes_root, self.relpath)

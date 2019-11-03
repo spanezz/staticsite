@@ -23,7 +23,7 @@ class Archetypes:
                 if f.startswith("."):
                     continue
                 relpath = os.path.relpath(os.path.join(root, f), self.root)
-                for name, feature in self.site.features.items():
+                for feature_name, feature in self.site.features.items():
                     a = feature.try_load_archetype(self, relpath, name)
                     if a is not None:
                         return a

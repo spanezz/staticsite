@@ -1,7 +1,7 @@
 from staticsite.core import Archetype, RenderedString
 from staticsite.page import Page
 from staticsite.feature import Feature
-from staticsite.utils import parse_front_matter
+from staticsite.utils import parse_front_matter, write_front_matter
 import jinja2
 import os
 import io
@@ -136,7 +136,7 @@ class MarkdownPages(Feature):
             return None
         if not (relpath.endswith(name) or relpath.endswith(name + ".md")):
             return None
-        return MarkdownArchetype(self, archetypes, relpath)
+        return MarkdownArchetype(archetypes, relpath, self)
 
 
 def parse_markdown_with_front_matter(fd):
@@ -175,33 +175,46 @@ def parse_markdown_with_front_matter(fd):
 
 
 class MarkdownArchetype(Archetype):
-    def __init__(self, mdenv, archetypes, relpath):
-        super().__init__(mdenv.site, relpath)
-        self.mdenv = mdenv
-        self.archetypes = archetypes
+    def __init__(self, archetypes, relpath, mdpages):
+        super().__init__(archetypes, relpath)
+        self.mdpages = mdpages
 
     def render(self, **kw):
-        """
-        Process the archetype returning its parsed front matter in a dict, and
-        its contents in a string
-        """
-        # Render the archetype with jinja2
-        abspath = os.path.join(self.archetypes.root, self.relpath)
-        with open(abspath, "rt") as fd:
-            template = self.site.theme.jinja2.from_string(fd.read())
+        meta, rendered = super().render(**kw)
 
-        rendered = template.render(**kw)
-
+        # Reparse the rendered version
         with io.StringIO(rendered) as fd:
             # Reparse it separating front matter and markdown content
             front_matter, body = parse_markdown_with_front_matter(fd)
+        try:
+            style, meta = parse_front_matter(front_matter)
+        except Exception:
+            log.exception("archetype %s: failed to parse front matter", self.relpath)
 
-            try:
-                style, meta = parse_front_matter(front_matter)
-            except Exception:
-                log.exception("archetype %s: failed to parse front matter", self.relpath)
+        # Make a copy of the full parsed metadata
+        archetype_meta = dict(meta)
 
-        return style, meta, body
+        # Remove the path entry
+        meta.pop("path", None)
+
+        # Reserialize the page with the edited metadata
+        front_matter = write_front_matter(meta, style)
+        with io.StringIO() as fd:
+            fd.write(front_matter)
+            print(file=fd)
+            for line in body:
+                print(line, file=fd)
+            post_body = fd.getvalue()
+
+        return archetype_meta, post_body
+
+#    def read_md(self, **kw):
+#        """
+#        Process the archetype returning its parsed front matter in a dict, and
+#        its contents in a string
+#        """
+#
+#        return style, meta, body
 
 
 class MarkdownPage(Page):
@@ -209,22 +222,22 @@ class MarkdownPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, mdenv, root_abspath, relpath):
+    def __init__(self, mdpages, root_abspath, relpath):
         dirname, basename = os.path.split(relpath)
         if basename in ("index.md", "README.md"):
             linkpath = dirname
         else:
             linkpath = os.path.splitext(relpath)[0]
         super().__init__(
-            site=mdenv.site,
+            site=mdpages.site,
             root_abspath=root_abspath,
             src_relpath=relpath,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(mdenv.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(mdpages.site.settings.SITE_ROOT, linkpath))
 
         # Shared markdown environment
-        self.mdenv = mdenv
+        self.mdpages = mdpages
 
         # Sequence of lines found in the front matter
         self.front_matter = []
@@ -271,18 +284,18 @@ class MarkdownPage(Page):
         return "\n".join(self.body)
 
     def check(self, checker):
-        self.mdenv.render(self)
+        self.mdpages.render(self)
 
     @property
     def content(self):
         if self.md_html is None:
-            self.md_html = self.mdenv.render(self)
+            self.md_html = self.mdpages.render(self)
         return self.md_html
 
     def render(self):
         res = {}
 
-        html = self.mdenv.page_template.render(
+        html = self.mdpages.page_template.render(
             page=self,
             content=self.content,
             **self.meta
@@ -290,7 +303,7 @@ class MarkdownPage(Page):
         res[self.dst_relpath] = RenderedString(html)
 
         for relpath in self.meta.get("aliases", ()):
-            html = self.mdenv.redirect_template.render(
+            html = self.mdpages.redirect_template.render(
                 page=self,
             )
             res[os.path.join(relpath, "index.html")] = RenderedString(html)

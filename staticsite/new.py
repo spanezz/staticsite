@@ -51,25 +51,17 @@ class New(SiteCommand):
 
         title = LazyTitle(self.args.title)
         slug = LazySlug(site, title)
-        meta_style, meta, body = archetype.render(slug=slug, title=title)
+        meta, body = archetype.render(slug=slug, title=title)
 
-        relpath = meta.pop("path", None)
+        relpath = meta.get("path", None)
         if relpath is None:
             raise CmdlineError("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
 
         abspath = os.path.join(self.content_root, relpath)
-
         if self.args.overwrite or not os.path.exists(abspath):
-            from .utils import write_front_matter
-            front_matter = write_front_matter(meta, meta_style)
-
             os.makedirs(os.path.dirname(abspath), exist_ok=True)
-
             with open(abspath, "wt") as out:
-                out.write(front_matter)
-                print(file=out)
-                for line in body:
-                    print(line, file=out)
+                out.write(body)
         else:
             log.info("%s already exists: reusing it", abspath)
 

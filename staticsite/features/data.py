@@ -48,8 +48,10 @@ class DataPages(Feature):
         mo = re_ext.search(relpath)
         if not mo:
             return None
-        # return DataArchetype(self, archetypes, relpath)
-        return None
+        fmt = mo.group(1)
+        if not (relpath.endswith(name) or relpath.endswith(name + "." + fmt)):
+            return None
+        return DataArchetype(archetypes, relpath, self, fmt)
 
     def finalize(self):
         for type, pages in self.by_type.items():
@@ -63,33 +65,57 @@ class DataPages(Feature):
 
 
 def load_data(abspath, relpath, fmt):
+    with open(abspath, "rt") as fd:
+        try:
+            return parse_data(fd, fmt)
+        except Exception:
+            log.exception("%s: failed to parse %s content", relpath, fmt)
+            return
+
+
+def parse_data(fd, fmt):
     if fmt == "json":
         import json
-        with open(abspath, "rt") as fd:
-            try:
-                return json.load(fd)
-            except Exception:
-                log.exception("%s: failed to parse %s content", relpath, fmt)
-                return
+        return json.load(fd)
     elif fmt == "toml":
         import toml
-        with open(abspath, "rt") as fd:
-            try:
-                return toml.load(fd)
-            except Exception:
-                log.exception("%s: failed to parse %s content", relpath, fmt)
-                return
+        return toml.load(fd)
     elif fmt == "yaml":
-        import yaml
-        with open(abspath, "rt") as fd:
-            try:
-                return yaml.load(fd, Loader=yaml.CLoader)
-            except Exception:
-                log.exception("%s: failed to parse %s content", relpath, fmt)
-                return
+        try:
+            import ruamel.yaml
+            yaml = ruamel.yaml.YAML()
+            load_args = {}
+        except ModuleNotFoundError:
+            import yaml
+            yaml = yaml
+            load_args = {"Loader": yaml.CLoader}
+        return yaml.load(fd, **load_args)
     else:
-        log.error("%s: unsupported format: %s", relpath, fmt)
-        return
+        raise NotImplementedError("data format {} is not supported".format(fmt))
+
+
+def write_data(fd, data, fmt):
+    if fmt == "json":
+        import json
+        json.dump(data, fd)
+    elif fmt == "toml":
+        import toml
+        toml.dump(data, fd)
+    elif fmt == "yaml":
+        try:
+            import ruamel.yaml
+            yaml = ruamel.yaml.YAML()
+            yaml.allow_unicode = True
+            yaml.default_flow_style = True
+            yaml.explicit_start = True
+            dump_args = {}
+        except ModuleNotFoundError:
+            import yaml
+            yaml = yaml
+            dump_args = {"default_flow_style": True, "allow_unicode": True}
+        yaml.dump(data, fd, **dump_args)
+    else:
+        raise NotImplementedError("data format {} is not supported".format(fmt))
 
 
 class DataPage(Page):
@@ -188,31 +214,28 @@ class DataPage(Page):
         return res
 
 
-#class DataArchetype(Archetype):
-#    def __init__(self, data_pages, archetypes, relpath):
-#        super().__init__(data_pages.site, relpath)
-#        self.archetypes = archetypes
-#
-#    def render(self, **kw):
-#        """
-#        Process the archetype returning its parsed front matter in a dict, and
-#        its contents in a string
-#        """
-#        # Render the archetype with jinja2
-#        abspath = os.path.join(self.archetypes.root, self.relpath)
-#        with open(abspath, "rt") as fd:
-#            template = self.site.theme.jinja2.from_string(fd.read())
-#
-#        rendered = template.render(**kw)
-#
-#        with io.StringIO(rendered) as fd:
-#            data = load_data(
-#            # Reparse it separating front matter and markdown content
-#            front_matter, body = parse_markdown_with_front_matter(fd)
-#
-#            try:
-#                style, meta = parse_front_matter(front_matter)
-#            except Exception:
-#                log.exception("archetype %s: failed to parse front matter", self.relpath)
-#
-#        return style, meta, body
+class DataArchetype(Archetype):
+    def __init__(self, archetypes, relpath, data_pages, fmt):
+        super().__init__(archetypes, relpath)
+        self.data_pages = data_pages
+        self.format = fmt
+
+    def render(self, **kw):
+        meta, rendered = super().render(**kw)
+
+        # Reparse the rendered version
+        with io.StringIO(rendered) as fd:
+            data = parse_data(fd, self.format)
+
+        # Make a copy of the full parsed metadata
+        archetype_meta = dict(data)
+
+        # Remove the path entry
+        data.pop("path", None)
+
+        # Reserialize the data
+        with io.StringIO() as fd:
+            write_data(fd, data, self.format)
+            post_body = fd.getvalue()
+
+        return archetype_meta, post_body
