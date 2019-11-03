@@ -1,6 +1,5 @@
-# coding: utf-8
 from unittest import TestCase
-from staticsite.site import Site
+from staticsite import Site
 from . import datafile_abspath, TestPage
 import datetime
 
@@ -8,6 +7,7 @@ import datetime
 class TestSeries(TestCase):
     def test_site(self):
         site = Site()
+        site.load_features()
         site.load_theme(datafile_abspath("theme"))
         series = site.features["series"].series
 

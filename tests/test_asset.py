@@ -1,4 +1,3 @@
-# coding: utf-8
 from unittest import TestCase
 from staticsite.site import Site
 from staticsite.asset import Asset
@@ -9,14 +8,16 @@ import tempfile
 import datetime
 import pytz
 
+
 @contextmanager
 def override_env(**kw):
-    orig = { k: os.environ[k] for k in kw }
+    orig = {k: os.environ[k] for k in kw}
     for k, v in kw.items():
         os.environ[k] = v
     yield
     for k, v in orig.items():
         os.environ[k] = v
+
 
 @contextmanager
 def override_tz(val):
@@ -34,6 +35,7 @@ def override_tz(val):
 class TestSite(TestCase):
     def test_timestamps(self):
         site = Site()
+        site.load_features()
 
         with override_tz("Pacific/Samoa"):
             with tempfile.NamedTemporaryFile() as f:

@@ -1,6 +1,6 @@
 from unittest import TestCase
 from staticsite.cmd.build import Build
-from staticsite.site import Site
+from staticsite import Site
 from . import datafile_abspath, example_site, TestArgs, TestPage
 import os
 import datetime
@@ -9,6 +9,7 @@ import datetime
 class TestSite(TestCase):
     def test_dirs(self):
         site = Site()
+        site.load_features()
 
         page_root = TestPage(site, "page_root", date=datetime.datetime(2016, 1, 1))
         page_sub = TestPage(site, "dir1/page_sub", date=datetime.datetime(2016, 2, 1))

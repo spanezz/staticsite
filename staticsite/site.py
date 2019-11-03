@@ -41,6 +41,7 @@ class Site:
         # Metadata names that trigger feature hooks when loading pages
         self.feature_metadata_hooks: Dict[str, Feature] = defaultdict(list)
 
+    def load_features(self):
         # Load default features
         from .features.markdown import MarkdownPages
         self.add_feature("md", MarkdownPages)

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from staticsite.site import Site
+from staticsite import Site
 from . import TestPage
 import os
 import datetime
@@ -11,6 +11,7 @@ class TestTaxonomies(TestCase):
         Test simply assigning pages to taxonomies
         """
         site = Site()
+        site.load_features()
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
 
         tax1 = site.add_test_page("taxonomies", name="tags")
@@ -28,6 +29,7 @@ class TestTaxonomies(TestCase):
         Test autogenerating series from taxonomies
         """
         site = Site()
+        site.load_features()
         site.load_theme(os.path.join(os.getcwd(), "example", "theme"))
         series = site.features["series"].series
 

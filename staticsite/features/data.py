@@ -1,6 +1,5 @@
 from staticsite.rendered import RenderedString
-from staticsite.page import Page
-from staticsite.feature import Feature
+from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 import pytz
 import dateutil.parser

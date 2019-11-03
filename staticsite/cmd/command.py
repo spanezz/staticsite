@@ -1,5 +1,5 @@
+from staticsite import Site
 from staticsite.settings import Settings
-from staticsite.site import Site
 from staticsite.utils import timings
 import sys
 import os
@@ -96,6 +96,7 @@ class SiteCommand:
         # Instantiate site
         site = Site(settings=self.settings)
         site.draft = self.args.draft
+        site.load_features()
 
         # Read and analyze site contents
         with timings("Read site in %fs"):
