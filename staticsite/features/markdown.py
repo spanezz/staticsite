@@ -1,7 +1,8 @@
-from staticsite.core import Archetype, RenderedString
+from staticsite.core import RenderedString
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.utils import parse_front_matter, write_front_matter
+from staticsite.archetypes import Archetype
 import jinja2
 import os
 import io

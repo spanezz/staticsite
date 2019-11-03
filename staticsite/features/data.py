@@ -1,6 +1,7 @@
-from staticsite.core import Archetype, RenderedString
+from staticsite.core import RenderedString
 from staticsite.page import Page
 from staticsite.feature import Feature
+from staticsite.archetypes import Archetype
 import pytz
 import dateutil.parser
 import jinja2

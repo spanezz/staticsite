@@ -1,10 +1,7 @@
 from __future__ import annotations
-from typing import Tuple, Dict, Any
-import os
 import sys
 import logging
 import shutil
-import mimetypes
 
 log = logging.getLogger()
 
@@ -56,32 +53,6 @@ class Settings:
         self.add_module(user_settings)
 
 
-class Archetype:
-    def __init__(self, archetypes, relpath):
-        self.archetypes = archetypes
-        self.site = archetypes.site
-        self.relpath = relpath
-
-    def render(self, **kw) -> Tuple[Dict[str, Any], str]:
-        """
-        Render the archetype with the given context information.
-
-        Returns the metadata of the rendered page, and the rendered page
-        contents.
-        """
-        # By default, render the archetype with jinja2
-        abspath = os.path.join(self.archetypes.root, self.relpath)
-        with open(abspath, "rt") as fd:
-            template = self.site.theme.jinja2.from_string(fd.read())
-        rendered = template.render(**kw)
-        return {}, rendered
-
-    # def as_template(self, **kw):
-    #     abspath = os.path.join(site.archetypes_root, self.relpath)
-    #     with open(abspath, "rt") as fd:
-    #         return self.site.jinja2.from_string(fd.read(), **kw)
-
-
 class RenderedFile:
     def __init__(self, abspath):
         self.abspath = abspath
@@ -104,67 +75,3 @@ class RenderedString:
 
     def content(self):
         return self.buf
-
-
-class PageFS:
-    """
-    VFS-like abstraction that maps the names of files that pages would render
-    with the corresponding pages.
-
-    This can be used to render pages on demand.
-    """
-    def __init__(self):
-        self.paths = {}
-
-    def add_site(self, site):
-        for page in site.pages.values():
-            for relpath in page.target_relpaths():
-                self.add_page(page, relpath)
-
-    def add_page(self, page, dst_relpath=None):
-        if dst_relpath is None:
-            dst_relpath = page.dst_relpath
-        self.paths[dst_relpath] = page
-
-    def get_page(self, relpath):
-        if not relpath:
-            relpath = "/index.html"
-        dst_relpath = os.path.normpath(relpath).lstrip("/")
-        page = self.paths.get(dst_relpath, None)
-        if page is not None:
-            return dst_relpath, page
-
-        dst_relpath = os.path.join(dst_relpath, "index.html")
-        page = self.paths.get(dst_relpath, None)
-        if page is not None:
-            return dst_relpath, page
-
-        return None, None
-
-    def serve_path(self, path, environ, start_response):
-        """
-        Render a page on the fly and serve it.
-
-        Call start_response with the page headers and return the bytes() with
-        the page contents.
-
-        start_response is the start_response from WSGI
-
-        Returns None without calling start_response if no page was found.
-        """
-        dst_relpath, page = self.get_page(os.path.normpath(path).lstrip("/"))
-        if page is None:
-            return None
-
-        for relpath, rendered in page.render().items():
-            if relpath == dst_relpath:
-                break
-        else:
-            return None
-
-        content = rendered.content()
-        start_response("200 OK", [
-            ("Content-Type", mimetypes.guess_type(relpath)[0]),
-            ("Content-Length", str(len(content))),
-        ])
-        return [content]
