@@ -16,6 +16,13 @@ log = logging.getLogger()
 
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.page = None
+
+    def set_page(self, page):
+        self.page = page
+
     def run(self, root):
         for a in root.iter("a"):
             new_url = self.resolve_url(a.attrib.get("href", None))
@@ -76,21 +83,21 @@ class StaticSiteExtension(markdown.extensions.Extension):
         pass
 
     def set_page(self, page):
-        self.page = page
-        self.link_resolver.page = page
+        self.link_resolver.set_page(page)
 
 
 class MarkdownPages(Feature):
     def __init__(self, site):
         super().__init__(site)
-        self.md_staticsite = StaticSiteExtension()
+        md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
             extensions=site.settings.MARKDOWN_EXTENSIONS + [
-                self.md_staticsite,
+                md_staticsite,
             ],
             extension_configs=site.settings.MARKDOWN_EXTENSION_CONFIGS,
             output_format="html5",
         )
+        self.link_resolver = md_staticsite.link_resolver
         # Cached templates
         self._page_template = None
         self._redirect_template = None
@@ -122,7 +129,7 @@ class MarkdownPages(Feature):
         """
         if content is None:
             content = page.get_content()
-        self.md_staticsite.set_page(page)
+        self.link_resolver.set_page(page)
         self.markdown.reset()
         return self.markdown.convert(content)
 
