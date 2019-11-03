@@ -10,7 +10,7 @@ setup(
     extras_require={
         'serve': ['livereload'],
     },
-    version="0.6",
+    version="1.0",
     description="Static site generator",
     author=["Enrico Zini"],
     author_email=["enrico@enricozini.org"],
