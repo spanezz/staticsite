@@ -131,6 +131,17 @@ else:
             self.db[relpath] = json.dumps(data)
 
 
+class DisabledRenderCache:
+    """
+    noop render cache, for when caching is disabled
+    """
+    def get(self, relpath):
+        return None
+
+    def put(self, relpath, data):
+        pass
+
+
 class MarkdownPages(Feature):
     def __init__(self, site):
         super().__init__(site)
@@ -149,9 +160,12 @@ class MarkdownPages(Feature):
 
         self.j2_filters["markdown"] = self.jinja2_markdown
 
-        cache_dir = os.path.join(self.site.settings.PROJECT_ROOT, ".cache")
-        os.makedirs(cache_dir, exist_ok=True)
-        self.render_cache = RenderCache(os.path.join(cache_dir, "markdown"))
+        if self.site.settings.CACHE_REBUILDS:
+            cache_dir = os.path.join(self.site.settings.PROJECT_ROOT, ".cache")
+            os.makedirs(cache_dir, exist_ok=True)
+            self.render_cache = RenderCache(os.path.join(cache_dir, "markdown"))
+        else:
+            self.render_cache = DisabledRenderCache()
 
     @jinja2.contextfilter
     def jinja2_markdown(self, context, mdtext):

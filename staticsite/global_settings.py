@@ -57,3 +57,6 @@ SYSTEM_ASSETS = []
 
 # If true, do not ignore pages with dates in the future
 DRAFT_MODE = False
+
+# If True, store cached data to speed up rebuilds
+CACHE_REBUILDS = True

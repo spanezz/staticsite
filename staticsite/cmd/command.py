@@ -46,6 +46,7 @@ class SiteCommand:
         if os.path.isfile(os.path.join(self.settings.PROJECT_ROOT, 'README.md')):
             self.settings.CONTENT = self.settings.PROJECT_ROOT
             self.settings.OUTPUT = self.settings.PROJECT_ROOT + '.site.out'
+            self.settings.CACHE_REBUILDS = False
 
         # Load settings (optional)
         settings_files = (os.path.join(self.settings.PROJECT_ROOT, f) for f in settings_files)
