@@ -68,7 +68,10 @@ class Site:
         for name in feature.for_metadata:
             self.feature_metadata_hooks[name].append(feature)
 
-    def find_theme_root(self):
+    def find_theme_root(self) -> str:
+        """
+        Choose a theme root from the ones listed in the configuration
+        """
         # Pick the first valid theme directory
         candidate_themes = self.settings.THEME
         if isinstance(candidate_themes, str):

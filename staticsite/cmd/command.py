@@ -77,7 +77,7 @@ class SiteCommand:
     def load_site(self):
         # Instantiate site
         site = Site(settings=self.settings)
-        with timings("Read site in %fs"):
+        with timings("Loaded site in %fs"):
             site.load()
         with timings("Analysed site tree in %fs"):
             site.analyze()
