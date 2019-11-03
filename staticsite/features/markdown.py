@@ -106,7 +106,7 @@ class MarkdownPages(Feature):
 
     @jinja2.contextfilter
     def jinja2_markdown(self, context, mdtext):
-        return jinja2.Markup(self.render(context.parent["page"], mdtext))
+        return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
 
     @property
     def page_template(self):
@@ -120,7 +120,19 @@ class MarkdownPages(Feature):
             self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
         return self._redirect_template
 
-    def render(self, page, content=None):
+    def render_page(self, page):
+        """
+        Render markdown in the context of the given page.
+
+        It renders the page content by default, unless `content` is set to a
+        different markdown string.
+        """
+        content = page.get_content()
+        self.link_resolver.set_page(page)
+        self.markdown.reset()
+        return self.markdown.convert(content)
+
+    def render_snippet(self, page, content):
         """
         Render markdown in the context of the given page.
 
@@ -291,12 +303,12 @@ class MarkdownPage(Page):
         return "\n".join(self.body)
 
     def check(self, checker):
-        self.mdpages.render(self)
+        self.mdpages.render_page(self)
 
     @property
     def content(self):
         if self.md_html is None:
-            self.md_html = self.mdpages.render(self)
+            self.md_html = self.mdpages.render_page(self)
         return self.md_html
 
     def render(self):
