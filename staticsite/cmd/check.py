@@ -1,15 +1,11 @@
-# coding: utf-8
-
-import os
-import shutil
-import json
 import datetime
-from .utils import timings
+from staticsite.utils import timings
 from collections import Counter
-from .commands import SiteCommand, CmdlineError
+from .command import SiteCommand
 import logging
 
 log = logging.getLogger()
+
 
 class Check(SiteCommand):
     "check the site, going through all the motions of rendering it without writing anything"

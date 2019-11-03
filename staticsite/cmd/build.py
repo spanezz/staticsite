@@ -1,16 +1,13 @@
-# coding: utf-8
-
-import json
 import os
-import re
 import time
 import shutil
 from collections import defaultdict
-from .commands import SiteCommand, CmdlineError
-from .utils import timings
+from .command import SiteCommand
+from staticsite.utils import timings
 import logging
 
 log = logging.getLogger()
+
 
 class Build(SiteCommand):
     "build the site into the web/ directory of the project"
@@ -109,7 +106,7 @@ class Builder:
             by_type[(page.RENDER_PREFERRED_ORDER, page.TYPE)].append(page)
 
         # Render collecting timing statistics
-        for (order, type), pgs in sorted(by_type.items(), key=lambda x:x[0][0]):
+        for (order, type), pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
             start = time.perf_counter()
             for page in pgs:
                 contents = page.render()

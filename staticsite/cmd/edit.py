@@ -1,17 +1,10 @@
-# coding: utf-8
-
-import os
-import shutil
-import json
-import datetime
-import time
 import subprocess
 import shlex
-from collections import OrderedDict
-from .commands import SiteCommand, CmdlineError
+from .command import SiteCommand, CmdlineError
 import logging
 
 log = logging.getLogger()
+
 
 class Edit(SiteCommand):
     "edit an existing page. Bare keywords match titles and file names, '+tag' matches tags"
@@ -45,7 +38,8 @@ class Edit(SiteCommand):
                     first=first + 1,
                     last=min(first + self.MENU_SIZE, len(pages)),
                     count=len(pages)))
-                prompt = "Please choose which page to edit (number, or p for previous page, n for next page, q to quit): "
+                prompt = ("Please choose which page to edit"
+                          " (number, or p for previous page, n for next page, q to quit): ")
             else:
                 print("{count} matching pages found:".format(count=len(pages)))
                 prompt = "Please choose which page to edit (number, or q to quit): "
@@ -81,11 +75,12 @@ class Edit(SiteCommand):
 
         # Build a list of all findable pages sorted with the newest first
         pages = [p for p in site.pages.values() if p.FINDABLE]
-        pages.sort(key=lambda x:x.meta["date"], reverse=True)
+        pages.sort(key=lambda x: x.meta["date"], reverse=True)
 
         selected = []
         for page in pages:
-            if not self.match_page(page): continue
+            if not self.match_page(page):
+                continue
             selected.append(page)
 
         if len(selected) == 0:
@@ -115,5 +110,6 @@ class Edit(SiteCommand):
     def make_subparser(cls, subparsers):
         parser = super().make_subparser(subparsers)
         parser.add_argument("match", nargs="*", help="keywords used to look for the page to edit")
-        parser.add_argument("-n", "--noedit", action="store_true", help="do not run an editor, only output the file name of the new post")
+        parser.add_argument("-n", "--noedit", action="store_true",
+                            help="do not run an editor, only output the file name of the new post")
         return parser

@@ -1,6 +1,5 @@
-# coding: utf-8
 from unittest import TestCase
-from staticsite.build import Build
+from staticsite.cmd.build import Build
 from . import example_site, TestArgs
 import os
 

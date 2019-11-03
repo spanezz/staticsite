@@ -1,6 +1,6 @@
-from .core import Settings
-from .site import Site
-from .utils import timings
+from staticsite.core import Settings
+from staticsite.site import Site
+from staticsite.utils import timings
 import sys
 import os
 import logging

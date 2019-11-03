@@ -1,8 +1,8 @@
 import os
 import subprocess
 import shlex
-from .commands import SiteCommand, CmdlineError
-from .archetypes import Archetypes
+from .command import SiteCommand, CmdlineError
+from staticsite.archetypes import Archetypes
 import logging
 
 log = logging.getLogger()

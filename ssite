@@ -1,32 +1,28 @@
 #!/usr/bin/python3
-# coding: utf-8
 import sys
-import os
 import argparse
 import logging
-import json
-import time
 
 log = logging.getLogger()
 
+
 def main():
     parser = argparse.ArgumentParser(description="Static site generator.")
-
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
-    from staticsite.check import Check
+    from staticsite.cmd.check import Check
     Check.make_subparser(subparsers)
 
-    from staticsite.build import Build
+    from staticsite.cmd.build import Build
     Build.make_subparser(subparsers)
 
-    from staticsite.serve import Serve
+    from staticsite.cmd.serve import Serve
     Serve.make_subparser(subparsers)
 
-    from staticsite.new import New
+    from staticsite.cmd.new import New
     New.make_subparser(subparsers)
 
-    from staticsite.edit import Edit
+    from staticsite.cmd.edit import Edit
     Edit.make_subparser(subparsers)
 
     args = parser.parse_args()
@@ -40,7 +36,7 @@ def main():
 
 
 if __name__ == "__main__":
-    from staticsite.commands import CmdlineError
+    from staticsite.cmd.command import CmdlineError
     try:
         main()
     except CmdlineError as e:

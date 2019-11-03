@@ -1,4 +1,4 @@
-from .commands import SiteCommand
+from .command import SiteCommand
 from staticsite.core import PageFS
 import sys
 import mimetypes

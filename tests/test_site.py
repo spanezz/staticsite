@@ -1,5 +1,5 @@
 from unittest import TestCase
-from staticsite.build import Build
+from staticsite.cmd.build import Build
 from staticsite.site import Site
 from . import datafile_abspath, example_site, TestArgs, TestPage
 import os
