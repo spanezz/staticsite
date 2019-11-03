@@ -8,6 +8,7 @@
   `$THEMEDIR/features/` directory
 * Implemented data pages, as yaml, toml, or json, that provide pure datasets.
   `data-$type.html` jinja2 templates can be used to render their contents.
+* Speed up site rebuilds by caching intermediate markdown contents
 
 # New in version 0.6
 
