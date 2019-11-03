@@ -9,8 +9,13 @@ import pytz
 import datetime
 import markdown
 import dateutil.parser
+import json
 from urllib.parse import urlparse, urlunparse
 import logging
+try:
+    import lmdb
+except ModuleNotFoundError:
+    lmdb = None
 
 log = logging.getLogger()
 
@@ -19,9 +24,11 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.page = None
+        self.substituted = {}
 
     def set_page(self, page):
         self.page = page
+        self.substituted = {}
 
     def run(self, root):
         for a in root.iter("a"):
@@ -67,9 +74,11 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             log.warn("%s: internal link %r does not resolve to any site page", self.page.src_relpath, url)
             return None
 
-        return urlunparse(
+        res = urlunparse(
             (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
         )
+        self.substituted[url] = res
+        return res
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
@@ -84,6 +93,42 @@ class StaticSiteExtension(markdown.extensions.Extension):
 
     def set_page(self, page):
         self.link_resolver.set_page(page)
+
+
+if lmdb is not None:
+    class RenderCache:
+        def __init__(self, fname):
+            self.fname = fname + ".lmdb"
+            self.db = lmdb.open(self.fname, metasync=False, sync=False)
+
+        def get(self, relpath):
+            with self.db.begin() as tr:
+                res = tr.get(relpath.encode(), None)
+                if res is None:
+                    return None
+                else:
+                    return json.loads(res)
+
+        def put(self, relpath, data):
+            with self.db.begin(write=True) as tr:
+                tr.put(relpath.encode(), json.dumps(data).encode())
+else:
+    import dbm
+
+    class RenderCache:
+        def __init__(self, fname):
+            self.fname = fname
+            self.db = dbm.open(self.fname, "c")
+
+        def get(self, relpath):
+            res = self.db.get(relpath)
+            if res is None:
+                return None
+            else:
+                return json.loads(res)
+
+        def put(self, relpath, data):
+            self.db[relpath] = json.dumps(data)
 
 
 class MarkdownPages(Feature):
@@ -103,6 +148,10 @@ class MarkdownPages(Feature):
         self._redirect_template = None
 
         self.j2_filters["markdown"] = self.jinja2_markdown
+
+        cache_dir = os.path.join(self.site.settings.PROJECT_ROOT, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        self.render_cache = RenderCache(os.path.join(cache_dir, "markdown"))
 
     @jinja2.contextfilter
     def jinja2_markdown(self, context, mdtext):
@@ -127,10 +176,31 @@ class MarkdownPages(Feature):
         It renders the page content by default, unless `content` is set to a
         different markdown string.
         """
-        content = page.get_content()
         self.link_resolver.set_page(page)
+
+        cached = self.render_cache.get(page.src_relpath)
+        if cached and cached["mtime"] != page.mtime:
+            cached = None
+        if cached:
+            for src, dest in cached["paths"]:
+                if self.link_resolver.resolve_url(src) != dest:
+                    cached = None
+                    break
+        if cached:
+            # log.info("%s: markdown cache hit", page.src_relpath)
+            return cached["rendered"]
+
+        content = page.get_content()
         self.markdown.reset()
-        return self.markdown.convert(content)
+        rendered = self.markdown.convert(content)
+
+        self.render_cache.put(page.src_relpath, {
+            "mtime": page.mtime,
+            "rendered": rendered,
+            "paths": list(self.link_resolver.substituted.items()),
+        })
+
+        return rendered
 
     def render_snippet(self, page, content):
         """
@@ -267,10 +337,14 @@ class MarkdownPage(Page):
         # Markdown content of the page rendered into html
         self.md_html = None
 
-        # Read the contents
         src = self.src_abspath
+
+        # Modification time of the file
+        self.mtime = os.path.getmtime(src)
+
+        # Read the contents
         if self.meta.get("date", None) is None:
-            self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
+            self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.mtime))
 
         # Parse separating front matter and markdown content
         with open(src, "rt") as fd:
