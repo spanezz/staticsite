@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, Dict
 import os
 import pytz
@@ -17,10 +18,10 @@ class Site:
         # Site settings
         if settings is None:
             settings = Settings()
-        self.settings = settings  # type: Settings
+        self.settings: Settings = settings
 
         # Site pages
-        self.pages = {}  # type: Dict[str, Page]
+        self.pages: Dict[str, Page] = {}
 
         # Site time zone
         self.timezone = pytz.timezone(settings.TIMEZONE)
@@ -32,13 +33,13 @@ class Site:
         self.theme = None
 
         # If true, do not ignore pages with dates in the future
-        self.draft = False  # type: bool
+        self.draft: bool = False
 
         # Feature implementation registry
-        self.features = {}  # type: Dict[str, Feature]
+        self.features: Dict[str, Feature] = {}
 
         # Metadata names that trigger feature hooks when loading pages
-        self.feature_metadata_hooks = defaultdict(list)  # type: Dict[str, Feature]
+        self.feature_metadata_hooks: Dict[str, Feature] = defaultdict(list)
 
         # Load default features
         from .features.markdown import MarkdownPages

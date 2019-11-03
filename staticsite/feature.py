@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, Dict, Callable
 from .page import Page
 from . import site
@@ -7,9 +8,9 @@ class Feature:
     def __init__(self, site: "site.Site"):
         self.site = site
         # Feature-provided jinja2 globals
-        self.j2_globals = {}   # type: Dict[str, Callable]
+        self.j2_globals: Dict[str, Callable] = {}
         # Feature-provided jinja2 filters
-        self.j2_filters = {}   # type: Dict[str, Callable]
+        self.j2_filters: Dict[str, Callable] = {}
         # Names of page.meta elements that are relevant to this feature
         self.for_metadata = []
 
