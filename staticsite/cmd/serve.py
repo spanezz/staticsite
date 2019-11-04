@@ -91,8 +91,10 @@ class Serve(SiteCommand):
         def do_reload():
             self.reload()
         content_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.CONTENT)
+        log.info("watching changes on %s", content_root)
         server.watch(content_root, do_reload)
-        server.watch(site.theme.root, do_reload)
+        log.info("watching changes on %s", site.theme.root)
+        server.watch(site.theme.root.as_posix(), do_reload)
         server.serve(port=8000, host="localhost")
 
     def application(self, environ, start_response):
