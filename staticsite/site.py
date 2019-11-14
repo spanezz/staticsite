@@ -45,8 +45,8 @@ class Site:
         from .features.data import DataPages
         self.features.add("data", DataPages)
 
-        from .features.taxonomy import TaxonomyPages
-        self.features.add("taxonomies", TaxonomyPages)
+        from .features.tags import TaxonomyPages
+        self.features.add("tags", TaxonomyPages)
 
         from .features.dir import DirPages
         self.features.add("dirs", DirPages)

@@ -15,7 +15,7 @@ class DirPages(Feature):
     When a directory has no index page but contains pages, this will generate
     the index page listing all pages in the directory.
     """
-    RUN_AFTER = ["taxonomies"]
+    RUN_AFTER = ["tags"]
 
     def finalize(self):
         by_dir = defaultdict(list)

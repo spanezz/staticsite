@@ -12,7 +12,12 @@ class IgnorePage(Exception):
 
 
 class J2Pages(Feature):
-    RUN_BEFORE = ["taxonomies"]
+    """
+    Render jinja2 templates from the contents directory.
+
+    See doc/templates.md for details.
+    """
+    RUN_BEFORE = ["tags"]
 
     def try_load_page(self, root_abspath, relpath):
         basename = os.path.basename(relpath)

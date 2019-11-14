@@ -18,7 +18,7 @@ class SeriesFeature(Feature):
     tags and one wants to choose which one to use, explicitly use the
     ``series`` metadata, which has priority over tags.
     """
-    RUN_AFTER = ["taxonomies"]
+    RUN_AFTER = ["tags"]
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -26,7 +26,7 @@ class SeriesFeature(Feature):
         self.series = {}
 
     def finalize(self):
-        taxonomies = self.site.features["taxonomies"].taxonomies
+        taxonomies = self.site.features["tags"].taxonomies
         # Auto-create series from taxonomies
         for taxonomy in taxonomies:
             for name in taxonomy.meta.get("series_tags", ()):

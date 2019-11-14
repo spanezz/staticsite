@@ -148,7 +148,7 @@ class MarkdownPages(Feature):
 
     See doc/markdown.md for details.
     """
-    RUN_BEFORE = ["taxonomies"]
+    RUN_BEFORE = ["tags"]
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

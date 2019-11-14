@@ -27,7 +27,7 @@ class PageFilter:
                 self.sort_reverse = False
 
         self.taxonomy_filters = []
-        for taxonomy in self.site.features["taxonomies"].taxonomies:
+        for taxonomy in self.site.features["tags"].taxonomies:
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:
                 continue
