@@ -5,8 +5,10 @@ log = logging.getLogger()
 
 
 class SeriesFeature(Feature):
-    def __init__(self, site):
-        super().__init__(site)
+    RUN_AFTER = ["taxonomies"]
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.for_metadata.append("series")
         self.series = {}
 

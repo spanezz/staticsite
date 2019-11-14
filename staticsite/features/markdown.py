@@ -143,14 +143,16 @@ class DisabledRenderCache:
 
 
 class MarkdownPages(Feature):
-    def __init__(self, site):
-        super().__init__(site)
+    RUN_BEFORE = ["taxonomies"]
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
-            extensions=site.settings.MARKDOWN_EXTENSIONS + [
+            extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
                 md_staticsite,
             ],
-            extension_configs=site.settings.MARKDOWN_EXTENSION_CONFIGS,
+            extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
             output_format="html5",
         )
         self.link_resolver = md_staticsite.link_resolver

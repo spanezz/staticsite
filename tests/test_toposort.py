@@ -25,4 +25,3 @@ class TestTopoSort(TestCase):
         with self.assertRaises(ValueError) as e:
             self.assertEqual(toposort.sort(graph), ["a", "c", "b"])
         self.assertEqual(str(e.exception), "cycle detected: (c, b, a)")
-

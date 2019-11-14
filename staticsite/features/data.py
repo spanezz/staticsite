@@ -18,8 +18,10 @@ re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
 class DataPages(Feature):
-    def __init__(self, site):
-        super().__init__(site)
+    RUN_BEFORE = ["taxonomies"]
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}

@@ -1,12 +1,29 @@
 from __future__ import annotations
-from typing import Optional, Dict, Callable
+from typing import Optional, Dict, Callable, Set, List
 from collections import defaultdict
+import logging
 from .page import Page
 from . import site
+from . import toposort
+
+log = logging.getLogger()
 
 
 class Feature:
-    def __init__(self, site: "site.Site"):
+    # List names of features that should run after us.
+    # The dependency order is taken into account when calling try_load_page and
+    # finalize.
+    RUN_BEFORE: List[str] = []
+
+    # List names of features that should run before us.
+    # The dependency order is taken into account when calling try_load_page and
+    # finalize.
+    RUN_AFTER: List[str] = []
+
+    def __init__(self, name: str, site: "site.Site"):
+        # Feature name
+        self.name = name
+        # Site object
         self.site = site
         # Feature-provided jinja2 globals
         self.j2_globals: Dict[str, Callable] = {}
@@ -14,6 +31,12 @@ class Feature:
         self.j2_filters: Dict[str, Callable] = {}
         # Names of page.meta elements that are relevant to this feature
         self.for_metadata = []
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self.name)
 
     def add_page(self, page):
         """
@@ -61,18 +84,45 @@ class Features:
         # Metadata names that trigger feature hooks when loading pages
         self.metadata_hooks: Dict[str, Feature] = defaultdict(list)
 
+        # Features sorted by topological order
+        self.sorted = None
+
     def add(self, name, cls):
         """
         Add a feature class to the site
         """
-        feature = cls(self.site)
+        feature = cls(name, self.site)
         self.features[name] = feature
         # Index features for metadata hooks
         for name in feature.for_metadata:
             self.metadata_hooks[name].append(feature)
 
     def ordered(self):
-        return self.features.values()
+        return self.sorted
 
     def __getitem__(self, key):
         return self.features[key]
+
+    def commit(self):
+        graph: Dict[Feature, Set[Feature]] = defaultdict(set)
+        for feature in self.features.values():
+            graph[feature] = set()
+
+            for name in feature.RUN_AFTER:
+                dep = self.features.get(name)
+                if dep is None:
+                    log.warn("feature %s: ignoring RUN_AFTER relation on %s which is not available",
+                             feature.name, name)
+                    continue
+                graph[dep].add(feature)
+
+            for name in feature.RUN_BEFORE:
+                dep = self.features.get(name)
+                if dep is None:
+                    log.warn("feature %s: ignoring RUN_BEFORE relation on %s which is not available",
+                             feature.name, name)
+                    continue
+                graph[feature].add(dep)
+
+        self.sorted = toposort.sort(graph)
+        log.debug("sorted feature list: %r", [x.name for x in self.sorted])

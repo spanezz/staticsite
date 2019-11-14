@@ -9,8 +9,8 @@ log = logging.getLogger()
 
 
 class TaxonomyPages(Feature):
-    def __init__(self, site):
-        super().__init__(site)
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.taxonomies = []
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
 

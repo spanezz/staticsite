@@ -9,6 +9,8 @@ log = logging.getLogger()
 
 
 class DirPages(Feature):
+    RUN_AFTER = ["taxonomies"]
+
     def finalize(self):
         by_dir = defaultdict(list)
         for page in self.site.pages.values():

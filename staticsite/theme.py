@@ -79,6 +79,9 @@ class Theme:
         # Load feature plugins from the theme directory
         self.load_features()
 
+        # We are done adding features
+        self.site.features.commit()
+
         # Jinja2 template engine
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
