@@ -152,13 +152,12 @@ class DataPage(Page):
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
 
         # Read and parse the contents
-        src = self.src.abspath
-        if src is None:
+        if self.src.stat is None:
             if self.meta.get("date", None) is None:
                 self.meta["date"] = self.site.generation_time
         else:
             if self.meta.get("date", None) is None:
-                self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(os.path.getmtime(src)))
+                self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
 
         self.meta.update(data)
         self.data = data
