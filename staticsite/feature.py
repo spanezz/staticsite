@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Optional, Dict, Callable
+from collections import defaultdict
 from .page import Page
 from . import site
 
@@ -48,3 +49,30 @@ class Feature:
         Hook called after all the pages have been loaded
         """
         pass
+
+
+class Features:
+    def __init__(self, site: site.Site):
+        self.site = site
+
+        # Feature implementation registry
+        self.features: Dict[str, Feature] = {}
+
+        # Metadata names that trigger feature hooks when loading pages
+        self.metadata_hooks: Dict[str, Feature] = defaultdict(list)
+
+    def add(self, name, cls):
+        """
+        Add a feature class to the site
+        """
+        feature = cls(self.site)
+        self.features[name] = feature
+        # Index features for metadata hooks
+        for name in feature.for_metadata:
+            self.metadata_hooks[name].append(feature)
+
+    def ordered(self):
+        return self.features.values()
+
+    def __getitem__(self, key):
+        return self.features[key]

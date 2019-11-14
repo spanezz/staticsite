@@ -109,7 +109,7 @@ class Theme:
         self.jinja2.filters["basename"] = self.jinja2_basename
 
         # Add feature-provided globals and filters
-        for feature in self.site.features.values():
+        for feature in self.site.features.ordered():
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
