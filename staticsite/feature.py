@@ -38,6 +38,15 @@ class Feature:
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.name)
 
+    def get_short_description(self):
+        """
+        Get a short description from this feature's docstring
+        """
+        if not self.__doc__:
+            return ""
+        else:
+            return self.__doc__.lstrip().splitlines()[0].strip()
+
     def add_page(self, page):
         """
         Add a page to this series, when it contains one of the metadata items
