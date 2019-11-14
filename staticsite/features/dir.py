@@ -9,6 +9,12 @@ log = logging.getLogger()
 
 
 class DirPages(Feature):
+    """
+    Build indices of directory contents.
+
+    When a directory has no index page but contains pages, this will generate
+    the index page listing all pages in the directory.
+    """
     RUN_AFTER = ["taxonomies"]
 
     def finalize(self):

@@ -9,6 +9,11 @@ log = logging.getLogger()
 
 
 class TaxonomyPages(Feature):
+    """
+    Tag pages using one or more taxonomies.
+
+    See doc/taxonomies.md for details.
+    """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.taxonomies = []

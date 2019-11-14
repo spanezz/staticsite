@@ -5,6 +5,19 @@ log = logging.getLogger()
 
 
 class SeriesFeature(Feature):
+    """
+    Allow to group pages into sequential series.
+
+    A page can be only in one series. The serie is named using the ``series``
+    metadata in the page front matter.
+
+    It is also possible to declare ``series_tags`` in a taxonomy, which would
+    automatically create a series from all pages with that tag.
+
+    A page is only added in the first series found. If it has multiple series
+    tags and one wants to choose which one to use, explicitly use the
+    ``series`` metadata, which has priority over tags.
+    """
     RUN_AFTER = ["taxonomies"]
 
     def __init__(self, *args, **kw):

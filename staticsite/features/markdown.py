@@ -143,6 +143,11 @@ class DisabledRenderCache:
 
 
 class MarkdownPages(Feature):
+    """
+    Render ``.md`` markdown pages, with front matter.
+
+    See doc/markdown.md for details.
+    """
     RUN_BEFORE = ["taxonomies"]
 
     def __init__(self, *args, **kw):
