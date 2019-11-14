@@ -143,7 +143,7 @@ class Theme:
 
             # Register features with site
             for name, cls in features.items():
-                self.site.add_feature(name, cls)
+                self.site.features.add(name, cls)
 
     def jinja2_basename(self, val):
         return os.path.basename(val)
