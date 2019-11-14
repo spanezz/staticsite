@@ -42,9 +42,9 @@ template_archive = "tag-archive.html"
 template_atom = "tag.atom"
 template_rss = "tag.rss"
 
-# When pages are added with these items of this taxonomy, also add them to a
-series with the same name as the tag
-series = ["links", "songs"]
+# When pages are added with these items of this taxonomy,
+# also add them to a series with the same name as the tag
+series_tags = ["links", "songs"]
 +++
 ```
 
