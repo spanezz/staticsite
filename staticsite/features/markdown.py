@@ -429,3 +429,8 @@ class MarkdownPage(Page):
         for relpath in self.meta.get("aliases", ()):
             res.append(os.path.join(relpath, "index.html"))
         return res
+
+
+FEATURES = {
+    "md": MarkdownPages,
+}

@@ -119,3 +119,8 @@ class DirPage(Page):
         return {
             self.dst_relpath: RenderedString(body)
         }
+
+
+FEATURES = {
+    "dirs": DirPages,
+}

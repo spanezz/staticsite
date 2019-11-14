@@ -115,8 +115,6 @@ class Features:
     def commit(self):
         graph: Dict[Feature, Set[Feature]] = defaultdict(set)
         for feature in self.features.values():
-            graph[feature] = set()
-
             for name in feature.RUN_AFTER:
                 dep = self.features.get(name)
                 if dep is None:

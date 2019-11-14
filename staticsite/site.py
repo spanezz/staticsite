@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Dict
 import os
+import sys
 import pytz
 import datetime
 from .settings import Settings
@@ -36,23 +37,33 @@ class Site:
 
     def load_features(self):
         # Load default features
-        from .features.markdown import MarkdownPages
-        self.features.add("md", MarkdownPages)
+        from . import features
+        self.load_feature_dir(features.__path__)
 
-        from .features.j2 import J2Pages
-        self.features.add("j2", J2Pages)
+    def load_feature_dir(self, paths, namespace="staticsite.features"):
+        import pkgutil
+        import importlib
+        for module_finder, name, ispkg in pkgutil.iter_modules(paths):
+            full_name = namespace + "." + name
+            mod = sys.modules.get(full_name)
+            if not mod:
+                try:
+                    spec = module_finder.find_spec(name)
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                except Exception:
+                    log.exception("%r: failed to load feature module", name)
+                    continue
+                sys.modules[full_name] = mod
 
-        from .features.data import DataPages
-        self.features.add("data", DataPages)
+            features = getattr(mod, "FEATURES", None)
+            if features is None:
+                log.warn("%r: feature module did not define a FEATURES dict", name)
+                continue
 
-        from .features.tags import TaxonomyPages
-        self.features.add("tags", TaxonomyPages)
-
-        from .features.dir import DirPages
-        self.features.add("dirs", DirPages)
-
-        from .features.series import SeriesFeature
-        self.features.add("series", SeriesFeature)
+            # Register features with site
+            for name, cls in features.items():
+                self.features.add(name, cls)
 
     def find_theme_root(self) -> str:
         """

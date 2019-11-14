@@ -255,3 +255,8 @@ class DataArchetype(Archetype):
             post_body = fd.getvalue()
 
         return archetype_meta, post_body
+
+
+FEATURES = {
+    "data": DataPages,
+}

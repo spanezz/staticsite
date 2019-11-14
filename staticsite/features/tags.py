@@ -259,3 +259,8 @@ class TaxonomyPage(Page):
 class TestTaxonomyPage(TaxonomyPage):
     def _read_taxonomy_description(self):
         pass
+
+
+FEATURES = {
+    "tags": TaxonomyPages,
+}

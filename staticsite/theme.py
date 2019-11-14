@@ -122,28 +122,10 @@ class Theme:
         """
         Load feature modules from the features/ theme directory
         """
-        import pkgutil
-        import importlib
         features_dir = self.root / "features"
         if not features_dir.is_dir():
             return
-
-        for module_finder, name, ispkg in pkgutil.iter_modules([features_dir.as_posix()]):
-            try:
-                spec = module_finder.find_spec(name)
-                mod = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(mod)
-            except Exception:
-                log.exception("%r: failed to load feature module", name)
-                continue
-
-            features = getattr(mod, "FEATURES", None)
-            if features is None:
-                log.warn("%r: feature module did not define a FEATURES dict", name)
-
-            # Register features with site
-            for name, cls in features.items():
-                self.site.features.add(name, cls)
+        self.site.load_feature_dir([features_dir.as_posix()])
 
     def jinja2_basename(self, val):
         return os.path.basename(val)

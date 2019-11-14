@@ -94,3 +94,8 @@ class Series:
                 if series_title is None:
                     series_title = cur.meta.get("title", self.name)
                 cur.meta["series_title"] = series_title
+
+
+FEATURES = {
+    "series": SeriesFeature,
+}

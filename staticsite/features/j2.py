@@ -68,3 +68,8 @@ class J2Page(Page):
         return {
             self.dst_relpath: RenderedString(body),
         }
+
+
+FEATURES = {
+    "j2": J2Pages,
+}
