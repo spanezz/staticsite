@@ -64,7 +64,7 @@ else:
         @lazy_value
         def db(self):
             os.makedirs(os.path.dirname(self.fname), exist_ok=True)
-            self.db = dbm.open(self.fname, "c")
+            return dbm.open(self.fname, "c")
 
         def get(self, relpath):
             res = self.db.get(relpath)
