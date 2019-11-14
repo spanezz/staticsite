@@ -8,6 +8,7 @@ import stat
 from .settings import Settings
 from .page import Page
 from .render import File
+from .cache import Caches, DisabledCaches
 import logging
 
 log = logging.getLogger()
@@ -36,6 +37,12 @@ class Site:
 
         # Feature implementation registry
         self.features = Features(self)
+
+        # Build cache repository
+        if self.settings.CACHE_REBUILDS:
+            self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".cache"))
+        else:
+            self.caches = DisabledCaches()
 
     def load_features(self):
         # Load default features

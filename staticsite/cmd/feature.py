@@ -46,6 +46,7 @@ class Feature(SiteCommand):
             for feature in site.features.ordered():
                 print("{} - {}".format(feature.name, feature.get_short_description()))
         else:
+            feature = site.features[self.args.name]
             raise NotImplementedError("this is an entry point for allowing features to provide their own site specific commands")
             # print(self.args)
 

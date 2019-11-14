@@ -9,13 +9,8 @@ import pytz
 import datetime
 import markdown
 import dateutil.parser
-import json
 from urllib.parse import urlparse, urlunparse
 import logging
-try:
-    import lmdb
-except ModuleNotFoundError:
-    lmdb = None
 
 log = logging.getLogger()
 
@@ -95,53 +90,6 @@ class StaticSiteExtension(markdown.extensions.Extension):
         self.link_resolver.set_page(page)
 
 
-if lmdb is not None:
-    class RenderCache:
-        def __init__(self, fname):
-            self.fname = fname + ".lmdb"
-            self.db = lmdb.open(self.fname, metasync=False, sync=False)
-
-        def get(self, relpath):
-            with self.db.begin() as tr:
-                res = tr.get(relpath.encode(), None)
-                if res is None:
-                    return None
-                else:
-                    return json.loads(res)
-
-        def put(self, relpath, data):
-            with self.db.begin(write=True) as tr:
-                tr.put(relpath.encode(), json.dumps(data).encode())
-else:
-    import dbm
-
-    class RenderCache:
-        def __init__(self, fname):
-            self.fname = fname
-            self.db = dbm.open(self.fname, "c")
-
-        def get(self, relpath):
-            res = self.db.get(relpath)
-            if res is None:
-                return None
-            else:
-                return json.loads(res)
-
-        def put(self, relpath, data):
-            self.db[relpath] = json.dumps(data)
-
-
-class DisabledRenderCache:
-    """
-    noop render cache, for when caching is disabled
-    """
-    def get(self, relpath):
-        return None
-
-    def put(self, relpath, data):
-        pass
-
-
 class MarkdownPages(Feature):
     """
     Render ``.md`` markdown pages, with front matter.
@@ -167,12 +115,7 @@ class MarkdownPages(Feature):
 
         self.j2_filters["markdown"] = self.jinja2_markdown
 
-        if self.site.settings.CACHE_REBUILDS:
-            cache_dir = os.path.join(self.site.settings.PROJECT_ROOT, ".cache")
-            os.makedirs(cache_dir, exist_ok=True)
-            self.render_cache = RenderCache(os.path.join(cache_dir, "markdown"))
-        else:
-            self.render_cache = DisabledRenderCache()
+        self.render_cache = self.site.caches.get("markdown")
 
     @jinja2.contextfilter
     def jinja2_markdown(self, context, mdtext):
