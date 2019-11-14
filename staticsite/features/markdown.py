@@ -143,14 +143,21 @@ class DisabledRenderCache:
 
 
 class MarkdownPages(Feature):
-    def __init__(self, site):
-        super().__init__(site)
+    """
+    Render ``.md`` markdown pages, with front matter.
+
+    See doc/markdown.md for details.
+    """
+    RUN_BEFORE = ["tags"]
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         md_staticsite = StaticSiteExtension()
         self.markdown = markdown.Markdown(
-            extensions=site.settings.MARKDOWN_EXTENSIONS + [
+            extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
                 md_staticsite,
             ],
-            extension_configs=site.settings.MARKDOWN_EXTENSION_CONFIGS,
+            extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
             output_format="html5",
         )
         self.link_resolver = md_staticsite.link_resolver
@@ -422,3 +429,8 @@ class MarkdownPage(Page):
         for relpath in self.meta.get("aliases", ()):
             res.append(os.path.join(relpath, "index.html"))
         return res
+
+
+FEATURES = {
+    "md": MarkdownPages,
+}

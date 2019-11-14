@@ -9,6 +9,14 @@ log = logging.getLogger()
 
 
 class DirPages(Feature):
+    """
+    Build indices of directory contents.
+
+    When a directory has no index page but contains pages, this will generate
+    the index page listing all pages in the directory.
+    """
+    RUN_AFTER = ["tags"]
+
     def finalize(self):
         by_dir = defaultdict(list)
         for page in self.site.pages.values():
@@ -111,3 +119,8 @@ class DirPage(Page):
         return {
             self.dst_relpath: RenderedString(body)
         }
+
+
+FEATURES = {
+    "dirs": DirPages,
+}

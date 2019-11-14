@@ -27,7 +27,7 @@ class PageFilter:
                 self.sort_reverse = False
 
         self.taxonomy_filters = []
-        for taxonomy in self.site.features["taxonomies"].taxonomies:
+        for taxonomy in self.site.features["tags"].taxonomies:
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:
                 continue
@@ -79,6 +79,9 @@ class Theme:
         # Load feature plugins from the theme directory
         self.load_features()
 
+        # We are done adding features
+        self.site.features.commit()
+
         # Jinja2 template engine
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
@@ -109,7 +112,7 @@ class Theme:
         self.jinja2.filters["basename"] = self.jinja2_basename
 
         # Add feature-provided globals and filters
-        for feature in self.site.features.values():
+        for feature in self.site.features.ordered():
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
@@ -119,28 +122,10 @@ class Theme:
         """
         Load feature modules from the features/ theme directory
         """
-        import pkgutil
-        import importlib
         features_dir = self.root / "features"
         if not features_dir.is_dir():
             return
-
-        for module_finder, name, ispkg in pkgutil.iter_modules([features_dir.as_posix()]):
-            try:
-                spec = module_finder.find_spec(name)
-                mod = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(mod)
-            except Exception:
-                log.exception("%r: failed to load feature module", name)
-                continue
-
-            features = getattr(mod, "FEATURES", None)
-            if features is None:
-                log.warn("%r: feature module did not define a FEATURES dict", name)
-
-            # Register features with site
-            for name, cls in features.items():
-                self.site.add_feature(name, cls)
+        self.site.load_feature_dir([features_dir.as_posix()])
 
     def jinja2_basename(self, val):
         return os.path.basename(val)

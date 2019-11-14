@@ -14,7 +14,7 @@ class TestTaxonomies(TestCase):
         site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
         site.load()
 
-        tax1 = site.add_test_page("taxonomies", name="tags")
+        tax1 = site.add_test_page("tags", name="tags")
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)
@@ -34,7 +34,7 @@ class TestTaxonomies(TestCase):
 
         series = site.features["series"].series
 
-        tax1 = site.add_test_page("taxonomies", name="tags", series_tags=["a", "b"])
+        tax1 = site.add_test_page("tags", name="tags", series_tags=["a", "b"])
 
         page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)

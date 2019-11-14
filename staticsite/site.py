@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Optional, Dict
 import os
+import sys
 import pytz
 import datetime
-from collections import defaultdict
 from .settings import Settings
 from .page import Page
 import logging
@@ -13,7 +13,7 @@ log = logging.getLogger()
 
 class Site:
     def __init__(self, settings: Optional[Settings] = None):
-        from .feature import Feature
+        from .feature import Features
 
         # Site settings
         if settings is None:
@@ -33,40 +33,37 @@ class Site:
         self.theme = None
 
         # Feature implementation registry
-        self.features: Dict[str, Feature] = {}
-
-        # Metadata names that trigger feature hooks when loading pages
-        self.feature_metadata_hooks: Dict[str, Feature] = defaultdict(list)
+        self.features = Features(self)
 
     def load_features(self):
         # Load default features
-        from .features.markdown import MarkdownPages
-        self.add_feature("md", MarkdownPages)
+        from . import features
+        self.load_feature_dir(features.__path__)
 
-        from .features.j2 import J2Pages
-        self.add_feature("j2", J2Pages)
+    def load_feature_dir(self, paths, namespace="staticsite.features"):
+        import pkgutil
+        import importlib
+        for module_finder, name, ispkg in pkgutil.iter_modules(paths):
+            full_name = namespace + "." + name
+            mod = sys.modules.get(full_name)
+            if not mod:
+                try:
+                    spec = module_finder.find_spec(name)
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                except Exception:
+                    log.exception("%r: failed to load feature module", name)
+                    continue
+                sys.modules[full_name] = mod
 
-        from .features.data import DataPages
-        self.add_feature("data", DataPages)
+            features = getattr(mod, "FEATURES", None)
+            if features is None:
+                log.warn("%r: feature module did not define a FEATURES dict", name)
+                continue
 
-        from .features.taxonomy import TaxonomyPages
-        self.add_feature("taxonomies", TaxonomyPages)
-
-        from .features.dir import DirPages
-        self.add_feature("dirs", DirPages)
-
-        from .features.series import SeriesFeature
-        self.add_feature("series", SeriesFeature)
-
-    def add_feature(self, name, cls):
-        """
-        Add a feature class to the site
-        """
-        feature = cls(self)
-        self.features[name] = feature
-        # Index features for metadata hooks
-        for name in feature.for_metadata:
-            self.feature_metadata_hooks[name].append(feature)
+            # Register features with site
+            for name, cls in features.items():
+                self.features.add(name, cls)
 
     def find_theme_root(self) -> str:
         """
@@ -150,7 +147,7 @@ class Site:
 
         # Run feature metadata hooks for the given page, if any
         trigger_features = set()
-        for name, features in self.feature_metadata_hooks.items():
+        for name, features in self.features.metadata_hooks.items():
             if name in page.meta:
                 for feature in features:
                     trigger_features.add(feature)
@@ -159,9 +156,10 @@ class Site:
 
     def add_test_page(self, feature: str, **kw) -> Page:
         """
-        Add a test page instantiated using the given feature.
+        Add a page instantiated using the given feature for the purpose of unit
+        testing.
 
-        :return:the Page added
+        :return: the Page added
         """
         page = self.features[feature].build_test_page(**kw)
         self.add_page(page)
@@ -175,7 +173,7 @@ class Site:
 
         log.info("Loading pages from %s", tree_root)
 
-        for root, dnames, fnames in os.walk(tree_root,followlinks=True):
+        for root, dnames, fnames in os.walk(tree_root, followlinks=True):
             for i, d in enumerate(dnames):
                 if d.startswith("."):
                     del dnames[i]
@@ -187,7 +185,7 @@ class Site:
                 page_abspath = os.path.join(root, f)
                 page_relpath = os.path.relpath(page_abspath, tree_root)
 
-                for handler in self.features.values():
+                for handler in self.features.ordered():
                     p = handler.try_load_page(tree_root, page_relpath)
                     if p is not None:
                         self.add_page(p)
@@ -211,7 +209,7 @@ class Site:
 
         log.info("Loading assets from %s", search_root)
 
-        for root, dnames, fnames in os.walk(search_root,followlinks=True):
+        for root, dnames, fnames in os.walk(search_root, followlinks=True):
             for f in fnames:
                 if f.startswith("."):
                     continue
@@ -233,7 +231,7 @@ class Site:
         Call this after all Pages have been added to the site.
         """
         # Call finalize hook on features
-        for feature in self.features.values():
+        for feature in self.features.ordered():
             feature.finalize()
 
     def slugify(self, text):

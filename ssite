@@ -25,6 +25,9 @@ def main():
     from staticsite.cmd.edit import Edit
     Edit.make_subparser(subparsers)
 
+    from staticsite.cmd.feature import Feature
+    Feature.make_subparser(subparsers)
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()

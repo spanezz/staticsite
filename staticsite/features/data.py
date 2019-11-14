@@ -18,8 +18,24 @@ re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
 class DataPages(Feature):
-    def __init__(self, site):
-        super().__init__(site)
+    """
+    Handle datasets in content directories.
+
+    This allows to store pure-data datasets in JSON, Yaml, or Toml format in
+    the contents directory, access it from pages, and render it using Jinja2
+    templates.
+
+    Each dataset needs, at its toplevel, to be a dict with a ``type`` element,
+    and the dataset will be rendered using the ``data-{{type}}.html`` template.
+
+    Other front-matter attributes like ``date``, ``title``, ``aliases``,
+    ``series`` and taxonomy names are handled as with other pages. The rest of
+    the dictionary is ignored and can contain any data one wants.
+    """
+    RUN_BEFORE = ["tags"]
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
@@ -239,3 +255,8 @@ class DataArchetype(Archetype):
             post_body = fd.getvalue()
 
         return archetype_meta, post_body
+
+
+FEATURES = {
+    "data": DataPages,
+}

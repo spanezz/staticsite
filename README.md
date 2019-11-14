@@ -55,6 +55,7 @@ Useful tips:
 * [doc/templates.md: Jinja2 templates reference](doc/templates.md)
 * [doc/taxonomies.md: taxonomy reference](doc/taxonomies.md)
 * [doc/series.md: page series reference](doc/series.md)
+* [doc/feature.md: providing site-specific features](doc/feature.md)
 
 
 ## License
