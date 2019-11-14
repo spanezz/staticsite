@@ -1,5 +1,9 @@
 # staticsite user-relevant changes
 
+# New in version 1.1
+
+* Documented and consolidated the Features feature
+
 # New in version 1.0
 
 * Refactored codebase to introduce the concept of pluggable Features. Most
