@@ -3,6 +3,7 @@
 # New in version 1.1
 
 * Documented and consolidated the Features feature
+* Reuse existing static content in destination directory to speed up rendering
 
 # New in version 1.0
 

@@ -1,6 +1,7 @@
 import pytz
 import os
 from staticsite.page import Page
+from staticsite.file import File
 from contextlib import contextmanager
 
 
@@ -38,8 +39,7 @@ class TestPage(Page):
 
         super().__init__(
             site=site,
-            root_abspath="/",
-            src_relpath=relpath,
+            src=File(relpath, root="/", abspath="/" + relpath),
             src_linkpath=relpath,
             dst_relpath=relpath,
             dst_link=relpath)

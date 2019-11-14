@@ -1,6 +1,8 @@
+from __future__ import annotations
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
+from staticsite.file import File
 import os
 import logging
 
@@ -19,12 +21,12 @@ class J2Pages(Feature):
     """
     RUN_BEFORE = ["tags"]
 
-    def try_load_page(self, root_abspath, relpath):
-        basename = os.path.basename(relpath)
+    def try_load_page(self, src: File):
+        basename = os.path.basename(src.relpath)
         if ".j2." not in basename:
             return None
         try:
-            return J2Page(self, root_abspath, relpath)
+            return J2Page(self, src)
         except IgnorePage:
             return None
 
@@ -34,8 +36,8 @@ class J2Page(Page):
 
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, j2env, root_abspath, relpath):
-        dirname, basename = os.path.split(relpath)
+    def __init__(self, j2env, src):
+        dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")
         dst_relpath = os.path.join(dirname, dst_basename)
 
@@ -46,8 +48,7 @@ class J2Page(Page):
 
         super().__init__(
             site=j2env.site,
-            root_abspath=root_abspath,
-            src_relpath=relpath,
+            src=src,
             src_linkpath=linkpath,
             dst_relpath=dst_relpath,
             dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
@@ -55,12 +56,12 @@ class J2Page(Page):
         self.meta["date"] = self.site.generation_time
 
     def render(self):
-        with open(self.src_abspath, "rt") as fd:
+        with open(self.src.abspath, "rt") as fd:
             template_body = fd.read()
         try:
             template = self.site.theme.jinja2.from_string(template_body)
         except Exception:
-            log.exception("%s: cannot load template", self.src_relpath)
+            log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
         body = template.render(
             page=self,

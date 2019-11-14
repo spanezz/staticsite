@@ -41,7 +41,7 @@ class PageFilter:
         for page in all_pages:
             if not page.FINDABLE:
                 continue
-            if self.re_path is not None and not self.re_path.match(page.src_relpath):
+            if self.re_path is not None and not self.re_path.match(page.src.relpath):
                 continue
             if self.sort is not None and self.sort != "url" and self.sort not in page.meta:
                 continue
@@ -151,7 +151,7 @@ class Theme:
             return dt.strftime(format)
         else:
             log.warn("%s+%s: invalid datetime format %r requested",
-                     context.parent["page"].src_relpath, context.name, format)
+                     context.parent["page"].src.relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
     @jinja2.contextfunction
@@ -166,7 +166,7 @@ class Theme:
             cur_page = context.parent["page"]
             page = cur_page.resolve_link(arg)
             if page is None:
-                log.warn("%s+%s: unresolved link %s passed to url_for", cur_page.src_relpath, context.name, arg)
+                log.warn("%s+%s: unresolved link %s passed to url_for", cur_page.src.relpath, context.name, arg)
                 return ""
         else:
             page = arg

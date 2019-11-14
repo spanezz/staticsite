@@ -15,11 +15,8 @@ class Page:
 
     `site`:
         the Site that contains the page
-    `root_abspath`:
-        the absolute path of the root of the directory tree under which the
-        page was found. This is where src_relpath is rooted.
-    `src_relpath`:
-        the relative path under `root_abspath` for the source file of the page
+    `src`:
+        the File object with informationm about the source file
     `src_linkpath`:
         the path used by other pages to link to this page, when referencing its
         source. For example, blog/2016/example.md is linked as
@@ -51,19 +48,14 @@ class Page:
     # taxonomies.
     RENDER_PREFERRED_ORDER = 1
 
-    def __init__(self, site, root_abspath, src_relpath, src_linkpath, dst_relpath, dst_link):
+    def __init__(self, site, src, src_linkpath, dst_relpath, dst_link):
         self.site = site
-        self.root_abspath = root_abspath
-        self.src_relpath = src_relpath
+        self.src = src
         self.src_linkpath = src_linkpath
         self.dst_relpath = dst_relpath
         self.dst_link = dst_link
         self.meta = {}
-        log.debug("%s: new page, src_link: %s", src_relpath, src_linkpath)
-
-    @property
-    def src_abspath(self):
-        return os.path.join(self.root_abspath, self.src_relpath)
+        log.debug("%s: new page, src_link: %s", self.src.relpath, src_linkpath)
 
     @property
     def date_as_iso8601(self):
@@ -87,10 +79,10 @@ class Page:
     def resolve_link(self, target):
         dirname, basename = os.path.split(target)
         if basename == "index.html":
-            # log.debug("%s: resolve %s using %s", self.src_relpath, target, dirname)
+            # log.debug("%s: resolve %s using %s", self.src.relpath, target, dirname)
             target = dirname
         # else:
-            # log.debug("%s: resolve %s using %s", self.src_relpath, target, target)
+            # log.debug("%s: resolve %s using %s", self.src.relpath, target, target)
 
         # Absolute URLs are resolved as is
         if target.startswith("/"):
@@ -98,10 +90,10 @@ class Page:
                 target_relpath = ""
             else:
                 target_relpath = os.path.normpath(target.lstrip("/"))
-            # log.debug("%s: resolve absolute path using %s", self.src_relpath, target_relpath)
+            # log.debug("%s: resolve absolute path using %s", self.src.relpath, target_relpath)
             return self.site.pages.get(target_relpath, None)
 
-        root = os.path.dirname(self.src_relpath)
+        root = os.path.dirname(self.src.relpath)
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
             if target_relpath == ".":
@@ -120,7 +112,7 @@ class Page:
         return [self.dst_relpath]
 
     def __str__(self):
-        return self.src_relpath
+        return self.src.relpath
 
     def __repr__(self):
-        return "{}:{}".format(self.TYPE, self.src_relpath)
+        return "{}:{}".format(self.TYPE, self.src.relpath)

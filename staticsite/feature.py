@@ -3,6 +3,7 @@ from typing import Optional, Dict, Callable, Set, List
 from collections import defaultdict
 import logging
 from .page import Page
+from .render import File
 from . import site
 from . import toposort
 
@@ -54,7 +55,7 @@ class Feature:
         """
         raise NotImplementedError("Feature.add_page")
 
-    def try_load_page(self, root_abspath: str, relpath: str) -> Optional[Page]:
+    def try_load_page(self, file: File) -> Optional[Page]:
         """
         Try loading a page from the given path.
 
