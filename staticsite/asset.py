@@ -1,5 +1,5 @@
 from .page import Page
-from .render import RenderedFile
+from .render import RenderedFile, FSFile
 import datetime
 import os
 import pytz
@@ -23,11 +23,12 @@ class Asset(Page):
             dst_relpath=relpath,
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
         self.title = os.path.basename(relpath)
+        self.src = FSFile(self.src_abspath, os.stat(self.src_abspath))
 
-        dt = datetime.datetime.utcfromtimestamp(os.path.getmtime(self.src_abspath)).replace(tzinfo=pytz.utc)
+        dt = datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime).replace(tzinfo=pytz.utc)
         self.meta["date"] = dt
 
     def render(self):
         return {
-            self.dst_relpath: RenderedFile(self.src_abspath),
+            self.dst_relpath: RenderedFile(self.src),
         }

@@ -2,6 +2,7 @@ import os
 import time
 from collections import defaultdict
 from .command import SiteCommand
+from staticsite.render import FSFile
 from staticsite.utils import timings
 import logging
 
@@ -24,7 +25,7 @@ class Builder:
     def __init__(self, site):
         self.site = site
         self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
-        self.existing_paths = set()
+        self.existing_paths = {}
 
     def write(self):
         """
@@ -32,10 +33,12 @@ class Builder:
         """
         # Scan the target directory to take note of existing contents
         with timings("Scanned old content in %fs"):
-            self.existing_paths = set()
-            for dirpath, dirnames, filenames in os.walk(self.output_root):
-                for fn in filenames:
-                    self.existing_paths.add(os.path.join(dirpath, fn))
+            self.existing_paths = {}
+            if os.path.exists(self.output_root):
+                for dirpath, dirnames, filenames, dirfd in os.fwalk(self.output_root):
+                    for fn in filenames:
+                        fullpath = os.path.join(dirpath, fn)
+                        self.existing_paths[fullpath] = FSFile(fullpath, os.stat(fn, dir_fd=dirfd))
 
         with timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
@@ -127,9 +130,12 @@ class Builder:
             for page in pgs:
                 contents = page.render()
                 for relpath, rendered in contents.items():
-                    dst = self.output_abspath(relpath)
+                    fullpath = self.output_abspath(relpath)
+                    dst = self.existing_paths.pop(fullpath, None)
+                    if dst is None:
+                        dst = FSFile(fullpath)
                     rendered.write(dst)
-                    self.existing_paths.discard(dst)
+                    self.existing_paths.pop(dst, None)
             end = time.perf_counter()
             sums[type] = end - start
             counts[type] = len(pgs)
