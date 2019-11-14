@@ -71,7 +71,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             else:
                 dest = self.page.resolve_link(parsed.path[:-3])
         if dest is None:
-            log.warn("%s: internal link %r does not resolve to any site page", self.page.src_relpath, url)
+            log.warn("%s: internal link %r does not resolve to any site page", self.page.src.relpath, url)
             return None
 
         res = urlunparse(
@@ -199,7 +199,7 @@ class MarkdownPages(Feature):
         """
         self.link_resolver.set_page(page)
 
-        cached = self.render_cache.get(page.src_relpath)
+        cached = self.render_cache.get(page.src.relpath)
         if cached and cached["mtime"] != page.mtime:
             cached = None
         if cached:
@@ -208,14 +208,14 @@ class MarkdownPages(Feature):
                     cached = None
                     break
         if cached:
-            # log.info("%s: markdown cache hit", page.src_relpath)
+            # log.info("%s: markdown cache hit", page.src.relpath)
             return cached["rendered"]
 
         content = page.get_content()
         self.markdown.reset()
         rendered = self.markdown.convert(content)
 
-        self.render_cache.put(page.src_relpath, {
+        self.render_cache.put(page.src.relpath, {
             "mtime": page.mtime,
             "rendered": rendered,
             "paths": list(self.link_resolver.substituted.items()),
@@ -236,10 +236,10 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def try_load_page(self, root_abspath, relpath):
-        if not relpath.endswith(".md"):
+    def try_load_page(self, src):
+        if not src.relpath.endswith(".md"):
             return None
-        return MarkdownPage(self, root_abspath, relpath)
+        return MarkdownPage(self, src)
 
     def try_load_archetype(self, archetypes, relpath, name):
         if not relpath.endswith(".md"):
@@ -332,16 +332,15 @@ class MarkdownPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, mdpages, root_abspath, relpath):
-        dirname, basename = os.path.split(relpath)
+    def __init__(self, mdpages, src):
+        dirname, basename = os.path.split(src.relpath)
         if basename in ("index.md", "README.md"):
             linkpath = dirname
         else:
-            linkpath = os.path.splitext(relpath)[0]
+            linkpath = os.path.splitext(src.relpath)[0]
         super().__init__(
             site=mdpages.site,
-            root_abspath=root_abspath,
-            src_relpath=relpath,
+            src=src,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(mdpages.site.settings.SITE_ROOT, linkpath))
@@ -358,24 +357,22 @@ class MarkdownPage(Page):
         # Markdown content of the page rendered into html
         self.md_html = None
 
-        src = self.src_abspath
-
         # Modification time of the file
-        self.mtime = os.path.getmtime(src)
+        self.mtime = self.src.stat.st_mtime
 
         # Read the contents
         if self.meta.get("date", None) is None:
             self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.mtime))
 
         # Parse separating front matter and markdown content
-        with open(src, "rt") as fd:
+        with open(self.src.abspath, "rt") as fd:
             self.front_matter, self.body = parse_markdown_with_front_matter(fd)
 
         try:
             style, meta = parse_front_matter(self.front_matter)
             self.meta.update(**meta)
         except Exception:
-            log.exception("%s: failed to parse front matter", self.src_relpath)
+            log.exception("%s: failed to parse front matter", self.src.relpath)
 
         # Remove leading empty lines
         while self.body and not self.body[0]:

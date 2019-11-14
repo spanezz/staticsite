@@ -94,7 +94,7 @@ class Edit(SiteCommand):
         if page is None:
             return
 
-        abspath = page.src_abspath
+        abspath = page.src.abspath
 
         if not self.args.noedit:
             settings_dict = site.settings.as_dict()

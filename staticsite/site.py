@@ -4,8 +4,10 @@ import os
 import sys
 import pytz
 import datetime
+import stat
 from .settings import Settings
 from .page import Page
+from .render import File
 import logging
 
 log = logging.getLogger()
@@ -141,7 +143,7 @@ class Site:
         """
         ts = page.meta.get("date", None)
         if not self.settings.DRAFT_MODE and ts is not None and ts > self.generation_time:
-            log.info("Ignoring page %s with date %s in the future", page.src_relpath, ts - self.generation_time)
+            log.info("Ignoring page %s with date %s in the future", page.src.relpath, ts - self.generation_time)
             return
         self.pages[page.src_linkpath] = page
 
@@ -171,30 +173,23 @@ class Site:
         """
         from .asset import Asset
 
-        log.info("Loading pages from %s", tree_root)
+        if not os.path.exists(tree_root):
+            log.info("%s: content tree does not exist", tree_root)
+            return
+        else:
+            log.info("Loading pages from %s", tree_root)
 
-        for root, dnames, fnames in os.walk(tree_root, followlinks=True):
-            for i, d in enumerate(dnames):
-                if d.startswith("."):
-                    del dnames[i]
-
-            for f in fnames:
-                if f.startswith("."):
-                    continue
-
-                page_abspath = os.path.join(root, f)
-                page_relpath = os.path.relpath(page_abspath, tree_root)
-
-                for handler in self.features.ordered():
-                    p = handler.try_load_page(tree_root, page_relpath)
-                    if p is not None:
-                        self.add_page(p)
-                        break
-                else:
-                    if os.path.isfile(page_abspath):
-                        log.debug("Loading static file %s", page_relpath)
-                        p = Asset(self, tree_root, page_relpath)
-                        self.add_page(p)
+        for f in File.scan(tree_root, follow_symlinks=True, ignore_hidden=True):
+            for handler in self.features.ordered():
+                p = handler.try_load_page(f)
+                if p is not None:
+                    self.add_page(p)
+                    break
+            else:
+                if stat.S_ISREG(f.stat.st_mode):
+                    log.debug("Loading static file %s", f.relpath)
+                    p = Asset(self, f)
+                    self.add_page(p)
 
     def read_asset_tree(self, tree_root, subdir=None):
         """
@@ -202,26 +197,17 @@ class Site:
         """
         from .asset import Asset
 
-        if subdir is None:
-            search_root = tree_root
+        if subdir:
+            log.info("Loading assets from %s / %s", tree_root, subdir)
         else:
-            search_root = os.path.join(tree_root, subdir)
+            log.info("Loading assets from %s", tree_root)
 
-        log.info("Loading assets from %s", search_root)
-
-        for root, dnames, fnames in os.walk(search_root, followlinks=True):
-            for f in fnames:
-                if f.startswith("."):
-                    continue
-
-                page_abspath = os.path.join(root, f)
-                if not os.path.isfile(page_abspath):
-                    continue
-
-                page_relpath = os.path.relpath(page_abspath, tree_root)
-                log.debug("Loading static file %s", page_relpath)
-                p = Asset(self, tree_root, page_relpath)
-                self.add_page(p)
+        for f in File.scan(tree_root, relpath=subdir, follow_symlinks=True, ignore_hidden=True):
+            if not stat.S_ISREG(f.stat.st_mode):
+                continue
+            log.debug("Loading static file %s", f.relpath)
+            p = Asset(self, f)
+            self.add_page(p)
 
     def analyze(self):
         """

@@ -1,6 +1,7 @@
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
+from staticsite.file import File
 from collections import defaultdict
 import os
 import logging
@@ -21,8 +22,8 @@ class DirPages(Feature):
         by_dir = defaultdict(list)
         for page in self.site.pages.values():
             # Harvest content for directory indices
-            if page.FINDABLE and page.src_relpath:
-                dir_relpath = os.path.dirname(page.src_relpath)
+            if page.FINDABLE and page.src.relpath:
+                dir_relpath = os.path.dirname(page.src.relpath)
                 by_dir[dir_relpath].append(page)
                 while dir_relpath:
                     dir_relpath = os.path.dirname(dir_relpath)
@@ -59,8 +60,7 @@ class DirPage(Page):
     def __init__(self, site, relpath, pages):
         super().__init__(
             site=site,
-            root_abspath=None,
-            src_relpath=relpath,
+            src=File(relpath=relpath),
             src_linkpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
             dst_link=os.path.join(site.settings.SITE_ROOT, relpath))
@@ -69,9 +69,9 @@ class DirPage(Page):
         self.subdirs = []
 
     def attach_to_parent(self):
-        if not self.src_relpath:
+        if not self.src.relpath:
             return
-        parent_relpath = os.path.dirname(self.src_relpath)
+        parent_relpath = os.path.dirname(self.src.relpath)
         parent = self.site.pages[parent_relpath]
         if parent.TYPE != "dir":
             return
@@ -79,10 +79,6 @@ class DirPage(Page):
             return
         parent.subdirs.append(self)
         parent.attach_to_parent()
-
-    @property
-    def src_abspath(self):
-        return None
 
     def get_date(self):
         # Sort by decreasing date
@@ -102,13 +98,13 @@ class DirPage(Page):
 
     def finalize(self):
         self.meta["date"] = self.get_date()
-        self.meta["title"] = os.path.basename(self.src_relpath) or self.site.settings.SITE_NAME
+        self.meta["title"] = os.path.basename(self.src.relpath) or self.site.settings.SITE_NAME
 
     def render(self):
         self.subdirs.sort(key=lambda x: x.meta["title"])
         parent_page = None
-        if self.src_relpath:
-            parent = os.path.dirname(self.src_relpath)
+        if self.src.relpath:
+            parent = os.path.dirname(self.src.relpath)
             parent_page = self.site.pages.get(parent, None)
 
         body = self.site.theme.dir_template.render(

@@ -1,6 +1,7 @@
 from unittest import TestCase
 from staticsite.site import Site
 from staticsite.asset import Asset
+from staticsite.file import File
 from contextlib import contextmanager
 import os
 import time
@@ -32,7 +33,7 @@ def override_tz(val):
     time.tzset()
 
 
-class TestSite(TestCase):
+class TestAsset(TestCase):
     def test_timestamps(self):
         site = Site()
         site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
@@ -42,7 +43,7 @@ class TestSite(TestCase):
             with tempfile.NamedTemporaryFile() as f:
                 # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
                 os.utime(f.name, (1477958400, 1477958400))
-
-                page = Asset(site, os.path.dirname(f.name), os.path.basename(f.name))
+                src = File(os.path.basename(f.name), root=os.path.dirname(f.name), abspath=f.name, stat=os.stat(f.name))
+                page = Asset(site, src)
 
                 self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))

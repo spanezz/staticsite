@@ -1,6 +1,7 @@
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
+from staticsite.file import File
 import os
 import jinja2
 import logging
@@ -19,15 +20,15 @@ class TaxonomyPages(Feature):
         self.taxonomies = []
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
 
-    def try_load_page(self, root_abspath, relpath):
-        if not relpath.endswith(".taxonomy"):
+    def try_load_page(self, src):
+        if not src.relpath.endswith(".taxonomy"):
             return None
-        page = TaxonomyPage(self.site, root_abspath, relpath)
+        page = TaxonomyPage(self.site, src)
         self.taxonomies.append(page)
         return page
 
     def build_test_page(self, name, **kw) -> Page:
-        page = TestTaxonomyPage(self.site, root_abspath="/", relpath=name + ".taxonomy")
+        page = TestTaxonomyPage(self.site, File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"))
         page.meta.update(**kw)
         self.taxonomies.append(page)
         return page
@@ -64,13 +65,12 @@ class TaxonomyPage(Page):
     ANALYZE_PASS = 2
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, site, root_abspath, relpath):
-        linkpath = os.path.splitext(relpath)[0]
+    def __init__(self, site, src):
+        linkpath = os.path.splitext(src.relpath)[0]
 
         super().__init__(
             site=site,
-            root_abspath=root_abspath,
-            src_relpath=relpath,
+            src=src,
             src_linkpath=linkpath,
             dst_relpath=linkpath,
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
@@ -110,14 +110,13 @@ class TaxonomyPage(Page):
         Parse the taxonomy file to read its description
         """
         from staticsite.utils import parse_front_matter
-        src = self.src_abspath
-        with open(src, "rt") as fd:
+        with open(self.src.abspath, "rt") as fd:
             lines = [x.rstrip() for x in fd]
         try:
             style, meta = parse_front_matter(lines)
             self.meta.update(**meta)
         except Exception:
-            log.exception("%s.taxonomy: cannot parse taxonomy information", self.src_relpath)
+            log.exception("%s.taxonomy: cannot parse taxonomy information", self.src.relpath)
 
     def link_value(self, context, output_item, value):
         if isinstance(value, str):
@@ -162,7 +161,7 @@ class TaxonomyPage(Page):
         try:
             return self.site.theme.jinja2.get_template(template_name)
         except Exception:
-            log.exception("%s: cannot load %s %s", self.src_relpath, name, template_name)
+            log.exception("%s: cannot load %s %s", self.src.relpath, name, template_name)
             return None
 
     def finalize(self):

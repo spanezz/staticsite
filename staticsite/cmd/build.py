@@ -2,7 +2,7 @@ import os
 import time
 from collections import defaultdict
 from .command import SiteCommand
-from staticsite.render import FSFile
+from staticsite.render import File
 from staticsite.utils import timings
 import logging
 
@@ -35,10 +35,8 @@ class Builder:
         with timings("Scanned old content in %fs"):
             self.existing_paths = {}
             if os.path.exists(self.output_root):
-                for dirpath, dirnames, filenames, dirfd in os.fwalk(self.output_root):
-                    for fn in filenames:
-                        fullpath = os.path.join(dirpath, fn)
-                        self.existing_paths[fullpath] = FSFile(fullpath, os.stat(fn, dir_fd=dirfd))
+                for f in File.scan(self.output_root, follow_symlinks=False, ignore_hidden=False):
+                    self.existing_paths[f.abspath] = f
 
         with timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
@@ -133,7 +131,7 @@ class Builder:
                     fullpath = self.output_abspath(relpath)
                     dst = self.existing_paths.pop(fullpath, None)
                     if dst is None:
-                        dst = FSFile(fullpath)
+                        dst = File.from_abspath(self.output_root, fullpath)
                     rendered.write(dst)
                     self.existing_paths.pop(dst, None)
             end = time.perf_counter()
