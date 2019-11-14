@@ -12,7 +12,7 @@ class CmdlineError(RuntimeError):
     pass
 
 
-class SiteCommand:
+class Command:
     # Command name (as used in command line)
     # Defaults to the lowercased class name
     NAME = None
@@ -23,22 +23,59 @@ class SiteCommand:
 
     def __init__(self, args):
         self.args = args
+        self.setup_logging()
+        self.settings = Settings()
 
-        self.setup_logging(args)
+    def setup_logging(self):
+        FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+        if self.args.debug:
+            logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
+        elif self.args.verbose:
+            logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+        else:
+            logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
+
+    def load_site(self):
+        # Instantiate site
+        site = Site(settings=self.settings)
+        with timings("Loaded site in %fs"):
+            site.load()
+        with timings("Analysed site tree in %fs"):
+            site.analyze()
+        return site
+
+    @classmethod
+    def make_subparser(cls, subparsers):
+        name = cls.NAME
+        if name is None:
+            name = cls.__name__.lower()
+
+        desc = cls.DESC
+        if desc is None:
+            desc = cls.__doc__.strip()
+
+        parser = subparsers.add_parser(name, help=desc)
+        parser.set_defaults(handler=cls)
+        parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+        parser.add_argument("--debug", action="store_true", help="verbose output")
+        return parser
+
+
+class SiteCommand(Command):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
 
         settings_files = ['settings.py', '.staticsite.py']
 
-        self.settings = Settings()
-
         # Default to current directory if project was not provided.
         # If the project was provided and is a .py file, load it as settings.
-        if args.project:
-            if os.path.isfile(args.project) and args.project.endswith(".py"):
-                settings_file = os.path.abspath(args.project)
+        if self.args.project:
+            if os.path.isfile(self.args.project) and self.args.project.endswith(".py"):
+                settings_file = os.path.abspath(self.args.project)
                 self.settings.PROJECT_ROOT, settings_file = os.path.split(settings_file)
                 settings_files.insert(0, settings_file)
             else:
-                self.settings.PROJECT_ROOT = os.path.abspath(args.project)
+                self.settings.PROJECT_ROOT = os.path.abspath(self.args.project)
         else:
             self.settings.PROJECT_ROOT = os.getcwd()
 
@@ -66,44 +103,16 @@ class SiteCommand:
         if self.args.draft:
             self.settings.DRAFT_MODE = True
 
-    def setup_logging(self, args):
-        FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-        if args.debug:
-            logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-        elif args.verbose:
-            logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
-        else:
-            logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
-
-    def load_site(self):
-        # Instantiate site
-        site = Site(settings=self.settings)
-        with timings("Loaded site in %fs"):
-            site.load()
-        with timings("Analysed site tree in %fs"):
-            site.analyze()
-        return site
-
     @classmethod
     def make_subparser(cls, subparsers):
-        name = cls.NAME
-        if name is None:
-            name = cls.__name__.lower()
+        parser = super().make_subparser(subparsers)
 
-        desc = cls.DESC
-        if desc is None:
-            desc = cls.__doc__.strip()
-
-        parser = subparsers.add_parser(name, help=desc)
         parser.add_argument("project", nargs="?",
                             help="project directory or .py configuration file (default: the current directory)")
         parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
         parser.add_argument("--content", help="content directory location. Overrides settings.CONTENT")
         parser.add_argument("--archetypes", help="archetypes directory location. Override settings.ARCHETYPES")
         parser.add_argument("-o", "--output", help="output directory location. Override settings.OUTPUT")
-        parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
         parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
-        parser.add_argument("--debug", action="store_true", help="verbose output")
-        parser.set_defaults(handler=cls)
 
         return parser

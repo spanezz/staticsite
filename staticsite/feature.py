@@ -83,6 +83,12 @@ class Feature:
         """
         pass
 
+    def add_site_commands(self, subparsers):
+        """
+        Add commands to `ssite site --cmd …` command line parser
+        """
+        pass
+
 
 class Features:
     def __init__(self, site: site.Site):

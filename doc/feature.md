@@ -14,6 +14,9 @@ You can add anything you want to the modules under `$theme/features`: see for
 example [importlib.resources](https://docs.python.org/3/library/importlib.html#module-importlib.resources)
 for how to package assets together with a feature.
 
+This mechanism can also add site-specific command line features under the
+`ssite site --cmd …` command.
+
 See `example/theme/features/hello.py` for an annotate example feature.
 
 Most of staticsite is now implemented through features, and you can also look

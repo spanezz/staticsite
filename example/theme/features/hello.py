@@ -1,4 +1,5 @@
 from staticsite.feature import Feature
+from staticsite.cmd.site import FeatureCommand
 import jinja2
 
 
@@ -31,8 +32,23 @@ class Hello(Feature):
         for page in self.site.pages.values():
             page.meta.setdefault("hello", "Hello " + page.meta.get("title", "page"))
 
+    def add_site_commands(self, subparsers):
+        # Add an example command as ssite site --cmd hello
+        super().add_site_commands(subparsers)
+        HelloCmd.make_subparser(subparsers)
 
-# The FEATURES dict defines which features are activated and with which name.
+
+class HelloCmd(FeatureCommand):
+    "greet the user"
+
+    NAME = "hello"
+
+    def run(self):
+        print(f"Hello from {self.site.settings.SITE_NAME}!")
+        print("I contain {} pages.".format(len(self.site.pages)))
+
+
+#  FEATURES dict defines which features are activated and with which name.
 FEATURES = {
     "hello": Hello,
 }

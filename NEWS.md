@@ -4,6 +4,8 @@
 
 * Documented and consolidated the Features feature
 * Reuse existing static content in destination directory to speed up rendering
+* Allow to invoke feature-specific code from the command line
+  (`ssite site --cmd …`)
 
 # New in version 1.0
 
