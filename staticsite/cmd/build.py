@@ -1,6 +1,5 @@
 import os
 import time
-import shutil
 from collections import defaultdict
 from .command import SiteCommand
 from staticsite.utils import timings
@@ -25,24 +24,18 @@ class Builder:
     def __init__(self, site):
         self.site = site
         self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
-
-    def clear_outdir(self, outdir):
-        for f in os.listdir(outdir):
-            abs = os.path.join(outdir, f)
-            if os.path.isdir(abs):
-                shutil.rmtree(abs)
-            else:
-                os.unlink(abs)
+        self.existing_paths = set()
 
     def write(self):
         """
         Generate output
         """
-        # Clear the target directory, but keep the root path so that a web
-        # server running on it does not find itself running nowhere
-        if os.path.exists(self.output_root):
-            with timings("Cleaned output directory in %fs"):
-                self.clear_outdir(self.output_root)
+        # Scan the target directory to take note of existing contents
+        with timings("Scanned old content in %fs"):
+            self.existing_paths = set()
+            for dirpath, dirnames, filenames in os.walk(self.output_root):
+                for fn in filenames:
+                    self.existing_paths.add(os.path.join(dirpath, fn))
 
         with timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
@@ -65,31 +58,54 @@ class Builder:
             #     sys   0m0.468s
             self.write_single_process()
 
-    def write_multi_process(self, child_count):
-        log.info("Generating pages using %d child processes", child_count)
+        with timings("Removed old content in %fs"):
+            # Delete all files not written by us
+            dirs = set()
+            for path in self.existing_paths:
+                os.unlink(path)
+                dirs.add(os.path.dirname(path))
+                log.debug("%s: removed old file", path)
 
-        pages = list(self.site.pages.values())
+            # Delete leftover empty directories
+            while dirs:
+                parents = set()
+                for path in dirs:
+                    try:
+                        os.rmdir(path)
+                    except OSError:
+                        pass
+                    else:
+                        log.debug("%s: removed old directory", path)
+                        parent = os.path.dirname(path)
+                        if parent.startswith(self.output_root):
+                            parents.add(parent)
+                dirs = parents
 
-        # From http://code.activestate.com/recipes/576785-partition-an-iterable-into-n-lists/
-        chunks = [pages[i::child_count] for i in range(child_count)]
-
-        print(len(pages))
-        for c in chunks:
-            print(len(c))
-
-        import sys
-        pids = set()
-        for chunk in chunks:
-            pid = os.fork()
-            if pid == 0:
-                self.write_pages(chunk)
-                sys.exit(0)
-            else:
-                pids.add(pid)
-
-        while pids:
-            (pid, status) = os.wait()
-            pids.discard(pid)
+#     def write_multi_process(self, child_count):
+#         log.info("Generating pages using %d child processes", child_count)
+#
+#         pages = list(self.site.pages.values())
+#
+#         # From http://code.activestate.com/recipes/576785-partition-an-iterable-into-n-lists/
+#         chunks = [pages[i::child_count] for i in range(child_count)]
+#
+#         print(len(pages))
+#         for c in chunks:
+#             print(len(c))
+#
+#         import sys
+#         pids = set()
+#         for chunk in chunks:
+#             pid = os.fork()
+#             if pid == 0:
+#                 self.write_pages(chunk)
+#                 sys.exit(0)
+#             else:
+#                 pids.add(pid)
+#
+#         while pids:
+#             (pid, status) = os.wait()
+#             pids.discard(pid)
 
     def write_single_process(self):
         sums, counts = self.write_pages(self.site.pages.values())
@@ -113,6 +129,7 @@ class Builder:
                 for relpath, rendered in contents.items():
                     dst = self.output_abspath(relpath)
                     rendered.write(dst)
+                    self.existing_paths.discard(dst)
             end = time.perf_counter()
             sums[type] = end - start
             counts[type] = len(pgs)
