@@ -1,4 +1,4 @@
-from staticsite.rendered import RenderedString
+from staticsite.render import RenderedString
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 import pytz

@@ -40,7 +40,7 @@ class Archetypes:
 
         Returns None if nothing matches.
         """
-        for root, dnames, fnames in os.walk(self.root,followlinks=True):
+        for root, dnames, fnames in os.walk(self.root, followlinks=True):
             for f in fnames:
                 if f.startswith("."):
                     continue

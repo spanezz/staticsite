@@ -1,5 +1,5 @@
 from .page import Page
-from .rendered import RenderedFile
+from .render import RenderedFile
 import datetime
 import os
 import pytz

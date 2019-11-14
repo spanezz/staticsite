@@ -1,4 +1,4 @@
-from staticsite.rendered import RenderedString
+from staticsite.render import RenderedString
 from staticsite import Page, Feature
 from staticsite.utils import parse_front_matter, write_front_matter
 from staticsite.archetypes import Archetype
