@@ -1,3 +1,11 @@
+staticsite (1.1-1) unstable; urgency=medium
+
+  * New upstream version
+     - More 'Feature' features and documentation
+     - Reuse unchanged contents in build directory to speed up build
+
+ -- Enrico Zini <enrico@debian.org>  Thu, 14 Nov 2019 17:43:31 +0100
+
 staticsite (1.0-1) unstable; urgency=medium
 
   * New upstream version
