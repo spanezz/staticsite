@@ -5,9 +5,7 @@ import docutils.io
 import docutils.core
 import docutils.nodes
 import docutils.writers.html5_polyglot
-import jinja2
 import os
-import io
 import pytz
 import datetime
 import dateutil.parser
@@ -99,6 +97,7 @@ def split_tags(x):
 #
 #     def set_page(self, page):
 #         self.link_resolver.set_page(page)
+
 
 def find_title(element):
     """
@@ -223,14 +222,15 @@ class RestructuredText(Feature):
 
         # Get metadata fields from docinfo
         meta = {}
-        for child in node_docinfo.children:
-            if child.tagname == 'field':
-                name = child.attributes.get('classes')[0]
-                for fchild in child.children:
-                    if fchild.tagname == "field_body":
-                        meta[name] = fchild.astext().strip()
-            else:
-                meta[child.tagname] = child.astext().strip()
+        if node_docinfo is not None:
+            for child in node_docinfo.children:
+                if child.tagname == 'field':
+                    name = child.attributes.get('classes')[0]
+                    for fchild in child.children:
+                        if fchild.tagname == "field_body":
+                            meta[name] = fchild.astext().strip()
+                else:
+                    meta[child.tagname] = child.astext().strip()
 
         if "title" not in meta:
             # Recursively find the first title node in the document

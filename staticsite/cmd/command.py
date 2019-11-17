@@ -80,10 +80,12 @@ class SiteCommand(Command):
             self.settings.PROJECT_ROOT = os.getcwd()
 
         # "Repo mode", adjust paths if README.md exists in the root
-        if os.path.isfile(os.path.join(self.settings.PROJECT_ROOT, 'README.md')):
-            self.settings.CONTENT = self.settings.PROJECT_ROOT
-            self.settings.OUTPUT = self.settings.PROJECT_ROOT + '.site.out'
-            self.settings.CACHE_REBUILDS = False
+        for repo_file in "README.md", "README.rst":
+            if os.path.isfile(os.path.join(self.settings.PROJECT_ROOT, repo_file)):
+                self.settings.CONTENT = self.settings.PROJECT_ROOT
+                self.settings.OUTPUT = self.settings.PROJECT_ROOT + '.site.out'
+                self.settings.CACHE_REBUILDS = False
+                break
 
         # Load settings (optional)
         settings_files = (os.path.join(self.settings.PROJECT_ROOT, f) for f in settings_files)

@@ -50,7 +50,11 @@ class DataPages(Feature):
         data = load_data(src, mo.group(1))
         if data is None:
             return None
-        type = data.get("type", None)
+        try:
+            type = data.get("type", None)
+        except AttributeError:
+            log.error("%s: data did not parse into a dict", src.relpath)
+            return None
         if type is None:
             log.error("%s: data type not found: ignoring page", src.relpath)
             return None
