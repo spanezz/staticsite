@@ -40,6 +40,7 @@ class TaxonomyPages(Feature):
                 vals = page.meta.get(taxonomy.name, None)
                 if not vals:
                     continue
+                # TODO: if vals is a string, parse it
                 taxonomy.add_page(page, vals)
 
         for taxonomy in self.taxonomies:

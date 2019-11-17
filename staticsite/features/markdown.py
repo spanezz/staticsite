@@ -136,9 +136,6 @@ class MarkdownPages(Feature):
     def render_page(self, page):
         """
         Render markdown in the context of the given page.
-
-        It renders the page content by default, unless `content` is set to a
-        different markdown string.
         """
         self.link_resolver.set_page(page)
 
