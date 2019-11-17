@@ -27,3 +27,5 @@ THEME = "theme"
 
 # Directory where the static site will be written by build
 # OUTPUT = "web"
+
+TAXONOMIES = ["tags"]

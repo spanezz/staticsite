@@ -60,3 +60,6 @@ DRAFT_MODE = False
 
 # If True, store cached data to speed up rebuilds
 CACHE_REBUILDS = True
+
+# List of taxonomy names used on this site
+TAXONOMIES = []

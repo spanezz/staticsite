@@ -17,6 +17,15 @@ import logging
 log = logging.getLogger()
 
 
+def split_tags(x):
+    """
+    Split a tag list from a string of comma separated possibly quoted tags names
+    """
+    import shlex
+    # Use shlex to split strings with or without quotes. There may be better
+    # implementations, or possibly it can all boil down to a simple regexp
+    return list(x for x in shlex.shlex(x, posix=True, punctuation_chars=",") if not x.startswith(","))
+
 # class LinkResolver(markdown.treeprocessors.Treeprocessor):
 #     def __init__(self, *args, **kw):
 #         super().__init__(*args, **kw)
@@ -327,6 +336,12 @@ class RstPage(Page):
             self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
         elif not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
+
+        for taxonomy in self.site.settings.TAXONOMIES:
+            elements = self.meta.get(taxonomy, None)
+            if elements is not None and isinstance(elements, str):
+                # if vals is a string, parse it
+                self.meta[taxonomy] = split_tags(elements)
 
     def check(self, checker):
         self.rst.render_page(self)

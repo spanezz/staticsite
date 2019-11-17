@@ -40,7 +40,6 @@ class TaxonomyPages(Feature):
                 vals = page.meta.get(taxonomy.name, None)
                 if not vals:
                     continue
-                # TODO: if vals is a string, parse it
                 taxonomy.add_page(page, vals)
 
         for taxonomy in self.taxonomies:
@@ -120,13 +119,14 @@ class TaxonomyPage(Page):
             log.exception("%s.taxonomy: cannot parse taxonomy information", self.src.relpath)
 
     def link_value(self, context, output_item, value):
+        page = context.get("page", None)
         if isinstance(value, str):
             item = self.items.get(value, None)
         else:
             item = value
 
         if item is None:
-            log.warn("%s+%s: %s not found in taxonomy %s", context.parent["page"], context.name, value, self.name)
+            log.warn("%s+%s: %s not found in taxonomy %s", page, context.name, value, self.name)
             return ""
         dest = self.meta[output_item].format(slug=item.slug)
         return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath, dest)
