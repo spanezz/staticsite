@@ -23,6 +23,9 @@ class TaxonomyPages(Feature):
     def try_load_page(self, src):
         if not src.relpath.endswith(".taxonomy"):
             return None
+        if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
+            log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
+            return None
         page = TaxonomyPage(self.site, src)
         self.taxonomies.append(page)
         return page

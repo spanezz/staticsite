@@ -2,7 +2,7 @@
 
 {% block head %}
 {{super()}}
-{% if series %}
+{% if url_for_tag and series %}
 <link href="{{ url_for_tag_rss(series) }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: {{series}} RSS2 feed"></link>
 <link href="{{ url_for_tag_atom(series) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{series}} ATOM feed"></link>
 {% endif %}
@@ -25,7 +25,9 @@
   {% endif %}
   </li>
 
+  {% if url_for_tag %}
   <li><a href="{{url_for_tag_archive(page.meta.series)|default("#")}}">{{series_title}} {{series_index}}/{{series_length}}</a></li>
+  {% endif %}
 
   {% if series_next %}
   <li>
@@ -45,7 +47,7 @@
 {% endblock %}
 
 {% block nav_extra %}
-{% if series %}
+{% if url_for_tag and series %}
 <p class="navbar-text navbar-right">
   <a href="{{ url_for_tag_rss(page.meta.series) }}">
     <img src="{{ url_for('/images/feed-icon-16x16.png') }}">
@@ -61,11 +63,13 @@
 
   {{content|safe}}
 
+  {% if url_for_tag %}
   <p>
   {% for tag in tags %}
   <a href="{{ url_for_tag(tag) }}" class="label label-default">{{tag}}</a>
   {% endfor %}
   </p>
+  {% endif %}
 
   <p><small>{{page.meta.date}}</small></p>
 {% endblock %}
