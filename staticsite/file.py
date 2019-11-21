@@ -44,8 +44,13 @@ class File(NamedTuple):
                     continue
 
                 abspath = os.path.join(root, f)
+                try:
+                    st = os.stat(f, dir_fd=dirfd)
+                except FileNotFoundError:
+                    # Skip broken links
+                    continue
                 yield cls(
                         relpath=os.path.relpath(abspath, tree_root),
                         root=tree_root,
                         abspath=abspath,
-                        stat=os.stat(f, dir_fd=dirfd))
+                        stat=st)

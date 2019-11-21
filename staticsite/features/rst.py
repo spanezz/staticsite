@@ -266,7 +266,11 @@ class RestructuredText(Feature):
     def try_load_page(self, src):
         if not src.relpath.endswith(".rst"):
             return None
-        return RstPage(self, src)
+        try:
+            return RstPage(self, src)
+        except Exception:
+            log.warn("%s: Failed to parse RestructuredText page: skipped", src)
+            return None
 
     # def try_load_archetype(self, archetypes, relpath, name):
     #     if not relpath.endswith(".md"):

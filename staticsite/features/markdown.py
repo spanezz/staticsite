@@ -154,7 +154,11 @@ class MarkdownPages(Feature):
     def try_load_page(self, src):
         if not src.relpath.endswith(".md"):
             return None
-        return MarkdownPage(self, src)
+        try:
+            return MarkdownPage(self, src)
+        except Exception:
+            log.warn("%s: Failed to parse markdown page: skipped", src)
+            return None
 
     def try_load_archetype(self, archetypes, relpath, name):
         if not relpath.endswith(".md"):
