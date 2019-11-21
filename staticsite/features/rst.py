@@ -128,8 +128,8 @@ class DoctreeScan:
         """
         for idx, node in enumerate(element.children):
             if self.first_title is None and isinstance(node, docutils.nodes.title):
-                self.first_title = element
-            elif isinstance(node, docutils.nodes.target):
+                self.first_title = node
+            elif isinstance(node, (docutils.nodes.target, docutils.nodes.reference)):
                 self.links_target.append(node)
             elif isinstance(node, docutils.nodes.image):
                 self.links_image.append(node)
@@ -358,7 +358,11 @@ class RstPage(Page):
         if date is None:
             self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
         elif not isinstance(date, datetime.datetime):
-            self.meta["date"] = dateutil.parser.parse(date)
+            date = dateutil.parser.parse(date)
+            if date.tzinfo is None:
+                # FIXME: configure a default site timezone in settings
+                date = pytz.utc.localize(date)
+            self.meta["date"] = date
 
         for taxonomy in self.site.settings.TAXONOMIES:
             elements = self.meta.get(taxonomy, None)
@@ -380,13 +384,13 @@ class RstPage(Page):
 
         if not self.doctree_scan.links_rewritten:
             for node in self.doctree_scan.links_target:
-                new_val = self.resolve_url(node["refuri"])
+                new_val = self.resolve_url(node.attributes["refuri"])
                 if new_val is not None:
-                    node["refuri"] = new_val
+                    node.attributes["refuri"] = new_val
             for node in self.doctree_scan.links_image:
-                new_val = self.resolve_url(node["uri"])
+                new_val = self.resolve_url(node.attributes["uri"])
                 if new_val is not None:
-                    node["uri"] = new_val
+                    node.attributes["uri"] = new_val
 
         html = self.rst.page_template.render(
             page=self,
