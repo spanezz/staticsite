@@ -99,19 +99,48 @@ def split_tags(x):
 #         self.link_resolver.set_page(page)
 
 
-def find_title(element):
-    """
-    Find the first title element in a doctree or a fragment of doctree
-    """
-    if isinstance(element, docutils.nodes.title):
-        return element
+class DoctreeScan:
+    def __init__(self, doctree):
+        # Doctree root node
+        self.doctree = doctree
+        # Information useful to locate and remove the docinfo element
+        self.docinfo = None
+        self.docinfo_idx = None
+        # First title element
+        self.first_title = None
+        # All <target> link elements that need rewriting on rendering
+        self.links_target = []
+        # All <image> link elements that need rewriting on rendering
+        self.links_image = []
+        # Return True if the link targets have been rewritten
+        self.links_rewritten = False
 
-    for child in element.children:
-        node = find_title(child)
-        if node is not None:
-            return node
+        # Scan tree contents looking for significant nodes
+        self.scan(self.doctree)
 
-    return None
+        # Remove docinfo element from tree
+        if self.docinfo is not None:
+            self.docinfo.parent.pop(self.docinfo_idx)
+
+    def scan(self, element):
+        """
+        Scan the doctree collecting significant elements
+        """
+        for idx, node in enumerate(element.children):
+            if self.first_title is None and isinstance(node, docutils.nodes.title):
+                self.first_title = element
+            elif isinstance(node, docutils.nodes.target):
+                self.links_target.append(node)
+            elif isinstance(node, docutils.nodes.image):
+                self.links_image.append(node)
+            elif isinstance(node, docutils.nodes.docinfo):
+                self.docinfo = node
+                self.docinfo_idx = idx
+                # Do not recurse into a docinfo
+                continue
+
+            # Recursively descend
+            self.scan(node)
 
 
 class RestructuredText(Feature):
@@ -160,7 +189,7 @@ class RestructuredText(Feature):
         # TODO: study if/how we can con configure publish_programmatically to
         # do as little work as possible
         output, pub = docutils.core.publish_programmatically(
-            source=page.doctree, source_path=None,
+            source=page.doctree_scan.doctree, source_path=None,
             source_class=docutils.io.DocTreeInput,
             destination=None, destination_path=None,
             destination_class=docutils.io.StringOutput,
@@ -212,18 +241,12 @@ class RestructuredText(Feature):
         doctree = docutils.core.publish_doctree(
                 fd, source_class=docutils.io.FileInput, settings_overrides={"input_encoding": "unicode"})
 
-        # Find and remove docinfo node from tree
-        node_docinfo = None
-        for idx, node in enumerate(doctree.children):
-            if isinstance(node, docutils.nodes.docinfo):
-                node_docinfo = node
-                doctree.pop(idx)
-                break
+        doctree_scan = DoctreeScan(doctree)
 
         # Get metadata fields from docinfo
         meta = {}
-        if node_docinfo is not None:
-            for child in node_docinfo.children:
+        if doctree_scan.docinfo is not None:
+            for child in doctree_scan.docinfo.children:
                 if child.tagname == 'field':
                     name = child.attributes.get('classes')[0]
                     for fchild in child.children:
@@ -234,11 +257,11 @@ class RestructuredText(Feature):
 
         if "title" not in meta:
             # Recursively find the first title node in the document
-            node = find_title(doctree)
+            node = doctree_scan.first_title
             if node is not None:
                 meta["title"] = node.astext()
 
-        return meta, doctree
+        return meta, doctree_scan
 
     def try_load_page(self, src):
         if not src.relpath.endswith(".rst"):
@@ -318,16 +341,16 @@ class RstPage(Page):
         self.rst = feature
 
         # Document doctree root node
-        self.doctree = None
+        self.doctree_scan = None
 
         # Content of the page rendered into html
         self.body_html = None
 
         # Parse document into a doctree and extract docinfo metadata
         with open(self.src.abspath, "rt") as fd:
-            meta, doctree = self.rst.parse_rest(fd)
+            meta, doctree_scan = self.rst.parse_rest(fd)
 
-        self.doctree = doctree
+        self.doctree_scan = doctree_scan
         self.meta.update(**meta)
 
         # Normalise well-known metadata elements
@@ -354,6 +377,16 @@ class RstPage(Page):
 
     def render(self):
         res = {}
+
+        if not self.doctree_scan.links_rewritten:
+            for node in self.doctree_scan.links_target:
+                new_val = self.resolve_url(node["refuri"])
+                if new_val is not None:
+                    node["refuri"] = new_val
+            for node in self.doctree_scan.links_image:
+                new_val = self.resolve_url(node["uri"])
+                if new_val is not None:
+                    node["uri"] = new_val
 
         html = self.rst.page_template.render(
             page=self,

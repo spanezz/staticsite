@@ -1,5 +1,6 @@
 import os
 import logging
+from urllib.parse import urlparse, urlunparse
 
 log = logging.getLogger()
 
@@ -104,6 +105,56 @@ class Page:
             if not root or root == "/":
                 return None
             root = os.path.dirname(root)
+
+    def resolve_url(self, url):
+        """
+        Resolve internal URLs.
+
+        Returns None if the URL does not need changing, else returns the new URL.
+        """
+        from markdown.util import AMP_SUBSTITUTE
+        if not url:
+            return None
+        if url.startswith(AMP_SUBSTITUTE):
+            # Possibly an overencoded mailto: link.
+            # see https://bugs.debian.org/816218
+            #
+            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
+            # we look for it here.
+            return None
+        parsed = urlparse(url)
+        if parsed.scheme or parsed.netloc:
+            return None
+        if not parsed.path:
+            return None
+        dest = self.resolve_link(parsed.path)
+        if dest is None:
+            # If resolving the full path failed, try resolving without extension
+            pos = parsed.path.rfind(".")
+            if pos == -1:
+                return None
+
+            # Treat .md and .rst as strippable extensions
+            # TODO: deprecate this function and always link to full source
+            #       paths with extension instead
+            # TODO: have features provide this list instead of hardcoding it
+            ext = parsed.path[pos:]
+            if ext not in (".md", ".rst"):
+                return None
+
+            dirname, basename = os.path.split(parsed.path)
+            # TODO: also generate this list from features
+            if basename in ("index.md", "README.md", "index.rst", "README.rst"):
+                dest = self.resolve_link(dirname)
+            else:
+                dest = self.resolve_link(parsed.path[:-len(ext)])
+        if dest is None:
+            log.warn("%s: internal link %r does not resolve to any site page", self.page.src.relpath, url)
+            return None
+
+        return urlunparse(
+            (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
+        )
 
     def check(self, checker):
         pass

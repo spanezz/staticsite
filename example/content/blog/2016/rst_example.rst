@@ -32,3 +32,7 @@ And also inline images work:
 
 (image from `wikimedia commons
 <https://commons.wikimedia.org/wiki/File:Example_image.png>`_)
+
+`Internal links`_ also work.
+
+.. _`internal links`: example.md

@@ -42,38 +42,13 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
 
         Returns None if the URL does not need changing, else returns the new URL.
         """
-        from markdown.util import AMP_SUBSTITUTE
-        if not url:
-            return None
-        if url.startswith(AMP_SUBSTITUTE):
-            # Possibly an overencoded mailto: link.
-            # see https://bugs.debian.org/816218
-            #
-            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
-            # we look for it here.
-            return None
-        parsed = urlparse(url)
-        if parsed.scheme or parsed.netloc:
-            return None
-        if not parsed.path:
-            return None
-        dest = self.page.resolve_link(parsed.path)
-        # Also allow .md extension in
-        if dest is None and parsed.path.endswith(".md"):
-            dirname, basename = os.path.split(parsed.path)
-            if basename in ("index.md", "README.md"):
-                dest = self.page.resolve_link(dirname)
-            else:
-                dest = self.page.resolve_link(parsed.path[:-3])
-        if dest is None:
-            log.warn("%s: internal link %r does not resolve to any site page", self.page.src.relpath, url)
-            return None
-
-        res = urlunparse(
-            (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
-        )
-        self.substituted[url] = res
-        return res
+        new_url = self.substituted.get(url)
+        if new_url is not None:
+            return new_url
+        new_url = self.page.resolve_url(url)
+        if new_url is not None:
+            self.substituted[url] = new_url
+        return new_url
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
