@@ -5,6 +5,11 @@ should appear in the site.
 
 See `example/content/tags.taxonomy` for details.
 
+Any taxonomy you use needs to be explicitly listed in settings as a
+`TAXONOMIES` list of taxonomy names. staticsite prints a warning if a
+`.taxonomy` file is found that is not listed in `TAXONOMIES`.
+
+
 ```toml
 +++
 # In staticsite, a taxonomy is a group of attributes like categories or tags.
