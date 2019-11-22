@@ -7,6 +7,7 @@ import docutils.nodes
 import docutils.writers.html5_polyglot
 import os
 import io
+import re
 import pytz
 import datetime
 import dateutil.parser
@@ -26,7 +27,7 @@ def split_tags(x):
 
 
 class DoctreeScan:
-    def __init__(self, doctree):
+    def __init__(self, doctree, remove_docinfo=True):
         # Doctree root node
         self.doctree = doctree
         # Information useful to locate and remove the docinfo element
@@ -45,7 +46,7 @@ class DoctreeScan:
         self.scan(self.doctree)
 
         # Remove docinfo element from tree
-        if self.docinfo is not None:
+        if remove_docinfo and self.docinfo is not None:
             self.docinfo.parent.pop(self.docinfo_idx)
 
     def scan(self, element):
@@ -98,7 +99,7 @@ class RestructuredText(Feature):
             self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
         return self._redirect_template
 
-    def parse_rest(self, fd):
+    def parse_rest(self, fd, remove_docinfo=True):
         """
         Parse a rest document.
 
@@ -110,7 +111,7 @@ class RestructuredText(Feature):
         doctree = docutils.core.publish_doctree(
                 fd, source_class=docutils.io.FileInput, settings_overrides={"input_encoding": "unicode"})
 
-        doctree_scan = DoctreeScan(doctree)
+        doctree_scan = DoctreeScan(doctree, remove_docinfo=remove_docinfo)
 
         # Get metadata fields from docinfo
         meta = {}
@@ -174,11 +175,36 @@ class RestArchetype(Archetype):
 
         # Reparse the rendered version
         with io.StringIO(rendered) as fd:
-            parsed_meta, doctree_scan = self.rst.parse_rest(fd)
+            parsed_meta, doctree_scan = self.rst.parse_rest(fd, remove_docinfo=False)
 
         meta.update(**parsed_meta)
 
-        # TODO: remove path from rendered
+        # # Remove path from docinfo
+        # if doctree_scan.docinfo:
+        #     for idx, node in doctree_scan.docinfo.children:
+        #         if node.tagname == 'field' and node.attributes.get('classes')[0] == "path":
+        #             doctree_scan.docinfo.pop(idx)
+        #             break
+        #
+        # It would be good if we could now serialize the doctree back to reSt,
+        # but there seems to be no writer for that.
+        #
+        # But no. Fall back to brutally hacking the rendered text.
+        if doctree_scan.docinfo:
+            lines = []
+            head = True
+            for line in rendered.splitlines():
+                line = line.rstrip()
+                if head:
+                    if not line:
+                        lines.append(line)
+                        head = False
+                    else:
+                        if not line.startswith(":path: "):
+                            lines.append(line)
+                else:
+                    lines.append(line)
+            rendered = "\n".join(lines) + "\n"
 
         return meta, rendered
 
