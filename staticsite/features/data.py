@@ -69,7 +69,7 @@ class DataPages(Feature):
         if not mo:
             return None
         fmt = mo.group(1)
-        if not (relpath.endswith(name) or relpath.endswith(name + "." + fmt)):
+        if os.path.basename(relpath) != name + "." + fmt:
             return None
         return DataArchetype(archetypes, relpath, self, fmt)
 

@@ -6,6 +6,7 @@ import docutils.core
 import docutils.nodes
 import docutils.writers.html5_polyglot
 import os
+import io
 import pytz
 import datetime
 import dateutil.parser
@@ -129,6 +130,23 @@ class RestructuredText(Feature):
             if node is not None:
                 meta["title"] = node.astext()
 
+        # Normalise well-known metadata elements
+        date = meta.get("date")
+        if date is None:
+            meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
+        elif not isinstance(date, datetime.datetime):
+            date = dateutil.parser.parse(date)
+            if date.tzinfo is None:
+                # FIXME: configure a default site timezone in settings
+                date = pytz.utc.localize(date)
+            meta["date"] = date
+
+        for taxonomy in self.site.settings.TAXONOMIES:
+            elements = meta.get(taxonomy, None)
+            if elements is not None and isinstance(elements, str):
+                # if vals is a string, parse it
+                meta[taxonomy] = split_tags(elements)
+
         return meta, doctree_scan
 
     def try_load_page(self, src):
@@ -140,55 +158,29 @@ class RestructuredText(Feature):
             log.warn("%s: Failed to parse RestructuredText page: skipped", src)
             return None
 
-    # def try_load_archetype(self, archetypes, relpath, name):
-    #     if not relpath.endswith(".md"):
-    #         return None
-    #     if not (relpath.endswith(name) or relpath.endswith(name + ".md")):
-    #         return None
-    #     return MarkdownArchetype(archetypes, relpath, self)
+    def try_load_archetype(self, archetypes, relpath, name):
+        if os.path.basename(relpath) != name + ".rst":
+            return None
+        return RestArchetype(archetypes, relpath, self)
 
 
-# class MarkdownArchetype(Archetype):
-#     def __init__(self, archetypes, relpath, mdpages):
-#         super().__init__(archetypes, relpath)
-#         self.mdpages = mdpages
-#
-#     def render(self, **kw):
-#         meta, rendered = super().render(**kw)
-#
-#         # Reparse the rendered version
-#         with io.StringIO(rendered) as fd:
-#             # Reparse it separating front matter and markdown content
-#             front_matter, body = parse_markdown_with_front_matter(fd)
-#         try:
-#             style, meta = parse_front_matter(front_matter)
-#         except Exception:
-#             log.exception("archetype %s: failed to parse front matter", self.relpath)
-#
-#         # Make a copy of the full parsed metadata
-#         archetype_meta = dict(meta)
-#
-#         # Remove the path entry
-#         meta.pop("path", None)
-#
-#         # Reserialize the page with the edited metadata
-#         front_matter = write_front_matter(meta, style)
-#         with io.StringIO() as fd:
-#             fd.write(front_matter)
-#             print(file=fd)
-#             for line in body:
-#                 print(line, file=fd)
-#             post_body = fd.getvalue()
-#
-#         return archetype_meta, post_body
-#
-# #    def read_md(self, **kw):
-# #        """
-# #        Process the archetype returning its parsed front matter in a dict, and
-# #        its contents in a string
-# #        """
-# #
-# #        return style, meta, body
+class RestArchetype(Archetype):
+    def __init__(self, archetypes, relpath, feature):
+        super().__init__(archetypes, relpath)
+        self.rst = feature
+
+    def render(self, **kw):
+        meta, rendered = super().render(**kw)
+
+        # Reparse the rendered version
+        with io.StringIO(rendered) as fd:
+            parsed_meta, doctree_scan = self.rst.parse_rest(fd)
+
+        meta.update(**parsed_meta)
+
+        # TODO: remove path from rendered
+
+        return meta, rendered
 
 
 class RstPage(Page):
@@ -224,23 +216,6 @@ class RstPage(Page):
 
         self.doctree_scan = doctree_scan
         self.meta.update(**meta)
-
-        # Normalise well-known metadata elements
-        date = meta.get("date")
-        if date is None:
-            self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
-        elif not isinstance(date, datetime.datetime):
-            date = dateutil.parser.parse(date)
-            if date.tzinfo is None:
-                # FIXME: configure a default site timezone in settings
-                date = pytz.utc.localize(date)
-            self.meta["date"] = date
-
-        for taxonomy in self.site.settings.TAXONOMIES:
-            elements = self.meta.get(taxonomy, None)
-            if elements is not None and isinstance(elements, str):
-                # if vals is a string, parse it
-                self.meta[taxonomy] = split_tags(elements)
 
     def check(self, checker):
         self.rst.render_page(self)

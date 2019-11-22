@@ -161,9 +161,7 @@ class MarkdownPages(Feature):
             return None
 
     def try_load_archetype(self, archetypes, relpath, name):
-        if not relpath.endswith(".md"):
-            return None
-        if not (relpath.endswith(name) or relpath.endswith(name + ".md")):
+        if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
 
