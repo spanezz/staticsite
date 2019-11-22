@@ -9,7 +9,6 @@ import os
 import pytz
 import datetime
 import dateutil.parser
-from urllib.parse import urlparse, urlunparse
 import logging
 
 log = logging.getLogger()
@@ -23,80 +22,6 @@ def split_tags(x):
     # Use shlex to split strings with or without quotes. There may be better
     # implementations, or possibly it can all boil down to a simple regexp
     return list(x for x in shlex.shlex(x, posix=True, punctuation_chars=",") if not x.startswith(","))
-
-# class LinkResolver(markdown.treeprocessors.Treeprocessor):
-#     def __init__(self, *args, **kw):
-#         super().__init__(*args, **kw)
-#         self.page = None
-#         self.substituted = {}
-#
-#     def set_page(self, page):
-#         self.page = page
-#         self.substituted = {}
-#
-#     def run(self, root):
-#         for a in root.iter("a"):
-#             new_url = self.resolve_url(a.attrib.get("href", None))
-#             if new_url is not None:
-#                 a.attrib["href"] = new_url
-#
-#         for a in root.iter("img"):
-#             new_url = self.resolve_url(a.attrib.get("src", None))
-#             if new_url is not None:
-#                 a.attrib["src"] = new_url
-#
-#     def resolve_url(self, url):
-#         """
-#         Resolve internal URLs.
-#
-#         Returns None if the URL does not need changing, else returns the new URL.
-#         """
-#         from markdown.util import AMP_SUBSTITUTE
-#         if not url:
-#             return None
-#         if url.startswith(AMP_SUBSTITUTE):
-#             # Possibly an overencoded mailto: link.
-#             # see https://bugs.debian.org/816218
-#             #
-#             # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
-#             # we look for it here.
-#             return None
-#         parsed = urlparse(url)
-#         if parsed.scheme or parsed.netloc:
-#             return None
-#         if not parsed.path:
-#             return None
-#         dest = self.page.resolve_link(parsed.path)
-#         # Also allow .md extension in
-#         if dest is None and parsed.path.endswith(".md"):
-#             dirname, basename = os.path.split(parsed.path)
-#             if basename in ("index.md", "README.md"):
-#                 dest = self.page.resolve_link(dirname)
-#             else:
-#                 dest = self.page.resolve_link(parsed.path[:-3])
-#         if dest is None:
-#             log.warn("%s: internal link %r does not resolve to any site page", self.page.src.relpath, url)
-#             return None
-#
-#         res = urlunparse(
-#             (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
-#         )
-#         self.substituted[url] = res
-#         return res
-#
-#
-# class StaticSiteExtension(markdown.extensions.Extension):
-#     def extendMarkdown(self, md, md_globals):
-#         self.link_resolver = LinkResolver(md)
-#         # Insert instance of 'mypattern' before 'references' pattern
-#         md.treeprocessors.add('staticsite', self.link_resolver, '_end')
-#         md.registerExtension(self)
-#
-#     def reset(self):
-#         pass
-#
-#     def set_page(self, page):
-#         self.link_resolver.set_page(page)
 
 
 class DoctreeScan:
@@ -153,15 +78,6 @@ class RestructuredText(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        # md_staticsite = StaticSiteExtension()
-        # self.markdown = markdown.Markdown(
-        #     extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
-        #         md_staticsite,
-        #     ],
-        #     extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
-        #     output_format="html5",
-        # )
-        # self.link_resolver = md_staticsite.link_resolver
 
         # Cached templates
         self._page_template = None
@@ -180,54 +96,6 @@ class RestructuredText(Feature):
         if not self._redirect_template:
             self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
         return self._redirect_template
-
-    def render_page(self, page: "RstPage"):
-        """
-        Render a doctree in the context of the given page.
-        """
-        writer = docutils.writers.html5_polyglot.Writer()
-        # TODO: study if/how we can con configure publish_programmatically to
-        # do as little work as possible
-        output, pub = docutils.core.publish_programmatically(
-            source=page.doctree_scan.doctree, source_path=None,
-            source_class=docutils.io.DocTreeInput,
-            destination=None, destination_path=None,
-            destination_class=docutils.io.StringOutput,
-            reader=None, reader_name='doctree',
-            parser=None, parser_name='null',
-            writer=writer, writer_name=None,
-            settings=None, settings_spec=None,
-            settings_overrides=None,
-            config_section=None,
-            enable_exit_status=False
-            )
-        parts = pub.writer.parts
-        return parts["body"]
-#         self.link_resolver.set_page(page)
-#
-#         cached = self.render_cache.get(page.src.relpath)
-#         if cached and cached["mtime"] != page.mtime:
-#             cached = None
-#         if cached:
-#             for src, dest in cached["paths"]:
-#                 if self.link_resolver.resolve_url(src) != dest:
-#                     cached = None
-#                     break
-#         if cached:
-#             # log.info("%s: markdown cache hit", page.src.relpath)
-#             return cached["rendered"]
-#
-#         content = page.get_content()
-#         self.markdown.reset()
-#         rendered = self.markdown.convert(content)
-#
-#         self.render_cache.put(page.src.relpath, {
-#             "mtime": page.mtime,
-#             "rendered": rendered,
-#             "paths": list(self.link_resolver.substituted.items()),
-#         })
-#
-#         return rendered
 
     def parse_rest(self, fd):
         """
@@ -380,21 +248,57 @@ class RstPage(Page):
     @property
     def content(self):
         if self.body_html is None:
-            self.body_html = self.rst.render_page(self)
+            if not self.doctree_scan.links_rewritten:
+                for node in self.doctree_scan.links_target:
+                    new_val = self.resolve_url(node.attributes["refuri"])
+                    if new_val is not None:
+                        node.attributes["refuri"] = new_val
+                for node in self.doctree_scan.links_image:
+                    new_val = self.resolve_url(node.attributes["uri"])
+                    if new_val is not None:
+                        node.attributes["uri"] = new_val
+
+            # TODO: caching
+            # cached = self.render_cache.get(page.src.relpath)
+            # if cached and cached["mtime"] != page.mtime:
+            #     cached = None
+            # if cached:
+            #     for src, dest in cached["paths"]:
+            #         if self.link_resolver.resolve_url(src) != dest:
+            #             cached = None
+            #             break
+            # if cached:
+            #     # log.info("%s: markdown cache hit", page.src.relpath)
+            #     return cached["rendered"]
+
+            writer = docutils.writers.html5_polyglot.Writer()
+            # TODO: study if/how we can con configure publish_programmatically to
+            # do as little work as possible
+            output, pub = docutils.core.publish_programmatically(
+                source=self.doctree_scan.doctree, source_path=None,
+                source_class=docutils.io.DocTreeInput,
+                destination=None, destination_path=None,
+                destination_class=docutils.io.StringOutput,
+                reader=None, reader_name='doctree',
+                parser=None, parser_name='null',
+                writer=writer, writer_name=None,
+                settings=None, settings_spec=None,
+                settings_overrides=None,
+                config_section=None,
+                enable_exit_status=False
+                )
+            parts = pub.writer.parts
+            self.body_html = parts["body"]
+
+            # self.render_cache.put(page.src.relpath, {
+            #     "mtime": page.mtime,
+            #     "rendered": rendered,
+            #     "paths": list(self.link_resolver.substituted.items()),
+            # })
         return self.body_html
 
     def render(self):
         res = {}
-
-        if not self.doctree_scan.links_rewritten:
-            for node in self.doctree_scan.links_target:
-                new_val = self.resolve_url(node.attributes["refuri"])
-                if new_val is not None:
-                    node.attributes["refuri"] = new_val
-            for node in self.doctree_scan.links_image:
-                new_val = self.resolve_url(node.attributes["uri"])
-                if new_val is not None:
-                    node.attributes["uri"] = new_val
 
         html = self.rst.page_template.render(
             page=self,
