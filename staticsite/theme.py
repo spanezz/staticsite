@@ -97,6 +97,8 @@ class Theme:
                 continue
             self.jinja2.globals[x] = getattr(self.site.settings, x)
 
+        self.jinja2.globals["site"] = self.site
+
         # Install site's functions into the jinja2 environment
         self.jinja2.globals.update(
             has_page=self.jinja2_has_page,
