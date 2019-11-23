@@ -40,7 +40,20 @@ __ https://help.github.com/articles/relative-links-in-readmes/
 Page metadata
 -------------
 
-The post metadata 
+As in Sphinx_, a field list near the top of the file is parsed as front
+matter and removed from the generated files.
+
+.. _Sphinx: http://www.sphinx-doc.org/en/stable/markup/misc.html#file-wide-metadata
+
+All `bibliographic fields`_ known to docutils are parsed according to their
+respective type.
+
+.. _`bibliographic fields`: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bibliographic-fields
+
+All fields whose name matches a taxonomy defined in ``TAXONOMY_NAMES``
+`settings <settings.md>`_ are parsed as comma-separated lists of possibly
+quoted strings, and taken as the set of values (e.g. tags) of the given
+taxonomy for the current page.
 
 See `page metadata <metadata.md>`_ for a list of commonly used metadata.
 
