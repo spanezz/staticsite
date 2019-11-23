@@ -6,6 +6,7 @@
 * Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
   list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
   found that is not listed in `TAXONOMIES`.
+* Try harder to localize timestamps as the configured site TIMEZONE
 
 # New in version 1.1
 
