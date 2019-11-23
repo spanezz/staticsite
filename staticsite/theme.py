@@ -125,7 +125,7 @@ class Theme:
         features_dir = self.root / "features"
         if not features_dir.is_dir():
             return
-        self.site.load_feature_dir([features_dir.as_posix()])
+        self.site.features.load_feature_dir([features_dir.as_posix()])
 
     def jinja2_basename(self, val):
         return os.path.basename(val)

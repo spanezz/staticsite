@@ -44,36 +44,6 @@ class Site:
         else:
             self.caches = DisabledCaches()
 
-    def load_features(self):
-        # Load default features
-        from . import features
-        self.load_feature_dir(features.__path__)
-
-    def load_feature_dir(self, paths, namespace="staticsite.features"):
-        import pkgutil
-        import importlib
-        for module_finder, name, ispkg in pkgutil.iter_modules(paths):
-            full_name = namespace + "." + name
-            mod = sys.modules.get(full_name)
-            if not mod:
-                try:
-                    spec = module_finder.find_spec(name)
-                    mod = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(mod)
-                except Exception:
-                    log.exception("%r: failed to load feature module", name)
-                    continue
-                sys.modules[full_name] = mod
-
-            features = getattr(mod, "FEATURES", None)
-            if features is None:
-                log.warn("%r: feature module did not define a FEATURES dict", name)
-                continue
-
-            # Register features with site
-            for name, cls in features.items():
-                self.features.add(name, cls)
-
     def find_theme_root(self) -> str:
         """
         Choose a theme root from the ones listed in the configuration
@@ -136,7 +106,7 @@ class Site:
         """
         Load all site components
         """
-        self.load_features()
+        self.features.load_default_features()
         self.load_theme()
         self.load_content()
 
