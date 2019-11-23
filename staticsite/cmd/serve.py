@@ -166,7 +166,7 @@ class Show(ServerMixin, Command):
                 server = tornado.httpserver.HTTPServer(self)
                 server.add_sockets(sockets)
                 for s in sockets:
-                    host, port = s.getsockname()
+                    host, port = s.getsockname()[:2]
                     url = f"http://{host}:{port}"
                     log.info("Listening on %s", url)
                     webbrowser.open(url)
