@@ -44,6 +44,9 @@ OUTPUT = "web"
 
 # List of asset directories included from /usr/share/javascript
 SYSTEM_ASSETS = []
+
+# List of taxonomy names used in the site
+TAXONOMIES = []
 ```
 
 

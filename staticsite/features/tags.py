@@ -23,6 +23,9 @@ class TaxonomyPages(Feature):
     def try_load_page(self, src):
         if not src.relpath.endswith(".taxonomy"):
             return None
+        if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
+            log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
+            return None
         page = TaxonomyPage(self.site, src)
         self.taxonomies.append(page)
         return page
@@ -119,13 +122,14 @@ class TaxonomyPage(Page):
             log.exception("%s.taxonomy: cannot parse taxonomy information", self.src.relpath)
 
     def link_value(self, context, output_item, value):
+        page = context.get("page", None)
         if isinstance(value, str):
             item = self.items.get(value, None)
         else:
             item = value
 
         if item is None:
-            log.warn("%s+%s: %s not found in taxonomy %s", context.parent["page"], context.name, value, self.name)
+            log.warn("%s+%s: %s not found in taxonomy %s", page, context.name, value, self.name)
             return ""
         dest = self.meta[output_item].format(slug=item.slug)
         return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath, dest)

@@ -17,6 +17,9 @@ class File(NamedTuple):
     # File stats if the file exists, else NOne
     stat: Optional[os.stat_result] = None
 
+    def __str__(self):
+        return self.abspath
+
     @classmethod
     def from_abspath(cls, tree_root: str, abspath: str):
         return cls(
@@ -44,8 +47,13 @@ class File(NamedTuple):
                     continue
 
                 abspath = os.path.join(root, f)
+                try:
+                    st = os.stat(f, dir_fd=dirfd)
+                except FileNotFoundError:
+                    # Skip broken links
+                    continue
                 yield cls(
                         relpath=os.path.relpath(abspath, tree_root),
                         root=tree_root,
                         abspath=abspath,
-                        stat=os.stat(f, dir_fd=dirfd))
+                        stat=st)

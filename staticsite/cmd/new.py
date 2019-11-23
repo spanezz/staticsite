@@ -22,6 +22,9 @@ class LazyTitle:
             self.title = input("Please enter the post title: ")
         return self.title
 
+    def __len__(self):
+        return len(str(self))
+
 
 class LazySlug:
     """

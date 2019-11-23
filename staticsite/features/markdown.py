@@ -42,38 +42,13 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
 
         Returns None if the URL does not need changing, else returns the new URL.
         """
-        from markdown.util import AMP_SUBSTITUTE
-        if not url:
-            return None
-        if url.startswith(AMP_SUBSTITUTE):
-            # Possibly an overencoded mailto: link.
-            # see https://bugs.debian.org/816218
-            #
-            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
-            # we look for it here.
-            return None
-        parsed = urlparse(url)
-        if parsed.scheme or parsed.netloc:
-            return None
-        if not parsed.path:
-            return None
-        dest = self.page.resolve_link(parsed.path)
-        # Also allow .md extension in
-        if dest is None and parsed.path.endswith(".md"):
-            dirname, basename = os.path.split(parsed.path)
-            if basename in ("index.md", "README.md"):
-                dest = self.page.resolve_link(dirname)
-            else:
-                dest = self.page.resolve_link(parsed.path[:-3])
-        if dest is None:
-            log.warn("%s: internal link %r does not resolve to any site page", self.page.src.relpath, url)
-            return None
-
-        res = urlunparse(
-            (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
-        )
-        self.substituted[url] = res
-        return res
+        new_url = self.substituted.get(url)
+        if new_url is not None:
+            return new_url
+        new_url = self.page.resolve_url(url)
+        if new_url is not None:
+            self.substituted[url] = new_url
+        return new_url
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
@@ -136,9 +111,6 @@ class MarkdownPages(Feature):
     def render_page(self, page):
         """
         Render markdown in the context of the given page.
-
-        It renders the page content by default, unless `content` is set to a
-        different markdown string.
         """
         self.link_resolver.set_page(page)
 
@@ -182,12 +154,14 @@ class MarkdownPages(Feature):
     def try_load_page(self, src):
         if not src.relpath.endswith(".md"):
             return None
-        return MarkdownPage(self, src)
+        try:
+            return MarkdownPage(self, src)
+        except Exception:
+            log.warn("%s: Failed to parse markdown page: skipped", src)
+            return None
 
     def try_load_archetype(self, archetypes, relpath, name):
-        if not relpath.endswith(".md"):
-            return None
-        if not (relpath.endswith(name) or relpath.endswith(name + ".md")):
+        if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
 
@@ -242,7 +216,8 @@ class MarkdownArchetype(Archetype):
         try:
             style, meta = parse_front_matter(front_matter)
         except Exception:
-            log.exception("archetype %s: failed to parse front matter", self.relpath)
+            log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=True)
+            log.warn("archetype %s: failed to parse front matter", self.relpath)
 
         # Make a copy of the full parsed metadata
         archetype_meta = dict(meta)
@@ -260,14 +235,6 @@ class MarkdownArchetype(Archetype):
             post_body = fd.getvalue()
 
         return archetype_meta, post_body
-
-#    def read_md(self, **kw):
-#        """
-#        Process the archetype returning its parsed front matter in a dict, and
-#        its contents in a string
-#        """
-#
-#        return style, meta, body
 
 
 class MarkdownPage(Page):
@@ -315,7 +282,8 @@ class MarkdownPage(Page):
             style, meta = parse_front_matter(self.front_matter)
             self.meta.update(**meta)
         except Exception:
-            log.exception("%s: failed to parse front matter", self.src.relpath)
+            log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=True)
+            log.warn("%s: failed to parse front matter", self.src.relpath)
 
         # Remove leading empty lines
         while self.body and not self.body[0]:

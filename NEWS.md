@@ -1,5 +1,12 @@
 # staticsite user-relevant changes
 
+# New in version 1.2
+
+* RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl
+* Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
+  list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
+  found that is not listed in `TAXONOMIES`.
+
 # New in version 1.1
 
 * Documented and consolidated the Features feature
