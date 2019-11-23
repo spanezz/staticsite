@@ -236,14 +236,6 @@ class MarkdownArchetype(Archetype):
 
         return archetype_meta, post_body
 
-#    def read_md(self, **kw):
-#        """
-#        Process the archetype returning its parsed front matter in a dict, and
-#        its contents in a string
-#        """
-#
-#        return style, meta, body
-
 
 class MarkdownPage(Page):
     TYPE = "markdown"

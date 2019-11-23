@@ -125,11 +125,15 @@ class RestructuredText(Feature):
                 else:
                     meta[child.tagname] = child.astext().strip()
 
-        if "title" not in meta:
-            # Recursively find the first title node in the document
-            node = doctree_scan.first_title
-            if node is not None:
-                meta["title"] = node.astext()
+        if doctree_scan.first_title is not None:
+            if "title" not in meta:
+                meta["title"] = doctree_scan.first_title.astext()
+            # If the title element is at the beginning of the doctree, remove
+            # it to avoid a duplicate title in the rendered content
+            if (doctree_scan.docinfo
+                    and doctree_scan.docinfo.children
+                    and doctree_scan.docinfo.children[0] == doctree_scan.first_title):
+                doctree_scan.doctree.children.pop(0)
 
         # Normalise well-known metadata elements
         date = meta.get("date")
@@ -245,58 +249,60 @@ class RstPage(Page):
         self.meta.update(**meta)
 
     def check(self, checker):
-        self.rst.render_page(self)
+        self._render_page()
+
+    def _render_page(self):
+        if not self.doctree_scan.links_rewritten:
+            for node in self.doctree_scan.links_target:
+                new_val = self.resolve_url(node.attributes["refuri"])
+                if new_val is not None:
+                    node.attributes["refuri"] = new_val
+            for node in self.doctree_scan.links_image:
+                new_val = self.resolve_url(node.attributes["uri"])
+                if new_val is not None:
+                    node.attributes["uri"] = new_val
+
+        # TODO: caching
+        # cached = self.render_cache.get(page.src.relpath)
+        # if cached and cached["mtime"] != page.mtime:
+        #     cached = None
+        # if cached:
+        #     for src, dest in cached["paths"]:
+        #         if self.link_resolver.resolve_url(src) != dest:
+        #             cached = None
+        #             break
+        # if cached:
+        #     # log.info("%s: markdown cache hit", page.src.relpath)
+        #     return cached["rendered"]
+
+        writer = docutils.writers.html5_polyglot.Writer()
+        # TODO: study if/how we can con configure publish_programmatically to
+        # do as little work as possible
+        output, pub = docutils.core.publish_programmatically(
+            source=self.doctree_scan.doctree, source_path=None,
+            source_class=docutils.io.DocTreeInput,
+            destination=None, destination_path=None,
+            destination_class=docutils.io.StringOutput,
+            reader=None, reader_name='doctree',
+            parser=None, parser_name='null',
+            writer=writer, writer_name=None,
+            settings=None, settings_spec=None,
+            settings_overrides=None,
+            config_section=None,
+            enable_exit_status=False
+            )
+        parts = pub.writer.parts
+        # self.render_cache.put(page.src.relpath, {
+        #     "mtime": page.mtime,
+        #     "rendered": parts["body"],
+        #     "paths": list(self.link_resolver.substituted.items()),
+        # })
+        return parts["body"]
 
     @property
     def content(self):
         if self.body_html is None:
-            if not self.doctree_scan.links_rewritten:
-                for node in self.doctree_scan.links_target:
-                    new_val = self.resolve_url(node.attributes["refuri"])
-                    if new_val is not None:
-                        node.attributes["refuri"] = new_val
-                for node in self.doctree_scan.links_image:
-                    new_val = self.resolve_url(node.attributes["uri"])
-                    if new_val is not None:
-                        node.attributes["uri"] = new_val
-
-            # TODO: caching
-            # cached = self.render_cache.get(page.src.relpath)
-            # if cached and cached["mtime"] != page.mtime:
-            #     cached = None
-            # if cached:
-            #     for src, dest in cached["paths"]:
-            #         if self.link_resolver.resolve_url(src) != dest:
-            #             cached = None
-            #             break
-            # if cached:
-            #     # log.info("%s: markdown cache hit", page.src.relpath)
-            #     return cached["rendered"]
-
-            writer = docutils.writers.html5_polyglot.Writer()
-            # TODO: study if/how we can con configure publish_programmatically to
-            # do as little work as possible
-            output, pub = docutils.core.publish_programmatically(
-                source=self.doctree_scan.doctree, source_path=None,
-                source_class=docutils.io.DocTreeInput,
-                destination=None, destination_path=None,
-                destination_class=docutils.io.StringOutput,
-                reader=None, reader_name='doctree',
-                parser=None, parser_name='null',
-                writer=writer, writer_name=None,
-                settings=None, settings_spec=None,
-                settings_overrides=None,
-                config_section=None,
-                enable_exit_status=False
-                )
-            parts = pub.writer.parts
-            self.body_html = parts["body"]
-
-            # self.render_cache.put(page.src.relpath, {
-            #     "mtime": page.mtime,
-            #     "rendered": rendered,
-            #     "paths": list(self.link_resolver.substituted.items()),
-            # })
+            self.body_html = self._render_page()
         return self.body_html
 
     def render(self):

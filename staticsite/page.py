@@ -149,7 +149,7 @@ class Page:
             else:
                 dest = self.resolve_link(parsed.path[:-len(ext)])
         if dest is None:
-            log.warn("%s: internal link %r does not resolve to any site page", self.page.src.relpath, url)
+            log.warn("%s: internal link %r does not resolve to any site page", self.src.relpath, url)
             return None
 
         return urlunparse(

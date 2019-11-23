@@ -17,6 +17,9 @@ class File(NamedTuple):
     # File stats if the file exists, else NOne
     stat: Optional[os.stat_result] = None
 
+    def __str__(self):
+        return self.abspath
+
     @classmethod
     def from_abspath(cls, tree_root: str, abspath: str):
         return cls(
