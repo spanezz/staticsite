@@ -1,14 +1,15 @@
 from __future__ import annotations
 import sys
 import logging
+import importlib
 
 log = logging.getLogger()
 
 
 class Settings:
-    def __init__(self):
-        from . import global_settings
-        self.add_module(global_settings)
+    def __init__(self, default_settings="staticsite.global_settings"):
+        if default_settings is not None:
+            self.add_module(importlib.import_module(default_settings))
 
     def as_dict(self):
         res = {}
