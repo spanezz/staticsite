@@ -27,7 +27,11 @@ class Site:
         self.pages: Dict[str, Page] = {}
 
         # Site time zone
-        self.timezone = pytz.timezone(settings.TIMEZONE)
+        if settings.TIMEZONE is None:
+            from dateutil.tz import tzlocal
+            self.timezone = tzlocal()
+        else:
+            self.timezone = pytz.timezone(settings.TIMEZONE)
 
         # Current datetime
         self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)

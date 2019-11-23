@@ -1,3 +1,4 @@
+# Default settings
 import os
 
 # Root directory used to resolve relative path in site sources
@@ -27,7 +28,8 @@ THEME = ("/usr/share/doc/staticsite/example/theme/", "theme")
 OUTPUT = "web"
 
 # Time zone used for timestamps on the site
-TIMEZONE = "UTC"
+# (NONE defaults to the system configured timezone)
+TIMEZONE = None
 
 # Editor used to edit new pages
 EDITOR = os.environ.get("EDITOR", "sensible-editor")
