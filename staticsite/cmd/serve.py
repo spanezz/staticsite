@@ -79,9 +79,14 @@ class ServerMixin:
 
     def make_server(self, watch_paths=[]):
         try:
-            from livereload import Server
+            import livereload
         except ImportError:
             raise CmdlineError("Please install the python3 livereload module to use this function.")
+
+        class Server(livereload.Server):
+            def _setup_logging(self):
+                # Keep existing logging setup
+                pass
 
         server = Server(self.application)
 
@@ -158,6 +163,7 @@ class Show(ServerMixin, Command):
         import tornado.web
         import tornado.httpserver
         import tornado.netutil
+        import tornado.ioloop
         import webbrowser
 
         class Application(tornado.web.Application):
@@ -165,12 +171,20 @@ class Show(ServerMixin, Command):
                 sockets = tornado.netutil.bind_sockets(0, 'localhost')
                 server = tornado.httpserver.HTTPServer(self)
                 server.add_sockets(sockets)
+                pairs = []
                 for s in sockets:
-                    host, port = s.getsockname()[:2]
-                    url = f"http://{host}:{port}"
-                    log.info("Listening on %s", url)
-                    webbrowser.open(url)
-                    break
+                    pairs.append(s.getsockname()[:2])
+                pairs.sort()
+                host, port = pairs[0]
+                if ":" in host:
+                    host = f"[{host}]"
+                url = f"http://{host}:{port}"
+                log.info("Actually serving on %s", url)
+
+                async def open_browser():
+                    webbrowser.open_new_tab(url)
+
+                tornado.ioloop.IOLoop.current().add_callback(open_browser)
                 return server
 
         # Monkey patch to be able to start servers in a smoother way that the
