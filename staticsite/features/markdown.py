@@ -113,7 +113,7 @@ class MarkdownPages(Feature):
         self.link_resolver.set_page(page)
 
         cached = self.render_cache.get(page.src.relpath)
-        if cached and cached["mtime"] != page.mtime:
+        if cached and cached["mtime"] != page.src.stat.st_mtime:
             cached = None
         if cached:
             for src, dest in cached["paths"]:
