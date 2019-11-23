@@ -1,20 +1,18 @@
 from unittest import TestCase
 from staticsite.cmd.build import Build
-from staticsite import Site
-from . import datafile_abspath, example_site, TestArgs, TestPage
+from . import utils as test_utils
 import os
 import datetime
 
 
 class TestSite(TestCase):
     def test_dirs(self):
-        site = Site()
-        site.settings.THEME = datafile_abspath("theme")
-        site.load()
+        site = test_utils.Site()
+        site.load_without_content()
 
-        page_root = TestPage(site, "page_root", date=datetime.datetime(2016, 1, 1))
-        page_sub = TestPage(site, "dir1/page_sub", date=datetime.datetime(2016, 2, 1))
-        page_sub3 = TestPage(site, "dir1/dir2/dir3/page_sub3", date=datetime.datetime(2016, 3, 1))
+        page_root = test_utils.Page(site, "page_root", date=datetime.datetime(2016, 1, 1))
+        page_sub = test_utils.Page(site, "dir1/page_sub", date=datetime.datetime(2016, 2, 1))
+        page_sub3 = test_utils.Page(site, "dir1/dir2/dir3/page_sub3", date=datetime.datetime(2016, 3, 1))
 
         site.add_page(page_root)
         site.add_page(page_sub)
@@ -45,12 +43,12 @@ class TestSite(TestCase):
 
 class TestMarkdownInJinja2(TestCase):
     def test_jinja2_markdown(self):
-        with example_site() as root:
+        with test_utils.example_site() as root:
             page = os.path.join(root, "content/test.j2.html")
             with open(page, "wt") as fd:
                 fd.write("{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")
 
-            args = TestArgs(project=root)
+            args = test_utils.Args(project=root)
             build = Build(args)
             build.run()
 
@@ -64,8 +62,8 @@ class TestMarkdownInJinja2(TestCase):
 
 class TestBuild(TestCase):
     def test_dots(self):
-        with example_site() as root:
-            args = TestArgs(project=root)
+        with test_utils.example_site() as root:
+            args = test_utils.Args(project=root)
             build = Build(args)
             build.run()
 
@@ -75,8 +73,8 @@ class TestBuild(TestCase):
             self.assertFalse(os.path.exists(output))
 
     def test_different_links(self):
-        with example_site() as root:
-            args = TestArgs(project=root)
+        with test_utils.example_site() as root:
+            args = test_utils.Args(project=root)
             build = Build(args)
             build.run()
 

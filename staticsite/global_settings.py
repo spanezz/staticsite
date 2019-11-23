@@ -1,8 +1,9 @@
 # Default settings
 import os
 
-# Root directory used to resolve relative path in site sources
-PROJECT_ROOT = "."
+# Root directory used to resolve relative path in settings
+# Default if None: the directory where the settings file is found
+PROJECT_ROOT = None
 
 # Root directory of the site in the URLs we generate.
 #
@@ -10,22 +11,24 @@ PROJECT_ROOT = "."
 # override this with /prefix
 SITE_ROOT = "/"
 
-# Default site name. Override it with your site name.
-SITE_NAME = "Site name not set"
+# Default site name. If None, use the title of the toplevel index
+SITE_NAME = None
 
 # Directory with "archetypes" (templates used by ssite new)
+# If None, archetypes are not used by ssite new
 ARCHETYPES = "archetypes"
 
 # Directory with the source content of the site
-# Default: the project directory itself
-CONTENT = "content"
+# Default if None: PROJECT_ROOT
+CONTENT = None
 
 # Theme used to render the site. A sequence of strings is tried in order.
 # Default: the one installed in the system
 THEME = ("/usr/share/doc/staticsite/example/theme/", "theme")
 
 # Directory where the static site will be written by build
-OUTPUT = "web"
+# If None, require providing it explicitly to build
+OUTPUT = None
 
 # Time zone used for timestamps on the site
 # (NONE defaults to the system configured timezone)

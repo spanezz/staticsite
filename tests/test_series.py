@@ -1,29 +1,28 @@
 from unittest import TestCase
-from staticsite import Site
-from . import datafile_abspath, TestPage
+from . import utils as test_utils
 import datetime
 
 
 class TestSeries(TestCase):
     def test_site(self):
-        site = Site()
-        site.settings.THEME = datafile_abspath("theme")
-        site.load()
+        site = test_utils.Site()
+        site.load_without_content()
         series = site.features["series"].series
 
-        seriesa1 = TestPage(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa", title="Series A")
-        seriesa2 = TestPage(site, "seriesa2", date=datetime.datetime(2016, 1, 2), series="seriesa", title="A2")
-        seriesa3 = TestPage(site, "seriesa3", date=datetime.datetime(2016, 1, 3), series="seriesa", title="A3",
-                            series_title="Series A part Two")
-        seriesa4 = TestPage(site, "seriesa4", date=datetime.datetime(2016, 1, 4), series="seriesa", title="A4")
+        seriesa1 = test_utils.Page(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa",
+                                   title="Series A")
+        seriesa2 = test_utils.Page(site, "seriesa2", date=datetime.datetime(2016, 1, 2), series="seriesa", title="A2")
+        seriesa3 = test_utils.Page(site, "seriesa3", date=datetime.datetime(2016, 1, 3), series="seriesa", title="A3",
+                                   series_title="Series A part Two")
+        seriesa4 = test_utils.Page(site, "seriesa4", date=datetime.datetime(2016, 1, 4), series="seriesa", title="A4")
 
-        seriesb1 = TestPage(site, "seriesb1", date=datetime.datetime(2016, 1, 1), series="seriesb", title="Series B",
-                            series_title="Series B part One")
-        seriesb2 = TestPage(site, "seriesb2", date=datetime.datetime(2016, 1, 2), series="seriesb", title="B2")
+        seriesb1 = test_utils.Page(site, "seriesb1", date=datetime.datetime(2016, 1, 1), series="seriesb",
+                                   title="Series B", series_title="Series B part One")
+        seriesb2 = test_utils.Page(site, "seriesb2", date=datetime.datetime(2016, 1, 2), series="seriesb", title="B2")
 
-        seriesc1 = TestPage(site, "seriesc1", date=datetime.datetime(2016, 1, 1), series="seriesc")
+        seriesc1 = test_utils.Page(site, "seriesc1", date=datetime.datetime(2016, 1, 1), series="seriesc")
 
-        noseries = TestPage(site, "noseries", date=datetime.datetime(2016, 1, 1), title="Other things")
+        noseries = test_utils.Page(site, "noseries", date=datetime.datetime(2016, 1, 1), title="Other things")
 
         site.add_page(seriesa1)
         site.add_page(seriesa2)

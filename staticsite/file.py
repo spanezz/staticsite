@@ -18,7 +18,10 @@ class File(NamedTuple):
     stat: Optional[os.stat_result] = None
 
     def __str__(self):
-        return self.abspath
+        if self.abspath:
+            return self.abspath
+        else:
+            return f"{self.root} → {self.relpath}"
 
     @classmethod
     def from_abspath(cls, tree_root: str, abspath: str):

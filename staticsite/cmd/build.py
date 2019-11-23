@@ -1,7 +1,7 @@
 import os
 import time
 from collections import defaultdict
-from .command import SiteCommand
+from .command import SiteCommand, CmdlineError
 from staticsite.render import File
 from staticsite.utils import timings
 import logging
@@ -24,6 +24,8 @@ class Build(SiteCommand):
 class Builder:
     def __init__(self, site):
         self.site = site
+        if self.site.settings.OUTPUT is None:
+            raise CmdlineError("please use --output or set OUTPUT in settings")
         self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
         self.existing_paths = {}
 

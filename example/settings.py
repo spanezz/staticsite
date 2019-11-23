@@ -16,7 +16,7 @@ TIMEZONE = "Europe/Rome"
 # SITE_ROOT = "/"
 
 # Directory with the source content of the site
-# CONTENT = "content"
+CONTENT = "content"
 
 # Theme used to render the site. A sequence of strings is tried in order.
 # Default: the one installed in the system
@@ -26,6 +26,7 @@ THEME = "theme"
 # ARCHETYPES = "archetypes"
 
 # Directory where the static site will be written by build
-# OUTPUT = "web"
+OUTPUT = "web"
 
+# Enable a 'tags' taxonomy
 TAXONOMIES = ["tags"]

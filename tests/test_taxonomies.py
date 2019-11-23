@@ -1,6 +1,6 @@
 from unittest import TestCase
 from staticsite import Site
-from . import TestPage
+from . import utils as test_utils
 import os
 import datetime
 
@@ -10,13 +10,12 @@ class TestTaxonomies(TestCase):
         """
         Test simply assigning pages to taxonomies
         """
-        site = Site()
-        site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
-        site.load()
+        site = test_utils.Site()
+        site.load_without_content()
 
         tax1 = site.add_test_page("tags", name="tags")
 
-        page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
+        page1 = test_utils.Page(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)
 
         site.analyze()
@@ -28,21 +27,20 @@ class TestTaxonomies(TestCase):
         """
         Test autogenerating series from taxonomies
         """
-        site = Site()
-        site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
-        site.load()
+        site = test_utils.Site()
+        site.load_without_content()
 
         series = site.features["series"].series
 
         tax1 = site.add_test_page("tags", name="tags", series_tags=["a", "b"])
 
-        page1 = TestPage(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
+        page1 = test_utils.Page(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)
 
-        page2 = TestPage(site, "page2", date=datetime.datetime(2016, 1, 2), tags=["a"])
+        page2 = test_utils.Page(site, "page2", date=datetime.datetime(2016, 1, 2), tags=["a"])
         site.add_page(page2)
 
-        page3 = TestPage(site, "page3", date=datetime.datetime(2016, 1, 3), tags=["a", "b"], series="a")
+        page3 = test_utils.Page(site, "page3", date=datetime.datetime(2016, 1, 3), tags=["a", "b"], series="a")
         site.add_page(page3)
 
         site.analyze()

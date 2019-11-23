@@ -22,14 +22,15 @@ class DirPages(Feature):
         by_dir = defaultdict(list)
         for page in self.site.pages.values():
             # Harvest content for directory indices
-            if page.FINDABLE and page.src.relpath:
-                dir_relpath = os.path.dirname(page.src.relpath)
-                by_dir[dir_relpath].append(page)
-                while dir_relpath:
-                    dir_relpath = os.path.dirname(dir_relpath)
-                    # Do a lookup to make sure an entry exists for this
-                    # directory level, even though without pages
-                    by_dir[dir_relpath]
+            if not page.FINDABLE or not page.src.relpath:
+                continue
+            dir_relpath = os.path.dirname(page.src.relpath)
+            by_dir[dir_relpath].append(page)
+            while dir_relpath:
+                dir_relpath = os.path.dirname(dir_relpath)
+                # Do a lookup to make sure an entry exists for this
+                # directory level, even though without pages
+                by_dir[dir_relpath]
 
         # Build directory indices
         dir_pages = []
@@ -98,7 +99,16 @@ class DirPage(Page):
 
     def finalize(self):
         self.meta["date"] = self.get_date()
-        self.meta["title"] = os.path.basename(self.src.relpath) or self.site.settings.SITE_NAME
+        # If src_relpath is empty, we are the toplevel directory index
+        if self.src.relpath:
+            self.meta["title"] = os.path.basename(self.src.relpath)
+        elif self.site.settings.SITE_NAME:
+            self.meta["title"] = self.site.settings.SITE_NAME
+        else:
+            # If we have no site name and we need to generate the toplevel
+            # directory index, pick a fallback title.
+            # TODO: is there a better idea than "/"?
+            self.meta["title"] = "/"
 
     def render(self):
         self.subdirs.sort(key=lambda x: x.meta["title"])

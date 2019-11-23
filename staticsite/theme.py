@@ -86,6 +86,7 @@ class Theme:
         from jinja2 import Environment, FileSystemLoader
         self.jinja2 = Environment(
             loader=FileSystemLoader([
+                self.site.content_root,
                 self.root.as_posix(),
             ]),
             autoescape=True,

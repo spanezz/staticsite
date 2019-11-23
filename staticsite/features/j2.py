@@ -56,10 +56,8 @@ class J2Page(Page):
         self.meta["date"] = self.site.generation_time
 
     def render(self):
-        with open(self.src.abspath, "rt") as fd:
-            template_body = fd.read()
         try:
-            template = self.site.theme.jinja2.from_string(template_body)
+            template = self.site.theme.jinja2.get_template(self.src.relpath)
         except Exception:
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage

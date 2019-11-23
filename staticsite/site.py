@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Optional, Dict
 import os
-import sys
 import pytz
 import datetime
 import stat
@@ -22,6 +21,12 @@ class Site:
         if settings is None:
             settings = Settings()
         self.settings: Settings = settings
+
+        # Fill in settings left empty that have meaningful defaults
+        if self.settings.PROJECT_ROOT is None:
+            self.settings.PROJECT_ROOT = os.getcwd()
+        if self.settings.CONTENT is None:
+            self.settings.CONTENT = self.settings.PROJECT_ROOT
 
         # Site pages
         self.pages: Dict[str, Page] = {}
@@ -44,9 +49,12 @@ class Site:
 
         # Build cache repository
         if self.settings.CACHE_REBUILDS:
-            self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".cache"))
+            self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache"))
         else:
             self.caches = DisabledCaches()
+
+        # Content root for the website
+        self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
 
         # Pick an initial site name from settings
         self.site_name = self.settings.SITE_NAME
@@ -106,7 +114,7 @@ class Site:
                            settings.CONTENT is used.
         """
         if content_root is None:
-            content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
+            content_root = self.content_root
         self.read_contents_tree(content_root)
 
     def load(self):

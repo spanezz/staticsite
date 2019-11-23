@@ -65,33 +65,44 @@ class SiteCommand(Command):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
+        # Look for extra settings
         settings_files = ['settings.py', '.staticsite.py']
-
-        # Default to current directory if project was not provided.
-        # If the project was provided and is a .py file, load it as settings.
         if self.args.project:
-            if os.path.isfile(self.args.project) and self.args.project.endswith(".py"):
+            if os.path.isfile(self.args.project):
+                # If a project file is mentioned, take its directory as default
+                # project root
                 settings_file = os.path.abspath(self.args.project)
-                self.settings.PROJECT_ROOT, settings_file = os.path.split(settings_file)
-                settings_files.insert(0, settings_file)
+                settings_dir, settings_file = os.path.split(settings_file)
+                if not self.args.project.endswith(".py"):
+                    log.warn("%s: project settings does not end in `.py`: contents ignored", settings_file)
+                else:
+                    settings_files = [settings_file]
             else:
-                self.settings.PROJECT_ROOT = os.path.abspath(self.args.project)
+                # If a project directory is mentioned, take it as default
+                # project root
+                settings_dir = os.path.abspath(self.args.project)
         else:
-            self.settings.PROJECT_ROOT = os.getcwd()
+            settings_dir = os.getcwd()
 
-        # "Repo mode", adjust paths if README.md exists in the root
-        for repo_file in "README.md", "README.rst":
-            if os.path.isfile(os.path.join(self.settings.PROJECT_ROOT, repo_file)):
-                self.settings.CONTENT = self.settings.PROJECT_ROOT
-                self.settings.OUTPUT = self.settings.PROJECT_ROOT + '.site.out'
-                self.settings.CACHE_REBUILDS = False
+        # Load the first settings file found (if any)
+        for relpath in settings_files:
+            abspath = os.path.join(settings_dir, relpath)
+            if os.path.isfile(abspath):
+                log.info("%s: loading settings", abspath)
+                self.settings.load(abspath)
                 break
 
-        # Load settings (optional)
-        settings_files = (os.path.join(self.settings.PROJECT_ROOT, f) for f in settings_files)
-        settings_file = next(filter(os.path.isfile, settings_files), None)
-        if settings_file:
-            self.settings.load(settings_file)
+        # Set default project root if undefined
+        if self.settings.PROJECT_ROOT is None:
+            self.settings.PROJECT_ROOT = settings_dir
+
+        # # "Repo mode", adjust paths if README.md exists in the root
+        # for repo_file in "README.md", "README.rst":
+        #     if os.path.isfile(os.path.join(self.settings.PROJECT_ROOT, repo_file)):
+        #         self.settings.CONTENT = self.settings.PROJECT_ROOT
+        #         self.settings.OUTPUT = self.settings.PROJECT_ROOT + '.site.out'
+        #         self.settings.CACHE_REBUILDS = False
+        #         break
 
         # Command line overrides for settings
         if self.args.theme:

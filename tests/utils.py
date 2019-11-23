@@ -1,8 +1,30 @@
-import pytz
+from __future__ import annotations
+from typing import Dict, Union
 import os
-from staticsite.page import Page
-from staticsite.file import File
+import tempfile
 from contextlib import contextmanager
+import pytz
+import staticsite
+from staticsite.settings import Settings
+
+
+class TestSettings(Settings):
+    def __init__(self, **kw):
+        kw.setdefault("CACHE_REBUILDS", False)
+        kw.setdefault("THEME", datafile_abspath("theme"))
+        super().__init__()
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+
+class Site(staticsite.Site):
+    def __init__(self, **kw):
+        settings = TestSettings(**kw)
+        super().__init__(settings=settings)
+
+    def load_without_content(self):
+        self.features.load_default_features()
+        self.load_theme()
 
 
 def datafile_abspath(relpath):
@@ -11,8 +33,29 @@ def datafile_abspath(relpath):
 
 
 @contextmanager
+def workdir(files: Dict[str, Union[str, bytes]] = None):
+    """
+    Create a temporary directory and populate it with the given files
+    """
+    if files is None:
+        files = {}
+    with tempfile.TemporaryDirectory() as root:
+        for relpath, content in files.items():
+            abspath = os.path.join(root, relpath)
+            os.makedirs(os.path.dirname(abspath), exist_ok=True)
+            if isinstance(content, str):
+                with open(abspath, "wt") as fd:
+                    fd.write(content)
+            elif isinstance(content, bytes):
+                with open(abspath, "wb") as fd:
+                    fd.write(content)
+            else:
+                raise TypeError("content should be a str or bytes")
+        yield root
+
+
+@contextmanager
 def example_site():
-    import tempfile
     import shutil
     src = os.path.join(os.getcwd(), "example")
     with tempfile.TemporaryDirectory() as root:
@@ -21,7 +64,10 @@ def example_site():
         yield dst
 
 
-class TestArgs:
+class Args:
+    """
+    Mock argparser namespace initialized with options from constructor
+    """
     def __init__(self, **kw):
         self._args = kw
 
@@ -29,7 +75,7 @@ class TestArgs:
         return self._args.get(k, None)
 
 
-class TestPage(Page):
+class Page(staticsite.Page):
     TYPE = "test"
     FINDABLE = True
 
@@ -39,7 +85,7 @@ class TestPage(Page):
 
         super().__init__(
             site=site,
-            src=File(relpath, root="/", abspath="/" + relpath),
+            src=staticsite.File(relpath, root="/", abspath="/" + relpath),
             src_linkpath=relpath,
             dst_relpath=relpath,
             dst_link=relpath)

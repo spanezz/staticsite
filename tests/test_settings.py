@@ -1,7 +1,7 @@
 from unittest import TestCase
 from staticsite.settings import Settings
 from staticsite import global_settings
-from . import datafile_abspath
+from .utils import datafile_abspath
 import os
 
 
