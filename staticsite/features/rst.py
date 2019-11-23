@@ -156,6 +156,7 @@ class RestructuredText(Feature):
         try:
             return RstPage(self, src)
         except Exception:
+            log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
             log.warn("%s: Failed to parse RestructuredText page: skipped", src)
             return None
 

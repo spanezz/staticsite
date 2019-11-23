@@ -216,7 +216,8 @@ class MarkdownArchetype(Archetype):
         try:
             style, meta = parse_front_matter(front_matter)
         except Exception:
-            log.exception("archetype %s: failed to parse front matter", self.relpath)
+            log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=True)
+            log.warn("archetype %s: failed to parse front matter", self.relpath)
 
         # Make a copy of the full parsed metadata
         archetype_meta = dict(meta)
@@ -289,7 +290,8 @@ class MarkdownPage(Page):
             style, meta = parse_front_matter(self.front_matter)
             self.meta.update(**meta)
         except Exception:
-            log.exception("%s: failed to parse front matter", self.src.relpath)
+            log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=True)
+            log.warn("%s: failed to parse front matter", self.src.relpath)
 
         # Remove leading empty lines
         while self.body and not self.body[0]:
