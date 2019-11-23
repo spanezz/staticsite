@@ -1,8 +1,6 @@
 from .page import Page
 from .render import RenderedFile
-import datetime
 import os
-import pytz
 
 
 class Asset(Page):
@@ -22,8 +20,7 @@ class Asset(Page):
             dst_relpath=src.relpath,
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
 
-        dt = datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime).replace(tzinfo=pytz.utc)
-        self.meta["date"] = dt
+        self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
         self.meta["title"] = os.path.basename(src.relpath)
 
     def render(self):

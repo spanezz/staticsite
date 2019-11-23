@@ -205,6 +205,11 @@ class Site:
         from slugify import slugify
         return slugify(text)
 
+    def localized_timestamp(self, ts):
+        return pytz.utc.localize(
+                        datetime.datetime.utcfromtimestamp(ts)
+                    ).astimezone(self.timezone)
+
     def get_archetypes(self):
         from .archetypes import Archetypes
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))

@@ -7,8 +7,6 @@ import docutils.nodes
 import docutils.writers.html5_polyglot
 import os
 import io
-import re
-import pytz
 import datetime
 import dateutil.parser
 import logging
@@ -138,12 +136,11 @@ class RestructuredText(Feature):
         # Normalise well-known metadata elements
         date = meta.get("date")
         if date is None:
-            meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
+            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
         elif not isinstance(date, datetime.datetime):
             date = dateutil.parser.parse(date)
             if date.tzinfo is None:
-                # FIXME: configure a default site timezone in settings
-                date = pytz.utc.localize(date)
+                date = self.site.timezone.localize(date)
             meta["date"] = date
 
         for taxonomy in self.site.settings.TAXONOMIES:

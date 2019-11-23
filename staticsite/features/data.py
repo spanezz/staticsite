@@ -1,7 +1,6 @@
 from staticsite.render import RenderedString
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
-import pytz
 import dateutil.parser
 import jinja2
 import re
@@ -161,7 +160,7 @@ class DataPage(Page):
                 self.meta["date"] = self.site.generation_time
         else:
             if self.meta.get("date", None) is None:
-                self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.src.stat.st_mtime))
+                self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
         self.meta.update(data)
         self.data = data

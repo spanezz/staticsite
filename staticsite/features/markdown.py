@@ -5,11 +5,9 @@ from staticsite.archetypes import Archetype
 import jinja2
 import os
 import io
-import pytz
 import datetime
 import markdown
 import dateutil.parser
-from urllib.parse import urlparse, urlunparse
 import logging
 
 log = logging.getLogger()
@@ -131,7 +129,7 @@ class MarkdownPages(Feature):
         rendered = self.markdown.convert(content)
 
         self.render_cache.put(page.src.relpath, {
-            "mtime": page.mtime,
+            "mtime": page.src.stat.st_mtime,
             "rendered": rendered,
             "paths": list(self.link_resolver.substituted.items()),
         })
@@ -267,12 +265,9 @@ class MarkdownPage(Page):
         # Markdown content of the page rendered into html
         self.md_html = None
 
-        # Modification time of the file
-        self.mtime = self.src.stat.st_mtime
-
         # Read the contents
         if self.meta.get("date", None) is None:
-            self.meta["date"] = pytz.utc.localize(datetime.datetime.utcfromtimestamp(self.mtime))
+            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
         # Parse separating front matter and markdown content
         with open(self.src.abspath, "rt") as fd:
