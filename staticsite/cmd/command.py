@@ -96,14 +96,6 @@ class SiteCommand(Command):
         if self.settings.PROJECT_ROOT is None:
             self.settings.PROJECT_ROOT = settings_dir
 
-        # # "Repo mode", adjust paths if README.md exists in the root
-        # for repo_file in "README.md", "README.rst":
-        #     if os.path.isfile(os.path.join(self.settings.PROJECT_ROOT, repo_file)):
-        #         self.settings.CONTENT = self.settings.PROJECT_ROOT
-        #         self.settings.OUTPUT = self.settings.PROJECT_ROOT + '.site.out'
-        #         self.settings.CACHE_REBUILDS = False
-        #         break
-
         # Command line overrides for settings
         if self.args.theme:
             self.settings.THEME = (os.path.abspath(self.args.theme),)

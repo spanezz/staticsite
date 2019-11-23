@@ -7,6 +7,11 @@
   list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
   found that is not listed in `TAXONOMIES`.
 * Try harder to localize timestamps as the configured site TIMEZONE
+* Added a `ssite show` command to open a directory in a browser without loading
+  possibly unsafe settings
+* When run without a `settings.py`, take more defaults from repo mode. This
+  makes running staticfile or arbitrary directories quite useful, and similar
+  to viewing a repository on GitLab/GitHub.
 
 # New in version 1.1
 

@@ -1,6 +1,5 @@
-from .command import SiteCommand
+from .command import Command, SiteCommand, CmdlineError
 import os
-import sys
 import mimetypes
 import gc
 import logging
@@ -18,7 +17,7 @@ class PageFS:
     def __init__(self):
         self.paths = {}
 
-    def add_site(self, site):
+    def set_site(self, site):
         for page in site.pages.values():
             for relpath in page.target_relpaths():
                 self.add_page(page, relpath)
@@ -72,30 +71,29 @@ class PageFS:
         return [content]
 
 
-class Serve(SiteCommand):
-    "serve the site over HTTP, building it in memory on demand"
-
-    def run(self):
+class ServerMixin:
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.pages = PageFS()
         mimetypes.init()
 
-        site = self.reload()
-
+    def make_server(self, watch_paths=[]):
         try:
             from livereload import Server
         except ImportError:
-            print("Please install the python3 livereload module to use this function.", file=sys.stderr)
-            return
+            raise CmdlineError("Please install the python3 livereload module to use this function.")
+
         server = Server(self.application)
 
         # see https://github.com/lepture/python-livereload/issues/171
         def do_reload():
             self.reload()
-        content_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.CONTENT)
-        log.info("watching changes on %s", content_root)
-        server.watch(content_root, do_reload)
-        log.info("watching changes on %s", site.theme.root)
-        server.watch(site.theme.root.as_posix(), do_reload)
-        server.serve(port=8000, host="localhost")
+
+        for path in watch_paths:
+            log.info("watching changes on %s", path)
+            server.watch(path, do_reload)
+
+        return server
 
     def application(self, environ, start_response):
         path = environ.get("PATH_INFO", None)
@@ -113,7 +111,80 @@ class Serve(SiteCommand):
     def reload(self):
         log.info("Loading site")
         site = self.load_site()
-        self.pages = PageFS()
-        self.pages.add_site(site)
+        self.pages.set_site(site)
         gc.collect()
         return site
+
+
+class Serve(ServerMixin, SiteCommand):
+    "Serve the site over HTTP, building it in memory on demand"
+
+    def run(self):
+        site = self.reload()
+        server = self.make_server([site.content_root, site.theme.root])
+        server.serve(port=self.args.port, host=self.args.host)
+
+    @classmethod
+    def make_subparser(cls, subparsers):
+        parser = super().make_subparser(subparsers)
+        parser.add_argument("--port", "-p", action="store", type=int, default=8000,
+                            help="port to use (default: 8000)")
+        parser.add_argument("--host", action="store", type=str, default="localhost",
+                            help="host to bind to (default: localhost)")
+        return parser
+
+
+class Show(ServerMixin, Command):
+    "Show the current directory in a browser"
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+
+        # Set default project root if undefined
+        self.settings.PROJECT_ROOT = self.args.dir
+        if self.settings.PROJECT_ROOT is None:
+            self.settings.PROJECT_ROOT = os.getcwd()
+
+        # Command line overrides for settings
+        if self.args.theme:
+            self.settings.THEME = (os.path.abspath(self.args.theme),)
+        if self.args.draft:
+            self.settings.DRAFT_MODE = True
+
+    def run(self):
+        site = self.reload()
+        server = self.make_server([site.content_root, site.theme.root])
+
+        import tornado.web
+        import tornado.httpserver
+        import tornado.netutil
+        import webbrowser
+
+        class Application(tornado.web.Application):
+            def listen(self, *args, **kw):
+                sockets = tornado.netutil.bind_sockets(0, 'localhost')
+                server = tornado.httpserver.HTTPServer(self)
+                server.add_sockets(sockets)
+                for s in sockets:
+                    host, port = s.getsockname()
+                    url = f"http://{host}:{port}"
+                    log.info("Listening on %s", url)
+                    webbrowser.open(url)
+                    break
+                return server
+
+        # Monkey patch to be able to start servers in a smoother way that the
+        # defaults of livereload
+        import livereload.server
+        livereload.server.web.Application = Application
+        server.serve()
+
+    @classmethod
+    def make_subparser(cls, subparsers):
+        parser = super().make_subparser(subparsers)
+
+        parser.add_argument("dir", nargs="?",
+                            help="directory to show (default: the current directory)")
+        parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
+        parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
+        return parser
