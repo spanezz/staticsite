@@ -124,11 +124,6 @@ class ServerMixin:
 class Serve(ServerMixin, SiteCommand):
     "Serve the site over HTTP, building it in memory on demand"
 
-    def run(self):
-        site = self.reload()
-        server = self.make_server([site.content_root, site.theme.root])
-        server.serve(port=self.args.port, host=self.args.host)
-
     @classmethod
     def make_subparser(cls, subparsers):
         parser = super().make_subparser(subparsers)
@@ -137,6 +132,11 @@ class Serve(ServerMixin, SiteCommand):
         parser.add_argument("--host", action="store", type=str, default="localhost",
                             help="host to bind to (default: localhost)")
         return parser
+
+    def run(self):
+        site = self.reload()
+        server = self.make_server([site.content_root, site.theme.root])
+        server.serve(port=self.args.port, host=self.args.host)
 
 
 class Show(ServerMixin, Command):
@@ -159,6 +159,9 @@ class Show(ServerMixin, Command):
     def run(self):
         site = self.reload()
         server = self.make_server([site.content_root, site.theme.root])
+        arg_no_start = self.args.no_start
+        arg_port = self.args.port
+        arg_host = self.args.host
 
         import tornado.web
         import tornado.httpserver
@@ -168,7 +171,7 @@ class Show(ServerMixin, Command):
 
         class Application(tornado.web.Application):
             def listen(self, *args, **kw):
-                sockets = tornado.netutil.bind_sockets(0, 'localhost')
+                sockets = tornado.netutil.bind_sockets(arg_port, arg_host)
                 server = tornado.httpserver.HTTPServer(self)
                 server.add_sockets(sockets)
                 pairs = []
@@ -184,7 +187,10 @@ class Show(ServerMixin, Command):
                 async def open_browser():
                     webbrowser.open_new_tab(url)
 
-                tornado.ioloop.IOLoop.current().add_callback(open_browser)
+                if not arg_no_start:
+                    tornado.ioloop.IOLoop.current().add_callback(open_browser)
+                else:
+                    print(url)
                 return server
 
         # Monkey patch to be able to start servers in a smoother way that the
@@ -201,4 +207,10 @@ class Show(ServerMixin, Command):
                             help="directory to show (default: the current directory)")
         parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
         parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
+        parser.add_argument("--no-start", "-n", action="store_true",
+                            help="do not start a browser automatically, print the URL instead")
+        parser.add_argument("--port", "-p", action="store", type=int, default=0,
+                            help="port to use (default: randomly allocated)")
+        parser.add_argument("--host", action="store", type=str, default="localhost",
+                            help="host to bind to (default: localhost)")
         return parser
