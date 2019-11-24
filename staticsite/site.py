@@ -26,7 +26,7 @@ class Site:
         if self.settings.PROJECT_ROOT is None:
             self.settings.PROJECT_ROOT = os.getcwd()
         if self.settings.CONTENT is None:
-            self.settings.CONTENT = self.settings.PROJECT_ROOT
+            self.settings.CONTENT = "."
 
         # Site pages
         self.pages: Dict[str, Page] = {}
