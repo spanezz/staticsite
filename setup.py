@@ -5,7 +5,7 @@ from setuptools import setup
 setup(
     name="staticsite",
     python_requires=">= 3.7",
-    install_requires=['unidecode', 'markdown', 'toml', 'PyYAML', 'jinja2', 'python_dateutil', 'python_slugify', 'pytz'],
+    install_requires=['unidecode', 'markdown', 'toml', 'PyYAML', 'jinja2', 'python_dateutil', 'python_slugify', 'pytz', 'docutils'],
     # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
     extras_require={
         'serve': ['livereload'],
