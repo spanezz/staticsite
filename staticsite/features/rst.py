@@ -135,9 +135,7 @@ class RestructuredText(Feature):
 
         # Normalise well-known metadata elements
         date = meta.get("date")
-        if date is None:
-            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        elif not isinstance(date, datetime.datetime):
+        if date is not None and not isinstance(date, datetime.datetime):
             date = dateutil.parser.parse(date)
             if date.tzinfo is None:
                 date = self.site.timezone.localize(date)
@@ -244,6 +242,9 @@ class RstPage(Page):
 
         self.doctree_scan = doctree_scan
         self.meta.update(**meta)
+
+        if meta.get("date") is None:
+            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
     def check(self, checker):
         self._render_page()
