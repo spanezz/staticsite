@@ -107,8 +107,7 @@ class DirPage(Page):
         else:
             # If we have no site name and we need to generate the toplevel
             # directory index, pick a fallback title.
-            # TODO: is there a better idea than "/"?
-            self.meta["title"] = "/"
+            self.meta["title"] = os.path.dirname(self.site.content_root)
 
     def render(self):
         self.subdirs.sort(key=lambda x: x.meta["title"])
