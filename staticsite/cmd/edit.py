@@ -18,7 +18,7 @@ class Edit(SiteCommand):
                 if m[1:] not in tags:
                     return False
             elif (m.lower() not in page.meta.get("title", "").lower()
-                  and m.lower() not in page.src_relpath.lower()):
+                  and m.lower() not in page.src.relpath.lower()):
                 return False
         return True
 
@@ -49,7 +49,7 @@ class Edit(SiteCommand):
                 print("{idx}: {date} {relpath} {title}".format(
                     idx=idx,
                     date=page.meta["date"].strftime("%Y-%m-%d"),
-                    relpath=page.src_relpath,
+                    relpath=page.src.relpath,
                     title=page.meta.get("title", "{no title}")))
             print()
 
@@ -74,7 +74,7 @@ class Edit(SiteCommand):
         site = self.load_site()
 
         # Build a list of all findable pages sorted with the newest first
-        pages = [p for p in site.pages.values() if p.FINDABLE]
+        pages = [p for p in site.pages.values() if p.FINDABLE and p.src.stat is not None]
         pages.sort(key=lambda x: x.meta["date"], reverse=True)
 
         selected = []
