@@ -24,10 +24,10 @@ class RenderedFile(RenderedElement):
         self.src = src
 
     def write(self, dst: File):
-        if dst.stat is not None and (
+        if dst.stat is None or (
                 self.src.stat.st_mtime > dst.stat.st_mtime
                 or self.src.stat.st_size != dst.stat.st_size):
-            shutil.copy2(self.abspath, dst.path)
+            shutil.copy2(self.src.abspath, dst.abspath)
 
     def content(self):
         with open(self.src.abspath, "rb") as fd:
