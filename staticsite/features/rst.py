@@ -144,7 +144,10 @@ class RestructuredText(Feature):
         if date is not None and not isinstance(date, datetime.datetime):
             date = dateutil.parser.parse(date)
             if date.tzinfo is None:
-                date = self.site.timezone.localize(date)
+                if hasattr(self.site.timezone, "localize"):
+                    date = self.site.timezone.localize(date)
+                else:
+                    date = date.replace(tzinfo=self.site.timezone)
             meta["date"] = date
 
         # Parse taxonomy-related metadata as lists of strings

@@ -277,8 +277,6 @@ class MarkdownPage(Page):
         self.md_html = None
 
         # Read the contents
-        if self.meta.get("date", None) is None:
-            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
         # Parse separating front matter and markdown content
         with open(self.src.abspath, "rt") as fd:
@@ -305,8 +303,15 @@ class MarkdownPage(Page):
                     self.body.pop(0)
 
         date = self.meta.get("date", None)
-        if date is not None and not isinstance(date, datetime.datetime):
+        if date is None:
+            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+        elif not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
+        if self.meta["date"].tzinfo is None:
+            if hasattr(self.site.timezone, "localize"):
+                self.meta["date"] = self.site.timezone.localize(self.meta["date"])
+            else:
+                self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
 
     def get_content(self):
         return "\n".join(self.body)
