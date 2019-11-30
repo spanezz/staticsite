@@ -55,7 +55,6 @@ class DirPage(Page):
     A directory index
     """
     TYPE = "dir"
-    ANALYZE_PASS = 3
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site, relpath, pages):

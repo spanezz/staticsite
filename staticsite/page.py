@@ -39,9 +39,6 @@ class Page:
         a dictionary with the page metadata. See the README for documentation
         about its contents.
     """
-    # In what pass must pages of this type be analyzed.
-    ANALYZE_PASS = 1
-
     # True if the page can be found when search site contents
     FINDABLE = False
 

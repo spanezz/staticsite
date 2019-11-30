@@ -66,7 +66,6 @@ class TaxonomyItem:
 
 class TaxonomyPage(Page):
     TYPE = "taxonomy"
-    ANALYZE_PASS = 2
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site, src):
