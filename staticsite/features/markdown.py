@@ -1,13 +1,14 @@
 from staticsite.render import RenderedString
-from staticsite import Page, Feature
+from staticsite import Page, Feature, File
 from staticsite.utils import parse_front_matter, write_front_matter
 from staticsite.archetypes import Archetype
 import jinja2
+import dateutil.parser
 import os
 import io
 import datetime
 import markdown
-import dateutil.parser
+import tempfile
 import logging
 
 log = logging.getLogger()
@@ -162,6 +163,16 @@ class MarkdownPages(Feature):
         if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
+
+    def build_test_page(self, relpath: str, content: str) -> Page:
+        with tempfile.NamedTemporaryFile("wt", suffix=".md") as tf:
+            tf.write(content)
+            tf.flush()
+            src = File(relpath=relpath,
+                       root=None,
+                       abspath=os.path.abspath(tf.name),
+                       stat=None)
+            return MarkdownPage(self, src)
 
 
 def parse_markdown_with_front_matter(fd):
