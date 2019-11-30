@@ -192,5 +192,9 @@ class Features:
                 feature_classes[name] = cls
 
         # Instantiate the feature classes in dependency order
-        for cls in self._sort_features(feature_classes.values(), feature_classes):
+        all_feature_classes = dict(self.features)
+        all_feature_classes.update(feature_classes)
+        for cls in self._sort_features(feature_classes.values(), all_feature_classes):
+            if cls.NAME in self.features:
+                continue
             self.add(cls.NAME, cls)
