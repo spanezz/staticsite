@@ -64,6 +64,9 @@ class Series:
         self.name = name
         self.pages = []
 
+    def __str__(self):
+        return self.name
+
     def add_page(self, page):
         if page not in self.pages:
             self.pages.append(page)
@@ -77,6 +80,9 @@ class Series:
         series_title = None
         for idx in range(len(self.pages)):
             cur = self.pages[idx]
+
+            # Also expose an array with all the pages in the series
+            cur.meta["series_pages"] = self.pages
 
             # Assign series_prev and series_next metadata elements to pages
             cur.meta["series_index"] = idx + 1
