@@ -1,5 +1,5 @@
 from staticsite.render import RenderedString
-from staticsite import Page, Feature
+from staticsite import Page, Feature, File
 from staticsite.archetypes import Archetype
 import docutils.io
 import docutils.core
@@ -9,6 +9,7 @@ import os
 import io
 import datetime
 import dateutil.parser
+import tempfile
 import logging
 
 log = logging.getLogger()
@@ -85,6 +86,9 @@ class RestructuredText(Feature):
 
         # self.render_cache = self.site.caches.get("markdown")
 
+        # Names of tags whose content should be parsed as yaml
+        self.yaml_tags = set()
+
     @property
     def page_template(self):
         if not self._page_template:
@@ -141,11 +145,27 @@ class RestructuredText(Feature):
                 date = self.site.timezone.localize(date)
             meta["date"] = date
 
+        # Parse taxonomy-related metadata as lists of strings
         for taxonomy in self.site.settings.TAXONOMIES:
             elements = meta.get(taxonomy, None)
             if elements is not None and isinstance(elements, str):
                 # if vals is a string, parse it
                 meta[taxonomy] = split_tags(elements)
+
+        # If requested, parse some tag contents as yaml
+        if self.yaml_tags:
+            try:
+                import ruamel.yaml
+                yaml = ruamel.yaml.YAML()
+                load_args = {}
+            except ModuleNotFoundError:
+                import yaml
+                yaml = yaml
+                load_args = {"Loader": yaml.CLoader}
+            for tag in self.yaml_tags:
+                val = meta.get(tag)
+                if val is not None:
+                    meta[tag] = yaml.load(val, **load_args)
 
         return meta, doctree_scan
 
@@ -163,6 +183,16 @@ class RestructuredText(Feature):
         if os.path.basename(relpath) != name + ".rst":
             return None
         return RestArchetype(archetypes, relpath, self)
+
+    def build_test_page(self, relpath: str, content: str) -> Page:
+        with tempfile.NamedTemporaryFile("wt", suffix=".rst") as tf:
+            tf.write(content)
+            tf.flush()
+            src = File(relpath=relpath,
+                       root=None,
+                       abspath=os.path.abspath(tf.name),
+                       stat=None)
+            return RstPage(self, src)
 
 
 class RestArchetype(Archetype):
