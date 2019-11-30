@@ -1,5 +1,6 @@
 import os
 import logging
+import jinja2
 from urllib.parse import urlparse, urlunparse
 
 log = logging.getLogger()
@@ -167,3 +168,15 @@ class Page:
 
     def __repr__(self):
         return "{}:{}".format(self.TYPE, self.src.relpath)
+
+    def render_template(self, template, **kwargs):
+        """
+        Render a jinja2 template, logging things if something goes wrong
+        """
+        try:
+            return template.render(**kwargs)
+        except jinja2.TemplateError as e:
+            log.error("%s: failed to render %s: %s", template.filename, self.src.relpath, e)
+            log.debug("%s: failed to render %s: %s", template.filename, self.src.relpath, e, exc_info=True)
+            # TODO: return a "render error" page? But that risks silent errors
+            return None

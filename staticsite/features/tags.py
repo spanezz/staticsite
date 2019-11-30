@@ -216,7 +216,7 @@ class TaxonomyPage(Page):
                 self.name: sorted(self.items.values(), key=lambda x: x.name),
             }
             kwargs.update(**self.meta)
-            body = self.template_index.render(**kwargs)
+            body = self.render_template(self.template_index, **kwargs)
             res[dest] = RenderedString(body)
 
         for item in self.items.values():
