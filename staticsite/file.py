@@ -1,6 +1,19 @@
 from __future__ import annotations
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Dict
 import os
+
+
+class Dir:
+    """
+    Information about one directory during scanning
+    """
+    def __init__(self, tree_root: str, relpath: str, files: Dict[str, "File"], dirfd=int):
+        self.tree_root = tree_root
+        self.relpath = relpath
+        if files.pop(".staticsite", None):
+            # TODO: load .staticsite from dir if it exists
+            ...
+        self.files = files
 
 
 class File(NamedTuple):
@@ -30,6 +43,44 @@ class File(NamedTuple):
                 relpath=os.path.relpath(abspath, tree_root),
                 root=tree_root,
                 abspath=abspath)
+
+    @classmethod
+    def scan_dirs(cls, tree_root, relpath=None, follow_symlinks=False, ignore_hidden=False):
+        if relpath is None:
+            scan_path = tree_root
+        else:
+            scan_path = os.path.join(tree_root, relpath)
+
+        for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
+            if ignore_hidden:
+                # Ignore hidden directories
+                filtered = [d for d in dnames if not d.startswith(".")]
+                if len(filtered) != len(dnames):
+                    dnames[::] = filtered
+
+            files = {}
+            for f in fnames:
+                # Ignore hidden files
+                if ignore_hidden and f.startswith(".") and f != ".staticsite":
+                    continue
+
+                abspath = os.path.join(root, f)
+                try:
+                    st = os.stat(f, dir_fd=dirfd)
+                except FileNotFoundError:
+                    # Skip broken links
+                    continue
+                files[f] = cls(
+                        relpath=os.path.relpath(abspath, tree_root),
+                        root=tree_root,
+                        abspath=abspath,
+                        stat=st)
+
+            yield Dir(
+                    tree_root=tree_root,
+                    relpath=os.path.relpath(root, tree_root),
+                    files=files,
+                    dirfd=dirfd)
 
     @classmethod
     def scan(cls, tree_root, relpath=None, follow_symlinks=False, ignore_hidden=False):
