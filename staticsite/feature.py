@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, Callable, Set, List
+from typing import Optional, Dict, Callable, Set, List, Iterable
 from collections import defaultdict
 import logging
 import sys
@@ -12,6 +12,12 @@ log = logging.getLogger()
 
 
 class Feature:
+    """
+    Base class for implementing a staticsite feature.
+
+    It contains dependencies on other features, and hooks called in various
+    stages of site processing.
+    """
     # List names of features that should run after us.
     # The dependency order is taken into account when calling try_load_page and
     # finalize.
@@ -120,26 +126,29 @@ class Features:
     def __getitem__(self, key):
         return self.features[key]
 
-    def commit(self):
+    def _sort_features(self, features: Iterable[Feature], all_features: Dict[str, Feature]):
         graph: Dict[Feature, Set[Feature]] = defaultdict(set)
-        for feature in self.features.values():
+        for feature in features:
             for name in feature.RUN_AFTER:
-                dep = self.features.get(name)
+                dep = all_features.get(name)
                 if dep is None:
                     log.warn("feature %s: ignoring RUN_AFTER relation on %s which is not available",
-                             feature.name, name)
+                             feature, name)
                     continue
                 graph[dep].add(feature)
 
             for name in feature.RUN_BEFORE:
-                dep = self.features.get(name)
+                dep = all_features.get(name)
                 if dep is None:
                     log.warn("feature %s: ignoring RUN_BEFORE relation on %s which is not available",
-                             feature.name, name)
+                             feature, name)
                     continue
                 graph[feature].add(dep)
 
-        self.sorted = toposort.sort(graph)
+        return toposort.sort(graph)
+
+    def commit(self):
+        self.sorted = self._sort_features(self.features.values(), self.features)
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
 
     def load_default_features(self):
@@ -151,10 +160,14 @@ class Features:
 
     def load_feature_dir(self, paths, namespace="staticsite.features"):
         """
-        Load all features found in the given directory
+        Load all features found in the given directory.
+
+        Feature classes are instantiate in dependency order.
         """
         import pkgutil
         import importlib
+
+        feature_classes = {}
         for module_finder, name, ispkg in pkgutil.iter_modules(paths):
             full_name = namespace + "." + name
             mod = sys.modules.get(full_name)
@@ -175,4 +188,9 @@ class Features:
 
             # Register features with site
             for name, cls in features.items():
-                self.add(name, cls)
+                cls.NAME = name
+                feature_classes[name] = cls
+
+        # Instantiate the feature classes in dependency order
+        for cls in self._sort_features(feature_classes.values(), feature_classes):
+            self.add(cls.NAME, cls)
