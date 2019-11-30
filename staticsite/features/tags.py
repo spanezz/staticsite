@@ -190,6 +190,11 @@ class TaxonomyPage(Page):
         Add a page to this taxonomy. Elements is a sequence of elements for
         this taxonomy.
         """
+        # Set our 'date' metadata to the maximum date of the pages we've seen
+        cur_date = self.meta.get("date")
+        if cur_date is None or cur_date < page.meta["date"]:
+            self.meta["date"] = page.meta["date"]
+
         for v in elements:
             item = self.items.get(v, None)
             if item is None:
