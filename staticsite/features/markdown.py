@@ -1,3 +1,4 @@
+from __future__ import annotations
 from staticsite.render import RenderedString
 from staticsite import Page, Feature, File
 from staticsite.utils import parse_front_matter, write_front_matter

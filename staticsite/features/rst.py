@@ -1,3 +1,4 @@
+from __future__ import annotations
 from staticsite.render import RenderedString
 from staticsite import Page, Feature, File
 from staticsite.archetypes import Archetype
