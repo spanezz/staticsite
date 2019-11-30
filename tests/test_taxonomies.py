@@ -1,7 +1,5 @@
 from unittest import TestCase
-from staticsite import Site
 from . import utils as test_utils
-import os
 import datetime
 
 
