@@ -14,6 +14,8 @@
   to viewing a repository on GitLab/GitHub.
 * Improved logging in case of jinja2 errors. Use --debug to see a full
   stacktrace
+* Instantiate Feature classes in dependency order: this allows a feature
+  constructor to register hooks with another one.
 
 **Upgrade notes**:
 
