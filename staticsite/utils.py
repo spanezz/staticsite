@@ -25,8 +25,16 @@ def parse_front_matter(lines):
 
     if lines[0] == "---":
         # YAML
-        import yaml
-        return "yaml", yaml.load("\n".join(lines[1:-1]), Loader=yaml.CLoader)
+        try:
+            import ruamel.yaml
+            yaml = ruamel.yaml.YAML()
+            load_args = {}
+        except ModuleNotFoundError:
+            import yaml
+            yaml = yaml
+            load_args = {"Loader": yaml.CLoader}
+        yaml_body = "\n".join(lines[1:-1])
+        return "yaml", yaml.load(yaml_body, **load_args)
 
     return {}
 
