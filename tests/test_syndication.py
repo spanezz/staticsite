@@ -1,12 +1,15 @@
 from __future__ import annotations
 from unittest import TestCase
 from . import utils as test_utils
+import re
 import datetime
 
 
 class TestSyndication(TestCase):
     def test_simple(self):
-        site = test_utils.Site()
+        site = test_utils.Site(
+            THEME="example/theme",
+        )
         site.load_without_content()
 
         blog = site.add_test_page(
@@ -43,11 +46,21 @@ Example blog post in reStructuredText
         self.assertIn("syndication_info", blog.meta)
         self.assertIn("syndication_info", post.meta)
 
-#        # We have a root dir index and dir indices for all subdirs
-#        page = site.pages[""]
-#        self.assertEqual(page.TYPE, "rst")
-#        self.assertEqual(page.meta, {
-#            "date": datetime.datetime(2016, 4, 16, 10, 23, tzinfo=site.timezone),
-#            "tags": ["example", "another tag"],
-#            "foo": "line1\nline2\nline3\n",
-#        })
+        # See what the site would generate
+        rendered_pages = {}
+        for page in site.pages.values():
+            contents = page.render()
+            for relpath, rendered in contents.items():
+                # Ignore static assets
+                if re.match(r"^(css|images|js|fonts)/", relpath):
+                    continue
+                rendered_pages[relpath] = [page, rendered]
+
+        self.maxDiff = None
+        self.assertCountEqual(rendered_pages.keys(), [
+            "index.html",
+            "blog/index.html",
+            "blog.rss",
+            "blog.atom",
+            "blog/post/index.html",
+        ])

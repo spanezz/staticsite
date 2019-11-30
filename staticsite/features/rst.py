@@ -189,7 +189,7 @@ class RestructuredText(Feature):
             src = File(relpath=relpath,
                        root=None,
                        abspath=os.path.abspath(tf.name),
-                       stat=None)
+                       stat=os.stat(tf.fileno()))
             return RstPage(self, src)
 
 
