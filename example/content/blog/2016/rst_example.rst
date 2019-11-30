@@ -1,5 +1,5 @@
 :date: 2016-04-16 10:23:00+02:00
-:tags: example, "another tag"
+:tags: [example, "another tag"]
 
 Example blog post in reStructuredText
 =====================================

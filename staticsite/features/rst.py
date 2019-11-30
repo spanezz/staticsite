@@ -11,18 +11,20 @@ import datetime
 import dateutil.parser
 import tempfile
 import logging
+try:
+    import ruamel.yaml
+    yaml = ruamel.yaml.YAML()
+
+    def parse_yaml_tag(s):
+        return yaml.load(s)
+except ModuleNotFoundError:
+    import yaml
+    yaml = yaml
+
+    def parse_yaml_tag(s):
+        return yaml.load(s, Loader=yaml.CLoader)
 
 log = logging.getLogger()
-
-
-def split_tags(x):
-    """
-    Split a tag list from a string of comma separated possibly quoted tags names
-    """
-    import shlex
-    # Use shlex to split strings with or without quotes. There may be better
-    # implementations, or possibly it can all boil down to a simple regexp
-    return list(x for x in shlex.shlex(x, posix=True, punctuation_chars=",") if not x.startswith(","))
 
 
 class DoctreeScan:
@@ -150,22 +152,14 @@ class RestructuredText(Feature):
             elements = meta.get(taxonomy, None)
             if elements is not None and isinstance(elements, str):
                 # if vals is a string, parse it
-                meta[taxonomy] = split_tags(elements)
+                meta[taxonomy] = parse_yaml_tag(elements)
 
         # If requested, parse some tag contents as yaml
         if self.yaml_tags:
-            try:
-                import ruamel.yaml
-                yaml = ruamel.yaml.YAML()
-                load_args = {}
-            except ModuleNotFoundError:
-                import yaml
-                yaml = yaml
-                load_args = {"Loader": yaml.CLoader}
             for tag in self.yaml_tags:
                 val = meta.get(tag)
                 if val is not None:
-                    meta[tag] = yaml.load(val, **load_args)
+                    meta[tag] = parse_yaml_tag(val)
 
         return meta, doctree_scan
 

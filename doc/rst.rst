@@ -51,9 +51,9 @@ respective type.
 .. _`bibliographic fields`: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bibliographic-fields
 
 All fields whose name matches a taxonomy defined in ``TAXONOMY_NAMES``
-`settings <settings.md>`_ are parsed as comma-separated lists of possibly
-quoted strings, and taken as the set of values (e.g. tags) of the given
-taxonomy for the current page.
+`settings <settings.md>`_ are parsed as yaml, and expected to be a list of
+strings, with the set of values (e.g. tags) of the given taxonomy for the
+current page.
 
 See `page metadata <metadata.md>`_ for a list of commonly used metadata.
 
