@@ -12,6 +12,8 @@
 * When run without a `settings.py`, take more defaults from repo mode. This
   makes running staticfile or arbitrary directories quite useful, and similar
   to viewing a repository on GitLab/GitHub.
+* Improved logging in case of jinja2 errors. Use --debug to see a full
+  stacktrace
 
 **Upgrade notes**:
 

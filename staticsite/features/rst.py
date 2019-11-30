@@ -306,17 +306,14 @@ class RstPage(Page):
     def render(self):
         res = {}
 
-        html = self.rst.page_template.render(
-            page=self,
-            content=self.content,
-            **self.meta
-        )
+        html = self.render_template(self.rst.page_template, {
+            "content": self.content,
+            **self.meta,
+        })
         res[self.dst_relpath] = RenderedString(html)
 
         for relpath in self.meta.get("aliases", ()):
-            html = self.rst.redirect_template.render(
-                page=self,
-            )
+            html = self.render_template(self.rst.redirect_template)
             res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res

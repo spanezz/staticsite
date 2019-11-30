@@ -116,11 +116,10 @@ class DirPage(Page):
             parent = os.path.dirname(self.src.relpath)
             parent_page = self.site.pages.get(parent, None)
 
-        body = self.site.theme.dir_template.render(
-            parent_page=parent_page,
-            page=self,
-            pages=self.subdirs + self.pages,
-        )
+        body = self.render_template(self.site.theme.dir_template, {
+            "parent_page": parent_page,
+            "pages": self.subdirs + self.pages,
+        })
         return {
             self.dst_relpath: RenderedString(body)
         }

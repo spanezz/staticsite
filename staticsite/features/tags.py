@@ -211,12 +211,10 @@ class TaxonomyPage(Page):
             dest = os.path.join(self.dst_relpath, self.meta["output_index"])
             if dest.endswith("/"):
                 dest += "index.html"
-            kwargs = {
-                "page": self,
+            body = self.render_template(self.template_index, {
                 self.name: sorted(self.items.values(), key=lambda x: x.name),
-            }
-            kwargs.update(**self.meta)
-            body = self.render_template(self.template_index, **kwargs)
+                **self.meta,
+            })
             res[dest] = RenderedString(body)
 
         for item in self.items.values():

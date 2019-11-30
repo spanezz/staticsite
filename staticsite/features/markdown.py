@@ -312,17 +312,14 @@ class MarkdownPage(Page):
     def render(self):
         res = {}
 
-        html = self.mdpages.page_template.render(
-            page=self,
-            content=self.content,
-            **self.meta
-        )
+        html = self.render_template(self.mdpages.page_template, {
+            "content": self.content,
+            **self.meta,
+        })
         res[self.dst_relpath] = RenderedString(html)
 
         for relpath in self.meta.get("aliases", ()):
-            html = self.mdpages.redirect_template.render(
-                page=self,
-            )
+            html = self.render_template(self.mdpages.redirect_template)
             res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res

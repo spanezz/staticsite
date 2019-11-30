@@ -61,9 +61,7 @@ class J2Page(Page):
         except Exception:
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
-        body = template.render(
-            page=self,
-        )
+        body = self.render_template(template)
         return {
             self.dst_relpath: RenderedString(body),
         }

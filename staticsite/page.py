@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Dict, Any
 import os
 import logging
 import jinja2
@@ -169,12 +171,15 @@ class Page:
     def __repr__(self):
         return "{}:{}".format(self.TYPE, self.src.relpath)
 
-    def render_template(self, template, **kwargs):
+    def render_template(self, template: jinja2.Template, template_args: Dict[Any, Any] = None) -> str:
         """
         Render a jinja2 template, logging things if something goes wrong
         """
+        if template_args is None:
+            template_args = {}
+        template_args.setdefault("page", self)
         try:
-            return template.render(**kwargs)
+            return template.render(**template_args)
         except jinja2.TemplateError as e:
             log.error("%s: failed to render %s: %s", template.filename, self.src.relpath, e)
             log.debug("%s: failed to render %s: %s", template.filename, self.src.relpath, e, exc_info=True)

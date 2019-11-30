@@ -195,10 +195,9 @@ class DataPage(Page):
                     log.exception("%s: cannot load template", self.src.relpath)
                     return "cannot load template data.html"
 
-            self._content = template.render(
-                page=self,
-                data=self.data,
-            )
+            self._content = self.render_template(template, {
+                "data": self.data,
+            })
 
         return self._content
 
@@ -206,20 +205,17 @@ class DataPage(Page):
         res = {}
 
         page_template = self.site.theme.jinja2.get_template("page.html")
-        html = page_template.render(
-            page=self,
-            content=self.content,
+        html = self.render_template(page_template, {
+            "content": self.content,
             **self.meta
-        )
+        })
         res[self.dst_relpath] = RenderedString(html)
 
         aliases = self.meta.get("aliases", ())
         if aliases:
             redirect_template = self.site.theme.jinja2.get_template("redirect.html")
             for relpath in aliases:
-                html = redirect_template.render(
-                    page=self,
-                )
+                html = self.render_template(redirect_template)
                 res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res
