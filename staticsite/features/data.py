@@ -1,6 +1,7 @@
 from __future__ import annotations
+from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature
+from staticsite import Page, Feature, Dir
 from staticsite.archetypes import Archetype
 import dateutil.parser
 import jinja2
@@ -43,26 +44,44 @@ class DataPages(Feature):
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
 
-    def try_load_page(self, src):
-        mo = re_ext.search(src.relpath)
-        if not mo:
-            return None
-        data = load_data(src, mo.group(1))
-        if data is None:
-            return None
-        try:
-            type = data.get("type", None)
-        except AttributeError:
-            log.error("%s: data did not parse into a dict", src.relpath)
-            return None
-        if type is None:
-            log.error("%s: data type not found: ignoring page", src.relpath)
-            return None
-        cls = self.page_class_by_type.get(type, DataPage)
-        page = cls(self.site, src, data)
-        data_type = page.meta.get("type")
-        self.by_type[data_type].append(page)
-        return page
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("md")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, src in sitedir.files.items():
+            mo = re_ext.search(fname)
+            if not mo:
+                continue
+
+            data = load_data(src, mo.group(1))
+            if data is None:
+                continue
+
+            try:
+                type = data.get("type", None)
+            except AttributeError:
+                log.error("%s: data did not parse into a dict", src.relpath)
+                continue
+
+            if type is None:
+                log.error("%s: data type not found: ignoring page", src.relpath)
+                continue
+
+            cls = self.page_class_by_type.get(type, DataPage)
+            page = cls(self.site, src, data, meta=sitedir.meta_file(fname))
+            data_type = page.meta.get("type")
+            self.by_type[data_type].append(page)
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def try_load_archetype(self, archetypes, relpath, name):
         mo = re_ext.search(relpath)
