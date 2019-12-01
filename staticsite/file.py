@@ -16,7 +16,8 @@ class Dir:
         file_meta = files.pop(".staticsite", None)
         if file_meta:
             with open(file_meta.abspath, "rt") as fd:
-                self.meta = parse_front_matter(fd)
+                lines = [line.rstrip() for line in fd]
+                fmt, self.meta = parse_front_matter(lines)
         else:
             self.meta = {}
 
