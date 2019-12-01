@@ -1,8 +1,9 @@
 from __future__ import annotations
+from typing import List
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import File
+from staticsite.file import File, Dir
 import os
 import logging
 
@@ -21,14 +22,29 @@ class J2Pages(Feature):
     """
     RUN_BEFORE = ["tags"]
 
-    def try_load_page(self, src: File):
-        basename = os.path.basename(src.relpath)
-        if ".j2." not in basename:
-            return None
-        try:
-            return J2Page(self, src)
-        except IgnorePage:
-            return None
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        meta = sitedir.meta_features.get("j2")
+        if meta is None:
+            meta = {}
+
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            if ".j2." not in fname:
+                continue
+
+            try:
+                page = J2Page(self, f)
+            except IgnorePage:
+                continue
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
 
 class J2Page(Page):
