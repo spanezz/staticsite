@@ -1,6 +1,7 @@
 from __future__ import annotations
+from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, File
+from staticsite import Page, Feature, File, Dir
 from staticsite.utils import parse_front_matter, write_front_matter
 from staticsite.archetypes import Archetype
 import jinja2
@@ -151,14 +152,31 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def try_load_page(self, src):
-        if not src.relpath.endswith(".md"):
-            return None
-        try:
-            return MarkdownPage(self, src)
-        except Exception:
-            log.warn("%s: Failed to parse markdown page: skipped", src)
-            return None
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("md")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            if not fname.endswith(".md"):
+                continue
+
+            try:
+                page = MarkdownPage(self, f, extra_meta=sitedir.meta_file(fname))
+            except Exception:
+                log.warn("%s: Failed to parse markdown page: skipped", f)
+                log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=True)
+                continue
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".md":
@@ -252,7 +270,7 @@ class MarkdownPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, mdpages, src):
+    def __init__(self, mdpages, src, extra_meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.md", "README.md"):
             linkpath = dirname
@@ -302,6 +320,9 @@ class MarkdownPage(Page):
                 # Remove leading empty lines again
                 while self.body and not self.body[0]:
                     self.body.pop(0)
+
+        if extra_meta is not None:
+            self.meta.update(extra_meta)
 
         date = self.meta.get("date", None)
         if date is None:
