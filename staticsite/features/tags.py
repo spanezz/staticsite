@@ -1,8 +1,9 @@
 from __future__ import annotations
+from typing import List
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import File
+from staticsite.file import File, Dir
 import os
 import jinja2
 import logging
@@ -21,15 +22,30 @@ class TaxonomyPages(Feature):
         self.taxonomies = []
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
 
-    def try_load_page(self, src):
-        if not src.relpath.endswith(".taxonomy"):
-            return None
-        if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
-            log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
-            return None
-        page = TaxonomyPage(self.site, src)
-        self.taxonomies.append(page)
-        return page
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("j2")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, src in sitedir.files.items():
+            if not fname.endswith(".taxonomy"):
+                continue
+
+            if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
+                log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
+                continue
+
+            page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
+            self.taxonomies.append(page)
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def build_test_page(self, name, **kw) -> Page:
         page = TestTaxonomyPage(self.site, File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"))
