@@ -17,7 +17,8 @@ class SyndicationInfo:
 
         # Dict with PageFilter arguments to select the pages to show in this
         # syndication
-        self.select: Dict[str, Any] = dict(syndication.get("filter"))
+        select = syndication.get("filter")
+        self.select: Optional[Dict[str, Any]] = dict(select) if select is not None else None
 
         # Dict with PageFilter arguments to select the pages that should link
         # to this syndication
@@ -64,10 +65,21 @@ class SyndicationFeature(Feature):
         page.meta["syndication_info"] = syndication_info
 
     def finalize(self):
+        # Add syndication info for all taxonomies
+        for taxonomy in self.site.features["tags"].taxonomies.values():
+            # For each item in the taxonomy, create a syndication
+            for category_page in taxonomy.categories.values():
+                info = SyndicationInfo(category_page, {})
+                info.pages = category_page.pages
+                self.syndications.append(info)
+                category_page.meta["syndication_info"] = info
+                category_page.archive.meta["syndication_info"] = info
+
         for syndication_info in self.syndications:
             # Compute the pages to show
-            f = PageFilter(self.site, **syndication_info.select)
-            syndication_info.pages.extend(f.filter(self.site.pages.values()))
+            if syndication_info.select:
+                f = PageFilter(self.site, **syndication_info.select)
+                syndication_info.pages.extend(f.filter(self.site.pages.values()))
 
             # Add a link to the syndication to the affected pages
             if syndication_info.add_to:
