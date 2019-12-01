@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import NamedTuple, Optional, Dict
+from .utils import parse_front_matter
 import os
 
 
@@ -10,10 +11,50 @@ class Dir:
     def __init__(self, tree_root: str, relpath: str, files: Dict[str, "File"], dirfd=int):
         self.tree_root = tree_root
         self.relpath = relpath
-        if files.pop(".staticsite", None):
-            # TODO: load .staticsite from dir if it exists
-            ...
+
+        # load .staticsite from dir if it exists
+        file_meta = files.pop(".staticsite", None)
+        if file_meta:
+            with open(file_meta.abspath, "rt") as fd:
+                self.meta = parse_front_matter(fd)
+        else:
+            self.meta = {}
+
         self.files = files
+
+        self._meta_features = None
+        self._meta_files = None
+
+    @property
+    def meta_features(self):
+        """
+        Return a dict with the 'features'-specific metadata
+        """
+        if self._meta_features is None:
+            self._meta_features = self.meta.get("features")
+            if self._meta_features is None:
+                self._meta_features = {}
+        return self._meta_features
+
+    @property
+    def meta_files(self):
+        """
+        Return a dict with the 'features'-specific metadata
+        """
+        if self._meta_files is None:
+            self._meta_files = self.meta.get("files")
+            if self._meta_files is None:
+                self._meta_files = {}
+        return self._meta_files
+
+    def meta_file(self, fname):
+        """
+        Return a dict with the dir metadata related to a file
+        """
+        res = self.files_meta.get(fname)
+        if res is None:
+            return {}
+        return res
 
 
 class File(NamedTuple):
