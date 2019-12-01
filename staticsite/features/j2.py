@@ -3,7 +3,7 @@ from typing import List
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import File, Dir
+from staticsite.file import Dir
 import os
 import logging
 
@@ -34,7 +34,7 @@ class J2Pages(Feature):
                 continue
 
             try:
-                page = J2Page(self, f)
+                page = J2Page(self, f, meta=sitedir.meta_file(fname))
             except IgnorePage:
                 continue
 
@@ -52,7 +52,7 @@ class J2Page(Page):
 
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, j2env, src):
+    def __init__(self, j2env, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")
         dst_relpath = os.path.join(dirname, dst_basename)
@@ -70,6 +70,9 @@ class J2Page(Page):
             dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
 
         self.meta["date"] = self.site.generation_time
+
+        if meta is not None:
+            self.meta.update(meta)
 
     def render(self):
         try:

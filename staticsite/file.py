@@ -51,7 +51,7 @@ class Dir:
         """
         Return a dict with the dir metadata related to a file
         """
-        res = self.files_meta.get(fname)
+        res = self.meta_files.get(fname)
         if res is None:
             return {}
         return res
