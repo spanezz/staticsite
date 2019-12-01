@@ -23,9 +23,9 @@ class J2Pages(Feature):
     RUN_BEFORE = ["tags"]
 
     def load_dir(self, sitedir: Dir) -> List[Page]:
-        meta = sitedir.meta_features.get("j2")
-        if meta is None:
-            meta = {}
+        # meta = sitedir.meta_features.get("j2")
+        # if meta is None:
+        #     meta = {}
 
         taken = []
         pages = []

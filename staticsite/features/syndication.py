@@ -13,6 +13,7 @@ log = logging.getLogger()
 class SyndicationInfo:
     def __init__(self, index_page: Page, syndication: Dict[str, Any]):
         self.index_page = index_page
+        self.meta = syndication
 
         # Dict with PageFilter arguments to select the pages to show in this
         # syndication
@@ -111,16 +112,27 @@ class SyndicationPage(Page):
             src=File(relpath=relpath),
             src_linkpath=relpath,
             dst_relpath=relpath,
-            dst_link=os.path.join(site.settings.SITE_ROOT, relpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, relpath),
+            meta=info.meta)
 
+        if self.meta.get("title") is None:
+            self.meta["title"] = info.index_page.meta.get("title")
+        if self.meta.get("title") is None:
+            log.warn("%s: syndication index page %s has no title", self, info.index_page)
+            self.meta["title"] = info.index_page.site.site_name
+
+        if self.meta.get("date") is None:
+            if info.pages:
+                self.meta["date"] = max(p.meta["date"] for p in info.pages)
+            else:
+                self.meta["date"] = self.site.generation_time
+
+        self.meta["index"] = info.index_page
         self.info = info
 
-        if info.pages:
-            self.meta["date"] = max(x.meta["date"] for x in info.pages)
-        else:
-            self.meta["date"] = self.site.generation_time 
-
         self.template = self.site.theme.jinja2.get_template(self.TEMPLATE)
+
+        self.validate_meta()
 
     def render(self):
         body = self.render_template(self.template, {
