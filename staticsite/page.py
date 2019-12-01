@@ -92,6 +92,21 @@ class Page:
             else:
                 self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
 
+        # title must exist
+        title = self.meta.get("title")
+        if title is None:
+            self.meta["title"] = os.path.basename(self.src_linkpath)
+        elif isinstance(title, jinja2.Template):
+            # If title is a jinja2 template, render it in the page context
+            self.meta["title"] = title.render(page=self)
+
+        # description may exist
+        description = self.meta.get("description")
+        if description is not None:
+            if isinstance(description, jinja2.Template):
+                # If description is a jinja2 template, render it in the page context
+                self.meta["description"] = description.render(page=self)
+
     @property
     def date_as_iso8601(self):
         from dateutil.tz import tzlocal
