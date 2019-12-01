@@ -168,15 +168,31 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def try_load_page(self, src):
-        if not src.relpath.endswith(".rst"):
-            return None
-        try:
-            return RstPage(self, src)
-        except Exception:
-            log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
-            log.warn("%s: Failed to parse RestructuredText page: skipped", src)
-            return None
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("md")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            if not fname.endswith(".rst"):
+                continue
+
+            try:
+                page = RstPage(self, f, meta=sitedir.meta_file(fname))
+            except Exception:
+                log.debug("%s: Failed to parse RestructuredText page: skipped", f, exc_info=True)
+                log.warn("%s: Failed to parse RestructuredText page: skipped", f)
+                continue
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".rst":
