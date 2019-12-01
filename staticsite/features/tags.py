@@ -68,7 +68,7 @@ class TaxonomyPage(Page):
     TYPE = "taxonomy"
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, site, src):
+    def __init__(self, site, src, meta=None):
         linkpath = os.path.splitext(src.relpath)[0]
 
         super().__init__(
@@ -76,7 +76,8 @@ class TaxonomyPage(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=linkpath,
-            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
@@ -107,6 +108,8 @@ class TaxonomyPage(Page):
 
         # Read taxonomy information
         self._read_taxonomy_description()
+
+        self.validate_meta()
 
     def _read_taxonomy_description(self):
         """

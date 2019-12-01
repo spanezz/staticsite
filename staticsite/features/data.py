@@ -142,7 +142,7 @@ class DataPage(Page):
     TYPE = "data"
     FINDABLE = True
 
-    def __init__(self, site, src, data):
+    def __init__(self, site, src, data, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename.startswith("index.") or basename.startswith("README."):
             linkpath = dirname
@@ -153,7 +153,8 @@ class DataPage(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
         # Read and parse the contents
         if self.src.stat is None:

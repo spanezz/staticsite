@@ -2,8 +2,11 @@ from __future__ import annotations
 from typing import Dict, Any
 import os
 import logging
-import jinja2
+import datetime
 from urllib.parse import urlparse, urlunparse
+import jinja2
+import dateutil
+import staticsite
 
 log = logging.getLogger()
 
@@ -49,14 +52,45 @@ class Page:
     # taxonomies.
     RENDER_PREFERRED_ORDER = 1
 
-    def __init__(self, site, src, src_linkpath, dst_relpath, dst_link):
+    def __init__(
+            self,
+            site: "staticsite.Site",
+            src: "staticsite.File",
+            src_linkpath: str,
+            dst_relpath: str,
+            dst_link: str,
+            meta: Dict[str, Any] = None):
         self.site = site
         self.src = src
         self.src_linkpath = src_linkpath
         self.dst_relpath = dst_relpath
         self.dst_link = dst_link
-        self.meta = {}
+        if meta is None:
+            self.meta = {}
+        else:
+            self.meta = dict(meta)
         log.debug("%s: new page, src_link: %s", self.src.relpath, src_linkpath)
+
+    def validate_meta(self):
+        """
+        Enforce common meta invariants
+        """
+        # date must exist, and be a datetime
+        date = self.meta.get("date", None)
+        if date is None:
+            if self.src.stat is not None:
+                self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+            else:
+                self.meta["date"] = self.site.generation_time
+        elif not isinstance(date, datetime.datetime):
+            self.meta["date"] = dateutil.parser.parse(date)
+
+        # date must be an aware datetime
+        if self.meta["date"].tzinfo is None:
+            if hasattr(self.site.timezone, "localize"):
+                self.meta["date"] = self.site.timezone.localize(self.meta["date"])
+            else:
+                self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
 
     @property
     def date_as_iso8601(self):

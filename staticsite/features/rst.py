@@ -1,6 +1,7 @@
 from __future__ import annotations
+from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, File
+from staticsite import Page, Feature, File, Dir
 from staticsite.archetypes import Archetype
 import docutils.io
 import docutils.core
@@ -242,7 +243,7 @@ class RstPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, feature, src):
+    def __init__(self, feature, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.rst", "README.rst"):
             linkpath = dirname
@@ -253,7 +254,8 @@ class RstPage(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(feature.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(feature.site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
         # Shared RestructuredText environment
         self.rst = feature
@@ -266,13 +268,12 @@ class RstPage(Page):
 
         # Parse document into a doctree and extract docinfo metadata
         with open(self.src.abspath, "rt") as fd:
-            meta, doctree_scan = self.rst.parse_rest(fd)
+            fm_meta, doctree_scan = self.rst.parse_rest(fd)
+            self.meta.update(**fm_meta)
 
         self.doctree_scan = doctree_scan
-        self.meta.update(**meta)
 
-        if meta.get("date") is None:
-            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+        self.validate_meta()
 
     def check(self, checker):
         self._render_page()

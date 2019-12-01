@@ -67,12 +67,10 @@ class J2Page(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=dst_relpath,
-            dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
-        self.meta["date"] = self.site.generation_time
-
-        if meta is not None:
-            self.meta.update(meta)
+        self.validate_meta()
 
     def render(self):
         try:
