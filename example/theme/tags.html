@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Tags</h1>
+<h1 class="display-4">All tags</h1>
 
-<ul>
-{% for t in tags %}
-<li><a href="{{url_for_tag(t)}}">{{t.name}}</a></li>
+<p class="h5">
+{% for name, category_page in page.categories.items() %}
+<a class="badge badge-pill badge-primary" href="{{url_for(category_page)}}">{{name}}
+  <span class="badge badge-light">{{category_page.pages|length}}</span>
+</a>
 {% endfor %}
-</ul>
+</p>
 
 {% endblock %}
-

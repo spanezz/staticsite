@@ -8,7 +8,7 @@ class TestTaxonomies(TestCase):
         """
         Test simply assigning pages to taxonomies
         """
-        site = test_utils.Site()
+        site = test_utils.Site(TAXONOMIES=["tags"])
         site.load_without_content()
 
         tax1 = site.add_test_page("tags", name="tags")
@@ -18,14 +18,14 @@ class TestTaxonomies(TestCase):
 
         site.analyze()
 
-        self.assertEqual(tax1.items["a"].pages, [page1])
-        self.assertEqual(tax1.items["b"].pages, [page1])
+        self.assertEqual(tax1.categories["a"].pages, [page1])
+        self.assertEqual(tax1.categories["b"].pages, [page1])
 
     def test_autoseries(self):
         """
         Test autogenerating series from taxonomies
         """
-        site = test_utils.Site()
+        site = test_utils.Site(TAXONOMIES=["tags"])
         site.load_without_content()
 
         series = site.features["series"].series
@@ -43,7 +43,7 @@ class TestTaxonomies(TestCase):
 
         site.analyze()
 
-        self.assertCountEqual(tax1.items["a"].pages, [page1, page2, page3])
-        self.assertCountEqual(tax1.items["b"].pages, [page1, page3])
+        self.assertCountEqual(tax1.categories["a"].pages, [page1, page2, page3])
+        self.assertCountEqual(tax1.categories["b"].pages, [page1, page3])
         self.assertEqual(series["a"].pages, [page1, page2, page3])
         self.assertNotIn("b", series)

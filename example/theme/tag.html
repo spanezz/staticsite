@@ -1,30 +1,15 @@
 {% extends "base.html" %}
 {% from 'inline_page.html' import inline_page %}
 
-{% block head %}
-<link href="{{ url_for_tag_rss(tag) }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: {{tag.name}} RSS2 feed"></link>
-<link href="{{ url_for_tag_atom(tag) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{tag.name}} ATOM feed"></link>
-{% endblock %}
-
 {% block nav %}
 {{super()}}
-<li><a href="{{ url_for_tag_archive(tag) }}">Archive</a></li>
-{% endblock %}
-
-{% block nav_extra %}
-<p class="navbar-text navbar-right">
-  <a href="{{ url_for_tag_rss(tag) }}">
-    <img src="{{ url_for('/images/feed-icon-16x16.png') }}">
-  </a>
-</p>
+<li><a href="{{url_for(page.archive)}}">Archive</a></li>
 {% endblock %}
 
 {% block content %}
-<h1>Tag {{tag.name}}</h1>
+<h1 class="display-4">Latest posts for tag <b>{{page.meta.titlee}}</b></h1>
 
-<h2>Latest posts for tag {{tag.name}}</h2>
-
-{% for page in pages[:10] %}
+{% for page in page.pages[:10] %}
 {{inline_page(page)}}
 {% endfor %}
 
