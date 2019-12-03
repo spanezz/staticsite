@@ -117,13 +117,13 @@ class Site:
             content_root = self.content_root
         self.read_contents_tree(content_root)
 
-    def load(self):
+    def load(self, content_root=None):
         """
         Load all site components
         """
         self.features.load_default_features()
         self.load_theme()
-        self.load_content()
+        self.load_content(content_root=content_root)
 
     def add_page(self, page: Page):
         """
@@ -171,13 +171,14 @@ class Site:
         else:
             log.info("Loading pages from %s", tree_root)
 
-        for f in File.scan(tree_root, follow_symlinks=True, ignore_hidden=True):
+        for d in File.scan_dirs(tree_root, follow_symlinks=True, ignore_hidden=True):
             for handler in self.features.ordered():
-                p = handler.try_load_page(f)
-                if p is not None:
-                    self.add_page(p)
+                for page in handler.load_dir(d):
+                    self.add_page(page)
+                if not d.files:
                     break
-            else:
+
+            for f in d.files.values():
                 if stat.S_ISREG(f.stat.st_mode):
                     log.debug("Loading static file %s", f.relpath)
                     p = Asset(self, f)

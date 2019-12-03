@@ -2,8 +2,11 @@ from __future__ import annotations
 from typing import Dict, Any
 import os
 import logging
-import jinja2
+import datetime
 from urllib.parse import urlparse, urlunparse
+import jinja2
+import dateutil
+import staticsite
 
 log = logging.getLogger()
 
@@ -49,14 +52,89 @@ class Page:
     # taxonomies.
     RENDER_PREFERRED_ORDER = 1
 
-    def __init__(self, site, src, src_linkpath, dst_relpath, dst_link):
+    def __init__(
+            self,
+            site: "staticsite.Site",
+            src: "staticsite.File",
+            src_linkpath: str,
+            dst_relpath: str,
+            dst_link: str,
+            meta: Dict[str, Any] = None):
         self.site = site
         self.src = src
         self.src_linkpath = src_linkpath
         self.dst_relpath = dst_relpath
         self.dst_link = dst_link
-        self.meta = {}
+        if meta is None:
+            self.meta = {}
+        else:
+            self.meta = dict(meta)
         log.debug("%s: new page, src_link: %s", self.src.relpath, src_linkpath)
+
+        # Cached templates
+        self._page_template = None
+        self._redirect_template = None
+
+    def validate_meta(self):
+        """
+        Enforce common meta invariants
+        """
+        # date must exist, and be a datetime
+        date = self.meta.get("date", None)
+        if date is None:
+            if self.src.stat is not None:
+                self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+            else:
+                self.meta["date"] = self.site.generation_time
+        elif not isinstance(date, datetime.datetime):
+            self.meta["date"] = dateutil.parser.parse(date)
+
+        # template must exist, and defaults to page.html
+        self.meta.setdefault("template", "page.html")
+
+        # date must be an aware datetime
+        if self.meta["date"].tzinfo is None:
+            if hasattr(self.site.timezone, "localize"):
+                self.meta["date"] = self.site.timezone.localize(self.meta["date"])
+            else:
+                self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
+
+        # title must exist
+        title = self._fill_possibly_templatized_meta_value("title")
+        if title is None:
+            self.meta["title"] = os.path.basename(self.src_linkpath)
+
+        # description may exist
+        self._fill_possibly_templatized_meta_value("description")
+
+    def _fill_possibly_templatized_meta_value(self, name):
+        # If there is a value for the field, we're done
+        val = self.meta.get(name)
+        if val is not None:
+            return val
+
+        # If there's a templatized value for the field, render it
+        template_val = self.meta.get(f"template_{name}")
+        if template_val is not None:
+            val = jinja2.Markup(self.render_template(
+                    self.site.theme.jinja2.from_string(template_val)))
+            self.meta[name] = val
+            return val
+
+        # Else we could not fill
+        return None
+
+    @property
+    def page_template(self):
+        if not self._page_template:
+            self._page_template = self.site.theme.jinja2.get_template(self.meta["template"])
+        return self._page_template
+
+    @property
+    def redirect_template(self):
+        if not self._redirect_template:
+            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
+        return self._redirect_template
 
     @property
     def date_as_iso8601(self):

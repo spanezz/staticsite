@@ -4,7 +4,7 @@ from collections import defaultdict
 import logging
 import sys
 from .page import Page
-from .render import File
+from .file import File, Dir
 from . import site
 from . import toposort
 
@@ -61,6 +61,27 @@ class Feature:
         defined in for_metadata
         """
         raise NotImplementedError("Feature.add_page")
+
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        """
+        Load pages from the given Dir.
+
+        Remove from dir the filenames that have been loaded.
+
+        Return the list of loaded pages.
+        """
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            page = self.try_load_page(f)
+            if page is not None:
+                pages.append(page)
+                taken.append(fname)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def try_load_page(self, file: File) -> Optional[Page]:
         """

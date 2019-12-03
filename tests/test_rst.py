@@ -24,16 +24,20 @@ class TestRst(TestCase):
 Example blog post in reStructuredText
 =====================================
 """)
-        site.add_test_page("tags", name="tags")
+        tags = site.add_test_page("tags", name="tags")
 
         site.analyze()
+
+        tag_example = tags.categories["example"]
+        tag_another = tags.categories["another tag"]
 
         # We have a root dir index and dir indices for all subdirs
         page = site.pages[""]
         self.assertEqual(page.TYPE, "rst")
+        self.assertCountEqual(page.meta.pop("tags"), [tag_example, tag_another])
         self.assertEqual(page.meta, {
             "date": datetime.datetime(2016, 4, 16, 10, 23, tzinfo=tz.tzoffset(None, 7200)),
-            "tags": ["example", "another tag"],
             "foo": "line1\nline2\nline3",
+            "template": "page.html",
             "title": "Example blog post in reStructuredText",
         })

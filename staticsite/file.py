@@ -1,6 +1,61 @@
 from __future__ import annotations
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Dict
+from .utils import parse_front_matter
 import os
+
+
+class Dir:
+    """
+    Information about one directory during scanning
+    """
+    def __init__(self, tree_root: str, relpath: str, files: Dict[str, "File"], dirfd=int):
+        self.tree_root = tree_root
+        self.relpath = relpath
+
+        # load .staticsite from dir if it exists
+        file_meta = files.pop(".staticsite", None)
+        if file_meta:
+            with open(file_meta.abspath, "rt") as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, self.meta = parse_front_matter(lines)
+        else:
+            self.meta = {}
+
+        self.files = files
+
+        self._meta_features = None
+        self._meta_files = None
+
+    @property
+    def meta_features(self):
+        """
+        Return a dict with the 'features'-specific metadata
+        """
+        if self._meta_features is None:
+            self._meta_features = self.meta.get("features")
+            if self._meta_features is None:
+                self._meta_features = {}
+        return self._meta_features
+
+    @property
+    def meta_files(self):
+        """
+        Return a dict with the 'features'-specific metadata
+        """
+        if self._meta_files is None:
+            self._meta_files = self.meta.get("files")
+            if self._meta_files is None:
+                self._meta_files = {}
+        return self._meta_files
+
+    def meta_file(self, fname):
+        """
+        Return a dict with the dir metadata related to a file
+        """
+        res = self.meta_files.get(fname)
+        if res is None:
+            return {}
+        return res
 
 
 class File(NamedTuple):
@@ -30,6 +85,44 @@ class File(NamedTuple):
                 relpath=os.path.relpath(abspath, tree_root),
                 root=tree_root,
                 abspath=abspath)
+
+    @classmethod
+    def scan_dirs(cls, tree_root, relpath=None, follow_symlinks=False, ignore_hidden=False):
+        if relpath is None:
+            scan_path = tree_root
+        else:
+            scan_path = os.path.join(tree_root, relpath)
+
+        for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
+            if ignore_hidden:
+                # Ignore hidden directories
+                filtered = [d for d in dnames if not d.startswith(".")]
+                if len(filtered) != len(dnames):
+                    dnames[::] = filtered
+
+            files = {}
+            for f in fnames:
+                # Ignore hidden files
+                if ignore_hidden and f.startswith(".") and f != ".staticsite":
+                    continue
+
+                abspath = os.path.join(root, f)
+                try:
+                    st = os.stat(f, dir_fd=dirfd)
+                except FileNotFoundError:
+                    # Skip broken links
+                    continue
+                files[f] = cls(
+                        relpath=os.path.relpath(abspath, tree_root),
+                        root=tree_root,
+                        abspath=abspath,
+                        stat=st)
+
+            yield Dir(
+                    tree_root=tree_root,
+                    relpath=os.path.relpath(root, tree_root),
+                    files=files,
+                    dirfd=dirfd)
 
     @classmethod
     def scan(cls, tree_root, relpath=None, follow_symlinks=False, ignore_hidden=False):

@@ -1,8 +1,9 @@
 from __future__ import annotations
+from typing import List
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import File
+from staticsite.file import Dir
 import os
 import logging
 
@@ -21,14 +22,29 @@ class J2Pages(Feature):
     """
     RUN_BEFORE = ["tags"]
 
-    def try_load_page(self, src: File):
-        basename = os.path.basename(src.relpath)
-        if ".j2." not in basename:
-            return None
-        try:
-            return J2Page(self, src)
-        except IgnorePage:
-            return None
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("j2")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            if ".j2." not in fname:
+                continue
+
+            try:
+                page = J2Page(self, f, meta=sitedir.meta_file(fname))
+            except IgnorePage:
+                continue
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
 
 class J2Page(Page):
@@ -36,7 +52,7 @@ class J2Page(Page):
 
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, j2env, src):
+    def __init__(self, j2env, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")
         dst_relpath = os.path.join(dirname, dst_basename)
@@ -51,9 +67,10 @@ class J2Page(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=dst_relpath,
-            dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
-        self.meta["date"] = self.site.generation_time
+        self.validate_meta()
 
     def render(self):
         try:

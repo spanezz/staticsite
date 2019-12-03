@@ -1,6 +1,7 @@
 from __future__ import annotations
+from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, File
+from staticsite import Page, Feature, File, Dir
 from staticsite.archetypes import Archetype
 import docutils.io
 import docutils.core
@@ -83,26 +84,10 @@ class RestructuredText(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
-        # Cached templates
-        self._page_template = None
-        self._redirect_template = None
-
         # self.render_cache = self.site.caches.get("markdown")
 
         # Names of tags whose content should be parsed as yaml
         self.yaml_tags = set()
-
-    @property
-    def page_template(self):
-        if not self._page_template:
-            self._page_template = self.site.theme.jinja2.get_template("page.html")
-        return self._page_template
-
-    @property
-    def redirect_template(self):
-        if not self._redirect_template:
-            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
-        return self._redirect_template
 
     def parse_rest(self, fd, remove_docinfo=True):
         """
@@ -167,15 +152,31 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def try_load_page(self, src):
-        if not src.relpath.endswith(".rst"):
-            return None
-        try:
-            return RstPage(self, src)
-        except Exception:
-            log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
-            log.warn("%s: Failed to parse RestructuredText page: skipped", src)
-            return None
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("md")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            if not fname.endswith(".rst"):
+                continue
+
+            try:
+                page = RstPage(self, f, meta=sitedir.meta_file(fname))
+            except Exception:
+                log.debug("%s: Failed to parse RestructuredText page: skipped", f, exc_info=True)
+                log.warn("%s: Failed to parse RestructuredText page: skipped", f)
+                continue
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".rst":
@@ -189,7 +190,7 @@ class RestructuredText(Feature):
             src = File(relpath=relpath,
                        root=None,
                        abspath=os.path.abspath(tf.name),
-                       stat=None)
+                       stat=os.stat(tf.fileno()))
             return RstPage(self, src)
 
 
@@ -242,7 +243,7 @@ class RstPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, feature, src):
+    def __init__(self, feature, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.rst", "README.rst"):
             linkpath = dirname
@@ -253,7 +254,8 @@ class RstPage(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(feature.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(feature.site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
         # Shared RestructuredText environment
         self.rst = feature
@@ -266,13 +268,12 @@ class RstPage(Page):
 
         # Parse document into a doctree and extract docinfo metadata
         with open(self.src.abspath, "rt") as fd:
-            meta, doctree_scan = self.rst.parse_rest(fd)
+            fm_meta, doctree_scan = self.rst.parse_rest(fd)
+            self.meta.update(**fm_meta)
 
         self.doctree_scan = doctree_scan
-        self.meta.update(**meta)
 
-        if meta.get("date") is None:
-            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+        self.validate_meta()
 
     def check(self, checker):
         self._render_page()
@@ -334,7 +335,7 @@ class RstPage(Page):
     def render(self):
         res = {}
 
-        html = self.render_template(self.rst.page_template, {
+        html = self.render_template(self.page_template, {
             "content": self.content,
             **self.meta,
         })

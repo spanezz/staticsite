@@ -1,13 +1,12 @@
 from __future__ import annotations
+from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, File
+from staticsite import Page, Feature, File, Dir
 from staticsite.utils import parse_front_matter, write_front_matter
 from staticsite.archetypes import Archetype
 import jinja2
-import dateutil.parser
 import os
 import io
-import datetime
 import markdown
 import tempfile
 import logging
@@ -84,9 +83,6 @@ class MarkdownPages(Feature):
             output_format="html5",
         )
         self.link_resolver = md_staticsite.link_resolver
-        # Cached templates
-        self._page_template = None
-        self._redirect_template = None
 
         self.j2_filters["markdown"] = self.jinja2_markdown
 
@@ -95,18 +91,6 @@ class MarkdownPages(Feature):
     @jinja2.contextfilter
     def jinja2_markdown(self, context, mdtext):
         return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
-
-    @property
-    def page_template(self):
-        if not self._page_template:
-            self._page_template = self.site.theme.jinja2.get_template("page.html")
-        return self._page_template
-
-    @property
-    def redirect_template(self):
-        if not self._redirect_template:
-            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
-        return self._redirect_template
 
     def render_page(self, page):
         """
@@ -151,14 +135,31 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def try_load_page(self, src):
-        if not src.relpath.endswith(".md"):
-            return None
-        try:
-            return MarkdownPage(self, src)
-        except Exception:
-            log.warn("%s: Failed to parse markdown page: skipped", src)
-            return None
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("md")
+        # if meta is None:
+        #     meta = {}
+
+        taken = []
+        pages = []
+        for fname, f in sitedir.files.items():
+            if not fname.endswith(".md"):
+                continue
+
+            try:
+                page = MarkdownPage(self, f, meta=sitedir.meta_file(fname))
+            except Exception:
+                log.warn("%s: Failed to parse markdown page: skipped", f)
+                log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=True)
+                continue
+
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".md":
@@ -172,7 +173,7 @@ class MarkdownPages(Feature):
             src = File(relpath=relpath,
                        root=None,
                        abspath=os.path.abspath(tf.name),
-                       stat=None)
+                       stat=os.stat(tf.fileno()))
             return MarkdownPage(self, src)
 
 
@@ -252,7 +253,7 @@ class MarkdownPage(Page):
 
     FINDABLE = True
 
-    def __init__(self, mdpages, src):
+    def __init__(self, mdpages, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.md", "README.md"):
             linkpath = dirname
@@ -263,7 +264,8 @@ class MarkdownPage(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(mdpages.site.settings.SITE_ROOT, linkpath))
+            dst_link=os.path.join(mdpages.site.settings.SITE_ROOT, linkpath),
+            meta=meta)
 
         # Shared markdown environment
         self.mdpages = mdpages
@@ -284,8 +286,8 @@ class MarkdownPage(Page):
             self.front_matter, self.body = parse_markdown_with_front_matter(fd)
 
         try:
-            style, meta = parse_front_matter(self.front_matter)
-            self.meta.update(**meta)
+            style, fm_meta = parse_front_matter(self.front_matter)
+            self.meta.update(**fm_meta)
         except Exception:
             log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=True)
             log.warn("%s: failed to parse front matter", self.src.relpath)
@@ -303,16 +305,7 @@ class MarkdownPage(Page):
                 while self.body and not self.body[0]:
                     self.body.pop(0)
 
-        date = self.meta.get("date", None)
-        if date is None:
-            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        elif not isinstance(date, datetime.datetime):
-            self.meta["date"] = dateutil.parser.parse(date)
-        if self.meta["date"].tzinfo is None:
-            if hasattr(self.site.timezone, "localize"):
-                self.meta["date"] = self.site.timezone.localize(self.meta["date"])
-            else:
-                self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
+        self.validate_meta()
 
     def get_content(self):
         return "\n".join(self.body)
@@ -329,7 +322,7 @@ class MarkdownPage(Page):
     def render(self):
         res = {}
 
-        html = self.render_template(self.mdpages.page_template, {
+        html = self.render_template(self.page_template, {
             "content": self.content,
             **self.meta,
         })

@@ -25,6 +25,9 @@ def parse_front_matter(lines):
         return "toml", toml.loads("\n".join(lines[1:-1]))
 
     if lines[0] == "---":
+        if len(lines) == 1:
+            return "yaml", {}
+
         # YAML
         try:
             import ruamel.yaml
@@ -34,10 +37,14 @@ def parse_front_matter(lines):
             import yaml
             yaml = yaml
             load_args = {"Loader": yaml.CLoader}
-        yaml_body = "\n".join(lines[1:-1])
+
+        # Optionally remove a trailing ---
+        if lines[-1] == "---":
+            lines = lines[:-1]
+        yaml_body = "\n".join(lines)
         return "yaml", yaml.load(yaml_body, **load_args)
 
-    return {}
+    return None, {}
 
 
 def write_front_matter(meta, style="toml"):

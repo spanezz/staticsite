@@ -26,7 +26,9 @@ class Builder:
     def __init__(self, site):
         self.site = site
         if self.site.settings.OUTPUT is None:
-            raise CmdlineError("No output directory configured: please use --output or set OUTPUT in settings.py or .staticsite.py")
+            raise CmdlineError(
+                    "No output directory configured:"
+                    " please use --output or set OUTPUT in settings.py or .staticsite.py")
         self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
         self.existing_paths = {}
 

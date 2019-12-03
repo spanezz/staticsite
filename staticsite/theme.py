@@ -27,7 +27,7 @@ class PageFilter:
                 self.sort_reverse = False
 
         self.taxonomy_filters = []
-        for taxonomy in self.site.features["tags"].taxonomies:
+        for taxonomy in self.site.features["tags"].taxonomies.values():
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:
                 continue
@@ -47,7 +47,7 @@ class PageFilter:
                 continue
             fail_taxonomies = False
             for name, t_filter in self.taxonomy_filters:
-                page_tags = frozenset(page.meta.get(name, ()))
+                page_tags = frozenset(t.name for t in page.meta.get(name, ()))
                 if not t_filter.issubset(page_tags):
                     fail_taxonomies = True
             if fail_taxonomies:

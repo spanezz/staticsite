@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <author><name>{{SITE_AUTHOR}}</name></author>
+  <link rel="self" href="{{SITE_URL}}{{link}}"/>
+  <id>{{SITE_URL}}{{link}}</id>
+  <generator uri="https://github.com/spanezz/staticsite">staticsite</generator>
+  <updated>{{now|datetime_format("atom")}}</updated>
+  <title>{{title}}</title>
+  {% for page in pages -%}
+  <entry>
+    <title>{{page.meta.title}}</title>
+    <id>{{SITE_URL}}{{url_for(page)}}</id>
+    <link href="{{SITE_URL}}{{url_for(page)}}"/>
+    {% for tag in page.meta.tags -%}
+    <category term="{{tag}}"/>
+    {%- endfor %}
+    <updated>{{page.meta.date|datetime_format("atom")}}</updated>
+    <published>{{page.meta.date|datetime_format("atom")}}</published>
+    <content type="html">{{page.content}}</content>
+  </entry>
+  {%- endfor %}
+</feed>

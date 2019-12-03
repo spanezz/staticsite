@@ -50,34 +50,14 @@ Extra filters provided to Jinja2 templates:
  * `basename` returns the file name part of a pathname.
  * `markdown` renders the string using [markdown](markdown.md).
 
-Each taxonomy defines extra `url_for_*` functions. For example, given a *tags*
-taxonomy with *tag* as singular name:
+Each feature can make more filters and functions available to Jinja2 templates:
+see the documentation for each feature for what is made available.
 
- * `url_for_tags()`: links to the taxonomy index.
- * `url_for_tag(tag)`: links to the tag index.
- * `url_for_tag_archive(tag)`: links to the tag archive page.
- * `url_for_tag_rss(tag)`: links to the RSS2 feed for the tag.
- * `url_for_tag_atom(tag)`: links to the Atom feed for the tag.
+When a `page` is passed to Jinja2, it has at least a `meta` member, pointing to
+the [metadata for the page](metadata.md).
 
-When a `page` is passed to Jinja2, it has these members:
-
- * `page.meta`: all the metadata for the page, like `page.meta.title`,
-   `page.meta.date`, `page.meta.tags` and anything else you have in the front
-   matter.
-
-When a `tag` (or other taxonomy element) is passed to Jinja2, it has these
-members:
-
- * `tag.name`: the tag name
- * `tag.slug`: the [slug](https://en.wikipedia.org/wiki/Semantic_URL#Slug) for
-   the tag
- * `tag.pages`: unordered list of pages with this tag
-
-When a taxonomy is passed to Jinja2, it has these members:
-
- * `taxonomy.meta`: all the metadata, just like a page. You can also pass a
-   taxonomy to `url_for`, to link to its main page.
- * `taxonomy.items`: dict mapping taxonomy element names to taxonomy elements.
+Depending on the feature that created the page, a page can have extra members,
+documented in each feature documentation.
 
 
 [Back to README](../README.md)

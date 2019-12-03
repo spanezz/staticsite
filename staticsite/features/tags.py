@@ -1,16 +1,17 @@
 from __future__ import annotations
+from typing import List, Dict, Iterable
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import File
+from staticsite.file import File, Dir
+import functools
 import os
-import jinja2
 import logging
 
 log = logging.getLogger()
 
 
-class TaxonomyPages(Feature):
+class TaxonomyFeature(Feature):
     """
     Tag pages using one or more taxonomies.
 
@@ -18,95 +19,122 @@ class TaxonomyPages(Feature):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.taxonomies = []
+        # All TaxonomyPages found
+        self.taxonomies: Dict[str, TaxonomyPage] = {}
+
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
+        self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
-    def try_load_page(self, src):
-        if not src.relpath.endswith(".taxonomy"):
-            return None
-        if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
-            log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
-            return None
-        page = TaxonomyPage(self.site, src)
-        self.taxonomies.append(page)
-        return page
+    def load_dir(self, sitedir: Dir) -> List[Page]:
+        # meta = sitedir.meta_features.get("j2")
+        # if meta is None:
+        #     meta = {}
 
-    def build_test_page(self, name, **kw) -> Page:
+        taken = []
+        pages = []
+        for fname, src in sitedir.files.items():
+            if not fname.endswith(".taxonomy"):
+                continue
+
+            if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
+                log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
+                continue
+
+            page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
+            self.taxonomies[page.name] = page
+            taken.append(fname)
+            pages.append(page)
+
+        for fname in taken:
+            del sitedir.files[fname]
+
+        return pages
+
+    def build_test_page(self, name: str, **kw) -> Page:
         page = TestTaxonomyPage(self.site, File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"))
         page.meta.update(**kw)
-        self.taxonomies.append(page)
+        self.taxonomies[page.name] = page
         return page
 
+    def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
+        return self.taxonomies.values()
+
+    def jinja2_taxonomy(self, name) -> "TaxonomyPage":
+        return self.taxonomies.get(name)
+
     def finalize(self):
-        # Assign pages to their taxonomies
-        for page in self.site.pages.values():
-            for taxonomy in self.taxonomies:
-                vals = page.meta.get(taxonomy.name, None)
-                if not vals:
+        # Scan all pages for taxonomies.
+
+        # Do it here instead of hooking into self.for_metadata and do this at
+        # page load time, so that we are sure that all .taxonomy files have
+        # been loaded
+        for page in list(self.site.pages.values()):
+            for name, taxonomy in self.taxonomies.items():
+                categories = page.meta.get(name)
+                if categories is None:
                     continue
-                taxonomy.add_page(page, vals)
+                taxonomy.add_page(page, categories)
 
-        for taxonomy in self.taxonomies:
+        # Warn of taxonomies configured in settings.TAXONOMIES but not mounted
+        # with a <name>.taxonomy
+        for name in self.site.settings.TAXONOMIES:
+            if name not in self.taxonomies:
+                log.warn("Taxonomy %s defined in settings, but no %s.taxonomy file found in site contents: ignoring it",
+                         name, name)
+
+        # Call finalize on all taxonomy pages, now that we fully populated them
+        for taxonomy in self.taxonomies.values():
             taxonomy.finalize()
-
-    def jinja2_taxonomies(self):
-        return self.taxonomies
-
-
-class TaxonomyItem:
-    def __init__(self, page, name):
-        self.page = page
-        self.name = name
-        self.slug = self.page.site.slugify(name)
-        self.pages = []
-
-    def __str__(self):
-        return self.name
 
 
 class TaxonomyPage(Page):
+    """
+    Root page for one taxonomy defined in the site
+    """
     TYPE = "taxonomy"
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, site, src):
+    def __init__(self, site, src, meta=None):
         linkpath = os.path.splitext(src.relpath)[0]
 
         super().__init__(
             site=site,
             src=src,
             src_linkpath=linkpath,
-            dst_relpath=linkpath,
-            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath))
+            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
+            meta=meta)
+        self.meta.setdefault("template", "tags.html")
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
 
         # Map all possible values for this taxonomy to the pages that reference
         # them
-        self.items = {}
-
-        self.template_index = None
-        self.template_item = None
-        self.template_feed = None
-        self.template_archive = None
-
-        self.meta["output_index"] = ""
-        self.meta["output_item"] = "{slug}/"
-        self.meta["output_rss"] = "{slug}/index.rss"
-        self.meta["output_atom"] = "{slug}/index.atom"
-        self.meta["output_archive"] = "{slug}/archive.html"
-
-        # # Generate taxonomies from configuration
-        # self.taxonomies = {}
-        # for name, info in self.site.settings.TAXONOMIES.items():
-        #     info["name"] = name
-        #     output_dir = info.get("output_dir", None)
-        #     if output_dir is not None:
-        #         info["output_dir"] = self.enforce_relpath(output_dir)
-        #     self.taxonomies[name] = Taxonomy(**info)
+        self.categories: Dict[str, CategoryPage] = {}
 
         # Read taxonomy information
         self._read_taxonomy_description()
+
+        # Metadata for category pages
+        self.category_meta = self.meta.get("category", {})
+        self.category_meta.setdefault("template", "tag.html")
+
+        # Metadata for archive pages
+        self.archive_meta = self.meta.get("archive", {})
+        self.archive_meta.setdefault("template", "tag-archive.html")
+
+        # Template used to render this taxonomy
+        self.template_tags = self.site.theme.jinja2.get_template(self.meta.get("template_tags", "tags.html"))
+
+        # Template used to render each single category index
+        self.template_tag = self.site.theme.jinja2.get_template(self.meta.get("template_tag", "tag.html"))
+
+        # Template used to render the archive view of each single category index
+        self.template_tag_archive = self.site.theme.jinja2.get_template(
+                self.meta.get("template_archive", "tag-archive.html"))
+
+        self.validate_meta()
 
     def _read_taxonomy_description(self):
         """
@@ -119,147 +147,160 @@ class TaxonomyPage(Page):
             style, meta = parse_front_matter(lines)
             self.meta.update(**meta)
         except Exception:
-            log.exception("%s.taxonomy: cannot parse taxonomy information", self.src.relpath)
+            log.exception("%s: cannot parse taxonomy information", self.src.relpath)
 
-    def link_value(self, context, output_item, value):
-        page = context.get("page", None)
-        if isinstance(value, str):
-            item = self.items.get(value, None)
-        else:
-            item = value
+    def add_page(self, page, categories):
+        """
+        Add a page to this taxonomy.
 
-        if item is None:
-            log.warn("%s+%s: %s not found in taxonomy %s", page, context.name, value, self.name)
-            return ""
-        dest = self.meta[output_item].format(slug=item.slug)
-        return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath, dest)
+        :arg categories: a sequence of categories that the page declares for
+                         this taxonomy
+        """
+        category_pages = []
+        for v in categories:
+            category_page = self.categories.get(v, None)
+            if category_page is None:
+                category_page = CategoryPage(self, v, meta=self.category_meta)
+                self.categories[v] = category_page
+                self.site.pages[category_page.src_linkpath] = category_page
+                self.site.pages[category_page.archive.src_linkpath] = category_page.archive
+            category_pages.append(category_page)
+            category_page.add_page(page)
 
-    @jinja2.contextfunction
-    def link_index(self, context):
-        dest = self.meta["output_index"]
-        if not dest:
-            return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath)
-        else:
-            return os.path.join(self.site.settings.SITE_ROOT, self.dst_relpath, dest)
+        # Replace tag names in page.meta with CategoryPage pages
+        category_pages.sort(key=lambda p: p.name)
+        page.meta[self.name] = category_pages
 
-    @jinja2.contextfunction
-    def link_item(self, context, value):
-        return self.link_value(context, "output_item", value)
-
-    @jinja2.contextfunction
-    def link_rss(self, context, value):
-        return self.link_value(context, "output_rss", value)
-
-    @jinja2.contextfunction
-    def link_atom(self, context, value):
-        return self.link_value(context, "output_atom", value)
-
-    @jinja2.contextfunction
-    def link_archive(self, context, value):
-        return self.link_value(context, "output_archive", value)
-
-    def load_template_from_meta(self, name):
-        template_name = self.meta.get(name, None)
-        if template_name is None:
-            return None
-        try:
-            return self.site.theme.jinja2.get_template(template_name)
-        except Exception:
-            log.exception("%s: cannot load %s %s", self.src.relpath, name, template_name)
-            return None
+    def __getitem__(self, name):
+        return self.categories[name]
 
     def finalize(self):
-        single_name = self.meta.get("item_name", self.name)
-
-        # Instantiate jinja2 templates
-        self.template_index = self.load_template_from_meta("template_" + self.name)
-        self.template_item = self.load_template_from_meta("template_" + single_name)
-        self.template_rss = self.load_template_from_meta("template_rss")
-        self.template_atom = self.load_template_from_meta("template_atom")
-        self.template_archive = self.load_template_from_meta("template_archive")
-
-        # Extend jinja2 with a function to link to elements of this taxonomy
-        self.site.theme.jinja2.globals["url_for_" + self.name] = self.link_index
-        self.site.theme.jinja2.globals["url_for_" + single_name] = self.link_item
-        self.site.theme.jinja2.globals["url_for_" + single_name + "_rss"] = self.link_rss
-        self.site.theme.jinja2.globals["url_for_" + single_name + "_atom"] = self.link_atom
-        self.site.theme.jinja2.globals["url_for_" + single_name + "_archive"] = self.link_archive
-
-    def add_page(self, page, elements):
-        """
-        Add a page to this taxonomy. Elements is a sequence of elements for
-        this taxonomy.
-        """
-        # Set our 'date' metadata to the maximum date of the pages we've seen
-        cur_date = self.meta.get("date")
-        if cur_date is None or cur_date < page.meta["date"]:
-            self.meta["date"] = page.meta["date"]
-
-        for v in elements:
-            item = self.items.get(v, None)
-            if item is None:
-                item = TaxonomyItem(self, v)
-                self.items[v] = item
-            item.pages.append(page)
+        self.categories = {k: v for k, v in sorted(self.categories.items())}
+        for category in self.categories.values():
+            category.finalize()
 
     def render(self):
         res = {}
 
-        single_name = self.meta.get("item_name", self.name)
-
-        if self.template_index is not None:
-            dest = os.path.join(self.dst_relpath, self.meta["output_index"])
-            if dest.endswith("/"):
-                dest += "index.html"
-            body = self.render_template(self.template_index, {
-                self.name: sorted(self.items.values(), key=lambda x: x.name),
-                **self.meta,
-            })
-            res[dest] = RenderedString(body)
-
-        for item in self.items.values():
-            for type in ("item", "rss", "atom", "archive"):
-                template = getattr(self, "template_" + type, None)
-                if template is None:
-                    continue
-
-                dest = self.meta["output_" + type].format(slug=item.slug)
-                if dest.endswith("/"):
-                    dest += "index.html"
-
-                kwargs = {
-                    "page": self,
-                    single_name: item,
-                    "pages": sorted(item.pages, key=lambda x: x.meta["date"], reverse=True),
-                }
-                kwargs.update(**self.meta)
-                body = template.render(**kwargs)
-                res[os.path.join(self.dst_relpath, dest)] = RenderedString(body)
+        if self.template_tags is not None:
+            body = self.render_template(self.template_tags)
+            res[self.dst_relpath] = RenderedString(body)
 
         return res
 
-    def target_relpaths(self):
-        res = []
 
-        if self.template_index is not None:
-            dest = os.path.join(self.dst_relpath, self.meta["output_index"])
-            if dest.endswith("/"):
-                dest += "index.html"
-            res.append(dest)
+@functools.total_ordering
+class CategoryPage(Page):
+    """
+    Index page showing all the pages tagged with a given taxonomy item
+    """
+    TYPE = "category"
+    RENDER_PREFERRED_ORDER = 2
 
-        for item in self.items.values():
-            for type in ("item", "rss", "atom", "archive"):
-                template = getattr(self, "template_" + type, None)
-                if template is None:
-                    continue
+    def __init__(self, taxonomy, name, meta=None):
+        relpath = os.path.join(taxonomy.src_linkpath, name)
+        super().__init__(
+            site=taxonomy.site,
+            src=File(relpath=relpath),
+            src_linkpath=relpath,
+            dst_relpath=os.path.join(relpath, "index.html"),
+            dst_link=os.path.join(taxonomy.site.settings.SITE_ROOT, relpath),
+            meta=meta)
+        # Category name
+        self.name = name
+        # Taxonomy we belong to
+        self.taxonomy: TaxonomyPage = taxonomy
+        # Pages that have this category
+        self.pages: List[Page] = []
 
-                dest = self.meta["output_" + type].format(slug=item.slug)
-                if dest.endswith("/"):
-                    dest += "index.html"
+        self.meta.setdefault("template_title", "{{page.name}}")
+        self.meta.setdefault("date", taxonomy.meta["date"])
+        self.validate_meta()
 
-                res.append(os.path.join(self.dst_relpath, dest))
+        # Archive page
+        self.archive = CategoryArchivePage(self, meta=taxonomy.archive_meta)
 
-        return res
+    def __lt__(self, o):
+        o_taxonomy = getattr(o, "taxonomy", None)
+        if o_taxonomy is None:
+            return NotImplemented
+
+        o_name = getattr(o, "name", None)
+        if o_name is None:
+            return NotImplemented
+
+        return (self.taxonomy.name, self.name) < (o_taxonomy.name, o_name)
+
+    def __eq__(self, o):
+        o_taxonomy = getattr(o, "taxonomy", None)
+        if o_taxonomy is None:
+            return NotImplemented
+
+        o_name = getattr(o, "name", None)
+        if o_name is None:
+            return NotImplemented
+
+        return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
+
+    def add_page(self, page):
+        """
+        Add a page to this category.
+        """
+        # Our date is the maximum of all pages
+        page_date = page.meta["date"]
+        if page_date > self.meta["date"]:
+            self.meta["date"] = page_date
+
+        self.pages.append(page)
+
+    def finalize(self):
+        self.pages.sort(key=lambda x: x.meta["date"], reverse=True)
+        self.archive.finalize()
+
+    def render(self):
+        return {
+            self.dst_relpath: RenderedString(self.render_template(self.taxonomy.template_tag)),
+        }
+
+
+class CategoryArchivePage(Page):
+    """
+    Index page showing the archive page for a CategoryPage
+    """
+    TYPE = "category_archive"
+    RENDER_PREFERRED_ORDER = 2
+
+    def __init__(self, category_page, meta=None):
+        relpath = os.path.join(category_page.src_linkpath, "archive")
+        super().__init__(
+            site=category_page.site,
+            src=File(relpath=relpath),
+            src_linkpath=relpath,
+            dst_relpath=os.path.join(relpath, "index.html"),
+            dst_link=os.path.join(category_page.site.settings.SITE_ROOT, relpath),
+            meta=meta)
+
+        # Category name
+        self.name = category_page.name
+
+        # Taxonomy we belong to
+        self.taxonomy: TaxonomyPage = category_page.taxonomy
+
+        # Category we belong to
+        self.category: CategoryPage = category_page
+
+        self.meta.setdefault("template_title", "{{page.name}} archive")
+        self.meta.setdefault("date", category_page.meta["date"])
+        self.validate_meta()
+
+    def finalize(self):
+        self.meta["date"] = self.category.meta["date"]
+        self.pages = self.category.pages
+
+    def render(self):
+        return {
+            self.dst_relpath: RenderedString(self.render_template(self.taxonomy.template_tag_archive)),
+        }
 
 
 class TestTaxonomyPage(TaxonomyPage):
@@ -268,5 +309,5 @@ class TestTaxonomyPage(TaxonomyPage):
 
 
 FEATURES = {
-    "tags": TaxonomyPages,
+    "tags": TaxonomyFeature,
 }

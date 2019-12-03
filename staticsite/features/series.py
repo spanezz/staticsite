@@ -29,9 +29,9 @@ class SeriesFeature(Feature):
     def finalize(self):
         taxonomies = self.site.features["tags"].taxonomies
         # Auto-create series from taxonomies
-        for taxonomy in taxonomies:
+        for taxonomy in taxonomies.values():
             for name in taxonomy.meta.get("series_tags", ()):
-                for page in taxonomy.items[name].pages:
+                for page in taxonomy.categories[name].pages:
                     self.add_page_to_series(page, name)
 
         # Finalize series
