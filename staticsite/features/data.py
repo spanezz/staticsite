@@ -234,9 +234,8 @@ class DataPage(Page):
 
         aliases = self.meta.get("aliases", ())
         if aliases:
-            redirect_template = self.site.theme.jinja2.get_template("redirect.html")
             for relpath in aliases:
-                html = self.render_template(redirect_template)
+                html = self.render_template(self.redirect_template)
                 res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res

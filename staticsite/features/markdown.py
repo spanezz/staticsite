@@ -329,7 +329,7 @@ class MarkdownPage(Page):
         res[self.dst_relpath] = RenderedString(html)
 
         for relpath in self.meta.get("aliases", ()):
-            html = self.render_template(self.mdpages.redirect_template)
+            html = self.render_template(self.redirect_template)
             res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res

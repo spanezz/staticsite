@@ -30,4 +30,7 @@ This is a list of all metadata elements that are currently in use:
  - `series_title`, `series_prev`, `series_next`, `series_first`, `series_last`,
    `series_index`, `series_length`: see [series of articles](series.md)
 
+Other features can make use of other metadata, like
+[syndication](syndication.md), or [series](series.md).
+
 [Back to README](../README.md)
