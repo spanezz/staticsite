@@ -2,21 +2,25 @@
 
 # New in version 1.2
 
-* RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl
+* RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl.
 * Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
   list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
   found that is not listed in `TAXONOMIES`.
-* Try harder to localize timestamps as the configured site TIMEZONE
+* Try harder to localize timestamps as the configured site TIMEZONE.
 * Added a `ssite show` command to open a directory in a browser without loading
-  possibly unsafe settings
+  possibly unsafe settings.
 * When run without a `settings.py`, take more defaults from repo mode. This
   makes running staticfile or arbitrary directories quite useful, and similar
   to viewing a repository on GitLab/GitHub.
 * Improved logging in case of jinja2 errors. Use --debug to see a full
-  stacktrace
+  stacktrace.
 * Instantiate Feature classes in dependency order: this allows a feature
   constructor to register hooks with another one.
-* Significantly reengineered 'tags' feature
+* Significantly reengineered 'tags' feature.
+* `description` can now be used for page metadata.
+* `template_title` and `template_description`, if present while `title` and
+  `description` are not, are rendered with jinja2. See [doc/metadata.md] for
+  details.
 
 ## Upgrade notes
 

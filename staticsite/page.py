@@ -93,19 +93,29 @@ class Page:
                 self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
 
         # title must exist
-        title = self.meta.get("title")
+        title = self._fill_possibly_templatized_meta_value("title")
         if title is None:
             self.meta["title"] = os.path.basename(self.src_linkpath)
-        elif isinstance(title, jinja2.Template):
-            # If title is a jinja2 template, render it in the page context
-            self.meta["title"] = title.render(page=self)
 
         # description may exist
-        description = self.meta.get("description")
-        if description is not None:
-            if isinstance(description, jinja2.Template):
-                # If description is a jinja2 template, render it in the page context
-                self.meta["description"] = description.render(page=self)
+        self._fill_possibly_templatized_meta_value("description")
+
+    def _fill_possibly_templatized_meta_value(self, name):
+        # If there is a value for the field, we're done
+        val = self.meta.get(name)
+        if val is not None:
+            return val
+
+        # If there's a templatized value for the field, render it
+        template_val = self.meta.get(f"template_{name}")
+        if template_val is not None:
+            val = jinja2.Markup(self.render_template(
+                    self.site.theme.jinja2.from_string(template_val)))
+            self.meta[name] = val
+            return val
+
+        # Else we could not fill
+        return None
 
     @property
     def date_as_iso8601(self):
