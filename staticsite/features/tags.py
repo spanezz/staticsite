@@ -115,6 +115,12 @@ class TaxonomyPage(Page):
         # Read taxonomy information
         self._read_taxonomy_description()
 
+        # Metadata for category pages
+        self.category_meta = self.meta.get("category", {})
+
+        # Metadata for archive pages
+        self.archive_meta = self.meta.get("archive", {})
+
         # Template used to render this taxonomy
         self.template_tags = self.site.theme.jinja2.get_template(self.meta.get("template_tags", "tags.html"))
 
@@ -151,7 +157,7 @@ class TaxonomyPage(Page):
         for v in categories:
             category_page = self.categories.get(v, None)
             if category_page is None:
-                category_page = CategoryPage(self, v)
+                category_page = CategoryPage(self, v, meta=self.category_meta)
                 self.categories[v] = category_page
                 self.site.pages[category_page.src_linkpath] = category_page
                 self.site.pages[category_page.archive.src_linkpath] = category_page.archive
@@ -188,14 +194,15 @@ class CategoryPage(Page):
     TYPE = "category"
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, taxonomy, name):
+    def __init__(self, taxonomy, name, meta=None):
         relpath = os.path.join(taxonomy.src_linkpath, name)
         super().__init__(
             site=taxonomy.site,
             src=File(relpath=relpath),
             src_linkpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(taxonomy.site.settings.SITE_ROOT, relpath))
+            dst_link=os.path.join(taxonomy.site.settings.SITE_ROOT, relpath),
+            meta=meta)
         # Category name
         self.name = name
         # Taxonomy we belong to
@@ -203,12 +210,12 @@ class CategoryPage(Page):
         # Pages that have this category
         self.pages: List[Page] = []
 
-        self.meta.setdefault("title", name)
+        self.meta.setdefault("template_title", "{{page.name}}")
         self.meta.setdefault("date", taxonomy.meta["date"])
         self.validate_meta()
 
         # Archive page
-        self.archive = CategoryArchivePage(self)
+        self.archive = CategoryArchivePage(self, meta=taxonomy.archive_meta)
 
     def __lt__(self, o):
         o_taxonomy = getattr(o, "taxonomy", None)
@@ -260,14 +267,15 @@ class CategoryArchivePage(Page):
     TYPE = "category_archive"
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, category_page):
+    def __init__(self, category_page, meta=None):
         relpath = os.path.join(category_page.src_linkpath, "archive")
         super().__init__(
             site=category_page.site,
             src=File(relpath=relpath),
             src_linkpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(category_page.site.settings.SITE_ROOT, relpath))
+            dst_link=os.path.join(category_page.site.settings.SITE_ROOT, relpath),
+            meta=meta)
 
         # Category name
         self.name = category_page.name
@@ -278,7 +286,7 @@ class CategoryArchivePage(Page):
         # Category we belong to
         self.category: CategoryPage = category_page
 
-        self.meta.setdefault("title", category_page.meta["title"])
+        self.meta.setdefault("template_title", "{{page.name}} archive")
         self.meta.setdefault("date", category_page.meta["date"])
         self.validate_meta()
 

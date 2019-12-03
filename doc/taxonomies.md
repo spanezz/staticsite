@@ -14,23 +14,27 @@ The `.taxonomy` file will be a yaml, json, or toml file, like in
 
 The relevant fields in a taxonomy file are:
 
-* `template_tags`: template used to render the main taxonomy index (default:
-  `tags.html`)
-* `template_tag`: template to use to render each individual category index
-  for a taxonomy (default: `tag.html`)
-* `template_archive`: template to use to render the archive page for each
-  individual category index for a taxonomy (default: `tag-archive.html`)
+* `title`, `description`: used for the taxonomy index page
+* `category`: metadata for the page generated for each category in the taxonomy
+* `archive`: metadata for the page generated for each category archive
+
+* **changed in 1.2**: `template_tags`: use `template` instead
+* **changed in 1.2**: `template_tag`: use `category/template` instead
+* **changed in 1.2**: `template_archive`: use `archive/template` instead
 * **Removed in 1.2**: `output_dir` is now ignored, and the taxonomy pages will
   be put in a directory with the same name as the file, without extension
 * **Changed in 1.2**: `item_name` in a `.taxonomy` file does not have a special
   meaning anymore, and templates can still find it in the taxonomy page
   metadata
 * **Added in 1.2**: page.meta["tags"] or other taxonomy names gets substituted,
-  from a list of strings, to a list of pages for the taxonomy index
+  from a list of strings, to a list of pages for the taxonomy index, which can
+  be used to generate links and iterate subpages in templates without the need
+  of specialised functions.
 
+Example:
 
-```toml
-+++
+```yaml
+---
 # In staticsite, a taxonomy is a group of attributes like categories or tags.
 #
 # Like in Hugo, you can have as many taxonomies as you want. See
@@ -45,20 +49,27 @@ The relevant fields in a taxonomy file are:
 
 # Template for rendering the taxonomy index. Here, it's the page that shows the
 # list of tags
-template_tags = "tags.html"
-
-# Template for rendering the page for one tag. Here, it's the page that shows
-# the latest pages tagged with the tag
-template_tag = "tag.html"
-
-# Template for rendering the archive page for one tag. Here, it's the page that
-# links to all the pages tagged with the tag
-template_archive = "tag-archive.html"
+template: tags.html
 
 # When pages are added with these items of this taxonomy,
 # also add them to a series with the same name as the tag
 series_tags = ["links", "songs"]
-+++
+
+category:
+   # Template for rendering the page for one tag. Here, it's the page that shows
+   # the latest pages tagged with the tag
+   template: tag.html
+   # Title used in category pages
+   template_title: "Latest posts for tag <strong>{{page.name}}</strong>"
+   # Description used in category pages
+   template_description: "Most recent posts with tag <strong>{{page.name}}</strong>"
+
+archive:
+   # Template for rendering the archive page for one tag. Here, it's the page that
+   # links to all the pages tagged with the tag
+   template = "tag-archive.html"
+   template_title: "Archive of posts for tag <strong>{{page.name}}</strong>"
+   template_description: "Archive of all posts with tag <strong>{{page.name}}</strong>"
 ```
 
 

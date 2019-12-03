@@ -11,17 +11,11 @@ log = logging.getLogger()
 
 
 class SyndicationInfo:
-    def __init__(self, index_page: Page, syndication: Dict[str, Any]):
+    def __init__(self, index_page: Page, syndication: Dict[str, Any] = None):
+        if syndication is None:
+            syndication = {}
         self.index_page = index_page
         self.meta = syndication
-
-        title = self.meta.get("title")
-        if title is not None and isinstance(title, str):
-            self.meta["title"] = self.index_page.site.theme.jinja2.from_string(title)
-
-        description = self.meta.get("description")
-        if description is not None and isinstance(description, str):
-            self.meta["description"] = self.index_page.site.theme.jinja2.from_string(description)
 
         # Dict with PageFilter arguments to select the pages to show in this
         # syndication
@@ -76,12 +70,8 @@ class SyndicationFeature(Feature):
         # Add syndication info for all taxonomies
         for taxonomy in self.site.features["tags"].taxonomies.values():
             # For each item in the taxonomy, create a syndication
-            tag_syndication = taxonomy.meta.get("tag_syndication")
-            if tag_syndication is None:
-                tag_syndication = {}
-
             for category_page in taxonomy.categories.values():
-                info = SyndicationInfo(category_page, tag_syndication)
+                info = SyndicationInfo(category_page, category_page.meta.get("syndication"))
                 info.pages = category_page.pages
                 self.syndications.append(info)
                 category_page.meta["syndication_info"] = info
