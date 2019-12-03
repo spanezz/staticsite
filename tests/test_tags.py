@@ -3,7 +3,7 @@ from . import utils as test_utils
 import datetime
 
 
-class TestTaxonomies(TestCase):
+class TestTags(TestCase):
     def test_site(self):
         """
         Test simply assigning pages to taxonomies
