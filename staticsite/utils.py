@@ -25,6 +25,9 @@ def parse_front_matter(lines):
         return "toml", toml.loads("\n".join(lines[1:-1]))
 
     if lines[0] == "---":
+        if len(lines) == 1:
+            return "yaml", {}
+
         # YAML
         try:
             import ruamel.yaml
