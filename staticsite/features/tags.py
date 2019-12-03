@@ -22,9 +22,6 @@ class TaxonomyFeature(Feature):
         # All TaxonomyPages found
         self.taxonomies: Dict[str, TaxonomyPage] = {}
 
-        # Hook into all pages that have this taxonomy defined
-        self.for_metadata.extend(self.site.settings.TAXONOMIES)
-
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
@@ -59,12 +56,6 @@ class TaxonomyFeature(Feature):
         self.taxonomies[page.name] = page
         return page
 
-    def add_page(self, page: Page):
-        for name, taxonomy in self.taxonomies.items():
-            categories = page.meta.get(name)
-            if categories is not None:
-                taxonomy.add_page(page, categories)
-
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
         return self.taxonomies.values()
 
@@ -72,13 +63,26 @@ class TaxonomyFeature(Feature):
         return self.taxonomies.get(name)
 
     def finalize(self):
+        # Scan all pages for taxonomies.
+
+        # Do it here instead of hooking into self.for_metadata and do this at
+        # page load time, so that we are sure that all .taxonomy files have
+        # been loaded
+        for page in list(self.site.pages.values()):
+            for name, taxonomy in self.taxonomies.items():
+                categories = page.meta.get(name)
+                if categories is None:
+                    continue
+                taxonomy.add_page(page, categories)
+
         # Warn of taxonomies configured in settings.TAXONOMIES but not mounted
         # with a <name>.taxonomy
         for name in self.site.settings.TAXONOMIES:
             if name not in self.taxonomies:
-                log.warn("Taxonomy %s defined in settings, but no %s.taxonomy file found in site contents",
+                log.warn("Taxonomy %s defined in settings, but no %s.taxonomy file found in site contents: ignoring it",
                          name, name)
 
+        # Call finalize on all taxonomy pages, now that we fully populated them
         for taxonomy in self.taxonomies.values():
             taxonomy.finalize()
 

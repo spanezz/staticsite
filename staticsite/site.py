@@ -117,13 +117,13 @@ class Site:
             content_root = self.content_root
         self.read_contents_tree(content_root)
 
-    def load(self):
+    def load(self, content_root=None):
         """
         Load all site components
         """
         self.features.load_default_features()
         self.load_theme()
-        self.load_content()
+        self.load_content(content_root=content_root)
 
     def add_page(self, page: Page):
         """
