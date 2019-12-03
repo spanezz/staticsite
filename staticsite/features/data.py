@@ -191,6 +191,7 @@ class DataPage(Page):
             self.meta["date"] = dateutil.parser.parse(date)
 
         self._content = None
+        self.validate_meta()
 
     @property
     def content(self):
