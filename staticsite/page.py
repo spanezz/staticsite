@@ -71,6 +71,10 @@ class Page:
             self.meta = dict(meta)
         log.debug("%s: new page, src_link: %s", self.src.relpath, src_linkpath)
 
+        # Cached templates
+        self._page_template = None
+        self._redirect_template = None
+
     def validate_meta(self):
         """
         Enforce common meta invariants
@@ -84,6 +88,9 @@ class Page:
                 self.meta["date"] = self.site.generation_time
         elif not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
+
+        # template must exist, and defaults to page.html
+        self.meta.setdefault("template", "page.html")
 
         # date must be an aware datetime
         if self.meta["date"].tzinfo is None:
@@ -116,6 +123,18 @@ class Page:
 
         # Else we could not fill
         return None
+
+    @property
+    def page_template(self):
+        if not self._page_template:
+            self._page_template = self.site.theme.jinja2.get_template(self.meta["template"])
+        return self._page_template
+
+    @property
+    def redirect_template(self):
+        if not self._redirect_template:
+            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
+        return self._redirect_template
 
     @property
     def date_as_iso8601(self):

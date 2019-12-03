@@ -38,5 +38,6 @@ Example blog post in reStructuredText
         self.assertEqual(page.meta, {
             "date": datetime.datetime(2016, 4, 16, 10, 23, tzinfo=tz.tzoffset(None, 7200)),
             "foo": "line1\nline2\nline3",
+            "template": "page.html",
             "title": "Example blog post in reStructuredText",
         })

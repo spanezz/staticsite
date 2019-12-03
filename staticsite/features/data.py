@@ -225,8 +225,7 @@ class DataPage(Page):
     def render(self):
         res = {}
 
-        page_template = self.site.theme.jinja2.get_template("page.html")
-        html = self.render_template(page_template, {
+        html = self.render_template(self.page_template, {
             "content": self.content,
             **self.meta
         })

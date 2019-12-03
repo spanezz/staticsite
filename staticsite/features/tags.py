@@ -104,6 +104,7 @@ class TaxonomyPage(Page):
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
             meta=meta)
+        self.meta.setdefault("template", "tags.html")
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
@@ -117,9 +118,11 @@ class TaxonomyPage(Page):
 
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
+        self.category_meta.setdefault("template", "tag.html")
 
         # Metadata for archive pages
         self.archive_meta = self.meta.get("archive", {})
+        self.archive_meta.setdefault("template", "tag-archive.html")
 
         # Template used to render this taxonomy
         self.template_tags = self.site.theme.jinja2.get_template(self.meta.get("template_tags", "tags.html"))

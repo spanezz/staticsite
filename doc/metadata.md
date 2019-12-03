@@ -2,6 +2,9 @@
 
 This is a list of all metadata elements that are currently in use:
 
+ - `template`: template used to render the page. Defaults to `page.html`,
+   although specific pages of some features can default to other template
+   names. Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/)
  - `date`: a python datetime object, timezone aware. If the date is in the
    future when `ssite` runs, the page will be consider a draft and will be
    ignored. Use `ssite --draft` to also consider draft pages.

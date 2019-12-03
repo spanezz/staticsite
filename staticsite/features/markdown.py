@@ -83,9 +83,6 @@ class MarkdownPages(Feature):
             output_format="html5",
         )
         self.link_resolver = md_staticsite.link_resolver
-        # Cached templates
-        self._page_template = None
-        self._redirect_template = None
 
         self.j2_filters["markdown"] = self.jinja2_markdown
 
@@ -94,18 +91,6 @@ class MarkdownPages(Feature):
     @jinja2.contextfilter
     def jinja2_markdown(self, context, mdtext):
         return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
-
-    @property
-    def page_template(self):
-        if not self._page_template:
-            self._page_template = self.site.theme.jinja2.get_template("page.html")
-        return self._page_template
-
-    @property
-    def redirect_template(self):
-        if not self._redirect_template:
-            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
-        return self._redirect_template
 
     def render_page(self, page):
         """
@@ -337,7 +322,7 @@ class MarkdownPage(Page):
     def render(self):
         res = {}
 
-        html = self.render_template(self.mdpages.page_template, {
+        html = self.render_template(self.page_template, {
             "content": self.content,
             **self.meta,
         })

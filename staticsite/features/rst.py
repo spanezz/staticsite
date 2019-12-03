@@ -84,26 +84,10 @@ class RestructuredText(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
-        # Cached templates
-        self._page_template = None
-        self._redirect_template = None
-
         # self.render_cache = self.site.caches.get("markdown")
 
         # Names of tags whose content should be parsed as yaml
         self.yaml_tags = set()
-
-    @property
-    def page_template(self):
-        if not self._page_template:
-            self._page_template = self.site.theme.jinja2.get_template("page.html")
-        return self._page_template
-
-    @property
-    def redirect_template(self):
-        if not self._redirect_template:
-            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
-        return self._redirect_template
 
     def parse_rest(self, fd, remove_docinfo=True):
         """
@@ -351,7 +335,7 @@ class RstPage(Page):
     def render(self):
         res = {}
 
-        html = self.render_template(self.rst.page_template, {
+        html = self.render_template(self.page_template, {
             "content": self.content,
             **self.meta,
         })

@@ -21,6 +21,8 @@
 * `template_title` and `template_description`, if present while `title` and
   `description` are not, are rendered with jinja2. See [doc/metadata.md] for
   details.
+* `template` metadata can be used to choose a custom template to render the
+  page, similar to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 
 ## Upgrade notes
 
