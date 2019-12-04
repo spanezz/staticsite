@@ -1,8 +1,0 @@
-{#
-  This template will likely be the same for all Atom feeds.
-
-  You may just want to tweak the path=, limit=, link= and title= parameters to
-  fit your needs.
--#}
-{% from 'syndication.xml' import rss2_feed -%}
-{{rss2_feed(site_pages(path="blog/*", limit=10), link=url_for("blog"), title=site.site_name + ": blog")}}

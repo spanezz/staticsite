@@ -51,7 +51,7 @@ Example blog post in reStructuredText
             contents = page.render()
             for relpath, rendered in contents.items():
                 # Ignore static assets
-                if re.match(r"^(css|images|js|fonts)/", relpath):
+                if re.match(r"^(fork-awesome|popper\.js|bootstrap4|jquery|css|images)/", relpath):
                     continue
                 rendered_pages[relpath] = [page, rendered]
 

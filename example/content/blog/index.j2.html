@@ -1,18 +1,13 @@
 {% extends "base.html" %}
 {% from 'inline_page.html' import inline_page %}
 
-{% block head %}
-<link href="{{ url_for("index.rss") }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: blog RSS2 feed"></link>
-<link href="{{ url_for("index.atom") }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: blog ATOM feed"></link>
-{% endblock %}
-
 {% block nav %}
 {{super()}}
-<li><a href="{{ url_for('/blog/archive.html') }}">Archive</a></li>
+<li class="nav-item"><a class="nav-link" href="{{ url_for('/blog/archive.html') }}">Archive</a></li>
 {% endblock %}
 
 {% block content %}
-<h1>Blog entries</h1>
+<h1 class="display-4">Last 10 blog posts</h1>
 
 <p>This the example front page for the blog.</p>
 

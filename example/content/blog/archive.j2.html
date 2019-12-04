@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% from 'inline_page.html' import inline_page %}
 
-{% block head %}
-<link href="{{ url_for("index.rss") }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: blog RSS2 feed"></link>
-<link href="{{ url_for("index.atom") }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: blog ATOM feed"></link>
-{% endblock %}
-
 {% block content %}
 <h1>Blog entries</h1>
 
