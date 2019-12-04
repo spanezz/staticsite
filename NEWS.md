@@ -23,6 +23,10 @@
   details.
 * `template` metadata can be used to choose a custom template to render the
   page, similar to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+* Vendorized assets in `theme/static/` are now read by asset library name, as
+  if `static/` were the same as `/usr/share/javascript/`. Now you need to refer
+  to `/jquery/jquery.min.js` and `/bootstrap4/css/bootstrap.min.css` instead of
+  `jquery.min.js` and `css/bootstrap.min.css`.
 
 ## Upgrade notes
 
