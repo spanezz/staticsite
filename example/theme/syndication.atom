@@ -12,7 +12,7 @@
     <id>{{SITE_URL}}{{url_for(page)}}</id>
     <link href="{{SITE_URL}}{{url_for(page)}}"/>
     {% for tag in page.meta.tags -%}
-    <category term="{{tag}}"/>
+    <category term="{{tag.name}}"/>
     {%- endfor %}
     <updated>{{page.meta.date|datetime_format("atom")}}</updated>
     <published>{{page.meta.date|datetime_format("atom")}}</published>

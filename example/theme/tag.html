@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="display-4">Latest posts for tag <b>{{page.meta.titlee}}</b></h1>
+<h1 class="display-4">{{page.meta.title}}</h1>
 
 {% for page in page.pages[:10] %}
 {{inline_page(page)}}

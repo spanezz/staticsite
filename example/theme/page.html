@@ -1,13 +1,5 @@
 {% extends "base.html" %}
 
-{% block head %}
-{{super()}}
-{% if url_for_tag and series %}
-<link href="{{ url_for_tag_rss(series) }}" rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}: {{series}} RSS2 feed"></link>
-<link href="{{ url_for_tag_atom(series) }}" rel="alternate" type="application/atom+xml" title="{{SITE_NAME}}: {{series}} ATOM feed"></link>
-{% endif %}
-{% endblock %}
-
 {# Render navigation for page series #}
 {% block nav %}
 {{super()}}
@@ -43,16 +35,6 @@
     <a href="{{url_for(series_last)}}"><span class="glyphicon glyphicon-fast-forward"></a>
   </li>
   {% endif %}
-{% endif %}
-{% endblock %}
-
-{% block nav_extra %}
-{% if url_for_tag and series %}
-<p class="navbar-text navbar-right">
-  <a href="{{ url_for_tag_rss(page.meta.series) }}">
-    <img src="{{ url_for('/images/feed-icon-16x16.png') }}">
-  </a>
-</p>
 {% endif %}
 {% endblock %}
 

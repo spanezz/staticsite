@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="display-4">All tags</h1>
+<h1 class="display-4">{{page.meta.title}}</h1>
+
+{% if page.meta.description %}
+<p>{{page.meta.description}}</p>
+{% endif %}
 
 <p class="h5">
 {% for name, category_page in page.categories.items() %}

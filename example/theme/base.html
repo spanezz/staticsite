@@ -1,17 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: http://ogp.me/ns#">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>{% block title %}{{title}}{% endblock %}</title>
+
+    {% block meta %}
+    {% block meta_common %}
+    <meta name="language" content="EN">
+    <meta name="robots" content="index, follow"/>
+    <meta name="keywords" content="{% for tag in page.meta.tags -%}{% if loop.index0 %}, {% endif %}{{tag.name}}{% endfor %}"/>
+    {% if page.meta.description %}<meta name="description" content="{{page.meta.description}}" />{% endif %}
+    <meta name="author" content="{{SITE_AUTHOR}}"/>
+    <meta name="generator" content="staticsite"/>
+    {% endblock %}
+
+    {% block meta_opengraph %}
+    <meta property="og:title" content="{{title}}" />
+    {% if page.meta.image %}<meta property="og:image" content="{{url_for(page.meta.image)}}" />{% endif %}
+    {% if page.meta.imagelabel %}<meta property="og:image:alt" content="{{page.meta.imagelabel}}" />{% endif %}
+    <meta property="og:url" content="{{url_for(page)}}" />
+    {% if page.meta.description %}<meta property="og:description" content="{{page.meta.description}}" />{% endif %}
+    <meta property="og:site_name" content="{{site.site_name}}" />
+    {% block meta_opengraph_article %}
+    <meta property="og:type" content="article" />
+    <meta property="og:article:author" content="{{SITE_AUTHOR}}" />
+    <meta property="og:article:published_time" content="{{page.meta.date.isoformat()}}" />
+    {% for tag in page.meta.tags -%}
+    <meta property="og:article:tag" content="{{tag.name}}" />
+    {% endfor %}
+    {% endblock %}
+    {% endblock %}
+    {% endblock %}
+
+    {% block head_syndication %}
+    {% if page.meta.syndication_info %}
+    <link href="{{ url_for(page.meta.syndication_info.rss_page) }}" rel="alternate" type="application/rss+xml" title="{{page.meta.syndication_info.title}}"/>
+    <link href="{{ url_for(page.meta.syndication_info.atom_page) }}" rel="alternate" type="application/atom+xml" title="{{page.meta.syndication_info.title}}"/>
+    {% endif %}
+    {% endblock %}
 
     <!-- Bootstrap -->
     <link href="{{ url_for('/css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('/css/site.css') }}" rel="stylesheet">
-    <link href="{{ url_for('/css/github.css') }}" rel="stylesheet">
+    <link href="{{ url_for('/css/site.css') }}" rel="stylesheet"/>
+    <link href="{{ url_for('/css/github.css') }}" rel="stylesheet"/>
+
     {% block favicon %}<link rel="icon" href="{{ url_for('images/favicon.ico') }}">{% endblock %}
+
+    <title>{% block title %}{{title}}{% endblock %}</title>
+
     {% block head %}
     {% endblock %}
   </head>
