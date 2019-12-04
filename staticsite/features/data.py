@@ -122,7 +122,7 @@ def parse_data(fd, fmt):
     elif fmt == "yaml":
         try:
             import ruamel.yaml
-            yaml = ruamel.yaml.YAML()
+            yaml = ruamel.yaml.YAML(typ="rt")
             load_args = {}
         except ModuleNotFoundError:
             import yaml

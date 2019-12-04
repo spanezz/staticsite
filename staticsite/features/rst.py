@@ -15,7 +15,7 @@ import tempfile
 import logging
 try:
     import ruamel.yaml
-    yaml = ruamel.yaml.YAML()
+    yaml = ruamel.yaml.YAML(typ="safe", pure=True)
 
     def parse_yaml_tag(s):
         return yaml.load(s)

@@ -31,7 +31,7 @@ def parse_front_matter(lines):
         # YAML
         try:
             import ruamel.yaml
-            yaml = ruamel.yaml.YAML()
+            yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             load_args = {}
         except ModuleNotFoundError:
             import yaml
