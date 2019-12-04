@@ -192,10 +192,12 @@ class Site:
 
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
+            files = File.scan_subpath(tree_root, subdir, follow_symlinks=True, ignore_hidden=True)
         else:
             log.info("Loading assets from %s", tree_root)
+            files = File.scan(tree_root, follow_symlinks=True, ignore_hidden=True)
 
-        for f in File.scan(tree_root, relpath=subdir, follow_symlinks=True, ignore_hidden=True):
+        for f in files:
             if not stat.S_ISREG(f.stat.st_mode):
                 continue
             log.debug("Loading static file %s", f.relpath)

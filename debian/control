@@ -19,7 +19,7 @@ Vcs-Browser: https://github.com/spanezz/staticsite
 Package: staticsite
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}
-Recommends: ${python3:Recommends}, libjs-jquery, libjs-bootstrap, python3-lmdb
+Recommends: ${python3:Recommends}, libjs-jquery, libjs-bootstrap4, fonts-fork-awesome, python3-lmdb
 Description: Static site generator
  Static site generator based on markdown and jinja2.
  .

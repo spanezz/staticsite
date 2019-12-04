@@ -125,13 +125,8 @@ class File(NamedTuple):
                     dirfd=dirfd)
 
     @classmethod
-    def scan(cls, tree_root, relpath=None, follow_symlinks=False, ignore_hidden=False):
-        if relpath is None:
-            scan_path = tree_root
-        else:
-            scan_path = os.path.join(tree_root, relpath)
-
-        for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
+    def scan(cls, tree_root, follow_symlinks=False, ignore_hidden=False):
+        for root, dnames, fnames, dirfd in os.fwalk(tree_root, follow_symlinks=follow_symlinks):
             if ignore_hidden:
                 # Ignore hidden directories
                 filtered = [d for d in dnames if not d.startswith(".")]
@@ -144,6 +139,33 @@ class File(NamedTuple):
                     continue
 
                 abspath = os.path.join(root, f)
+                try:
+                    st = os.stat(f, dir_fd=dirfd)
+                except FileNotFoundError:
+                    # Skip broken links
+                    continue
+                yield cls(
+                        relpath=os.path.relpath(abspath, tree_root),
+                        root=tree_root,
+                        abspath=abspath,
+                        stat=st)
+
+    @classmethod
+    def scan_subpath(cls, tree_root, relpath, follow_symlinks=False, ignore_hidden=False):
+        scan_path = os.path.join(tree_root, relpath)
+        for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
+            if ignore_hidden:
+                # Ignore hidden directories
+                filtered = [d for d in dnames if not d.startswith(".")]
+                if len(filtered) != len(dnames):
+                    dnames[::] = filtered
+
+            for f in fnames:
+                # Ignore hidden files
+                if ignore_hidden and f.startswith("."):
+                    continue
+
+                abspath = os.path.join(relpath, root, f)
                 try:
                     st = os.stat(f, dir_fd=dirfd)
                 except FileNotFoundError:

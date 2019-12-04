@@ -4,54 +4,86 @@
 {% block nav %}
 {{super()}}
 {% if series %}
-  <li>
-    <a href="{{url_for(series_first)}}"><span class="glyphicon glyphicon-fast-backward"></a>
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(series_first)}}"><span class="fa fa-backward"></a>
   </li>
 
   {% if series_prev %}
-  <li>
-    <a href="{{url_for(series_prev)}}"><span class="glyphicon glyphicon-chevron-left"></a>
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(series_prev)}}"><span class="fa fa-chevron-left"></a>
   {% else %}
-  <li class="disabled">
-    <a href="#"><span class="glyphicon glyphicon-chevron-left"></a>
+  <li class="nav-item">
+    <a class="nav-link disabled" href="#"><span class="fa fa-chevron-left"></a>
   {% endif %}
   </li>
 
-  {% if url_for_tag %}
-  <li><a href="{{url_for_tag_archive(page.meta.series)|default("#")}}">{{series_title}} {{series_index}}/{{series_length}}</a></li>
-  {% endif %}
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="nav_series_dropdown"
+       role="button" data-toggle="dropdown" aria-haspopup="true"
+      aria-expanded="false">
+      {{series_title}} {{series_index}}/{{series_length}}
+    </a>
+      <div class="dropdown-menu" aria-labelledby="nav_series_dropdown">
+        {% for s_page in series_pages %}
+          {% if page == s_page %}
+            <span class="dropdown-item font-weight-bolder">{{s_page.meta.title}}</span>
+          {% else %}
+            <a class="dropdown-item" href="{{url_for(s_page)}}">{{s_page.meta.title}}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+  </li>
 
   {% if series_next %}
-  <li>
-    <a href="{{url_for(series_next)}}"><span class="glyphicon glyphicon-chevron-right"></a>
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(series_next)}}"><span class="fa fa-chevron-right"></a>
   {% else %}
-  <li class="disabled">
-    <a href="#"><span class="glyphicon glyphicon-chevron-right"></a>
+  <li class="nav-item">
+    <a class="nav-link disabled" href="#"><span class="fa fa-chevron-right"></a>
   {% endif %}
   </li>
 
   {% if series_last %}
-  <li>
-    <a href="{{url_for(series_last)}}"><span class="glyphicon glyphicon-fast-forward"></a>
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(series_last)}}"><span class="fa fa-forward"></a>
   </li>
   {% endif %}
 {% endif %}
 {% endblock %}
 
 {% block content %}
-  <div class="page-header">
-    <h1>{{page.meta.title}}</h1>
+<div class="d-flex justify-content-between align-items-top mb-4">
+  <h1 class="display-4">{{page.meta.title}}</h1>
+  <div class="text-right">
+    {% for tag in page.meta.tags %}
+    <a class="badge badge-pill badge-primary" href="{{ url_for(tag) }}" class="label label-default">{{tag.name}}</a>
+    {% endfor %}
   </div>
+</div>
 
-  {{content|safe}}
+{% if page.meta.image %}
+<figure class="figure float-right w-50 ml-3">
+<img class="figure-img img-fluid rounded" src="{{url_for(page.meta.image)}}"{% if page.meta.imagelabel %} alt="{{page.meta.imagelabel}}"{% endif %}>
+</img>
+{% if page.meta.imagelabel %}
+<figcaption class="figure-caption text-right">{{page.meta.imagelabel}}</figcaption>
+{% endif %}
+</figure>
+{% endif %}
 
-  {% if url_for_tag %}
-  <p>
-  {% for tag in tags %}
-  <a href="{{ url_for_tag(tag) }}" class="label label-default">{{tag}}</a>
-  {% endfor %}
-  </p>
-  {% endif %}
+{{content|safe}}
+{% endblock %}
 
-  <p><small>{{page.meta.date}}</small></p>
+{% block footer_content %}
+<div class="row">
+  <div class="col col-lg-8">
+    <small>{{page.meta.date.strftime("%Y-%m-%d %H:%M")}}</small>
+  </div>
+  <div class="col-sm-4 text-right">
+    {% for tag in page.meta.tags %}
+    <a class="badge badge-pill badge-primary" href="{{ url_for(tag) }}" class="label label-default">{{tag.name}}</a>
+    {% endfor %}
+  </div>
+</div>
+{{super()}}
 {% endblock %}
