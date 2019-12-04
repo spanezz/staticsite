@@ -116,7 +116,7 @@ class Page:
         if self.site.settings.DRAFT_MODE:
             return True
         if self.draft:
-            log.info("%s: still a draft, ignoring self", self.src.relpath)
+            log.info("%s: still a draft", self.src.relpath)
             return False
         return True
 
