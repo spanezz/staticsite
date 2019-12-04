@@ -170,6 +170,9 @@ class RestructuredText(Feature):
                 log.warn("%s: Failed to parse RestructuredText page: skipped", f)
                 continue
 
+            if not page.is_valid():
+                continue
+
             taken.append(fname)
             pages.append(page)
 
@@ -272,8 +275,6 @@ class RstPage(Page):
             self.meta.update(**fm_meta)
 
         self.doctree_scan = doctree_scan
-
-        self.validate_meta()
 
     def check(self, checker):
         self._render_page()

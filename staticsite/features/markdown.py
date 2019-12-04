@@ -153,6 +153,9 @@ class MarkdownPages(Feature):
                 log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=True)
                 continue
 
+            if not page.is_valid():
+                continue
+
             taken.append(fname)
             pages.append(page)
 
@@ -304,8 +307,6 @@ class MarkdownPage(Page):
                 # Remove leading empty lines again
                 while self.body and not self.body[0]:
                     self.body.pop(0)
-
-        self.validate_meta()
 
     def get_content(self):
         return "\n".join(self.body)

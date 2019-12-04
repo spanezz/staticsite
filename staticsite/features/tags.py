@@ -26,10 +26,6 @@ class TaxonomyFeature(Feature):
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
     def load_dir(self, sitedir: Dir) -> List[Page]:
-        # meta = sitedir.meta_features.get("j2")
-        # if meta is None:
-        #     meta = {}
-
         taken = []
         pages = []
         for fname, src in sitedir.files.items():
@@ -41,6 +37,8 @@ class TaxonomyFeature(Feature):
                 continue
 
             page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
+            if not page.is_valid():
+                continue
             self.taxonomies[page.name] = page
             taken.append(fname)
             pages.append(page)
@@ -134,8 +132,6 @@ class TaxonomyPage(Page):
         self.template_tag_archive = self.site.theme.jinja2.get_template(
                 self.meta.get("template_archive", "tag-archive.html"))
 
-        self.validate_meta()
-
     def _read_taxonomy_description(self):
         """
         Parse the taxonomy file to read its description
@@ -161,9 +157,18 @@ class TaxonomyPage(Page):
             category_page = self.categories.get(v, None)
             if category_page is None:
                 category_page = CategoryPage(self, v, meta=self.category_meta)
+                if not category_page.is_valid():
+                    log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
+
+                archive_page = CategoryArchivePage(category_page, meta=self.archive_meta)
+                if not archive_page.is_valid():
+                    log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
+
                 self.categories[v] = category_page
+                category_page.archive = archive_page
+
                 self.site.pages[category_page.src_linkpath] = category_page
-                self.site.pages[category_page.archive.src_linkpath] = category_page.archive
+                self.site.pages[category_page.archive.src_linkpath] = archive_page
             category_pages.append(category_page)
             category_page.add_page(page)
 
@@ -215,10 +220,9 @@ class CategoryPage(Page):
 
         self.meta.setdefault("template_title", "{{page.name}}")
         self.meta.setdefault("date", taxonomy.meta["date"])
-        self.validate_meta()
 
         # Archive page
-        self.archive = CategoryArchivePage(self, meta=taxonomy.archive_meta)
+        self.archive = None
 
     def __lt__(self, o):
         o_taxonomy = getattr(o, "taxonomy", None)
@@ -291,7 +295,6 @@ class CategoryArchivePage(Page):
 
         self.meta.setdefault("template_title", "{{page.name}} archive")
         self.meta.setdefault("date", category_page.meta["date"])
-        self.validate_meta()
 
     def finalize(self):
         self.meta["date"] = self.category.meta["date"]

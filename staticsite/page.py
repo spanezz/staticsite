@@ -75,12 +75,17 @@ class Page:
         self._page_template = None
         self._redirect_template = None
 
-    def validate_meta(self):
+    def is_valid(self) -> bool:
         """
-        Enforce common meta invariants
+        Enforce common meta invariants.
+
+        Performs validation and completion of metadata.
+
+        :return: True if the page is valid and ready to be added to the site,
+                 False if it should be discarded
         """
         # date must exist, and be a datetime
-        date = self.meta.get("date", None)
+        date = self.meta.get("date")
         if date is None:
             if self.src.stat is not None:
                 self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
@@ -107,6 +112,14 @@ class Page:
         # description may exist
         self._fill_possibly_templatized_meta_value("description")
 
+        # Check draft status
+        if self.site.settings.DRAFT_MODE:
+            return True
+        if self.draft:
+            log.info("%s: still a draft, ignoring self", self.src.relpath)
+            return False
+        return True
+
     def _fill_possibly_templatized_meta_value(self, name):
         # If there is a value for the field, we're done
         val = self.meta.get(name)
@@ -123,6 +136,18 @@ class Page:
 
         # Else we could not fill
         return None
+
+    @property
+    def draft(self):
+        """
+        Return True if this page is still a draft (i.e. its date is in the future)
+        """
+        ts = self.meta.get("date", None)
+        if ts is None:
+            return False
+        if ts <= self.site.generation_time:
+            return False
+        return True
 
     @property
     def page_template(self):

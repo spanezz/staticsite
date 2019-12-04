@@ -38,6 +38,9 @@ class J2Pages(Feature):
             except IgnorePage:
                 continue
 
+            if not page.is_valid():
+                continue
+
             taken.append(fname)
             pages.append(page)
 
@@ -69,8 +72,6 @@ class J2Page(Page):
             dst_relpath=dst_relpath,
             dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath),
             meta=meta)
-
-        self.validate_meta()
 
     def render(self):
         try:

@@ -72,6 +72,9 @@ class DataPages(Feature):
 
             cls = self.page_class_by_type.get(type, DataPage)
             page = cls(self.site, src, data, meta=sitedir.meta_file(fname))
+            if not page.is_valid():
+                continue
+
             data_type = page.meta.get("type")
             self.by_type[data_type].append(page)
 
@@ -191,7 +194,6 @@ class DataPage(Page):
             self.meta["date"] = dateutil.parser.parse(date)
 
         self._content = None
-        self.validate_meta()
 
     @property
     def content(self):

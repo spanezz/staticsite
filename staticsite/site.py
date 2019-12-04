@@ -133,9 +133,8 @@ class Site:
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        ts = page.meta.get("date", None)
-        if not self.settings.DRAFT_MODE and ts is not None and ts > self.generation_time:
-            log.info("Ignoring page %s with date %s in the future", page.src.relpath, ts - self.generation_time)
+        if page.draft:
+            log.info("%s: still a draft, ignoring page", page.src.relpath)
             return
         self.pages[page.src_linkpath] = page
 
@@ -156,6 +155,8 @@ class Site:
         :return: the Page added
         """
         page = self.features[feature].build_test_page(**kw)
+        if not page.is_valid():
+            raise RuntimeError("Tried to add an invalid test page")
         self.add_page(page)
         return page
 

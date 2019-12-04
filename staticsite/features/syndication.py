@@ -95,14 +95,16 @@ class SyndicationFeature(Feature):
 
             # Generate the syndication pages in the site
             rss_page = RSSPage(self.site, syndication_info)
-            syndication_info.rss_page = rss_page
-            self.site.pages[rss_page.src_linkpath] = rss_page
-            log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
+            if rss_page.is_valid():
+                syndication_info.rss_page = rss_page
+                self.site.pages[rss_page.src_linkpath] = rss_page
+                log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
 
             atom_page = AtomPage(self.site, syndication_info)
-            syndication_info.atom_page = atom_page
-            self.site.pages[atom_page.src_linkpath] = atom_page
-            log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
+            if atom_page.is_valid():
+                syndication_info.atom_page = atom_page
+                self.site.pages[atom_page.src_linkpath] = atom_page
+                log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
 
         # filter: args to page filters
         # link: defaults to same page: link shown as feed link
@@ -146,8 +148,6 @@ class SyndicationPage(Page):
         self.info = info
 
         self.template = self.site.theme.jinja2.get_template(self.TEMPLATE)
-
-        self.validate_meta()
 
     def render(self):
         body = self.render_template(self.template, {
