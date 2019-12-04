@@ -27,6 +27,8 @@
   if `static/` were the same as `/usr/share/javascript/`. Now you need to refer
   to `/jquery/jquery.min.js` and `/bootstrap4/css/bootstrap.min.css` instead of
   `jquery.min.js` and `css/bootstrap.min.css`.
+* Added syndication feature (see <doc/syndication.md>) to simplify generation
+  of RSS and Atom feeds
 
 ## Upgrade notes
 

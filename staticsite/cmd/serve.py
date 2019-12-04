@@ -207,7 +207,7 @@ class Show(ServerMixin, Command):
                             help="directory to show (default: the current directory)")
         parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
         parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
-        parser.add_argument("--no-browser", "-n", action="store_true",
+        parser.add_argument("--no-start", "-n", action="store_true",
                             help="do not start a browser automatically, print the URL instead")
         parser.add_argument("--port", "-p", action="store", type=int, default=0,
                             help="port to use (default: randomly allocated)")

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
 from staticsite.render import RenderedString
@@ -26,10 +26,6 @@ class SyndicationInfo:
         # to this syndication
         add_to = syndication.get("add_to")
         self.add_to: Optional[Dict[str, Any]] = dict(add_to) if add_to is not None else None
-
-        # link: defaults to same page: link shown as feed link
-        link = syndication.get("link")
-        self.link: Union[Page, str] = index_page if link is None else str(link)
 
         # Pages included in this syndication
         self.pages = []
@@ -89,10 +85,6 @@ class SyndicationFeature(Feature):
                 for page in f.filter(self.site.pages.values()):
                     page.meta["syndication_info"] = syndication_info
 
-            # Expand the link
-            if isinstance(syndication_info.link, str):
-                syndication_info.link = syndication_info.index_page.resolve_uri(syndication_info.link)
-
             # Generate the syndication pages in the site
             rss_page = RSSPage(self.site, syndication_info)
             if rss_page.is_valid():
@@ -105,13 +97,6 @@ class SyndicationFeature(Feature):
                 syndication_info.atom_page = atom_page
                 self.site.pages[atom_page.src_linkpath] = atom_page
                 log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
-
-        # filter: args to page filters
-        # link: defaults to same page: link shown as feed link
-        # add_to: args to page filters
-        #  - shortcut to define 'filters' but without limit?
-        # title
-        # date: autocomputed
 
 
 class SyndicationPage(Page):
@@ -131,27 +116,42 @@ class SyndicationPage(Page):
             dst_link=os.path.join(site.settings.SITE_ROOT, relpath),
             meta=info.meta)
 
-        if self.meta.get("title") is None:
-            self.meta["title"] = info.index_page.meta.get("title")
-
-        if self.meta.get("title") is None:
-            log.warn("%s: syndication index page %s has no title", self, info.index_page)
-            self.meta["title"] = self.site.site_name
-
-        if self.meta.get("date") is None:
-            if info.pages:
-                self.meta["date"] = max(p.meta["date"] for p in info.pages)
-            else:
-                self.meta["date"] = self.site.generation_time
+        # Hardcode the template
+        # FIXME: allow to customize it in syndication metadata?
+        self.meta["template"] = self.TEMPLATE
 
         self.meta["index"] = info.index_page
         self.info = info
 
-        self.template = self.site.theme.jinja2.get_template(self.TEMPLATE)
+    def is_valid(self):
+        if not self.meta.get("title") and not self.meta.get("template_title"):
+            if self.info.index_page.meta.get("title"):
+                self.meta["title"] = self.info.index_page.meta.get("title")
+            elif self.info.index_page.meta.get("template_title"):
+                self.meta["template_title"] = self.info.index_page.meta.get("template_title")
+            else:
+                log.warn("%s: syndication index page %s has no title", self, self.info.index_page)
+                self.meta["title"] = self.site.site_name
+
+        if not self.meta.get("description") and not self.meta.get("template_description"):
+            if self.info.index_page.meta.get("description"):
+                self.meta["description"] = self.info.index_page.meta.get("description")
+            elif self.info.index_page.meta.get("template_description"):
+                self.meta["template_description"] = self.info.index_page.meta.get("template_description")
+
+        if self.meta.get("date") is None:
+            if self.info.pages:
+                self.meta["date"] = max(p.meta["date"] for p in self.info.pages)
+            else:
+                self.meta["date"] = self.site.generation_time
+
+        if not super().is_valid():
+            return False
+
+        return True
 
     def render(self):
-        body = self.render_template(self.template, {
-            "title_page": self.info.link,
+        body = self.render_template(self.page_template, {
             "pages": self.info.pages,
         })
         return {

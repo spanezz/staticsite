@@ -1,4 +1,4 @@
-+++
+---
 # In staticsite, a taxonomy is a group of attributes like categories or tags.
 #
 # Like in Hugo, you can have as many taxonomies as you want. See
@@ -11,26 +11,22 @@
 # The format of the file is the same that is used for the front matter of
 # posts, again same as in Hugo: https://gohugo.io/content/front-matter/
 
-# Singular name for an element of the taxonomy
-item_name = "tag"
+# Any toplevel metadata is used for the tag index
+title: "All tags"
+description: "Index of all tags in the site."
+# template: tags.html
 
-# Output directory for the tag index, tag pages and Atom/RSS2 feeds.
-# The path is relative to this file.
-output_dir = "tags/"
+# Category metadata is used for each tag page
+category:
+  # template: tag.html
+  template_title: "Latest posts for tag <strong>{{page.name}}</strong>"
+  template_description: "Most recent posts with tag <strong>{{page.name}}</strong>"
+  syndication:
+    template_title: "{{page.site.site_name}}: posts with tag {{page.meta.index.name}}"
+    template_description: "{{page.site.site_name}}: most recent posts with tag {{page.meta.index.name}}"
 
-# Template for rendering the taxonomy index. Here, it's the page that shows the
-# list of tags
-template_tags = "tags.html"
-
-# Template for rendering the page for one tag. Here, it's the page that shows
-# the latest pages tagged with the tag
-template_tag = "tag.html"
-
-# Template for rendering the archive page for one tag. Here, it's the page that
-# links to all the pages tagged with the tag
-template_archive = "tag-archive.html"
-
-# Templates for rendering the Atom and RSS2 feeds for each tag
-template_atom = "tag.atom"
-template_rss = "tag.rss"
-+++
+# Archive metadata is used for each tag archive page
+archive:
+  # template: tag-archive.html
+  template_title: "Archive of posts for tag <strong>{{page.name}}</strong>"
+  template_description: "Archive of all posts with tag <strong>{{page.name}}</strong>"

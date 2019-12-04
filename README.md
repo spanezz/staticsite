@@ -50,10 +50,13 @@ Useful tips:
 * [doc/contents.md: `site/` reference](doc/contents.md)
 * [doc/theme.md: `theme/` reference](doc/theme.md)
 * [doc/archetypes.md: `archetypes/` reference](doc/archetypes.md)
+* [doc/metadata.md: general page metadata reference](doc/metadata.md)
 * [doc/markdown.md: Markdown pages reference](doc/markdown.md)
+* [doc/rst.md: reStructuredText pages reference](doc/rst.md)
 * [doc/data.md: Data pages reference](doc/data.md)
 * [doc/templates.md: Jinja2 templates reference](doc/templates.md)
 * [doc/taxonomies.md: taxonomy reference](doc/taxonomies.md)
+* [doc/syndication.md: RSS/Atom feed generation reference](doc/syndication.md)
 * [doc/series.md: page series reference](doc/series.md)
 * [doc/feature.md: providing site-specific features](doc/feature.md)
 
