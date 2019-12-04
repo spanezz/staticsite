@@ -18,6 +18,22 @@ override_dh_auto_build:
 	dh_auto_build
 	COLUMNS=200 help2man --name='Static site generator' --section=1 --version-string="$(version)" --no-info ./ssite > ssite.1
 
+override_dh_compress:
+	dh_compress --exclude=.ico
+
+override_dh_installdocs:
+	dh_installdocs
+	# Remove vendored front end libraries
+	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/jquery
+	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/popper.js
+	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/bootstrap4
+	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/fork-awesome
+	# Configure example site to use system versions instead
+	echo '' >> debian/staticsite/usr/share/doc/staticsite/example/settings.py
+	echo '# System-distributed assets in use' >> debian/staticsite/usr/share/doc/staticsite/example/settings.py
+	echo 'SYSTEM_ASSETS = ["jquery", "popper.js", "bootstrap4", "fork-awesome"]' >> debian/staticsite/usr/share/doc/staticsite/example/settings.py
+
+
 debsrc:
 	python3 setup.py sdist
 	mv dist/$(srcname)-$(version).tar.gz ../$(srcname)_$(version).orig.tar.gz

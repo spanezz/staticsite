@@ -49,7 +49,11 @@ class Site:
 
         # Build cache repository
         if self.settings.CACHE_REBUILDS:
-            self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache"))
+            if os.access(self.settings.PROJECT_ROOT, os.W_OK):
+                self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache"))
+            else:
+                log.warn("%s: directory not writable: disabling caching", self.settings.PROJECT_ROOT)
+                self.caches = DisabledCaches()
         else:
             self.caches = DisabledCaches()
 
