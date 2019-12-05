@@ -106,7 +106,7 @@ class SyndicationPage(Page):
     RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site: Site, info: SyndicationInfo):
-        relpath = f"{info.index_page.src_linkpath}.{self.TYPE}"
+        relpath = f"{info.index_page.src_linkpath}/index.{self.TYPE}"
 
         super().__init__(
             site=site,

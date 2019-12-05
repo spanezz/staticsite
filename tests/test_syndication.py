@@ -59,7 +59,7 @@ Example blog post in reStructuredText
         self.assertCountEqual(rendered_pages.keys(), [
             "index.html",
             "blog/index.html",
-            "blog.rss",
-            "blog.atom",
+            "blog/index.rss",
+            "blog/index.atom",
             "blog/post/index.html",
         ])
