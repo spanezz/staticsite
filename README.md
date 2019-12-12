@@ -61,6 +61,14 @@ Useful tips:
 * [doc/feature.md: providing site-specific features](doc/feature.md)
 
 
+## Example sites
+
+This is a list of sites using staticsite, whose sources are public, that can be
+used as examples:
+
+* <https://www.enricozini.org>: `git clone https://git.enricozini.org/site.git`
+
+
 ## License
 
 > This program is free software: you can redistribute it and/or modify
