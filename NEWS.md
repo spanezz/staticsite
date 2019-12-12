@@ -33,6 +33,9 @@
   yaml/json/toml (same as a page front matter) and used as theme configuration
 * `static_assets` in theme configuration can be used to load assets from
   `/usr/share/javascript`
+* A `.staticsite` file in a content directory is read as directory metadata,
+  and can be used to provide metadata to `.j2.html` pages. See
+  <doc/contents.md> for details.
 
 ## Upgrade notes
 
