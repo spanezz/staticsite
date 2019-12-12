@@ -271,6 +271,35 @@ class Page:
     def __repr__(self):
         return "{}:{}".format(self.TYPE, self.src.relpath)
 
+    def to_dict(self):
+        def format_val(val):
+            if val in (None, True, False) or isinstance(val, (int, float)):
+                return val
+            elif isinstance(val, str):
+                return str(val)
+            elif isinstance(val, Page):
+                return f"page:{val}"
+            elif isinstance(val, dict):
+                return {k: format_val(v) for k, v in val.items()}
+            elif isinstance(val, (list, tuple, set)):
+                return [format_val(v) for v in val]
+            else:
+                return str(val)
+
+        res = {k: format_val(v) for k, v in self.meta.items()}
+
+        res["page"] = {
+            "src": {
+                "relpath": str(self.src.relpath),
+                "root": str(self.src.root),
+                "abspath": str(self.src.abspath),
+            },
+            "src_linkpath": str(self.src_linkpath),
+            "dst_relpath": str(self.dst_relpath),
+            "dst_link": str(self.dst_link),
+        }
+        return res
+
     def render_template(self, template: jinja2.Template, template_args: Dict[Any, Any] = None) -> str:
         """
         Render a jinja2 template, logging things if something goes wrong
