@@ -137,9 +137,6 @@ class Site:
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        if page.draft:
-            log.info("%s: still a draft, ignoring page", page.src.relpath)
-            return
         self.pages[page.src_linkpath] = page
 
         # Run feature metadata hooks for the given page, if any
