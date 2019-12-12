@@ -193,7 +193,7 @@ class Site:
             if not stat.S_ISREG(f.stat.st_mode):
                 continue
             log.debug("Loading static file %s", f.relpath)
-            p = Asset(self, f)
+            p = Asset(self, f, dest_subdir="static")
             self.add_page(p)
 
     def analyze(self):
