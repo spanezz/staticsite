@@ -126,6 +126,9 @@ class File(NamedTuple):
 
     @classmethod
     def scan(cls, tree_root, follow_symlinks=False, ignore_hidden=False):
+        """
+        Scan tree_root, generating relative paths based on it
+        """
         for root, dnames, fnames, dirfd in os.fwalk(tree_root, follow_symlinks=follow_symlinks):
             if ignore_hidden:
                 # Ignore hidden directories
@@ -152,6 +155,9 @@ class File(NamedTuple):
 
     @classmethod
     def scan_subpath(cls, tree_root, relpath, follow_symlinks=False, ignore_hidden=False):
+        """
+        Scan a subdirectory of tree_root, generating relative paths based on tree_root
+        """
         scan_path = os.path.join(tree_root, relpath)
         for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
             if ignore_hidden:

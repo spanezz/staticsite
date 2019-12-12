@@ -96,17 +96,7 @@ class Site:
 
         from .theme import Theme
         self.theme = Theme(self, theme_root)
-
-        theme_static = os.path.join(theme_root, "static")
-        if os.path.isdir(theme_static):
-            self.read_asset_tree(theme_static)
-
-        for name in self.settings.SYSTEM_ASSETS:
-            root = os.path.join("/usr/share/javascript", name)
-            if not os.path.isdir(root):
-                log.warning("%s: system asset directory not found", root)
-                continue
-            self.read_asset_tree("/usr/share/javascript", name)
+        self.theme.load_assets()
 
     def load_content(self, content_root=None):
         """

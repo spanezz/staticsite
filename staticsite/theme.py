@@ -130,6 +130,21 @@ class Theme:
             return
         self.site.features.load_feature_dir([features_dir.as_posix()])
 
+    def load_assets(self):
+        """
+        Load static assets
+        """
+        theme_static = self.root / "static"
+        if theme_static.is_dir():
+            self.site.read_asset_tree(theme_static)
+
+        for name in self.site.settings.SYSTEM_ASSETS:
+            root = os.path.join("/usr/share/javascript", name)
+            if not os.path.isdir(root):
+                log.warning("%s: system asset directory not found", root)
+                continue
+            self.site.read_asset_tree("/usr/share/javascript", name)
+
     def jinja2_basename(self, val):
         return os.path.basename(val)
 
