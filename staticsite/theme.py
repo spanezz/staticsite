@@ -5,6 +5,7 @@ import fnmatch
 import datetime
 import logging
 from pathlib import Path
+from .utils import parse_front_matter
 
 log = logging.getLogger()
 
@@ -121,6 +122,15 @@ class Theme:
 
         self.dir_template = self.jinja2.get_template("dir.html")
 
+        # Load theme configuration if present
+        config = self.root / "config"
+        if config.is_file():
+            with open(config, "rt") as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, self.config = parse_front_matter(lines)
+        else:
+            self.config = {}
+
     def load_features(self):
         """
         Load feature modules from the features/ theme directory
@@ -138,7 +148,10 @@ class Theme:
         if theme_static.is_dir():
             self.site.read_asset_tree(theme_static)
 
-        for name in self.site.settings.SYSTEM_ASSETS:
+        # Load system assets from site settings and theme configuration
+        system_assets = set(self.site.settings.SYSTEM_ASSETS)
+        system_assets.update(self.config.get("system_assets", ()))
+        for name in system_assets:
             root = os.path.join("/usr/share/javascript", name)
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)

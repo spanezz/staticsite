@@ -29,9 +29,9 @@ override_dh_installdocs:
 	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/bootstrap4
 	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/fork-awesome
 	# Configure example site to use system versions instead
-	echo '' >> debian/staticsite/usr/share/doc/staticsite/example/settings.py
-	echo '# System-distributed assets in use' >> debian/staticsite/usr/share/doc/staticsite/example/settings.py
-	echo 'SYSTEM_ASSETS = ["jquery", "popper.js", "bootstrap4", "fork-awesome"]' >> debian/staticsite/usr/share/doc/staticsite/example/settings.py
+	echo '---' > debian/staticsite/usr/share/doc/staticsite/example/theme/config
+	echo '# System-distributed assets in use' >> debian/staticsite/usr/share/doc/staticsite/example/theme/config
+	echo 'system_assets: [jquery, popper.js, bootstrap4, fork-awesome]' >> debian/staticsite/usr/share/doc/staticsite/example/theme/config
 
 
 debsrc:

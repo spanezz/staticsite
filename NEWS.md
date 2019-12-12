@@ -29,6 +29,10 @@
   `jquery.min.js` and `css/bootstrap.min.css`.
 * Added syndication feature (see <doc/syndication.md>) to simplify generation
   of RSS and Atom feeds
+* If a `config` file exists in the theme directory, it is loaded as
+  yaml/json/toml (same as a page front matter) and used as theme configuration
+* `static_assets` in theme configuration can be used to load assets from
+  `/usr/share/javascript`
 
 ## Upgrade notes
 

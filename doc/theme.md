@@ -6,6 +6,19 @@ control how pages are rendered.
 The theme contents are independent from the contents of the site, and it should
 be possible to swap one theme for another at any point.
 
+## Theme configuration
+
+If a `config` file is found in the theme directory, it is parsed as `yaml`,
+`json`, or `toml` data, and used as theme configuration.
+
+Valid theme configuration entries currently are:
+
+* `system_assets`: list of names of directories under `/usr/share/javascript`
+  to be added as static assets to the site
+
+
+## Theme templates
+
 These templates are directly used by `staticsite`:
 
 * `dir.html` is used to render directory indices.
@@ -29,5 +42,15 @@ the case of a taxonomy called `tags` with `item_name` `tag`:
 * `tag-archive.html` is used to generate an archive page for each tag.
 * `tag.atom` is used for the Atom feed for each tag.
 * `tag.rss` is used for the RSS2 feed for each tag.
+
+
+## Static assets
+
+The contents of a `static` directory in the theme directory are added as static
+assets to the site.
+
+Other static assets are loaded from `/usr/share/javascript` as listed in the
+`SYSTEM_ASSETS` [setting](settings.md) or in the `system_assets` theme
+configuration.
 
 [Back to README](../README.md)
