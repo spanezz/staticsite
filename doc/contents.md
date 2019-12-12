@@ -21,4 +21,31 @@ the static site that will be generated will mirror the structure of pages in
 * any other file will be copied as-is to `web`. `dir/file.jpg` will be
   copied as `dir/file.jpg` in `web`.
 
+## Directory metadata
+
+If a `.staticsite` file is found in a content directory, it is parsed as
+`yaml`, `json`, or `toml`, and its contents are available to staticsite
+features.
+
+Entries currently supported:
+
+* `files`: provides extra metadata for files found in the directory. This can
+  be used, for example, to provide metadata for `.j2.html` pages.
+
+Example directory metadata:
+
+```yaml
+---
+files:
+  index.j2.html:
+    syndication:
+      filter:
+        path: blog/*
+        limit: 10
+        sort: "-date"
+      add_to:
+        path: blog/*
+      title: "Example blog feed"
+```
+
 [Back to README](../README.md)

@@ -10,7 +10,8 @@ selected in the `syndication` metadata.
 
 ## Syndication metadata
 
-Example `.staticsite` file alongside a blog index page:
+Example `.staticsite` file alongside a blog index page (see [directory
+metadata](contents.md)):
 
 ```yaml
 ---
