@@ -36,6 +36,9 @@
 * A `.staticsite` file in a content directory is read as directory metadata,
   and can be used to provide metadata to `.j2.html` pages. See
   <doc/contents.md> for details.
+* Static assets loaded by the theme have been moved to `static/` in the
+  rendered site, to avoid cluttering the rest of the contents. Referring to
+  them in `url_for` in templates has not changed.
 
 ## Upgrade notes
 
@@ -74,6 +77,14 @@
   expose you to arbitrary code execution if the project includes a
   `.staticsite.py` settings file: use `ssite show` instead. Use `ssite serve`
   for authoring your own websites, whose settings you control.
+
+### Link stability
+
+* `tag/archive.html` is now `tag/archive`
+* Static assets loaded by themes are now moved into a `static/` directory in
+  the rendered website. `url_for` generates the right links for them, but if
+  one had hardcoded links to them in the site, or external sites linked to the
+  site static assets, those links may end up broken
 
 # New in version 1.1
 
