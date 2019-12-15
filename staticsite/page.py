@@ -272,22 +272,7 @@ class Page:
         return "{}:{}".format(self.TYPE, self.src.relpath)
 
     def to_dict(self):
-        def format_val(val):
-            if val in (None, True, False) or isinstance(val, (int, float)):
-                return val
-            elif isinstance(val, str):
-                return str(val)
-            elif isinstance(val, Page):
-                return f"{val.__class__.__name__}({val})"
-            elif isinstance(val, dict):
-                return {k: format_val(v) for k, v in val.items()}
-            elif isinstance(val, (list, tuple, set)):
-                return [format_val(v) for v in val]
-            elif hasattr(val, "to_dict"):
-                return format_val(val.to_dict())
-            else:
-                return str(val)
-
+        from .utils import dump_meta
         res = {
             "src": {
                 "relpath": str(self.src.relpath),
@@ -297,7 +282,7 @@ class Page:
             "src_linkpath": str(self.src_linkpath),
             "dst_relpath": str(self.dst_relpath),
             "dst_link": str(self.dst_link),
-            "meta": {k: format_val(v) for k, v in self.meta.items()},
+            "meta": dump_meta(self.meta),
         }
         return res
 

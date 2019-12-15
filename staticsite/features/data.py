@@ -195,6 +195,12 @@ class DataPage(Page):
 
         self._content = None
 
+    def to_dict(self):
+        from staticsite.utils import dump_meta
+        res = super().to_dict()
+        res["data"] = dump_meta(self.data)
+        return res
+
     @property
     def content(self):
         if self._content is None:

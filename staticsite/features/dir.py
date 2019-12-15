@@ -68,6 +68,13 @@ class DirPage(Page):
         self.pages = list(pages)
         self.subdirs = []
 
+    def to_dict(self):
+        from staticsite.utils import dump_meta
+        res = super().to_dict()
+        res["pages"] = dump_meta(self.pages)
+        res["subdirs"] = dump_meta(self.subdirs)
+        return res
+
     def attach_to_parent(self):
         if not self.src.relpath:
             return

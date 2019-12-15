@@ -141,3 +141,24 @@ def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
     if pattern and (pattern[0] == '^' or pattern[-1] == '$'):
         return re.compile(pattern)
     return re.compile(fnmatch.translate(pattern))
+
+
+def dump_meta(val):
+    """
+    Dump data into a dict, for use with dump_meta in to_dict methods
+    """
+    from . import Page
+    if val in (None, True, False) or isinstance(val, (int, float)):
+        return val
+    elif isinstance(val, str):
+        return str(val)
+    elif isinstance(val, Page):
+        return f"{val.__class__.__name__}({val})"
+    elif isinstance(val, dict):
+        return {k: dump_meta(v) for k, v in val.items()}
+    elif isinstance(val, (list, tuple, set)):
+        return [dump_meta(v) for v in val]
+    elif hasattr(val, "to_dict"):
+        return dump_meta(val.to_dict())
+    else:
+        return str(val)

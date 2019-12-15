@@ -132,6 +132,15 @@ class TaxonomyPage(Page):
         self.template_tag_archive = self.site.theme.jinja2.get_template(
                 self.meta.get("template_archive", "tag-archive.html"))
 
+    def to_dict(self):
+        from staticsite.utils import dump_meta
+        res = super().to_dict()
+        res["name"] = self.name
+        res["categories"] = dump_meta(self.categories)
+        res["category_meta"] = dump_meta(self.category_meta)
+        res["archive_meta"] = dump_meta(self.archive_meta)
+        return res
+
     def _read_taxonomy_description(self):
         """
         Parse the taxonomy file to read its description
@@ -224,6 +233,15 @@ class CategoryPage(Page):
         # Archive page
         self.archive = None
 
+    def to_dict(self):
+        from staticsite.utils import dump_meta
+        res = super().to_dict()
+        res["name"] = self.name
+        res["taxonomy"] = dump_meta(self.taxonomy)
+        res["pages"] = dump_meta(self.pages)
+        res["archive"] = dump_meta(self.archive)
+        return res
+
     def __lt__(self, o):
         o_taxonomy = getattr(o, "taxonomy", None)
         if o_taxonomy is None:
@@ -295,6 +313,14 @@ class CategoryArchivePage(Page):
 
         self.meta.setdefault("template_title", "{{page.name}} archive")
         self.meta.setdefault("date", category_page.meta["date"])
+
+    def to_dict(self):
+        from staticsite.utils import dump_meta
+        res = super().to_dict()
+        res["name"] = self.name
+        res["taxonomy"] = dump_meta(self.taxonomy)
+        res["category"] = dump_meta(self.category)
+        return res
 
     def finalize(self):
         self.meta["date"] = self.category.meta["date"]

@@ -138,6 +138,12 @@ class SyndicationPage(Page):
         self.meta["index"] = info.index_page
         self.info = info
 
+    def to_dict(self):
+        from staticsite.utils import dump_meta
+        res = super().to_dict()
+        res["info"] = dump_meta(self.info)
+        return res
+
     def is_valid(self):
         if not self.meta.get("title") and not self.meta.get("template_title"):
             if self.info.index_page.meta.get("title"):
