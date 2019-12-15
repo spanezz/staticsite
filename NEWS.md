@@ -39,6 +39,7 @@
 * Static assets loaded by the theme have been moved to `static/` in the
   rendered site, to avoid cluttering the rest of the contents. Referring to
   them in `url_for` in templates has not changed.
+* Added `ssite dump_meta` to page information as available to templates
 
 ## Upgrade notes
 
