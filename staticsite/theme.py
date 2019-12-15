@@ -1,21 +1,24 @@
 import jinja2
 import os
 import re
-import fnmatch
 import datetime
 import logging
 from pathlib import Path
-from .utils import parse_front_matter
+from .utils import parse_front_matter, compile_page_match
 
 log = logging.getLogger()
 
 
 class PageFilter:
+    """
+    Engine for selecting pages in the site
+    """
+
     def __init__(self, site, path=None, limit=None, sort=None, **kw):
         self.site = site
 
         if path is not None:
-            self.re_path = re.compile(fnmatch.translate(path))
+            self.re_path = compile_page_match(path)
         else:
             self.re_path = None
 
@@ -100,6 +103,7 @@ class Theme:
             self.jinja2.globals[x] = getattr(self.site.settings, x)
 
         self.jinja2.globals["site"] = self.site
+        self.jinja2.globals["regex"] = re.compile
 
         # Install site's functions into the jinja2 environment
         self.jinja2.globals.update(

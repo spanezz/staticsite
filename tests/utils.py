@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import pytz
 import staticsite
 from staticsite.settings import Settings
+from staticsite.utils import write_front_matter
 
 
 class TestSettings(Settings):
@@ -33,7 +34,7 @@ def datafile_abspath(relpath):
 
 
 @contextmanager
-def workdir(files: Dict[str, Union[str, bytes]] = None):
+def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
     """
     Create a temporary directory and populate it with the given files
     """
@@ -49,6 +50,9 @@ def workdir(files: Dict[str, Union[str, bytes]] = None):
             elif isinstance(content, bytes):
                 with open(abspath, "wb") as fd:
                     fd.write(content)
+            elif isinstance(content, dict):
+                with open(abspath, "wt") as fd:
+                    fd.write(write_front_matter("json", content))
             else:
                 raise TypeError("content should be a str or bytes")
         yield root
