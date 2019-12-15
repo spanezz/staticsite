@@ -37,9 +37,9 @@ Any other metadata are used when generating pages for the RSS/Atom feeds, so
 you can use `title`, `template_title`, `description`, and so on, to personalize
 the feeds.
 
-`filter` and `add_to` are dictionaries whose keys correspond to the
-`site_pages` function available in [templates](templates.md), and can be used
-to select pages in the site in exactly the same way as `site_page` does.
+`filter` and `add_to` are dictionaries that select pages in the site, similar
+to the `site_pages` function in [templates](templates.md). See
+[Selecting pages](page_filter.md) for details.
 
 
 ## Syndication of taxonomies
