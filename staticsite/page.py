@@ -278,7 +278,7 @@ class Page:
             elif isinstance(val, str):
                 return str(val)
             elif isinstance(val, Page):
-                return f"page:{val}"
+                return f"{val.__class__.__name__}({val})"
             elif isinstance(val, dict):
                 return {k: format_val(v) for k, v in val.items()}
             elif isinstance(val, (list, tuple, set)):
@@ -286,9 +286,7 @@ class Page:
             else:
                 return str(val)
 
-        res = {k: format_val(v) for k, v in self.meta.items()}
-
-        res["page"] = {
+        res = {
             "src": {
                 "relpath": str(self.src.relpath),
                 "root": str(self.src.root),
@@ -297,6 +295,7 @@ class Page:
             "src_linkpath": str(self.src_linkpath),
             "dst_relpath": str(self.dst_relpath),
             "dst_link": str(self.dst_link),
+            "meta": {k: format_val(v) for k, v in self.meta.items()},
         }
         return res
 
