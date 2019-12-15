@@ -40,6 +40,8 @@
   rendered site, to avoid cluttering the rest of the contents. Referring to
   them in `url_for` in templates has not changed.
 * Added `ssite dump_meta` to page information as available to templates
+* One can now match pages by regexp and not just by glob. See
+  <doc/page_filter.md>.
 
 ## Upgrade notes
 
