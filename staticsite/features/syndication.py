@@ -36,6 +36,17 @@ class SyndicationInfo:
         # Atom page for this syndication
         self.atom_page: Optional[Page] = None
 
+    def to_dict(self):
+        return {
+            "index_page": self.index_page,
+            "meta": self.meta,
+            "select": self.select,
+            "add_to": self.add_to,
+            "pages": self.pages,
+            "rss_page": self.rss_page,
+            "atom_page": self.atom_page,
+        }
+
 
 class SyndicationFeature(Feature):
     """

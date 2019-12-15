@@ -283,6 +283,8 @@ class Page:
                 return {k: format_val(v) for k, v in val.items()}
             elif isinstance(val, (list, tuple, set)):
                 return [format_val(v) for v in val]
+            elif hasattr(val, "to_dict"):
+                return format_val(val.to_dict())
             else:
                 return str(val)
 
