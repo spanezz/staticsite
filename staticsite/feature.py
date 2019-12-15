@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, Callable, Set, List, Iterable
+from typing import Optional, Dict, Callable, Set, List, Iterable, Type
 from collections import defaultdict
 import logging
 import sys
@@ -122,6 +122,9 @@ class Features:
     def __init__(self, site: site.Site):
         self.site = site
 
+        # Registry of feature classes by name, built during loading
+        self.feature_classes: Dict[str, Type[Feature]] = {}
+
         # Feature implementation registry
         self.features: Dict[str, Feature] = {}
 
@@ -131,27 +134,17 @@ class Features:
         # Features sorted by topological order
         self.sorted = None
 
-    def add(self, name, cls):
-        """
-        Add a feature class to the site
-        """
-        feature = cls(name, self.site)
-        self.features[name] = feature
-        # Index features for metadata hooks
-        for name in feature.for_metadata:
-            self.metadata_hooks[name].append(feature)
-
     def ordered(self):
         return self.sorted
 
     def __getitem__(self, key):
         return self.features[key]
 
-    def _sort_features(self, features: Iterable[Feature], all_features: Dict[str, Feature]):
+    def _sort_features(self, features: Dict[str, Feature]):
         graph: Dict[Feature, Set[Feature]] = defaultdict(set)
-        for feature in features:
+        for feature in features.values():
             for name in feature.RUN_AFTER:
-                dep = all_features.get(name)
+                dep = features.get(name)
                 if dep is None:
                     log.warn("feature %s: ignoring RUN_AFTER relation on %s which is not available",
                              feature, name)
@@ -159,7 +152,7 @@ class Features:
                 graph[dep].add(feature)
 
             for name in feature.RUN_BEFORE:
-                dep = all_features.get(name)
+                dep = features.get(name)
                 if dep is None:
                     log.warn("feature %s: ignoring RUN_BEFORE relation on %s which is not available",
                              feature, name)
@@ -169,7 +162,24 @@ class Features:
         return toposort.sort(graph)
 
     def commit(self):
-        self.sorted = self._sort_features(self.features.values(), self.features)
+        """
+        Finalize feature loading, instantiating and initializing all the
+        features that have been collected.
+        """
+        self.sorted = []
+
+        # Instantiate the feature classes in dependency order
+        for cls in self._sort_features(self.feature_classes):
+            if cls.NAME in self.features:
+                continue
+            feature = cls(cls.NAME, self.site)
+            self.features[cls.NAME] = feature
+            # Index features for metadata hooks
+            for name in feature.for_metadata:
+                self.metadata_hooks[name].append(feature)
+
+            self.sorted.append(feature)
+
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
 
     def load_default_features(self):
@@ -188,7 +198,6 @@ class Features:
         import pkgutil
         import importlib
 
-        feature_classes = {}
         for module_finder, name, ispkg in pkgutil.iter_modules(paths):
             full_name = namespace + "." + name
             mod = sys.modules.get(full_name)
@@ -210,12 +219,8 @@ class Features:
             # Register features with site
             for name, cls in features.items():
                 cls.NAME = name
-                feature_classes[name] = cls
-
-        # Instantiate the feature classes in dependency order
-        all_feature_classes = dict(self.features)
-        all_feature_classes.update(feature_classes)
-        for cls in self._sort_features(feature_classes.values(), all_feature_classes):
-            if cls.NAME in self.features:
-                continue
-            self.add(cls.NAME, cls)
+                old = self.feature_classes.get(name)
+                if old is not None:
+                    # Allow to replace features: see #28
+                    log.info("%s: replacing feature %s with %s", name, old, cls)
+                self.feature_classes[name] = cls
