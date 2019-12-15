@@ -94,6 +94,10 @@ class SyndicationFeature(Feature):
             if syndication_info.add_to:
                 f = PageFilter(self.site, **syndication_info.add_to)
                 for page in f.filter(self.site.pages.values()):
+                    old = page.meta.get("syndication_info")
+                    if old is not None:
+                        log.warn("%s: page has syndication info from %s, and %s also wants to add to it",
+                                 page, old.index_page, syndication_info.index_page)
                     page.meta["syndication_info"] = syndication_info
 
             # Generate the syndication pages in the site
