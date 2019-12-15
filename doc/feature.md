@@ -22,3 +22,6 @@ See `example/theme/features/hello.py` for an annotate example feature.
 Most of staticsite is now implemented through features, and you can also look
 at `staticfile/features/` to take existing features as examples for custom
 ones.
+
+You can also replace an existing staticsite feature by providing a new feature
+registered with the same name.
