@@ -71,3 +71,7 @@ CACHE_REBUILDS = True
 
 # List of taxonomy names used on this site
 TAXONOMIES = []
+
+# Patterns (glob or regexps) that identify files in content directories that
+# are parsed as jinja2 templates
+JINJA2_PAGES = ["*.html", "*.j2.*"]

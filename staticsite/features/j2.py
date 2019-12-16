@@ -4,6 +4,7 @@ from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
 from staticsite.file import Dir
+from staticsite.utils import compile_page_match
 import os
 import logging
 
@@ -23,14 +24,17 @@ class J2Pages(Feature):
     RUN_BEFORE = ["tags"]
 
     def load_dir(self, sitedir: Dir) -> List[Page]:
-        # meta = sitedir.meta_features.get("j2")
-        # if meta is None:
-        #     meta = {}
+        # Precompile JINJA2_PAGES patterns
+        want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
         taken = []
         pages = []
         for fname, f in sitedir.files.items():
-            if ".j2." not in fname:
+            # Skip files that do not match JINJA2_PAGES
+            for pattern in want_patterns:
+                if pattern.match(fname):
+                    break
+            else:
                 continue
 
             try:

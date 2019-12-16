@@ -16,6 +16,7 @@ overridden by `settings.py` or `.staticsite.py`.
   rooted in this path. Defaults to the directory where the settings file is
   found.
 
+
 ## Site contents
 
 * `CONTENT`: Directory with the source content of the site. Defaults to
@@ -24,6 +25,7 @@ overridden by `settings.py` or `.staticsite.py`.
   order. Defaults to `("/usr/share/doc/staticsite/example/theme/", "theme")`
 * `SYSTEM_ASSETS`: Names of static asset directories to add from
   `/usr/share/javascript`. Defaults to the empty list.
+
 
 ## Site-wide metadata
 
@@ -64,8 +66,9 @@ overridden by `settings.py` or `.staticsite.py`.
 
 ## Feature specific settings
 
-See the [markdown feature documentation](doc/markdown.md) for extra settings
-used to control it.
+* `JINJA2_PAGES`: see [jinja2 pages documentation](doc/jinja2.md)
+* `MARKDOWN_EXTENSIONS` and `MARKDOWN_EXTENSION_CONFIGS`:
+  see [markdown pages documentation](doc/markdown.md)
 
 
 [Back to reference index](reference.md)
