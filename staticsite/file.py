@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import NamedTuple, Optional, Dict
-from .utils import parse_front_matter
+from typing import NamedTuple, Optional, Dict, List, Tuple, Any
+from .utils import parse_front_matter, compile_page_match, lazy
+import re
 import os
 
 
@@ -23,38 +24,43 @@ class Dir:
 
         self.files = files
 
-        self._meta_features = None
-        self._meta_files = None
+        # Cache of file metadata computed from .staticsite contents
+        self._file_meta_cache = {}
 
-    @property
+    @lazy
     def meta_features(self):
         """
         Return a dict with the 'features'-specific metadata
         """
-        if self._meta_features is None:
-            self._meta_features = self.meta.get("features")
-            if self._meta_features is None:
-                self._meta_features = {}
-        return self._meta_features
+        res = self.meta.get("features")
+        if res is None:
+            return {}
+        return res
 
-    @property
-    def meta_files(self):
+    @lazy
+    def meta_files(self) -> List[Tuple[re.Pattern, Dict[str, Any]]]:
         """
-        Return a dict with the 'features'-specific metadata
+        Return a list of tuples with filename matching regexps and associated
+        metadata
         """
-        if self._meta_files is None:
-            self._meta_files = self.meta.get("files")
-            if self._meta_files is None:
-                self._meta_files = {}
-        return self._meta_files
+        res = self.meta.get("files")
+        if res is None:
+            return ()
+        return [(compile_page_match(k), v) for k, v in res.items()]
 
     def meta_file(self, fname):
         """
         Return a dict with the dir metadata related to a file
         """
-        res = self.meta_files.get(fname)
+        # Lookup in cache to avoid computing it twice
+        res = self._file_meta_cache.get(fname)
         if res is None:
-            return {}
+            # Compute and add to cache
+            res = {}
+            for pattern, meta in self.meta_files:
+                if pattern.match(fname):
+                    res.update(meta)
+            self._file_meta_cache[fname] = res
         return res
 
 
