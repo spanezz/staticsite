@@ -7,7 +7,7 @@ This can be used to generate complex index pages, blog front pages, and
 anything else [Jinja2](http://jinja.pocoo.org/) is able to generate.
 
 You can set `JINJA2_PAGES` in the [site settings](settings.md) to a list of
-patterns (globs or regexps as in [page filters](page_filter.md)) matching file
+patterns (globs or regexps as in [page filters](page-filter.md)) matching file
 names to consider jinja2 templates by default. It defaults to
 `["*.html", "*.j2.*"]`.
 

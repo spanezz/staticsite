@@ -7,7 +7,7 @@
 * [Source contents](contents.md)
 * [Themes](theme.md)
 * [Jinja2 templates reference](templates.md)
-* [Selecting site pages](page_filter.md)
+* [Selecting site pages](page-filter.md)
 * [Archetypes reference](archetypes.md)
 * [Site-specific features](feature.md)
 

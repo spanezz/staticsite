@@ -40,7 +40,7 @@ for example:
 * `url_for(page)`: returns the URL that links to the given page.
 * `site_pages(path=None, limit=None, sort="-date", **kw)`: return a list of
   pages defined in the site that match the given arguments. See
-  [Selecting pages](page_filter.md) for details.
+  [Selecting pages](page-filter.md) for details.
 * `now`: the current date and time, alias to `site.generation_time`.
 * `next_month`: midnight of the first day of next month. Useful in archetypes
   front matter to collect content into monthly pages.

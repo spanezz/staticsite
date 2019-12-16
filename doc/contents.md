@@ -35,7 +35,7 @@ Entries currently supported:
 * `files`: provides extra metadata for files found in the directory. This can
   be used, for example, to provide metadata for `.j2.html` pages.
   File names can be given as glob expressions or regular expressions, as with
-  [page selection](page_filter.md). If a file matches multiple entries, it gets
+  [page selection](page-filter.md). If a file matches multiple entries, it gets
   all the matching metadata, with the later ones potentially overwriting the
   previous ones.
 

@@ -41,7 +41,7 @@
   them in `url_for` in templates has not changed.
 * Added `ssite dump_meta` to page information as available to templates
 * One can now match pages by regexp and not just by glob. See
-  <doc/page_filter.md>.
+  <doc/page-filter.md>.
 * Cleaned up reference documentation.
 * Turned `inline_pages.html` template into a `blog.html` macro library for
   blogs and category pages.

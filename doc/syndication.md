@@ -39,7 +39,7 @@ the feeds.
 
 `filter` and `add_to` are dictionaries that select pages in the site, similar
 to the `site_pages` function in [templates](templates.md). See
-[Selecting pages](page_filter.md) for details.
+[Selecting pages](page-filter.md) for details.
 
 
 ## Syndication of taxonomies
