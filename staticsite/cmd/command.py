@@ -25,6 +25,7 @@ class Command:
         self.args = args
         self.setup_logging()
         self.settings = Settings()
+        self.settings.BUILD_COMMAND = self.get_name()
 
     def setup_logging(self):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
@@ -45,16 +46,18 @@ class Command:
         return site
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        name = cls.NAME
-        if name is None:
-            name = cls.__name__.lower()
+    def get_name(cls):
+        if cls.NAME is not None:
+            return cls.NAME
+        return cls.__name__.lower()
 
+    @classmethod
+    def make_subparser(cls, subparsers):
         desc = cls.DESC
         if desc is None:
             desc = cls.__doc__.strip()
 
-        parser = subparsers.add_parser(name, help=desc)
+        parser = subparsers.add_parser(cls.get_name(), help=desc)
         parser.set_defaults(handler=cls)
         parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
         parser.add_argument("--debug", action="store_true", help="verbose output")

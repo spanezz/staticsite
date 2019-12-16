@@ -54,6 +54,7 @@ overridden by `settings.py` or `.staticsite.py`.
   not included in the site.
 * `CACHE_REBUILDS`: If True, store cached data to speed up rebuilds. Defaults
   to True.
+* `BUILD_COMMAND`: set to the name of the `ssite` command being run.
 
 
 ## `ssite new` settings
