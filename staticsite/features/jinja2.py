@@ -90,5 +90,5 @@ class J2Page(Page):
 
 
 FEATURES = {
-    "j2": J2Pages,
+    "jinja2": J2Pages,
 }

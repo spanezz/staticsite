@@ -49,6 +49,7 @@
   to force loading it as a static asset.
 * New setting [`JINJA2_PAGES`](doc/jinja2.md): now `*.html` pages are
   considered jinja2 templates by default.
+* Renamed `j2` feature to `jinja2`
 
 ## Upgrade notes
 
