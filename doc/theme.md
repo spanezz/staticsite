@@ -31,8 +31,7 @@ These templates are expected to be present by the Jinja2 templates
 inside `content`:
 
 * `base.html` is used for the common parts of all pages.
-* `inline_page.html` is used for rendering other pages inline, for example in
-  the front page of a blog, or in the index page of a tag.
+* `blog.html` macro library with functions to render blogs and category pages.
 * `syndication.xml` contains jinja2 macros used to generate RSS2 and Atom
   feeds.
 
