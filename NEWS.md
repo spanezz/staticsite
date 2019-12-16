@@ -45,6 +45,10 @@
 * Cleaned up reference documentation.
 * Turned `inline_pages.html` template into a `blog.html` macro library for
   blogs and category pages.
+* Set `asset` to true for a file in [`.staticsite` directory metadata](doc/contents.md),
+  to force loading it as a static asset.
+* New setting [`JINJA2_PAGES`](doc/jinja2.md): now `*.html` pages are
+  considered jinja2 templates by default.
 
 ## Upgrade notes
 
