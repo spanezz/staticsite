@@ -29,4 +29,4 @@ THEME = "theme"
 OUTPUT = "web"
 
 # Enable a 'tags' taxonomy
-TAXONOMIES = ["tags"]
+TAXONOMIES = ["tags", "series"]

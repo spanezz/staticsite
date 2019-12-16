@@ -10,6 +10,11 @@
     * You can use `tags: tagname` as short for `tags: [tagname]` if you
       only have one tag
     * Significantly reengineered 'tags' feature.
+    * Taxonomy pages are now ordered by ascending dates. You need to reverse
+      them in templates (you can use the [`|reverse` jinja2 filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#reverse))
+      if you want them sorted as newest first.
+    * Series are now generated from any category: `series_tags` is now ignored.
+    * Removed `series` feature, merged into `tags`
 * Page metadata:
     * `description` can now be used for page metadata.
     * `template_title` and `template_description`, if present while `title` and
@@ -64,7 +69,7 @@
 
 ### Taxonomies
 
-* if you use taxonomies, explicitly list them in the new `TAXONOMIES`
+* If you use taxonomies, explicitly list them in the new `TAXONOMIES`
   setting.
 * `item_name` in a `.taxonomy` file does not have a special meaning anymore,
   and templates can still find it in the taxonomy page metadata
@@ -72,6 +77,12 @@
   will be in a directory with the same name as the file, without extension
 * `tags.html`, `tag.html`, and `tag-archive.html` templates need updating: see
   the versions in `example/theme` for an updated example
+* `series_tags` is now ignored
+* The `series` feature is merged into `tags`: add a `series` taxonomy to keep using
+  the `series` metadata in pages
+* You may need to update the series rendering part of your templates: see
+  [the series documentation](doc/series.md) and the `page.html` example template
+  for details and an example.
 
 ### Settings
 

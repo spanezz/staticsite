@@ -229,6 +229,8 @@ class CategoryPage(Page):
         self.taxonomy: TaxonomyPage = taxonomy
         # Pages that have this category
         self.pages: List[Page] = []
+        # Index of each page in the category sequence
+        self.page_index: Dict[Page, int] = {}
 
         self.meta.setdefault("template_title", "{{page.name}}")
         self.meta.setdefault("date", taxonomy.meta["date"])
@@ -280,7 +282,26 @@ class CategoryPage(Page):
 
     def finalize(self):
         self.pages.sort(key=lambda x: x.meta["date"])
+        # Store page indices
+        self.page_index = {page.src_linkpath: idx for idx, page in enumerate(self.pages)}
         self.archive.finalize()
+
+    def sequence(self, page):
+        idx = self.page_index.get(page.src_linkpath)
+        if idx is None:
+            return None
+        return {
+            # Array with all the pages in the series
+            "pages": self.pages,
+            # Assign series_prev and series_next metadata elements to pages
+            "index": idx + 1,
+            "length": len(self.pages),
+            "first": self.pages[0],
+            "last": self.pages[-1],
+            "prev": self.pages[idx - 1] if idx > 0 else None,
+            "next": self.pages[idx + 1] if idx < len(self.pages) - 1 else None,
+            "title": self.pages[0].meta.get("title", self.name),
+        }
 
     def render(self):
         return {
