@@ -9,9 +9,11 @@ class Dir:
     """
     Information about one directory during scanning
     """
-    def __init__(self, tree_root: str, relpath: str, files: Dict[str, "File"], dirfd=int):
+    def __init__(self, tree_root: str, relpath: str, subdirs: List[str], files: Dict[str, "File"], dirfd=int):
         self.tree_root = tree_root
         self.relpath = relpath
+        # List of subdirectory names. Remove a name from the list to avoid recursing into it
+        self.subdirs = subdirs
 
         # load .staticsite from dir if it exists
         file_meta = files.pop(".staticsite", None)
@@ -63,6 +65,32 @@ class Dir:
             self._file_meta_cache[fname] = res
         return res
 
+    @lazy
+    def meta_dirs(self) -> List[Tuple[re.Pattern, Dict[str, Any]]]:
+        """
+        Return a list of tuples with filename matching regexps and associated
+        metadata
+        """
+        res = self.meta.get("dirs")
+        if res is None:
+            return ()
+        return [(compile_page_match(k), v) for k, v in res.items()]
+
+    def meta_dir(self, fname):
+        """
+        Return a dict with the dir metadata related to a directory
+        """
+        # Lookup in cache to avoid computing it twice
+        res = self._file_meta_cache.get(fname)
+        if res is None:
+            # Compute and add to cache
+            res = {}
+            for pattern, meta in self.meta_dirs:
+                if pattern.match(fname):
+                    res.update(meta)
+            self._file_meta_cache[fname] = res
+        return res
+
 
 class File(NamedTuple):
     """
@@ -99,12 +127,12 @@ class File(NamedTuple):
         else:
             scan_path = os.path.join(tree_root, relpath)
 
-        for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
+        for root, subdirs, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
             if ignore_hidden:
                 # Ignore hidden directories
-                filtered = [d for d in dnames if not d.startswith(".")]
-                if len(filtered) != len(dnames):
-                    dnames[::] = filtered
+                filtered = [d for d in subdirs if not d.startswith(".")]
+                if len(filtered) != len(subdirs):
+                    subdirs[::] = filtered
 
             files = {}
             for f in fnames:
@@ -127,6 +155,7 @@ class File(NamedTuple):
             yield Dir(
                     tree_root=tree_root,
                     relpath=os.path.relpath(root, tree_root),
+                    subdirs=subdirs,
                     files=files,
                     dirfd=dirfd)
 

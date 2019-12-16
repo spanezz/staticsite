@@ -32,14 +32,26 @@ features.
 
 Entries currently supported:
 
-* `files`: provides extra metadata for files found in the directory. This can
-  be used, for example, to provide metadata for `.j2.html` pages.
-  File names can be given as glob expressions or regular expressions, as with
-  [page selection](page-filter.md). If a file matches multiple entries, it gets
-  all the matching metadata, with the later ones potentially overwriting the
-  previous ones.
+### `files`
 
-Example directory metadata:
+Provides extra metadata for files found in the directory.
+
+This can be used, for example, to provide metadata for `.html` pages.
+
+File names can be given as glob expressions or regular expressions, as with
+[page selection](page-filter.md). If a file matches multiple entries, it gets
+all the matching metadata, with the later ones potentially overwriting the
+previous ones.
+
+### `dirs`
+
+Provides extra metadata for subdirectories of the given directory.
+
+At the moment only `asset` is supported: if set to true, the subdirectory is
+loaded as static files, and not passed through site features.
+
+
+### Example directory metadata
 
 ```yaml
 ---
@@ -53,6 +65,10 @@ files:
       add_to:
         path: blog/*
       title: "Example blog feed"
+
+dirs:
+  "static-*:
+      asset: true
 ```
 
 [Back to reference index](reference.md)

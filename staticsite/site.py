@@ -204,6 +204,22 @@ class Site:
                     p = Asset(self, f, meta=d.meta_file(fname))
                     self.add_page(p)
 
+            # Check whether to load subdirectories as asset trees
+            not_assets = []
+            for fname in d.subdirs:
+                meta = d.meta_dir(fname)
+                if meta.get("asset"):
+                    # Scan this subdir as an asset dir
+                    for f in File.scan_subpath(d.tree_root, os.path.join(d.relpath, fname),
+                                               follow_symlinks=True, ignore_hidden=True):
+                        if not stat.S_ISREG(f.stat.st_mode):
+                            continue
+                        log.debug("Loading static file %s", f.relpath)
+                        self.add_page(Asset(self, f, findable=True))
+                else:
+                    not_assets.append(fname)
+            d.subdirs[::] = not_assets
+
     def read_asset_tree(self, tree_root, subdir=None):
         """
         Read static assets from a directory and all its subdirectories

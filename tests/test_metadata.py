@@ -77,3 +77,38 @@ title: Test1 title
             self.assertEqual(index.TYPE, "dir")
             self.assertEqual(test.TYPE, "asset")
             self.assertEqual(test1.TYPE, "markdown")
+
+    def test_dir_asset(self):
+        files = {
+            ".staticsite": {
+                "dirs": {
+                    "examples": {
+                        "asset": True,
+                    },
+                },
+            },
+            "test.md": {},
+            "examples/test1.md": {},
+            "examples/subdir/test2.md": {},
+        }
+
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site()
+            site.load(content_root=root)
+            site.analyze()
+
+            self.assertCountEqual(site.pages.keys(), [
+                "", "test",
+                "examples", "examples/test1.md",
+                "examples/subdir", "examples/subdir/test2.md",
+            ])
+
+            index = site.pages[""]
+            test = site.pages["test"]
+            test1 = site.pages["examples/test1.md"]
+            test2 = site.pages["examples/subdir/test2.md"]
+
+            self.assertEqual(index.TYPE, "dir")
+            self.assertEqual(test.TYPE, "markdown")
+            self.assertEqual(test1.TYPE, "asset")
+            self.assertEqual(test2.TYPE, "asset")

@@ -6,7 +6,7 @@ import os
 class Asset(Page):
     TYPE = "asset"
 
-    def __init__(self, site, src, dest_subdir=None, meta=None):
+    def __init__(self, site, src, dest_subdir=None, meta=None, findable=False):
         dirname, basename = os.path.split(src.relpath)
         if basename == "index.html":
             linkpath = dirname
@@ -30,6 +30,7 @@ class Asset(Page):
 
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
         self.meta["title"] = os.path.basename(src.relpath)
+        self.FINDABLE = findable
 
     def render(self):
         return {
