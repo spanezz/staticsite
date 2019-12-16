@@ -19,9 +19,10 @@ possible.
 ## Dependencies
 
 ```sh
-apt install python3-tz python3-unidecode python3-markdown python3-toml \
-            python3-yaml python3-jinja2 python3-dateutil python3-livereload \
-            python3-slugify
+apt install python3-tz python3-dateutil python3-slugify \
+            python3-markdown python3-docutils \
+	    python3-toml python3-ruamel.yaml \
+	    python3-jinja2 python3-livereload
 ```
 
 ## Quick start
