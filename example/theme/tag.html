@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from 'inline_page.html' import inline_page %}
+{% import 'blog.html' as blog %}
 
 {% block nav %}
 {{super()}}
@@ -9,8 +9,6 @@
 {% block content %}
 <h1 class="display-4">{{page.meta.title}}</h1>
 
-{% for page in page.pages[:10] %}
-{{inline_page(page)}}
-{% endfor %}
+{{blog.pages(page.pages[:10])}}
 
 {% endblock %}

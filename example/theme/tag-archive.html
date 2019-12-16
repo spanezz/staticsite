@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import 'blog.html' as blog %}
 
 {% block nav %}
 {{super()}}
@@ -8,11 +9,7 @@
 {% block content %}
 <h1 class="display-4">{{page.meta.title}}</h1>
 
-<ul class="list-group">
-{% for p in page.pages %}
-<li class="list-group-item"><a href="{{url_for(p)}}">{{p.meta.date.strftime("%Y-%m-%d")}} - {{p.meta.title}}</a></li>
-{% endfor %}
-</ul>
+{{blog.archive(pages=page.pages)}}
 
 {% endblock %}
 

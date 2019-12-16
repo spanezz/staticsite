@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from 'inline_page.html' import inline_page %}
+{% import 'blog.html' as blog %}
 
 {% block nav %}
 {{super()}}
@@ -7,12 +7,11 @@
 {% endblock %}
 
 {% block content %}
+
 <h1 class="display-4">Last 10 blog posts</h1>
 
 <p>This the example front page for the blog.</p>
 
-{% for page in site_pages(path="blog/*", limit=10) %}
-{{inline_page(page)}}
-{% endfor %}
+{{blog.pages(pages=site_pages(path="blog/*", limit=10))}}
 
 {% endblock %}

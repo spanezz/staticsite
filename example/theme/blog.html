@@ -16,3 +16,17 @@
   </div>
 </div>
 {%- endmacro %}
+
+{% macro pages(pages) -%}
+  {% for page in pages %}
+  {{inline_page(page)}}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro archive(pages) -%}
+<ul class="list-group">
+  {% for page in pages %}
+  <li class="list-group-item"><a href="{{url_for(page)}}">{{page.meta.date.strftime("%Y-%m-%d")}} - {{page.meta.title}}</a></li>
+  {% endfor %}
+</ul>
+{%- endmacro %}

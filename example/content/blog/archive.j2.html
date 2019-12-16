@@ -1,15 +1,11 @@
 {% extends "base.html" %}
-{% from 'inline_page.html' import inline_page %}
+{% import 'blog.html' as blog %}
 
 {% block content %}
 <h1>Blog entries</h1>
 
 <h2>Archive of all posts</h2>
 
-<ul>
-{% for page in site_pages(path="blog/*") %}
-<li>[{{page.meta.date.date()}}] <a href="{{url_for(page)}}">{{page.meta.title}}</a></li>
-{% endfor %}
-</ul>
+{{blog.archive(pages=site_pages(path="blog/*"))}}
 
 {% endblock %}
