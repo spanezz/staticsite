@@ -185,10 +185,11 @@ class Site:
                 if not d.files:
                     break
 
-            for f in d.files.values():
+            # Use everything else as an asset
+            for fname, f in d.files.items():
                 if stat.S_ISREG(f.stat.st_mode):
                     log.debug("Loading static file %s", f.relpath)
-                    p = Asset(self, f)
+                    p = Asset(self, f, meta=d.meta_file(fname))
                     self.add_page(p)
 
     def read_asset_tree(self, tree_root, subdir=None):

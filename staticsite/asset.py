@@ -6,7 +6,7 @@ import os
 class Asset(Page):
     TYPE = "asset"
 
-    def __init__(self, site, src, dest_subdir=None):
+    def __init__(self, site, src, dest_subdir=None, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename == "index.html":
             linkpath = dirname
@@ -25,7 +25,8 @@ class Asset(Page):
             src=src,
             src_linkpath=linkpath,
             dst_relpath=dst_relpath,
-            dst_link=dst_link)
+            dst_link=dst_link,
+            meta=meta)
 
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
         self.meta["title"] = os.path.basename(src.relpath)
