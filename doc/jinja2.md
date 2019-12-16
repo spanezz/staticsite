@@ -20,6 +20,11 @@ built.
 ## Front matter
 
 If a page defines a jinja2 block called `front_matter`, the block is rendered
-and parsed as front matter
+and parsed as front matter.
+
+**Note**: [jinja2 renders all contents it finds before `{% extends %}`](https://jinja.palletsprojects.com/en/2.10.x/templates/#child-template).
+To prevent your front matter from ending up in the rendered HTML, place the
+`front_matter` block after the `{% extends %}` directive, or manage your front
+matter from [`.staticfile` directory metadata](content.md).
 
 [Back to reference index](reference.md)
