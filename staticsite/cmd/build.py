@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import time
+import locale
 from collections import defaultdict
 from .command import SiteCommand, CmdlineError
 from staticsite.render import File
@@ -36,6 +37,13 @@ class Builder:
         """
         Generate output
         """
+        # Set locale for rendering
+        try:
+            lname = self.site.settings.LANGUAGES[0]["locale"]
+            locale.setlocale(locale.LC_ALL, lname)
+        except locale.Error as e:
+            log.warn("Cannot set locale to %s: %s", lname, e)
+
         # Scan the target directory to take note of existing contents
         with timings("Scanned old content in %fs"):
             self.existing_paths = {}

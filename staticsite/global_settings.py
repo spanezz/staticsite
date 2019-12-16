@@ -75,3 +75,11 @@ TAXONOMIES = []
 # Patterns (glob or regexps) that identify files in content directories that
 # are parsed as jinja2 templates
 JINJA2_PAGES = ["*.html", "*.j2.*"]
+
+# Languages used to build the site
+# For now, only the first one is used, and only its locale is used.
+LANGUAGES = [
+    {
+        "locale": "C",
+    },
+]

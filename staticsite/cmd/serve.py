@@ -2,6 +2,7 @@ from .command import Command, SiteCommand, CmdlineError
 import os
 import mimetypes
 import gc
+import locale
 import logging
 
 log = logging.getLogger()
@@ -56,6 +57,13 @@ class PageFS:
         dst_relpath, page = self.get_page(os.path.normpath(path).lstrip("/"))
         if page is None:
             return None
+
+        # Set locale for rendering
+        try:
+            lname = page.site.settings.LANGUAGES[0]["locale"]
+            locale.setlocale(locale.LC_ALL, lname)
+        except locale.Error as e:
+            log.warn("%s: cannot set locale to %s: %s", page, lname, e)
 
         for relpath, rendered in page.render().items():
             if relpath == dst_relpath:

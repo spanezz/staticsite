@@ -34,6 +34,11 @@ overridden by `settings.py` or `.staticsite.py`.
 * `TIMEZONE`: Default timezone used for datetimes in site contents.
 * `TAXONOMIES`: List of [taxonomy](taxonomies.md) names used on the site.
   Defaults to no taxonomies.
+* `LANGUAGES`: List of dicts representing which languages to build the site
+  for. Currently only the first entry is used, and it should contain a `locale`
+  key with the locale to use to build the site. In the future this can grow
+  into building multiple versions of the site for different languages.
+  Defaults to `[{"locale": "C"}]`.
 
 
 ## `ssite build` settings
