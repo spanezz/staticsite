@@ -27,24 +27,36 @@ apt install python3-tz python3-dateutil python3-slugify \
 
 ## Quick start
 
-Example steps to create a new post, seeing it in the live preview, and build
-the site ready to be published:
+This is how to create a new site with markdown pages:
 
-1. Start a preview of the site: `ssite serve example`
-2. Open <http://localhost:8000> in the browser.
-3. Create a new post: `ssite new example`
-4. Save the new post, it automatically appears in the home page in the browser.
-5. Finally, build the site: `ssite build example`
-6. The built site will be in `example/web` ready to be served by a web server.
+1. Creating a new website:
+    * `mkdir mysite`
+    * `cd mysite`
+    * Create `index.md`, give it a title and an introduction to your site
+2. Preview your site while you work on it:
+    * Run `ssite serve`
+    * Visit <http://localhost:8000> for a live preview: each time you save
+      `index.md`, you will see the preview updating automatically
+3. Add pages:
+    * Create `about.md`
+    * Link it from the `index.md` as a normal markdown link, like:
+      `[About this site](about.md)`
+4. Build site:
+    * Run `ssite build -o web`, and the site will be built inside the `web/`
+      directory
+5. Keep going: you have a new website!
 
-Useful tips:
 
-* keep your browser open on `ssite serve` for an automatic live preview of
+Some tips:
+
+* Keep your browser open on `ssite serve` for an automatic live preview of
   everything you do
-* you can use `python3 -m http.server 8000 --bind 127.0.0.1` to serve the
+* You can use `python3 -m http.server 8000` to serve the
   result of `ssite build` and test your website before publishing
-* a quick rsync command for publishing the site:
-  `rsync -avz example/web/ server:/path/to/webspace`
+* Here's a quick rsync command for publishing the site:
+  `rsync -avz web/ server:/path/to/webspace`
+* Run `ssite serve` on the example site provided with staticsite, and look at
+  its sources, to see examples of the various functions of staticsite.
 
 
 ## Index of the documentation
