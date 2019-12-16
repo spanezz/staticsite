@@ -29,30 +29,49 @@ apt install python3-tz python3-dateutil python3-slugify \
 
 This is how to create a new site with markdown pages:
 
-1. Creating a new website:
-    * `mkdir mysite`
-    * `cd mysite`
-    * Create `index.md`, give it a title and an introduction to your site
-2. Preview your site while you work on it:
-    * Run `ssite serve`
-    * Visit <http://localhost:8000> for a live preview: each time you save
-      `index.md`, you will see the preview updating automatically
-3. Add pages:
-    * Create `about.md`
-    * Link it from the `index.md` as a normal markdown link, like:
-      `[About this site](about.md)`
-4. Build site:
-    * Run `ssite build -o web`, and the site will be built inside the `web/`
-      directory
-5. Keep going: you have a new website!
+**Create a new website**
+
+```sh
+mkdir mysite
+cd mysite
+```
+
+**Create your main index page**
+
+Write a file called `index.md`:
+```md
+# My new website
+
+This is the introduction of my new website
+```
+
+**Preview your site while you work on it**
+
+Run `ssite serve`, and visit <http://localhost:8000> for a live preview: each
+time you save `index.md`, you will see the preview updating automatically
+
+**Add pages**
+
+Create `about.md`
+
+Link it from the `index.md` as a normal markdown link, like:
+`[About this site](about.md)`
+
+**Build the site**
+
+Run `ssite build -o web`, and the site will be built inside the `web/`
+directory
+
+**Keep going: you have a new website!**
 
 
 Some tips:
 
 * Keep your browser open on `ssite serve` for an automatic live preview of
   everything you do
-* You can use `python3 -m http.server 8000` to serve the
-  result of `ssite build` and test your website before publishing
+* You can use `python3 -m http.server 8000` to create a little web server
+  serving the version of your site built with `ssite build`. This is a
+  comfortable way to can have a look at it before publishing.
 * Here's a quick rsync command for publishing the site:
   `rsync -avz web/ server:/path/to/webspace`
 * Run `ssite serve` on the example site provided with staticsite, and look at
