@@ -25,3 +25,6 @@ ones.
 
 You can also replace an existing staticsite feature by providing a new feature
 registered with the same name.
+
+
+[Back to reference index](reference.md)

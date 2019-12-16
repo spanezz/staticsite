@@ -57,4 +57,4 @@ current page.
 
 See `page metadata <metadata.md>`_ for a list of commonly used metadata.
 
-`Back to README <../README.md>`_
+`Back to reference index <reference.md>`_

@@ -46,4 +46,4 @@ month comes, the page will be published and `ssite new -a links` will start a
 new page.
 
 
-[Back to README](../README.md)
+[Back to reference index](reference.md)

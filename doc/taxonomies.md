@@ -1,9 +1,11 @@
 ## Taxonomies
 
-Any number of taxonomies, each described by a `<name>.taxonomy` file where it
-should appear in the site.
+Files with a `.taxonomy` extension represent where that taxonomy will appear in
+the built site.
 
-See `example/content/tags.taxonomy` for details.
+For example, `dir/tags.taxonomy` will become `dir/tags/…` in the built site,
+and contain an index of all categories in the taxonomy, and for each category
+an index page, an archive page, and rss and atom feeds.
 
 **Added in 1.2**: Any taxonomy you use needs to be explicitly listed in
 settings as a `TAXONOMIES` list of taxonomy names. staticsite prints a warning
@@ -118,4 +120,4 @@ usual [meta](metadata.md), documented here.
 * `pages`: the pages who have this category
 
 
-[Back to README](../README.md)
+[Back to reference index](reference.md)

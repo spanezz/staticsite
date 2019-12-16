@@ -44,9 +44,7 @@ class New(SiteCommand):
     def run(self):
         site = self.load_site()
 
-        archetypes = site.get_archetypes()
-
-        archetype = archetypes.find(self.args.archetype)
+        archetype = site.archetypes.find(self.args.archetype)
         if archetype is None:
             raise CmdlineError("archetype {} not found".format(self.args.archetype))
         log.info("Using archetype %s", archetype.relpath)

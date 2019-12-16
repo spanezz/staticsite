@@ -8,12 +8,19 @@ from .settings import Settings
 from .page import Page
 from .render import File
 from .cache import Caches, DisabledCaches
+from .utils import lazy
 import logging
 
 log = logging.getLogger()
 
 
 class Site:
+    """
+    A staticsite site.
+
+    This class tracks all resources associated with a site.
+    """
+
     def __init__(self, settings: Optional[Settings] = None):
         from .feature import Features
 
@@ -62,6 +69,14 @@ class Site:
 
         # Pick an initial site name from settings
         self.site_name = self.settings.SITE_NAME
+
+    @lazy
+    def archetypes(self) -> "archetypes.Archetypes":
+        """
+        Archetypes defined in the site
+        """
+        from .archetypes import Archetypes
+        return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
 
     def find_theme_root(self) -> str:
         """
@@ -229,7 +244,3 @@ class Site:
         return pytz.utc.localize(
                         datetime.datetime.utcfromtimestamp(ts)
                     ).astimezone(self.timezone)
-
-    def get_archetypes(self):
-        from .archetypes import Archetypes
-        return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))

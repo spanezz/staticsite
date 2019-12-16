@@ -31,3 +31,6 @@ a series.
 
 If you name the series with the same name as a [taxonomy](taxonomies.md), you
 can easily link to an index for all the series with its own RSS feed.
+
+
+[Back to reference index](reference.md)

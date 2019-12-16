@@ -15,6 +15,10 @@ with markdown pages.
 The same metadata as with [markdown pages](markdown.md) can be used, plus the
 following items:
 
- - `type`: the name of a Jinja2 template to load from the theme directory, as
-   `data-[type].html`. If it is not found, `data.html` is tried for a generic
-   template.
+### `type`
+
+The name of a Jinja2 template to load from the theme directory, as
+`data-[type].html`. If it is not found, `data.html` is tried for a generic
+template.
+
+[Back to reference index](reference.md)

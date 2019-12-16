@@ -1,4 +1,4 @@
-# Markdown files
+# Markdown pages
 
 Markdown files have a `.md` extension and are prefixed by a [Hugo-style front
 matter](https://gohugo.io/content/front-matter/).
@@ -51,4 +51,35 @@ The front matter of the post can be written in
 See [page metadata](metadata.md) for a list of commonly used metadata.
 
 
-[Back to README](../README.md)
+## Extra settings
+
+Markdown rendering makes use of these settings:
+
+### `MARKDOWN_EXTENSIONS`
+
+Extensions used by python-markdown. Defaults to:
+
+```py
+MARKDOWN_EXTENSIONS = [
+    "markdown.extensions.extra",
+    "markdown.extensions.codehilite",
+    "markdown.extensions.fenced_code",
+]
+```
+
+### `MARKDOWN_EXTENSION_CONFIGS`
+
+Configuration for markdown extensions. Defaults to:
+
+```py
+MARKDOWN_EXTENSION_CONFIGS = {
+    'markdown.extensions.extra': {
+        'markdown.extensions.footnotes': {
+            # See https://github.com/spanezz/staticsite/issues/13
+            'UNIQUE_IDS': True,
+        },
+    },
+}
+```
+
+[Back to reference index](reference.md)

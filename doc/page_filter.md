@@ -1,4 +1,4 @@
-# Selecting pages
+# Selecting site pages
 
 Functions like `site_pages` in [templates](templages.md) or `filter`/`add_to`
 in [syndication](syndication.md) allow to select pages from the site.
@@ -30,3 +30,6 @@ List blog articles about Debian in a template:
 <li>{{url_for(page)}}</li>
 {% endfor %}
 ```
+
+
+[Back to reference index](reference.md)

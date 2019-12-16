@@ -14,6 +14,9 @@ SITE_ROOT = "/"
 # Default site name. If None, use the title of the toplevel index
 SITE_NAME = None
 
+# Default author of the site
+SITE_AUTHOR = None
+
 # Directory with "archetypes" (templates used by ssite new)
 # If None, archetypes are not used by ssite new
 ARCHETYPES = "archetypes"

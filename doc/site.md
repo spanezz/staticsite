@@ -1,14 +1,19 @@
-# Site components
+# Site
 
-By default, a `staticsite` site contains:
+The [site object](../staticsite/site.py) collects and tracks all contents of a
+site.
 
-* `settings.py`: [the site configuration.](settings.md)
-* `content/`: [the contents of the site.](contents.md)
-* `theme/`: Jinja2 templates and static content used to
-  [control the appearance of the site.](theme.md)
-* `archetypes/`: Jinja2 templates used to [create new pages for `content`.](archetypes.md)
-* `web/`: the contents of the site rendered to be served on the web.
+Through it, templates and code can access:
 
-See [the site configuration](settings.md) for customizing these paths.
+* `settings`: the site [settings](settings.md)
+* `pages`: the site pages, indexed by relative path in the built site
+* `timezone`: timezone object for the default site timezone, used as a default
+  for naive datetime objects
+* `generation_time`: datetime of the current execution of staticsite
+* `theme`: [Theme](theme.md) for the site
+* `features`: site [features](feature.md) indexed by name
+* `content_root`: path to the root directory of site [contents](contents.md)
+* `site_name`: configured site name
+* `archetypes`: site [archetypes](archetypes.md)
 
-[Back to README](../README.md)
+[Back to reference index](reference.md)

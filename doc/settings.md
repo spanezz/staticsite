@@ -1,73 +1,71 @@
 # settings.py: configuration for the site
 
-At the root of the site there is a configuration file called `settings.py` that
-is interpreted via Python similarly to what happens in
-[Django](https://docs.djangoproject.com/en/1.9/topics/settings/).
+Sites can provide a configuration file, called `settings.py` or
+`.staticsite.py` by default, that is interpreted via Python similarly to what
+happens in [Django](https://docs.djangoproject.com/en/1.9/topics/settings/).
 
-Only uppercase settings are used.
+Only uppercase values set in the configuration are used by staticsite, the rest
+is ignored.
 
 Default settings are defined in the module `staticsite/global_settings.py` and
 overridden by `settings.py` or `.staticsite.py`.
 
 ## Common settings
 
-```py
-# Name of the website
-SITE_NAME = "Example web site"
+* `PROJECT_ROOT`: If some settings use relative paths, they are assumed to be
+  rooted in this path. Defaults to the directory where the settings file is
+  found.
 
-# Author of the website
-SITE_AUTHOR = "Example author"
+## Site contents
 
-# Absolute URL to the root of the website
-SITE_URL = "https://www.example.org"
+* `CONTENT`: Directory with the source content of the site. Defaults to
+  `PROJECT_ROOT`
+* `THEME`: Theme used to render the site. A sequence of strings is tried in
+  order. Defaults to `("/usr/share/doc/staticsite/example/theme/", "theme")`
+* `SYSTEM_ASSETS`: Names of static asset directories to add from
+  `/usr/share/javascript`. Defaults to the empty list.
 
-# Time zone used for site posts
-TIMEZONE = "Europe/Rome"
+## Site-wide metadata
 
-# Root directory of the site in the URLs we generate.
-# If you are publishing the site at /prefix instead of root of the domain,
-# override this with /prefix
-SITE_ROOT = "/"
-
-# Directory with the source content of the site
-CONTENT = "content"
-
-# Theme used to render the site
-# Default: the one installed in the system
-THEME = "theme"
-
-# Directory with "archetypes" (templates used by ssite new)
-ARCHETYPES = "archetypes"
-
-# Directory where the static site will be written by build
-OUTPUT = "web"
-
-# List of asset directories included from /usr/share/javascript
-SYSTEM_ASSETS = []
-
-# List of taxonomy names used in the site
-TAXONOMIES = []
-```
+* `SITE_NAME`: Site name. It defaults to the title of the toplevel page.
+* `SITE_AUTHOR`: Default author for site contents.
+* `TIMEZONE`: Default timezone used for datetimes in site contents.
+* `TAXONOMIES`: List of [taxonomy](taxonomies.md) names used on the site.
+  Defaults to no taxonomies.
 
 
-## Other settings
+## `ssite build` settings
 
-```py
-# Editor used to edit new pages (defaults to $EDITOR)
-EDITOR = os.environ.get("EDITOR", "sensible-editor")
+* `SITE_URL`: Absolute URL to the root of the site.
+* `SITE_ROOT`: Root directory of the site in the URLs we generate. If you are
+  publishing the site at `/prefix` instead of root of the domain, override this
+  with `/prefix`. Defaults to `/`.
+* `OUTPUT`: Directory where the output of `ssite build` will go. If not set,
+  `ssite build` will ask for it.
+* `DRAFT_MODE`: If True, do not ignore pages with dates in the future. Defaults
+  to False, where pages with dates in the future are considered drafts and are
+  not included in the site.
+* `CACHE_REBUILDS`: If True, store cached data to speed up rebuilds. Defaults
+  to True.
 
-# Command used to run the editor, as passed to subprocess.check_command.
-# Each list element is expanded with string.format. All settings are available
-# for expansion, and {name} is the absolute path of the file to edit.
-EDIT_COMMAND = ["{EDITOR}", "{name}"]
 
-# extensions for python-markdown and their config used for this site
-MARKDOWN_EXTENSIONS = [
-    "markdown.extensions.extra",
-    "markdown.extensions.codehilite",
-    "markdown.extensions.fenced_code",
-]
-MARKDOWN_EXTENSION_CONFIGS = {}
-```
+## `ssite new` settings
 
-[Back to README](../README.md)
+* `ARCHETYPES`: Directory where [archetypes](archetypes.md) used by `ssite new`
+  are found
+* `EDITOR`: editor command used by `ssite new` to edit new pages. Defaults to
+  `$EDITOR` or `sensible-editor`.
+* `EDIT_COMMAND`: Command used to run the editor, as passed to
+  `subprocess.check_command`. Each list element is expanded with
+  `string.format`, with all other settings values made available to the
+  `format` template, plus `{name}` set to the absolute path of the file to
+  edit. Defaults to `["{EDITOR}", "{name}", "+"]`
+
+
+## Feature specific settings
+
+See the [markdown feature documentation](doc/markdown.md) for extra settings
+used to control it.
+
+
+[Back to reference index](reference.md)

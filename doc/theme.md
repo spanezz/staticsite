@@ -1,10 +1,11 @@
 # theme: controlling the appearance of the site
 
-Inside `theme` there are the [Jinja2](http://jinja.pocoo.org/) templates that
-control how pages are rendered.
+Inside a theme directory there are the [Jinja2](http://jinja.pocoo.org/)
+templates that control how pages are rendered, and static assets for the theme.
 
 The theme contents are independent from the contents of the site, and it should
 be possible to swap one theme for another at any point.
+
 
 ## Theme configuration
 
@@ -19,7 +20,7 @@ Valid theme configuration entries currently are:
 
 ## Theme templates
 
-These templates are directly used by `staticsite`:
+These templates are used by default by `staticsite`:
 
 * `dir.html` is used to render directory indices.
 * `page.html` is used to render Markdown pages.
@@ -32,7 +33,8 @@ inside `content`:
 * `base.html` is used for the common parts of all pages.
 * `inline_page.html` is used for rendering other pages inline, for example in
   the front page of a blog, or in the index page of a tag.
-* `syndication.xml` contains macro used to generate RSS2 and Atom feeds.
+* `syndication.xml` contains jinja2 macros used to generate RSS2 and Atom
+  feeds.
 
 For each [taxonomy](taxonomies.md), a number of templates are also expected. In
 the case of a taxonomy called `tags` with `item_name` `tag`:
@@ -43,6 +45,8 @@ the case of a taxonomy called `tags` with `item_name` `tag`:
 * `tag.atom` is used for the Atom feed for each tag.
 * `tag.rss` is used for the RSS2 feed for each tag.
 
+See [the template documentation](templates.md) for a reference on writing
+templates.
 
 ## Static assets
 
@@ -53,4 +57,4 @@ Other static assets are loaded from `/usr/share/javascript` as listed in the
 `SYSTEM_ASSETS` [setting](settings.md) or in the `system_assets` theme
 configuration.
 
-[Back to README](../README.md)
+[Back to reference index](reference.md)

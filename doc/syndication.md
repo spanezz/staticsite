@@ -64,3 +64,6 @@ RSS and Atom pages have these extra properties:
 * `page.meta.date` is the most recent date of the pages in the feed
 * `page.meta.index` is the page defining the syndication
 * `page.pages` is a list of all the pages included in the syndication
+
+
+[Back to reference index](reference.md)
