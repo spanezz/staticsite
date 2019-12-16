@@ -89,6 +89,12 @@
   `.staticsite.py` settings file: use `ssite show` instead. Use `ssite serve`
   for authoring your own websites, whose settings you control.
 
+### Pages
+
+* `.html` files are now parsed as jinja2 templates by default. If you have
+  bundles of HTML in your site content that you'd like copied as-is, you can
+  mark them as 'asset' in [`.staticsite` directory metadata](doc/contents.md).
+
 ### Link stability
 
 * `tag/archive.html` is now `tag/archive`
