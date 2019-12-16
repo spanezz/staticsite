@@ -77,6 +77,9 @@ class ServerMixin:
         self.pages = PageFS()
         mimetypes.init()
 
+        # Do not clutter previewed directories with .staticsite-cache directories
+        self.settings.CACHE_REBUILDS = False
+
     def make_server(self, watch_paths=[]):
         try:
             import livereload
