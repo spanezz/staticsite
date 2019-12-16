@@ -3,26 +3,32 @@ from . import utils as test_utils
 import datetime
 
 
+def dt(*args):
+    return datetime.datetime(*args)
+
+
 class TestSeries(TestCase):
     def test_site(self):
         site = test_utils.Site()
         site.load_without_content()
+
+        # site.add_test_page("tags", name="series")
+
+        seriesa1 = site.add_test_page("md", "seriesa1", series="seriesa", title="Series A", date=dt(2016, 1, 1))
+        seriesa2 = site.add_test_page("md", "seriesa2", date=dt(2016, 1, 2), series="seriesa", title="A2")
+        seriesa3 = site.add_test_page("md", "seriesa3", date=dt(2016, 1, 3), series="seriesa", title="A3",
+                                      series_title="Series A part Two")
+        seriesa4 = site.add_test_page("md", "seriesa4", date=dt(2016, 1, 4), series="seriesa", title="A4")
+
+        seriesb1 = site.add_test_page("md", "seriesb1", date=dt(2016, 1, 1), series="seriesb",
+                                      title="Series B", series_title="Series B part One")
+        seriesb2 = site.add_test_page("md", "seriesb2", date=dt(2016, 1, 2), series="seriesb", title="B2")
+
+        seriesc1 = site.add_test_page("md", "seriesc1", date=dt(2016, 1, 1), series="seriesc")
+
+        noseries = site.add_test_page("md", "noseries", date=dt(2016, 1, 1), title="Other things")
+
         series = site.features["series"].series
-
-        seriesa1 = test_utils.Page(site, "seriesa1", date=datetime.datetime(2016, 1, 1), series="seriesa",
-                                   title="Series A")
-        seriesa2 = test_utils.Page(site, "seriesa2", date=datetime.datetime(2016, 1, 2), series="seriesa", title="A2")
-        seriesa3 = test_utils.Page(site, "seriesa3", date=datetime.datetime(2016, 1, 3), series="seriesa", title="A3",
-                                   series_title="Series A part Two")
-        seriesa4 = test_utils.Page(site, "seriesa4", date=datetime.datetime(2016, 1, 4), series="seriesa", title="A4")
-
-        seriesb1 = test_utils.Page(site, "seriesb1", date=datetime.datetime(2016, 1, 1), series="seriesb",
-                                   title="Series B", series_title="Series B part One")
-        seriesb2 = test_utils.Page(site, "seriesb2", date=datetime.datetime(2016, 1, 2), series="seriesb", title="B2")
-
-        seriesc1 = test_utils.Page(site, "seriesc1", date=datetime.datetime(2016, 1, 1), series="seriesc")
-
-        noseries = test_utils.Page(site, "noseries", date=datetime.datetime(2016, 1, 1), title="Other things")
 
         site.add_page(seriesa1)
         site.add_page(seriesa2)
@@ -96,7 +102,7 @@ class TestSeries(TestCase):
         self.assertEquals(seriesb2.meta["series_index"], 2)
         self.assertEquals(seriesb2.meta["series_length"], 2)
 
-        self.assertEquals(seriesc1.meta["series_title"], "seriesc")
+        self.assertEquals(seriesc1.meta["series_title"], "seriesc1")
         self.assertEquals(seriesc1.meta["series_prev"], None)
         self.assertEquals(seriesc1.meta["series_next"], None)
         self.assertEquals(seriesc1.meta["series_first"], seriesc1)

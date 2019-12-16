@@ -49,8 +49,10 @@ class TaxonomyFeature(Feature):
         return pages
 
     def build_test_page(self, name: str, **kw) -> Page:
-        page = TestTaxonomyPage(self.site, File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"))
-        page.meta.update(**kw)
+        page = TestTaxonomyPage(
+                self.site,
+                File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"),
+                meta=kw)
         self.taxonomies[page.name] = page
         return page
 
