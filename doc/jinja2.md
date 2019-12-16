@@ -14,7 +14,7 @@ names to consider jinja2 templates by default. It defaults to
 Any file with `.j2.` in their file name will be rendered as a template,
 stripping `.j2.` in the destination file name.
 
-For example, `dir/file.j2.html` will become `dir/file.html` when the site is
+For example, `dir/robots.j2.txt` will become `dir/robots.txt` when the site is
 built.
 
 ## Front matter

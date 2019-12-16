@@ -16,7 +16,7 @@ metadata](contents.md)):
 ```yaml
 ---
 files:
-  index.j2.html:
+  index.html:
     syndication:
       filter:
         path: blog/*

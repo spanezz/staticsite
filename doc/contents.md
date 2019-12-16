@@ -12,7 +12,7 @@ Site contents can contain any kind of resource handled by staticsite
 * [markdown files](markdown.md)
 * [restructuredText files](rst.rst)
 * [data files](data.md)
-* [jinja2 templates](j2.md)
+* [jinja2 templates](jinja2.md)
 * [taxonomy files](taxonomies.md)
 
 Most pages handled by staticsite features will be generated as
