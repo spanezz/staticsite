@@ -13,6 +13,7 @@
 
 ## Site contents
 
+* [Front Matter](front-matter.md)
 * [Common page metadata](metadata.md)
 * [Markdown pages](markdown.md)
 * [reStructuredText pages](rst.md)

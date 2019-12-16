@@ -1,14 +1,16 @@
 # Markdown pages
 
-Markdown files have a `.md` extension and are prefixed by a [Hugo-style front
-matter](https://gohugo.io/content/front-matter/).
+Markdown files have a `.md` extension and are prefixed by
+[front matter metadata](front-matter.md).
 
 The flavour of markdown is what's supported by
 [python-markdown](http://pythonhosted.org/Markdown/) with the
 [Extra](http://pythonhosted.org/Markdown/extensions/extra.html),
 [CodeHilite](http://pythonhosted.org/Markdown/extensions/code_hilite.html)
 and [Fenced Code Blocks](http://pythonhosted.org/Markdown/extensions/fenced_code_blocks.html)
-extensions.
+extensions, and is quite close to
+[GitHub Flavored Markdown](https://github.github.com/gfm/) or
+[GitLab Markdown](https://docs.gitlab.com/ee/user/markdown.html).
 
 `staticsite` adds an extra internal plugin to Python-Markdown to postprocess
 the page contents to adjust internal links to guarantee that they point where

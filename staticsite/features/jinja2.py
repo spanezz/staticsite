@@ -4,7 +4,7 @@ from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
 from staticsite.file import Dir
-from staticsite.utils import compile_page_match
+from staticsite.utils import compile_page_match, parse_front_matter
 import os
 import logging
 
@@ -77,13 +77,21 @@ class J2Page(Page):
             dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath),
             meta=meta)
 
-    def render(self):
         try:
-            template = self.site.theme.jinja2.get_template(self.src.relpath)
+            self.template = self.site.theme.jinja2.get_template(self.src.relpath)
         except Exception:
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
-        body = self.render_template(template)
+
+        # If the page has a front_matter block, render it to get the front matter
+        front_matter_block = self.template.blocks.get("front_matter")
+        if front_matter_block:
+            fm = "".join(front_matter_block(self.template.new_context())).strip().splitlines()
+            fmt, meta = parse_front_matter(fm)
+            self.meta.update(**meta)
+
+    def render(self):
+        body = self.render_template(self.template)
         return {
             self.dst_relpath: RenderedString(body),
         }

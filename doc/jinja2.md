@@ -17,4 +17,9 @@ stripping `.j2.` in the destination file name.
 For example, `dir/file.j2.html` will become `dir/file.html` when the site is
 built.
 
+## Front matter
+
+If a page defines a jinja2 block called `front_matter`, the block is rendered
+and parsed as front matter
+
 [Back to reference index](reference.md)
