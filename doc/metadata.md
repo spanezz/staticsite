@@ -67,4 +67,10 @@ Name identifying a [series of articles](series.md) that this page is a part of.
    
 See [series of articles](series.md).
 
+### `asset`
+
+If set to True in [`.staticsite` directory metadata](contents.md), the file is
+loaded as a static asset, regardless of whether a feature would load it.
+
+
 [Back to reference index](reference.md)

@@ -179,6 +179,18 @@ class Site:
             log.info("Loading pages from %s", tree_root)
 
         for d in File.scan_dirs(tree_root, follow_symlinks=True, ignore_hidden=True):
+            # Handle files marked as assets in their metadata
+            taken = []
+            for fname, f in d.files.items():
+                meta = d.meta_file(fname)
+                if meta.get("asset"):
+                    p = Asset(self, f, meta=meta)
+                    self.add_page(p)
+                    taken.append(fname)
+            for fname in taken:
+                del d.files[fname]
+
+            # Let features pick their files
             for handler in self.features.ordered():
                 for page in handler.load_dir(d):
                     self.add_page(page)
