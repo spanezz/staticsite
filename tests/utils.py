@@ -52,7 +52,7 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
                     fd.write(content)
             elif isinstance(content, dict):
                 with open(abspath, "wt") as fd:
-                    fd.write(write_front_matter("json", content))
+                    fd.write(write_front_matter(content, style="json"))
             else:
                 raise TypeError("content should be a str or bytes")
         yield root
