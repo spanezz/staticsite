@@ -64,6 +64,7 @@
 * One can now match pages by regexp and not just by glob. See
   <doc/page-filter.md>.
 * Cleaned up reference documentation.
+* Allow to select a language code for rendering. See `LANGUAGES` in [settings](doc/settings.md)
 
 ## Upgrade notes
 
