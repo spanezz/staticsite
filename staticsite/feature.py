@@ -57,7 +57,7 @@ class Feature:
 
     def add_page(self, page):
         """
-        Add a page to this series, when it contains one of the metadata items
+        Add a page to this feature, when it contains one of the metadata items
         defined in for_metadata
         """
         raise NotImplementedError("Feature.add_page")

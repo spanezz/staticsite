@@ -91,7 +91,7 @@ class TestExampleProject(TestCase):
             self.assertEqual(settings.SYSTEM_ASSETS, [])
             self.assertFalse(settings.DRAFT_MODE)
             self.assertTrue(settings.CACHE_REBUILDS)
-            self.assertEqual(settings.TAXONOMIES, ["tags"])
+            self.assertEqual(settings.TAXONOMIES, ["tags", "series"])
 
     def _test_project(self, root, title='Example web site', cfg='', **kw):
         args = test_utils.Args(project=root + cfg, **kw)

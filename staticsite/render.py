@@ -37,7 +37,10 @@ class RenderedFile(RenderedElement):
 
 class RenderedString(RenderedElement):
     def __init__(self, s):
-        self.buf = s.encode("utf-8")
+        if s is None:
+            self.buf = b"Error in page: see build logs"
+        else:
+            self.buf = s.encode("utf-8")
 
     def write(self, dst: File):
         with open(dst.abspath, "wb") as out:

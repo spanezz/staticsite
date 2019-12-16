@@ -32,6 +32,8 @@ The relevant fields in a taxonomy file are:
   from a list of strings, to a list of pages for the taxonomy index, which can
   be used to generate links and iterate subpages in templates without the need
   of specialised functions.
+* **Removed in 1.2**: `series_tags` is now ignored: every category can be used
+  to build a series
 
 Example:
 
@@ -52,10 +54,6 @@ Example:
 # Template for rendering the taxonomy index. Here, it's the page that shows the
 # list of tags
 template: tags.html
-
-# When pages are added with these items of this taxonomy,
-# also add them to a series with the same name as the tag
-series_tags = ["links", "songs"]
 
 category:
    # Template for rendering the page for one tag. Here, it's the page that shows

@@ -49,8 +49,10 @@ class TaxonomyFeature(Feature):
         return pages
 
     def build_test_page(self, name: str, **kw) -> Page:
-        page = TestTaxonomyPage(self.site, File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"))
-        page.meta.update(**kw)
+        page = TestTaxonomyPage(
+                self.site,
+                File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"),
+                meta=kw)
         self.taxonomies[page.name] = page
         return page
 
@@ -61,17 +63,10 @@ class TaxonomyFeature(Feature):
         return self.taxonomies.get(name)
 
     def finalize(self):
-        # Scan all pages for taxonomies.
-
-        # Do it here instead of hooking into self.for_metadata and do this at
-        # page load time, so that we are sure that all .taxonomy files have
-        # been loaded
-        for page in list(self.site.pages.values()):
-            for name, taxonomy in self.taxonomies.items():
-                categories = page.meta.get(name)
-                if categories is None:
-                    continue
-                taxonomy.add_page(page, categories)
+        # Call finalize on all taxonomy pages, to populate them by scanning
+        # site pages
+        for taxonomy in self.taxonomies.values():
+            taxonomy.finalize()
 
         # Warn of taxonomies configured in settings.TAXONOMIES but not mounted
         # with a <name>.taxonomy
@@ -79,10 +74,6 @@ class TaxonomyFeature(Feature):
             if name not in self.taxonomies:
                 log.warn("Taxonomy %s defined in settings, but no %s.taxonomy file found in site contents: ignoring it",
                          name, name)
-
-        # Call finalize on all taxonomy pages, now that we fully populated them
-        for taxonomy in self.taxonomies.values():
-            taxonomy.finalize()
 
 
 class TaxonomyPage(Page):
@@ -154,6 +145,24 @@ class TaxonomyPage(Page):
         except Exception:
             log.exception("%s: cannot parse taxonomy information", self.src.relpath)
 
+    def __getitem__(self, name):
+        return self.categories[name]
+
+    def finalize(self):
+        # Scan all pages for taxonomies.
+        # We cannot do it by hooking into page loads, because at that point
+        # .taxonomy files are not guaranteed to have been loaded
+        for page in list(self.site.pages.values()):
+            categories = page.meta.get(self.name)
+            if categories is None:
+                continue
+            self.add_page(page, categories)
+
+        # Finalize categories
+        self.categories = {k: v for k, v in sorted(self.categories.items())}
+        for category in self.categories.values():
+            category.finalize()
+
     def add_page(self, page, categories):
         """
         Add a page to this taxonomy.
@@ -161,6 +170,8 @@ class TaxonomyPage(Page):
         :arg categories: a sequence of categories that the page declares for
                          this taxonomy
         """
+        if isinstance(categories, str):
+            categories = (categories,)
         category_pages = []
         for v in categories:
             category_page = self.categories.get(v, None)
@@ -184,14 +195,6 @@ class TaxonomyPage(Page):
         # Replace tag names in page.meta with CategoryPage pages
         category_pages.sort(key=lambda p: p.name)
         page.meta[self.name] = category_pages
-
-    def __getitem__(self, name):
-        return self.categories[name]
-
-    def finalize(self):
-        self.categories = {k: v for k, v in sorted(self.categories.items())}
-        for category in self.categories.values():
-            category.finalize()
 
     def render(self):
         res = {}
@@ -226,6 +229,8 @@ class CategoryPage(Page):
         self.taxonomy: TaxonomyPage = taxonomy
         # Pages that have this category
         self.pages: List[Page] = []
+        # Index of each page in the category sequence
+        self.page_index: Dict[Page, int] = {}
 
         self.meta.setdefault("template_title", "{{page.name}}")
         self.meta.setdefault("date", taxonomy.meta["date"])
@@ -276,8 +281,27 @@ class CategoryPage(Page):
         self.pages.append(page)
 
     def finalize(self):
-        self.pages.sort(key=lambda x: x.meta["date"], reverse=True)
+        self.pages.sort(key=lambda x: x.meta["date"])
+        # Store page indices
+        self.page_index = {page.src_linkpath: idx for idx, page in enumerate(self.pages)}
         self.archive.finalize()
+
+    def sequence(self, page):
+        idx = self.page_index.get(page.src_linkpath)
+        if idx is None:
+            return None
+        return {
+            # Array with all the pages in the series
+            "pages": self.pages,
+            # Assign series_prev and series_next metadata elements to pages
+            "index": idx + 1,
+            "length": len(self.pages),
+            "first": self.pages[0],
+            "last": self.pages[-1],
+            "prev": self.pages[idx - 1] if idx > 0 else None,
+            "next": self.pages[idx + 1] if idx < len(self.pages) - 1 else None,
+            "title": self.pages[0].meta.get("title", self.name),
+        }
 
     def render(self):
         return {

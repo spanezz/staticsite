@@ -169,15 +169,16 @@ class MarkdownPages(Feature):
             return None
         return MarkdownArchetype(archetypes, relpath, self)
 
-    def build_test_page(self, relpath: str, content: str) -> Page:
+    def build_test_page(self, relpath: str, content: str = None, **kw) -> Page:
         with tempfile.NamedTemporaryFile("wt", suffix=".md") as tf:
-            tf.write(content)
+            if content:
+                tf.write(content)
             tf.flush()
             src = File(relpath=relpath,
                        root=None,
                        abspath=os.path.abspath(tf.name),
                        stat=os.stat(tf.fileno()))
-            return MarkdownPage(self, src)
+            return MarkdownPage(self, src, meta=kw)
 
 
 def parse_markdown_with_front_matter(fd):

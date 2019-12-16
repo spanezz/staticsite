@@ -3,10 +3,52 @@
 # New in version 1.2
 
 * RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl.
-* Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
-  list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
-  found that is not listed in `TAXONOMIES`.
-* Try harder to localize timestamps as the configured site TIMEZONE.
+* Taxonomies:
+    * Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
+      list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
+      found that is not listed in `TAXONOMIES`.
+    * You can use `tags: tagname` as short for `tags: [tagname]` if you
+      only have one tag
+    * Significantly reengineered 'tags' feature.
+    * Taxonomy pages are now ordered by ascending dates. You need to reverse
+      them in templates (you can use the [`|reverse` jinja2 filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#reverse))
+      if you want them sorted as newest first.
+    * Series are now generated from any category: `series_tags` is now ignored.
+    * Removed `series` feature, merged into `tags`
+* Page metadata:
+    * `description` can now be used for page metadata.
+    * `template_title` and `template_description`, if present while `title` and
+      `description` are not, are rendered with jinja2. See [doc/metadata.md] for
+      details.
+    * `template` metadata can be used to choose a custom template to render the
+      page, similar to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+* Themes:
+    * Vendorized assets in `theme/static/` are now read by asset library name, as
+      if `static/` were the same as `/usr/share/javascript/`. Now you need to refer
+      to `/jquery/jquery.min.js` and `/bootstrap4/css/bootstrap.min.css` instead of
+      `jquery.min.js` and `css/bootstrap.min.css`.
+    * If a `config` file exists in the theme directory, it is loaded as
+      yaml/json/toml (same as a page front matter) and used as theme configuration
+    * `static_assets` in theme configuration can be used to load assets from
+      `/usr/share/javascript`
+    * Turned `inline_pages.html` template into a `blog.html` macro library for
+      blogs and category pages.
+* Jinja2 pages
+    * New setting [`JINJA2_PAGES`](doc/jinja2.md): now `*.html` pages are
+      considered jinja2 templates by default.
+    * Renamed `j2` feature to `jinja2`
+* Content loading
+    * A `.staticsite` file in a content directory is read as directory metadata,
+      and can be used to provide metadata to `.j2.html` pages. See
+      <doc/contents.md> for details.
+    * Static assets loaded by the theme have been moved to `static/` in the
+      rendered site, to avoid cluttering the rest of the contents. Referring to
+      them in `url_for` in templates has not changed.
+    * Set `asset` to true for a file in [`.staticsite` directory metadata](doc/contents.md),
+      to force loading it as a static asset.
+    * Allow to mark entire subdirectories as assets in
+      [directory metadata](doc/contents.md).
+    * Try harder to localize timestamps as the configured site TIMEZONE.
 * Added a `ssite show` command to open a directory in a browser without loading
   possibly unsafe settings.
 * When run without a `settings.py`, take more defaults from repo mode. This
@@ -16,46 +58,18 @@
   stacktrace.
 * Instantiate Feature classes in dependency order: this allows a feature
   constructor to register hooks with another one.
-* Significantly reengineered 'tags' feature.
-* `description` can now be used for page metadata.
-* `template_title` and `template_description`, if present while `title` and
-  `description` are not, are rendered with jinja2. See [doc/metadata.md] for
-  details.
-* `template` metadata can be used to choose a custom template to render the
-  page, similar to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-* Vendorized assets in `theme/static/` are now read by asset library name, as
-  if `static/` were the same as `/usr/share/javascript/`. Now you need to refer
-  to `/jquery/jquery.min.js` and `/bootstrap4/css/bootstrap.min.css` instead of
-  `jquery.min.js` and `css/bootstrap.min.css`.
 * Added syndication feature (see <doc/syndication.md>) to simplify generation
   of RSS and Atom feeds
-* If a `config` file exists in the theme directory, it is loaded as
-  yaml/json/toml (same as a page front matter) and used as theme configuration
-* `static_assets` in theme configuration can be used to load assets from
-  `/usr/share/javascript`
-* A `.staticsite` file in a content directory is read as directory metadata,
-  and can be used to provide metadata to `.j2.html` pages. See
-  <doc/contents.md> for details.
-* Static assets loaded by the theme have been moved to `static/` in the
-  rendered site, to avoid cluttering the rest of the contents. Referring to
-  them in `url_for` in templates has not changed.
 * Added `ssite dump_meta` to page information as available to templates
 * One can now match pages by regexp and not just by glob. See
   <doc/page-filter.md>.
 * Cleaned up reference documentation.
-* Turned `inline_pages.html` template into a `blog.html` macro library for
-  blogs and category pages.
-* Set `asset` to true for a file in [`.staticsite` directory metadata](doc/contents.md),
-  to force loading it as a static asset.
-* New setting [`JINJA2_PAGES`](doc/jinja2.md): now `*.html` pages are
-  considered jinja2 templates by default.
-* Renamed `j2` feature to `jinja2`
 
 ## Upgrade notes
 
 ### Taxonomies
 
-* if you use taxonomies, explicitly list them in the new `TAXONOMIES`
+* If you use taxonomies, explicitly list them in the new `TAXONOMIES`
   setting.
 * `item_name` in a `.taxonomy` file does not have a special meaning anymore,
   and templates can still find it in the taxonomy page metadata
@@ -63,6 +77,12 @@
   will be in a directory with the same name as the file, without extension
 * `tags.html`, `tag.html`, and `tag-archive.html` templates need updating: see
   the versions in `example/theme` for an updated example
+* `series_tags` is now ignored
+* The `series` feature is merged into `tags`: add a `series` taxonomy to keep using
+  the `series` metadata in pages
+* You may need to update the series rendering part of your templates: see
+  [the series documentation](doc/series.md) and the `page.html` example template
+  for details and an example.
 
 ### Settings
 

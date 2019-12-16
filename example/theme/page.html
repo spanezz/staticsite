@@ -3,14 +3,15 @@
 {# Render navigation for page series #}
 {% block nav %}
 {{super()}}
-{% if series %}
+{% if page.meta.series %}
+{% with place = page.meta.series[0].sequence(page) %}
   <li class="nav-item">
-    <a class="nav-link" href="{{url_for(series_first)}}"><span class="fa fa-backward"></a>
+    <a class="nav-link" href="{{url_for(place.first)}}"><span class="fa fa-backward"></a>
   </li>
 
-  {% if series_prev %}
+  {% if place.prev %}
   <li class="nav-item">
-    <a class="nav-link" href="{{url_for(series_prev)}}"><span class="fa fa-chevron-left"></a>
+    <a class="nav-link" href="{{url_for(place.prev)}}"><span class="fa fa-chevron-left"></a>
   {% else %}
   <li class="nav-item">
     <a class="nav-link disabled" href="#"><span class="fa fa-chevron-left"></a>
@@ -21,10 +22,10 @@
     <a class="nav-link dropdown-toggle" href="#" id="nav_series_dropdown"
        role="button" data-toggle="dropdown" aria-haspopup="true"
       aria-expanded="false">
-      {{series_title}} {{series_index}}/{{series_length}}
+      {{place.title}} {{place.index}}/{{place.length}}
     </a>
       <div class="dropdown-menu" aria-labelledby="nav_series_dropdown">
-        {% for s_page in series_pages %}
+        {% for s_page in place.pages %}
           {% if page == s_page %}
             <span class="dropdown-item font-weight-bolder">{{s_page.meta.title}}</span>
           {% else %}
@@ -34,20 +35,21 @@
       </div>
   </li>
 
-  {% if series_next %}
+  {% if place.next %}
   <li class="nav-item">
-    <a class="nav-link" href="{{url_for(series_next)}}"><span class="fa fa-chevron-right"></a>
+    <a class="nav-link" href="{{url_for(place.next)}}"><span class="fa fa-chevron-right"></a>
   {% else %}
   <li class="nav-item">
     <a class="nav-link disabled" href="#"><span class="fa fa-chevron-right"></a>
   {% endif %}
   </li>
 
-  {% if series_last %}
+  {% if place.last %}
   <li class="nav-item">
-    <a class="nav-link" href="{{url_for(series_last)}}"><span class="fa fa-forward"></a>
+    <a class="nav-link" href="{{url_for(place.last)}}"><span class="fa fa-forward"></a>
   </li>
   {% endif %}
+{% endwith %}
 {% endif %}
 {% endblock %}
 

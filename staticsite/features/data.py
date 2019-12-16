@@ -29,9 +29,9 @@ class DataPages(Feature):
     Each dataset needs, at its toplevel, to be a dict with a ``type`` element,
     and the dataset will be rendered using the ``data-{{type}}.html`` template.
 
-    Other front-matter attributes like ``date``, ``title``, ``aliases``,
-    ``series`` and taxonomy names are handled as with other pages. The rest of
-    the dictionary is ignored and can contain any data one wants.
+    Other front-matter attributes like ``date``, ``title``, ``aliases``, and
+    taxonomy names are handled as with other pages. The rest of the dictionary
+    is ignored and can contain any data one wants.
     """
     RUN_BEFORE = ["tags"]
 

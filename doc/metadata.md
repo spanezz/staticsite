@@ -3,7 +3,7 @@
 This is a list of metadata elements that are currently used by staticsite.
 
 Features can make use of other metadata. See for example
-[syndication](syndication.md), and [series](series.md).
+[syndication](syndication.md), and [taxonomies](taxonomies.md).
 
 You can use `ssite dump_meta` to see all the content and metadata that pages
 make available to templates via the `page` variable.
@@ -58,14 +58,6 @@ tags for the page.
 Relative paths in the destination directory where the page should also show up.
 [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
 existing links when moving a page to a different location.
-
-### `series`
-
-Name identifying a [series of articles](series.md) that this page is a part of.
-
-### `series_title`, `series_prev`, `series_next`, `series_first`, `series_last`, `series_index`, `series_length`
-   
-See [series of articles](series.md).
 
 ### `asset`
 
