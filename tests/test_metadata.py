@@ -99,8 +99,8 @@ title: Test1 title
 
             self.assertCountEqual(site.pages.keys(), [
                 "", "test",
-                "examples", "examples/test1.md",
-                "examples/subdir", "examples/subdir/test2.md",
+                "examples/test1.md",
+                "examples/subdir/test2.md",
             ])
 
             index = site.pages[""]

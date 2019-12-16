@@ -215,7 +215,7 @@ class Site:
                         if not stat.S_ISREG(f.stat.st_mode):
                             continue
                         log.debug("Loading static file %s", f.relpath)
-                        self.add_page(Asset(self, f, findable=True))
+                        self.add_page(Asset(self, f))
                 else:
                     not_assets.append(fname)
             d.subdirs[::] = not_assets
