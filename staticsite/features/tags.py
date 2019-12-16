@@ -279,7 +279,7 @@ class CategoryPage(Page):
         self.pages.append(page)
 
     def finalize(self):
-        self.pages.sort(key=lambda x: x.meta["date"], reverse=True)
+        self.pages.sort(key=lambda x: x.meta["date"])
         self.archive.finalize()
 
     def render(self):
