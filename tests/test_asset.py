@@ -1,5 +1,5 @@
 from unittest import TestCase
-from staticsite.site import Site
+from . import utils as test_utils
 from staticsite.asset import Asset
 from staticsite.file import File
 from contextlib import contextmanager
@@ -34,10 +34,10 @@ def override_tz(val):
 
 
 class TestAsset(TestCase):
+    @test_utils.assert_no_logs()
     def test_timestamps(self):
-        site = Site()
-        site.settings.THEME = os.path.join(os.getcwd(), "example", "theme")
-        site.load()
+        site = test_utils.Site()
+        site.load_without_content()
 
         with override_tz("Pacific/Samoa"):
             with tempfile.NamedTemporaryFile() as f:

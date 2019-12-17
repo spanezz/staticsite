@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, Union
 import os
 import tempfile
+import logging
 from contextlib import contextmanager
 import pytz
 import staticsite
@@ -66,6 +67,31 @@ def example_site():
         dst = os.path.join(root, "site")
         shutil.copytree(src, dst)
         yield dst
+
+
+class TracebackHandler(logging.Handler):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.collected = []
+
+    def handle(self, record):
+        import traceback
+        if record.stack_info is None:
+            record.stack_info = traceback.print_stack()
+        self.collected.append(record)
+
+
+@contextmanager
+def assert_no_logs(level=logging.WARN):
+    handler = TracebackHandler(level=level)
+    try:
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+        yield
+    finally:
+        root_logger.removeHandler(handler)
+    if handler.collected:
+        raise AssertionError(f"{len(handler.collected)} unexpected loggings")
 
 
 class Args:
