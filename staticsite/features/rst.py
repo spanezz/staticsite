@@ -79,7 +79,7 @@ class RestructuredText(Feature):
 
     See doc/markdown.md for details.
     """
-    RUN_BEFORE = ["tags"]
+    RUN_BEFORE = ["contents_loaded"]
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

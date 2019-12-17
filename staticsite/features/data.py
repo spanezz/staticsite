@@ -33,7 +33,7 @@ class DataPages(Feature):
     taxonomy names are handled as with other pages. The rest of the dictionary
     is ignored and can contain any data one wants.
     """
-    RUN_BEFORE = ["tags"]
+    RUN_BEFORE = ["contents_loaded"]
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

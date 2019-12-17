@@ -21,7 +21,7 @@ class J2Pages(Feature):
 
     See doc/templates.md for details.
     """
-    RUN_BEFORE = ["tags"]
+    RUN_BEFORE = ["contents_loaded"]
 
     def load_dir(self, sitedir: Dir) -> List[Page]:
         # Precompile JINJA2_PAGES patterns
