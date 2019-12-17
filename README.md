@@ -81,6 +81,7 @@ Some tips:
 ## Index of the documentation
 
 * [Reference documentation](doc/reference.md)
+* [Developer documentation](doc/devel/README.md)
 
 
 ## Example sites
