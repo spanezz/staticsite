@@ -3,7 +3,7 @@ import sys
 import argparse
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("ssite")
 
 
 def main():

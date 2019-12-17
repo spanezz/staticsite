@@ -6,7 +6,7 @@ from collections import defaultdict
 import os
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("dir")
 
 
 class DirPages(Feature):

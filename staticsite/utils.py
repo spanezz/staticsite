@@ -26,7 +26,7 @@ except ModuleNotFoundError:
     yaml_dump_args = {"Dumper": yaml.CDumper}
     yaml_dump = yaml.dump
 
-log = logging.getLogger()
+log = logging.getLogger("utils")
 
 
 def parse_front_matter(lines):

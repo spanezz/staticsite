@@ -12,7 +12,7 @@ import datetime
 from collections import defaultdict
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("data")
 
 
 re_ext = re.compile(r"\.(json|toml|yaml)$")

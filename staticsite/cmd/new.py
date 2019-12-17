@@ -4,7 +4,7 @@ import shlex
 from .command import SiteCommand, Fail
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("new")
 
 
 class LazyTitle:

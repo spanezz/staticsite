@@ -11,7 +11,7 @@ import markdown
 import tempfile
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("markdown")
 
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):

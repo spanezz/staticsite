@@ -3,7 +3,7 @@ from typing import Tuple, Dict, Any
 import os
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("archetypes")
 
 
 class Archetype:

@@ -11,7 +11,7 @@ from .cache import Caches, DisabledCaches
 from .utils import lazy
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("site")
 
 
 class Site:

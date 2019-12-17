@@ -8,7 +8,7 @@ import functools
 import os
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("taxonomy")
 
 
 class TaxonomyFeature(Feature):

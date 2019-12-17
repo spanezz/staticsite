@@ -3,7 +3,7 @@ import sys
 import logging
 import importlib
 
-log = logging.getLogger()
+log = logging.getLogger("settings")
 
 
 class Settings:

@@ -8,7 +8,7 @@ from staticsite.render import File
 from staticsite.utils import timings
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("build")
 
 
 class Build(SiteCommand):

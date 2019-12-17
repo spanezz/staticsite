@@ -8,7 +8,7 @@ from staticsite.utils import compile_page_match, parse_front_matter
 import os
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("jinja2")
 
 
 class IgnorePage(Exception):

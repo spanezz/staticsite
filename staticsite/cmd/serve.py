@@ -5,7 +5,7 @@ import gc
 import locale
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("serve")
 
 
 class PageFS:

@@ -3,7 +3,7 @@ import argparse
 import sys
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("site")
 
 
 class FeatureCommand:

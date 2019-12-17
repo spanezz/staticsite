@@ -5,7 +5,7 @@ import sys
 import os
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("command")
 
 
 class Fail(RuntimeError):

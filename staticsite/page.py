@@ -8,7 +8,7 @@ import jinja2
 import dateutil
 import staticsite
 
-log = logging.getLogger()
+log = logging.getLogger("page")
 
 
 class Page:

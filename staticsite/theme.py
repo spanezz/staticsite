@@ -7,7 +7,7 @@ from pathlib import Path
 from .utils import parse_front_matter
 from .page_filter import PageFilter
 
-log = logging.getLogger()
+log = logging.getLogger("theme")
 
 
 class Theme:

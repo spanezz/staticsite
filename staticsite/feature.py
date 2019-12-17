@@ -8,7 +8,7 @@ from .file import File, Dir
 from . import site
 from . import toposort
 
-log = logging.getLogger()
+log = logging.getLogger("feature")
 
 
 class Feature:

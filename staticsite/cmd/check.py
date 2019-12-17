@@ -4,7 +4,7 @@ from collections import Counter
 from .command import SiteCommand
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("check")
 
 
 class Check(SiteCommand):

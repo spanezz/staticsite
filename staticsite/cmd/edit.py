@@ -3,7 +3,7 @@ import shlex
 from .command import SiteCommand, Fail
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("edit")
 
 
 class Edit(SiteCommand):

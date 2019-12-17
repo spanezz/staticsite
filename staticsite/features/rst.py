@@ -26,7 +26,7 @@ except ModuleNotFoundError:
     def parse_yaml_tag(s):
         return yaml.load(s, Loader=yaml.CLoader)
 
-log = logging.getLogger()
+log = logging.getLogger("rst")
 
 
 class DoctreeScan:

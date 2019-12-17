@@ -3,7 +3,7 @@ from staticsite.utils import write_front_matter, compile_page_match
 import sys
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("dump_meta")
 
 
 class DumpMeta(SiteCommand):
