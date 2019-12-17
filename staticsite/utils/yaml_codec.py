@@ -30,19 +30,16 @@ try:
     # # Hack to do unsorted serialization with ruamel
     yaml_dumper = ruamel.yaml.YAML(typ="rt", pure=True)
     yaml_dumper.allow_unicode = True
-    yaml_dumper.default_flow_style = True
+    yaml_dumper.default_flow_style = False
     yaml_dumper.explicit_start = True
 
     def dumps_ruamel(data):
         # YAML dump with unsorted keys
-        with io.StringIO() as buf:
-            print("---", file=buf)
-            yaml_dumper.dump(data, buf)
-            print("---", file=buf)
-            return buf.getvalue()
+        with io.StringIO() as fd:
+            yaml_dumper.dump(data, fd)
+            return fd.getvalue()
 
     def dump_ruamel(data, file):
-        print("---", file=file)
         yaml_dumper.dump(data, file)
 except ModuleNotFoundError:
     load_ruamel = None
@@ -64,12 +61,10 @@ try:
         # Before that version, it seems impossible to do unsorted serialization
         # with pyyaml
         # https://stackoverflow.com/questions/16782112/can-pyyaml-dump-dict-items-in-non-alphabetical-order
-        with io.StringIO() as fd:
-            yaml.dump(data, fd, default_flow_style=True, allow_unicode=True, Dumper=yaml.CDumper)
-            return fd.getvalue()
+        return yaml.dump(data, stream=None, default_flow_style=False, allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
 
     def dump_pyyaml(data, file):
-        yaml.dump(data, file, default_flow_style=True, allow_unicode=True, Dumper=yaml.CDumper)
+        yaml.dump(data, file, default_flow_style=False, allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
 except ModuleNotFoundError:
     load_pyyaml = None
     loads_pyyaml = None

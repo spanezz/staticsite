@@ -52,7 +52,7 @@ def write_front_matter(meta, style="toml"):
         import toml
         return "+++\n" + toml.dumps(meta) + "+++\n"
     elif style == "yaml":
-        return yaml_codec.dumps(meta)
+        return yaml_codec.dumps(meta) + "---\n"
     return ""
 
 
