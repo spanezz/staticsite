@@ -167,8 +167,10 @@ class Features:
                 graph[feature.NAME].add(name)
 
         # Build the sorted list of features
+        sorted_names = toposort.sort(graph)
+        log.debug("Feature run order: %r", sorted_names)
         sorted_features = []
-        for name in toposort.sort(graph):
+        for name in sorted_names:
             feature = features.get(name)
             # Skip names that are not features, liek well-known synchronization
             # points
