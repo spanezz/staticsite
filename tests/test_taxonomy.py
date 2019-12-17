@@ -11,7 +11,7 @@ class TestTags(TestCase):
         site = test_utils.Site(TAXONOMIES=["tags"])
         site.load_without_content()
 
-        tax1 = site.add_test_page("tags", name="tags")
+        tax1 = site.add_test_page("taxonomy", name="tags")
 
         page1 = test_utils.Page(site, "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.add_page(page1)

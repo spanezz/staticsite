@@ -4,17 +4,18 @@
 
 * RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl.
 * Taxonomies:
+    * Renamed `tags` feature to `taxonomy`
     * Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
       list of taxonomy names. staticsite prints a warning if a `.taxonomy` file is
       found that is not listed in `TAXONOMIES`.
     * You can use `tags: tagname` as short for `tags: [tagname]` if you
       only have one tag
-    * Significantly reengineered 'tags' feature.
+    * Significantly reengineered 'taxonomy' feature.
     * Taxonomy pages are now ordered by ascending dates. You need to reverse
       them in templates (you can use the [`|reverse` jinja2 filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#reverse))
       if you want them sorted as newest first.
     * Series are now generated from any category: `series_tags` is now ignored.
-    * Removed `series` feature, merged into `tags`
+    * Removed `series` feature, merged into `taxonomy`
 * Page metadata:
     * `description` can now be used for page metadata.
     * `template_title` and `template_description`, if present while `title` and

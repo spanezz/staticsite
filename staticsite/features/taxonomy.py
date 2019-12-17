@@ -365,5 +365,5 @@ class TestTaxonomyPage(TaxonomyPage):
 
 
 FEATURES = {
-    "tags": TaxonomyFeature,
+    "taxonomy": TaxonomyFeature,
 }

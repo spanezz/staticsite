@@ -13,7 +13,7 @@ class TestSeries(TestCase):
         site.load_without_content()
 
         # TODO: say that all categories are series (or make it default to True if called 'series'?)
-        site.add_test_page("tags", name="series")
+        site.add_test_page("taxonomy", name="series")
 
         seriesa1 = site.add_test_page("md", "seriesa1", series="seriesa", title="Series A", date=dt(2016, 1, 1))
         seriesa2 = site.add_test_page("md", "seriesa2", date=dt(2016, 1, 2), series="seriesa", title="A2")
