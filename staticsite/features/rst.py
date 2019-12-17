@@ -3,6 +3,7 @@ from typing import List
 from staticsite.render import RenderedString
 from staticsite import Page, Feature, File, Dir
 from staticsite.archetypes import Archetype
+from staticsite.utils import yaml_codec
 import docutils.io
 import docutils.core
 import docutils.nodes
@@ -13,18 +14,6 @@ import datetime
 import dateutil.parser
 import tempfile
 import logging
-try:
-    import ruamel.yaml
-    yaml = ruamel.yaml.YAML(typ="safe", pure=True)
-
-    def parse_yaml_tag(s):
-        return yaml.load(s)
-except ModuleNotFoundError:
-    import yaml
-    yaml = yaml
-
-    def parse_yaml_tag(s):
-        return yaml.load(s, Loader=yaml.CLoader)
 
 log = logging.getLogger("rst")
 
@@ -141,14 +130,14 @@ class RestructuredText(Feature):
             elements = meta.get(taxonomy, None)
             if elements is not None and isinstance(elements, str):
                 # if vals is a string, parse it
-                meta[taxonomy] = parse_yaml_tag(elements)
+                meta[taxonomy] = yaml_codec.loads(elements)
 
         # If requested, parse some tag contents as yaml
         if self.yaml_tags:
             for tag in self.yaml_tags:
                 val = meta.get(tag)
                 if val is not None:
-                    meta[tag] = parse_yaml_tag(val)
+                    meta[tag] = yaml_codec.loads(val)
 
         return meta, doctree_scan
 

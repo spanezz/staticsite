@@ -3,6 +3,7 @@ from typing import List
 from staticsite.render import RenderedString
 from staticsite import Page, Feature, Dir
 from staticsite.archetypes import Archetype
+from staticsite.utils import yaml_codec
 import dateutil.parser
 import jinja2
 import re
@@ -123,15 +124,7 @@ def parse_data(fd, fmt):
         import toml
         return toml.load(fd)
     elif fmt == "yaml":
-        try:
-            import ruamel.yaml
-            yaml = ruamel.yaml.YAML(typ="rt")
-            load_args = {}
-        except ModuleNotFoundError:
-            import yaml
-            yaml = yaml
-            load_args = {"Loader": yaml.CLoader}
-        return yaml.load(fd, **load_args)
+        return yaml_codec.load(fd)
     else:
         raise NotImplementedError("data format {} is not supported".format(fmt))
 
@@ -144,18 +137,7 @@ def write_data(fd, data, fmt):
         import toml
         toml.dump(data, fd)
     elif fmt == "yaml":
-        try:
-            import ruamel.yaml
-            yaml = ruamel.yaml.YAML()
-            yaml.allow_unicode = True
-            yaml.default_flow_style = True
-            yaml.explicit_start = True
-            dump_args = {}
-        except ModuleNotFoundError:
-            import yaml
-            yaml = yaml
-            dump_args = {"default_flow_style": True, "allow_unicode": True}
-        yaml.dump(data, fd, **dump_args)
+        yaml_codec.dump(data, fd)
     else:
         raise NotImplementedError("data format {} is not supported".format(fmt))
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from unittest import TestCase
 from . import utils as test_utils
-import re
 
 
 class TestSyndication(TestCase):

@@ -6,25 +6,8 @@ import contextlib
 import functools
 import time
 import logging
-import io
 import pytz
-try:
-    import ruamel.yaml
-    yaml = ruamel.yaml.YAML(typ="safe", pure=True)
-    yaml_load_args = {}
-    yaml_dump_args = {}
-    # Hack to do unsorted serialization with ruamel
-    yaml_dump = ruamel.yaml.YAML(typ="rt", pure=True).dump
-except ModuleNotFoundError:
-    import yaml
-    yaml = yaml
-    yaml_load_args = {"Loader": yaml.CLoader}
-    # From pyyaml 5.1, one can add sort_keys=False
-    # Before that version, it seems impossible to do unsorted serialization
-    # with pyyaml
-    # https://stackoverflow.com/questions/16782112/can-pyyaml-dump-dict-items-in-non-alphabetical-order
-    yaml_dump_args = {"Dumper": yaml.CDumper}
-    yaml_dump = yaml.dump
+from . import yaml_codec
 
 log = logging.getLogger("utils")
 
@@ -54,8 +37,9 @@ def parse_front_matter(lines):
         # Optionally remove a trailing ---
         if lines[-1] == "---":
             lines = lines[:-1]
+
         yaml_body = "\n".join(lines)
-        return "yaml", yaml.load(yaml_body, **yaml_load_args)
+        return "yaml", yaml_codec.loads(yaml_body)
 
     return None, {}
 
@@ -68,13 +52,7 @@ def write_front_matter(meta, style="toml"):
         import toml
         return "+++\n" + toml.dumps(meta) + "+++\n"
     elif style == "yaml":
-        # From pyyaml 5.1, one can add sort_keys=False
-        # https://stackoverflow.com/questions/16782112/can-pyyaml-dump-dict-items-in-non-alphabetical-order
-        with io.StringIO() as buf:
-            print("---", file=buf)
-            yaml_dump(meta, buf, **yaml_dump_args)
-            print("---", file=buf)
-            return buf.getvalue()
+        return yaml_codec.dumps(meta)
     return ""
 
 

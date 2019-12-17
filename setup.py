@@ -7,7 +7,7 @@ setup(
     python_requires=">= 3.7",
     install_requires=[
         'markdown', 'docutils',
-        'toml', 'ruamel.yaml',
+        'toml', 'pyyaml', 'ruamel.yaml',
         'jinja2',
         'python_dateutil', 'python_slugify', 'pytz'],
 

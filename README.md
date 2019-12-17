@@ -21,7 +21,7 @@ possible.
 ```sh
 apt install python3-tz python3-dateutil python3-slugify \
             python3-markdown python3-docutils \
-	    python3-toml python3-ruamel.yaml \
+	    python3-toml python3-yaml python3-ruamel.yaml \
 	    python3-jinja2 python3-livereload
 ```
 
