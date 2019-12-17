@@ -80,8 +80,10 @@ Some tips:
 
 ## Index of the documentation
 
-* [Reference documentation](doc/reference.md)
-* [Developer documentation](doc/devel/README.md)
+* [Reference documentation](doc/reference.md): description of each part of
+  staticsite
+* [Developer documentation](doc/devel/README.md): documentation for developing
+  staticsite itself
 
 
 ## Example sites
