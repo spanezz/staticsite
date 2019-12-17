@@ -8,7 +8,19 @@ import logging
 log = logging.getLogger()
 
 
-class CmdlineError(RuntimeError):
+class Fail(RuntimeError):
+    """
+    Exception raised when the program should exit with an error but without a
+    backtrace
+    """
+    pass
+
+
+class Success(Exception):
+    """
+    Exception raised when a command has been successfully handled, and no
+    further processing should happen
+    """
     pass
 
 
@@ -29,12 +41,17 @@ class Command:
 
     def setup_logging(self):
         FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-        if self.args.debug:
+        if self.args.debug is True:
             logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-        elif self.args.verbose:
-            logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
         else:
-            logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
+            if self.args.debug and self.args.debug != "list":
+                # TODO: set up debug for the listed loggers
+                pass
+
+            if self.args.verbose:
+                logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+            else:
+                logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
     def load_site(self):
         # Instantiate site
@@ -43,6 +60,12 @@ class Command:
             site.load()
         with timings("Analysed site tree in %fs"):
             site.analyze()
+
+        # If --debug=list was requested
+        if self.args.debug == "list":
+            for name in sorted(logging.root.manager.loggerDict):
+                print(name)
+            raise Success()
         return site
 
     @classmethod
@@ -60,7 +83,7 @@ class Command:
         parser = subparsers.add_parser(cls.get_name(), help=desc)
         parser.set_defaults(handler=cls)
         parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
-        parser.add_argument("--debug", action="store_true", help="verbose output")
+        parser.add_argument("--debug", nargs="?", action="store", const=True, help="verbose output")
         return parser
 
 

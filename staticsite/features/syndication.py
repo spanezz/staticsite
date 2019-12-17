@@ -7,7 +7,7 @@ from staticsite import Page, Site, File
 import os
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("syndication")
 
 
 class SyndicationInfo:

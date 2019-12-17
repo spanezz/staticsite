@@ -1,4 +1,4 @@
-from .command import Command, SiteCommand, CmdlineError
+from .command import Command, SiteCommand, Fail
 import os
 import mimetypes
 import gc
@@ -92,7 +92,7 @@ class ServerMixin:
         try:
             import livereload
         except ImportError:
-            raise CmdlineError("Please install the python3 livereload module to use this function.")
+            raise Fail("Please install the python3 livereload module to use this function.")
 
         class Server(livereload.Server):
             def _setup_logging(self):

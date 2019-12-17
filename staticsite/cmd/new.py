@@ -1,7 +1,7 @@
 import os
 import subprocess
 import shlex
-from .command import SiteCommand, CmdlineError
+from .command import SiteCommand, Fail
 import logging
 
 log = logging.getLogger()
@@ -46,7 +46,7 @@ class New(SiteCommand):
 
         archetype = site.archetypes.find(self.args.archetype)
         if archetype is None:
-            raise CmdlineError("archetype {} not found".format(self.args.archetype))
+            raise Fail("archetype {} not found".format(self.args.archetype))
         log.info("Using archetype %s", archetype.relpath)
 
         title = LazyTitle(self.args.title)
@@ -55,7 +55,7 @@ class New(SiteCommand):
 
         relpath = meta.get("path", None)
         if relpath is None:
-            raise CmdlineError("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
+            raise Fail("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
 
         content_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.CONTENT)
         abspath = os.path.join(content_root, relpath)

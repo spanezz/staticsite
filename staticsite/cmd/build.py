@@ -3,7 +3,7 @@ import os
 import time
 import locale
 from collections import defaultdict
-from .command import SiteCommand, CmdlineError
+from .command import SiteCommand, Fail
 from staticsite.render import File
 from staticsite.utils import timings
 import logging
@@ -27,7 +27,7 @@ class Builder:
     def __init__(self, site):
         self.site = site
         if self.site.settings.OUTPUT is None:
-            raise CmdlineError(
+            raise Fail(
                     "No output directory configured:"
                     " please use --output or set OUTPUT in settings.py or .staticsite.py")
         self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)

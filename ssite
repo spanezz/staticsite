@@ -43,9 +43,11 @@ def main():
 
 
 if __name__ == "__main__":
-    from staticsite.cmd.command import CmdlineError
+    from staticsite.cmd.command import Fail, Success
     try:
         main()
-    except CmdlineError as e:
+    except Fail as e:
         print(e, file=sys.stderr)
         sys.exit(1)
+    except Success:
+        pass

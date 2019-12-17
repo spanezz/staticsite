@@ -1,6 +1,6 @@
 import subprocess
 import shlex
-from .command import SiteCommand, CmdlineError
+from .command import SiteCommand, Fail
 import logging
 
 log = logging.getLogger()
@@ -84,7 +84,7 @@ class Edit(SiteCommand):
             selected.append(page)
 
         if len(selected) == 0:
-            raise CmdlineError("No page found matching {}".format(" ".join(shlex.quote(x) for x in self.args.match)))
+            raise Fail("No page found matching {}".format(" ".join(shlex.quote(x) for x in self.args.match)))
 
         if len(selected) == 1:
             page = selected[0]
