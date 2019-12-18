@@ -25,6 +25,9 @@ class BaseDir:
             for entry in entries:
                 # Note: is_dir, is_file, and stat, follow symlinks by default
                 if entry.is_dir():
+                    if entry.name.startswith("."):
+                        # Skip hidden directories
+                        continue
                     # Take note of directories
                     self.subdirs.append(entry.name)
                 elif entry.name == ".staticsite":
@@ -32,6 +35,9 @@ class BaseDir:
                     with open(entry.name, "rt", opener=lambda path, flags: os.open(path, flags, dir_fd=self.dir_fd)) as fd:
                         lines = [line.rstrip() for line in fd]
                         fmt, self.meta = parse_front_matter(lines)
+                elif entry.name.startswith("."):
+                    # Skip hidden files
+                    continue
                 else:
                     # Take note of files
                     relpath = os.path.join(self.relpath, entry.name)
@@ -93,15 +99,6 @@ class ContentDir(BaseDir):
                 with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
                     subdir = AssetDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd)
                     subdir.load()
-                # TODO
-                ...
-                # # Scan this subdir as an asset dir
-                # for f in File.scan_subpath(d.tree_root, os.path.join(d.relpath, fname),
-                #                            follow_symlinks=True, ignore_hidden=True):
-                #     if not stat.S_ISREG(f.stat.st_mode):
-                #         continue
-                #     log.debug("Loading static file %s", f.relpath)
-                #     self.add_page(Asset(self, f))
             else:
                 # TODO: prevent loops with a set of seen directory devs/inodes
                 # Recurse
@@ -158,7 +155,7 @@ class AssetDir(BaseDir):
             # TODO: prevent loops with a set of seen directory devs/inodes
             # Recurse
             with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
-                subdir = AssetDir(self.site, self.tree_root, self.relpath / fname, subdir_fd)
+                subdir = AssetDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd)
                 subdir.load()
 
         # Use everything else as an asset

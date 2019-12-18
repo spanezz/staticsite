@@ -138,7 +138,7 @@ class Site:
             log.info("Loading pages from %s", content_root)
 
         with open_dir_fd(content_root) as dir_fd:
-            root = ContentDir(self, content_root, ".", dir_fd)
+            root = ContentDir(self, content_root, "", dir_fd)
             root.load()
 
     def load(self, content_root=None):
@@ -147,7 +147,7 @@ class Site:
         """
         self.features.load_default_features()
         self.load_theme()
-        self.load_content(content_root=content_root)
+        self.load_content_new(content_root=content_root)
 
     def add_page(self, page: Page):
         """
