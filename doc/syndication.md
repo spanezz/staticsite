@@ -41,6 +41,9 @@ the feeds.
 to the `site_pages` function in [templates](templates.md). See
 [Selecting pages](page-filter.md) for details.
 
+**Updated in 1.2**: `filter` is now optional, and if missing, `page.meta.pages`
+is used. This way, [using the `pages` metadata](pages.md), you can define a
+single expression for both syndication and page listing.
 
 ## Syndication of taxonomies
 

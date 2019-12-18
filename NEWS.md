@@ -70,6 +70,11 @@
 * Removed compatibility `Feature.load_dir` method. The old `try_load_page`
   method is no longer supported. Now a feature that does not load files does
   not waste time during content loading.
+* [New `pages` feature](doc/pages.md) that allows to define a page filter in a
+  `pages` metadata element, and then set `page.meta.pages` to a list of the
+  matching pages. This can be used to simplify templates, so that with only one
+  page filter one can control both the syndication and the page listing aspect
+  of a blog page.
 
 ## Upgrade notes
 

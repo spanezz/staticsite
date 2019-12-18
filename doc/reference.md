@@ -20,6 +20,7 @@
 * [Jinja2 pages](jinja2.md)
 * [Data pages](data.md)
 * [Taxonomies](taxonomies.md)
+* [Listing subpages](pages.md)
 * [RSS/Atom feed generation](syndication.md)
 * [Series of pages](series.md)
 

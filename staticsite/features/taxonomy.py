@@ -238,6 +238,7 @@ class CategoryPage(Page):
 
         self.meta.setdefault("template_title", "{{page.name}}")
         self.meta.setdefault("date", taxonomy.meta["date"])
+        self.meta.setdefault("syndication", {})
 
         # Archive page
         self.archive = None

@@ -200,6 +200,12 @@ class Site:
 
         Call this after all Pages have been added to the site.
         """
+        # Add missing pages_by_metadata entries in case no matching page were
+        # found for some of them
+        for key in self.tracked_metadata:
+            if key not in self.pages_by_metadata:
+                self.pages_by_metadata[key] = []
+
         # Call finalize hook on features
         for feature in self.features.ordered():
             feature.finalize()
