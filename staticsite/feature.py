@@ -70,26 +70,7 @@ class Feature:
 
         Return the list of loaded pages.
         """
-        taken = []
-        pages = []
-        for fname, f in sitedir.files.items():
-            page = self.try_load_page(f)
-            if page is not None:
-                pages.append(page)
-                taken.append(fname)
-
-        for fname in taken:
-            del sitedir.files[fname]
-
-        return pages
-
-    def try_load_page(self, file: File) -> Optional[Page]:
-        """
-        Try loading a page from the given path.
-
-        Returns None if this path is not handled by this Feature
-        """
-        return None
+        return []
 
     def try_load_archetype(self, archetypes, relpath, name):
         """
