@@ -128,6 +128,8 @@ class SyndicationPage(Page):
         self.meta["index"] = info.index_page
         self.meta["pages"] = list(info.pages)
         self.meta["pages"].sort(key=lambda p: p.meta["date"], reverse=True)
+        # Limit to 15 entries (TODO: make it configurable)
+        self.meta["pages"] = self.meta["pages"][:15]
         self.info = info
 
     def to_dict(self):

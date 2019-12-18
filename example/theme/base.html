@@ -75,7 +75,7 @@
           <li class="nav-item"><a class="nav-link" href="{{ url_for('/blog') }}">Blog</a></li>
           {% endif %}
           {% for taxonomy in taxonomies() %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for(taxonomy) }}">Tags</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for(taxonomy) }}">{{taxonomy.name.capitalize()}}</a></li>
           {% endfor %}
           {% endblock %}
         </ul>
