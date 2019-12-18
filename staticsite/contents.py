@@ -10,8 +10,8 @@ import logging
 log = logging.getLogger("contents")
 
 
-class ContentDir:
-    def __init__(self, site: Site, tree_root: Path, relpath: Path, dir_fd: int):
+class BaseDir:
+    def __init__(self, site: Site, tree_root: str, relpath: str, dir_fd: int):
         self.site = site
         self.tree_root = tree_root
         self.relpath = relpath
@@ -34,10 +34,11 @@ class ContentDir:
                         fmt, self.meta = parse_front_matter(lines)
                 else:
                     # Take note of files
+                    relpath = os.path.join(self.relpath, entry.name)
                     self.files[entry.name] = File(
-                            relpath=(relpath / entry.name).as_posix(),
-                            root=self.tree_root.as_posix(),
-                            abspath=(self.tree_root / relpath / entry.name).as_posix(),
+                            relpath=relpath,
+                            root=self.tree_root,
+                            abspath=os.path.join(self.tree_root, relpath),
                             stat=entry.stat())
 
         # Postprocess directory metadata
@@ -63,9 +64,9 @@ class ContentDir:
                 for dname in self.subdirs:
                     res = {}
                     for pattern, meta in rules:
-                        if pattern.match(fname):
+                        if pattern.match(dname):
                             res.update(meta)
-                    self.file_meta[fname] = res
+                    self.file_meta[dname] = res
 
     def meta_file(self, fname):
         res = self.file_meta.get(fname)
@@ -74,6 +75,8 @@ class ContentDir:
         else:
             return res
 
+
+class ContentDir(BaseDir):
     def load(self):
         """
         Read static assets and pages from this directory and all its subdirectories
@@ -87,6 +90,9 @@ class ContentDir:
             # Check whether to load subdirectories as asset trees
             meta = self.file_meta.get(fname)
             if meta and meta.get("asset"):
+                with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
+                    subdir = AssetDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd)
+                    subdir.load()
                 # TODO
                 ...
                 # # Scan this subdir as an asset dir
@@ -100,7 +106,7 @@ class ContentDir:
                 # TODO: prevent loops with a set of seen directory devs/inodes
                 # Recurse
                 with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
-                    subdir = ContentDir(self.site, self.tree_root, self.relpath / fname, subdir_fd)
+                    subdir = ContentDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd)
                     subdir.load()
 
         # Handle files marked as assets in their metadata
@@ -136,3 +142,28 @@ class ContentDir:
 #                    with open_dir_fd(entry.name, dir_fd=self.dir_fd) as subdir_fd:
 #                        subdir = ContentDir(self.site, self.tree_root, self.relpath / entry.name, subdir_fd)
 #
+
+
+class AssetDir(BaseDir):
+    def load(self):
+        """
+        Read static assets and pages from this directory and all its subdirectories
+        """
+        from .asset import Asset
+
+        log.debug("Loading pages from %s:%s", self.tree_root, self.relpath)
+
+        # Load subdirectories
+        for fname in self.subdirs:
+            # TODO: prevent loops with a set of seen directory devs/inodes
+            # Recurse
+            with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
+                subdir = AssetDir(self.site, self.tree_root, self.relpath / fname, subdir_fd)
+                subdir.load()
+
+        # Use everything else as an asset
+        for fname, f in self.files.items():
+            if stat.S_ISREG(f.stat.st_mode):
+                log.debug("Loading static file %s", f.relpath)
+                p = Asset(self.site, f, meta=self.file_meta.get(fname))
+                self.site.add_page(p)

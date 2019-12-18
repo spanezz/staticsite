@@ -4,7 +4,6 @@ import os
 import pytz
 import datetime
 import stat
-from pathlib import Path
 from .settings import Settings
 from .page import Page
 from .render import File
@@ -139,7 +138,7 @@ class Site:
             log.info("Loading pages from %s", content_root)
 
         with open_dir_fd(content_root) as dir_fd:
-            root = ContentDir(self, Path(content_root), Path("."), dir_fd)
+            root = ContentDir(self, content_root, ".", dir_fd)
             root.load()
 
     def load(self, content_root=None):
