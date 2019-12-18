@@ -6,7 +6,7 @@
   <generator uri="https://github.com/spanezz/staticsite">staticsite</generator>
   <updated>{{page.meta.date|datetime_format("atom")}}</updated>
   <title>{{page.meta.title}}</title>
-  {% for page in pages -%}
+  {% for page in page.meta.pages -%}
   <entry>
     <title>{{page.meta.title}}</title>
     <id>{{SITE_URL}}{{url_for(page)}}</id>

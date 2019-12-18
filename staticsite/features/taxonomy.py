@@ -239,6 +239,7 @@ class CategoryPage(Page):
         self.meta.setdefault("template_title", "{{page.name}}")
         self.meta.setdefault("date", taxonomy.meta["date"])
         self.meta.setdefault("syndication", {})
+        self.meta["pages"] = self.pages
 
         # Archive page
         self.archive = None
@@ -342,6 +343,7 @@ class CategoryArchivePage(Page):
 
         self.meta.setdefault("template_title", "{{page.name}} archive")
         self.meta.setdefault("date", category_page.meta["date"])
+        self.meta["pages"] = category_page.pages
 
     def to_dict(self):
         from staticsite.utils import dump_meta

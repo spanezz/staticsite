@@ -14,7 +14,7 @@
   {%- endif %}
   <generator>staticsite</generator>
   <pubDate>{{page.meta.date|datetime_format("rss2")}}</pubDate>
-  {% for page in pages -%}
+  {% for page in page.meta.pages -%}
   <item>
     <title>{{page.meta.title}}</title>
     <guid isPermaLink="false">{{SITE_URL}}{{ url_for(page) }}</guid>

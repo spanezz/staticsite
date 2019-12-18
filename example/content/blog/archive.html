@@ -1,4 +1,12 @@
 {% extends "base.html" %}
+
+{% block front_matter %}
+---
+pages:
+  path: blog/*
+  sort: "-date"
+{% endblock %}
+
 {% import 'blog.html' as blog %}
 
 {% block content %}
@@ -6,6 +14,6 @@
 
 <h2>Archive of all posts</h2>
 
-{{blog.archive(pages=site_pages(path="blog/*"))}}
+{{blog.archive(page)}}
 
 {% endblock %}

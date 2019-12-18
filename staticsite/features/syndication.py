@@ -126,6 +126,8 @@ class SyndicationPage(Page):
         self.meta["template"] = self.TEMPLATE
 
         self.meta["index"] = info.index_page
+        self.meta["pages"] = list(info.pages)
+        self.meta["pages"].sort(key=lambda p: p.meta["date"], reverse=True)
         self.info = info
 
     def to_dict(self):
@@ -162,9 +164,7 @@ class SyndicationPage(Page):
         return True
 
     def render(self):
-        body = self.render_template(self.page_template, {
-            "pages": self.info.pages,
-        })
+        body = self.render_template(self.page_template)
         return {
             self.dst_relpath: RenderedString(body)
         }
