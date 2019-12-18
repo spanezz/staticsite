@@ -4,11 +4,12 @@ import os
 import pytz
 import datetime
 import stat
+from pathlib import Path
 from .settings import Settings
 from .page import Page
 from .render import File
 from .cache import Caches, DisabledCaches
-from .utils import lazy
+from .utils import lazy, open_dir_fd
 import logging
 
 log = logging.getLogger("site")
@@ -125,6 +126,21 @@ class Site:
         if content_root is None:
             content_root = self.content_root
         self.read_contents_tree(content_root)
+
+    def load_content_new(self, content_root=None):
+        from .contents import ContentDir
+        if content_root is None:
+            content_root = self.content_root
+
+        if not os.path.exists(content_root):
+            log.info("%s: content tree does not exist", content_root)
+            return
+        else:
+            log.info("Loading pages from %s", content_root)
+
+        with open_dir_fd(content_root) as dir_fd:
+            root = ContentDir(self, Path(content_root), Path("."), dir_fd)
+            root.load()
 
     def load(self, content_root=None):
         """
