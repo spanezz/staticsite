@@ -163,7 +163,12 @@ class AssetDir(BaseDir):
             # TODO: prevent loops with a set of seen directory devs/inodes
             # Recurse
             with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
-                subdir = AssetDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd, dest_subdir=self.dest_subdir)
+                subdir = AssetDir(
+                            self.site,
+                            self.tree_root,
+                            os.path.join(self.relpath, fname),
+                            subdir_fd,
+                            dest_subdir=self.dest_subdir)
                 subdir.load()
 
         # Use everything else as an asset
