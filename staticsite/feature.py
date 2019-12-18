@@ -37,8 +37,6 @@ class Feature:
         self.j2_globals: Dict[str, Callable] = {}
         # Feature-provided jinja2 filters
         self.j2_filters: Dict[str, Callable] = {}
-        # Names of page.meta elements that are relevant to this feature
-        self.for_metadata = []
 
     def __str__(self):
         return self.name
@@ -54,13 +52,6 @@ class Feature:
             return ""
         else:
             return self.__doc__.lstrip().splitlines()[0].strip()
-
-    def add_page(self, page):
-        """
-        Add a page to this feature, when it contains one of the metadata items
-        defined in for_metadata
-        """
-        raise NotImplementedError("Feature.add_page")
 
     def load_dir(self, sitedir: "contents.ContentDir") -> List[Page]:
         """
@@ -108,9 +99,6 @@ class Features:
 
         # Feature implementation registry
         self.features: Dict[str, Feature] = {}
-
-        # Metadata names that trigger feature hooks when loading pages
-        self.metadata_hooks: Dict[str, Feature] = defaultdict(list)
 
         # Features sorted by topological order
         self.sorted = None
@@ -173,10 +161,6 @@ class Features:
                 continue
             feature = cls(cls.NAME, self.site)
             self.features[cls.NAME] = feature
-            # Index features for metadata hooks
-            for name in feature.for_metadata:
-                self.metadata_hooks[name].append(feature)
-
             self.sorted.append(feature)
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])

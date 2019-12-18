@@ -3,10 +3,9 @@ from typing import Optional, Dict
 import os
 import pytz
 import datetime
-import stat
+from collections import defaultdict
 from .settings import Settings
 from .page import Page
-from .render import File
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd
 import logging
@@ -37,6 +36,12 @@ class Site:
 
         # Site pages
         self.pages: Dict[str, Page] = {}
+
+        # Metadata for which we add pages to pages_by_metadata
+        self.tracked_metadata = set(settings.TAXONOMIES)
+
+        # Site pages that have the given metadata
+        self.pages_by_metadata = defaultdict(list)
 
         # Site time zone
         if settings.TIMEZONE is None:
@@ -154,14 +159,9 @@ class Site:
         """
         self.pages[page.src_linkpath] = page
 
-        # Run feature metadata hooks for the given page, if any
-        trigger_features = set()
-        for name, features in self.features.metadata_hooks.items():
-            if name in page.meta:
-                for feature in features:
-                    trigger_features.add(feature)
-        for feature in trigger_features:
-            feature.add_page(page)
+        # Also group pages by tracked metadata
+        for tracked in page.meta.keys() & self.tracked_metadata:
+            self.pages_by_metadata[tracked].append(page)
 
     def add_test_page(self, feature: str, *args, **kw) -> Page:
         """
@@ -180,7 +180,6 @@ class Site:
         """
         Read static assets from a directory and all its subdirectories
         """
-        from .asset import Asset
         from .contents import AssetDir
 
         if subdir:

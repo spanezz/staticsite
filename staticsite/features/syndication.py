@@ -60,18 +60,9 @@ class SyndicationFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.for_metadata.append("syndication")
+        self.site.tracked_metadata.add("syndication")
         self.site.features["rst"].yaml_tags.add("syndication")
         self.syndications = []
-
-    def add_page(self, page):
-        syndication = page.meta.get("syndication", None)
-        if syndication is None:
-            return
-
-        syndication_info = SyndicationInfo(page, syndication)
-        self.syndications.append(syndication_info)
-        page.meta["syndication_info"] = syndication_info
 
     def finalize(self):
         # Add syndication info for all taxonomies
@@ -83,6 +74,15 @@ class SyndicationFeature(Feature):
                 self.syndications.append(info)
                 category_page.meta["syndication_info"] = info
                 category_page.archive.meta["syndication_info"] = info
+
+        # Build syndications from pages with a 'syndication' metadata
+        for page in self.site.pages_by_metadata["syndication"]:
+            syndication = page.meta.get("syndication")
+            if syndication is None:
+                continue
+            syndication_info = SyndicationInfo(page, syndication)
+            self.syndications.append(syndication_info)
+            page.meta["syndication_info"] = syndication_info
 
         for syndication_info in self.syndications:
             # Compute the pages to show
