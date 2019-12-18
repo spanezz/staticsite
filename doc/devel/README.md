@@ -24,8 +24,8 @@ ipython3
 >>> stats.sort_stats(SortKey.CUMULATIVE).print_stats(20)
 ```
 
-You can use `devel/profile-dump` to get some ready made statistics on profile
-data.
+You can use `devel/profile-view` to get some ready made statistics on profile
+data, and explore the profile results.
 
 
 Documentation at <https://docs.python.org/3/library/profile.html>

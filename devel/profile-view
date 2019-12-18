@@ -58,10 +58,10 @@ class Node:
             if not path:
                 continue
             if self.fname.startswith(path):
-                return f"[sys]{self.fname[len(path):]}:{self.lineno}:{self.scope}"
+                return f"[sys]{self.fname[len(path):]}:{self.lineno}|{self.scope}"
 
         # File in the local project
-        return f"{self.fname}:{self.lineno}:{self.scope}"
+        return f"{self.fname}:{self.lineno}|{self.scope}"
 
 
 class Call:
@@ -145,14 +145,19 @@ class Menu:
     def __init__(self):
         self.entries = []
 
-    def add(self, marker: str, node: Node, cc: int, nc: int, tt: float, ct: float, indent=0):
-        self.entries.append((node, len(self.entries), " " * indent + marker + " " + str(node), cc, nc, tt, ct))
+    def add(self, marker: str, node: Node, cc: int, nc: int, tt: float, ct: float, perc: float, indent=0):
+        if indent == 0:
+            lead = ""
+        else:
+            lead = "┆ " * (indent - 1) + "├─"
+        self.entries.append(
+                (node, len(self.entries), lead + (marker + " " if marker else "") + str(node), cc, nc, tt, ct, perc))
 
     def print(self):
         flen = max(len(x[2]) for x in self.entries)
-        print(f"     {'Function / Scope'.ljust(flen)} {'cc'.rjust(6)} {'nc'.rjust(6)}  tt      ct")
-        for node, idx, desc, cc, nc, tt, ct in self.entries:
-            print(f"{idx:3d}: {desc.ljust(flen)} {cc:6d} {nc:6d} {tt:7.3f} {ct:7.3f}")
+        print(f"     {'Function / Scope'.ljust(flen)} {'cc'.rjust(6)} {'nc'.rjust(6)}  tt      ct       %")
+        for node, idx, desc, cc, nc, tt, ct, perc in self.entries:
+            print(f"{idx:3d}: {desc.ljust(flen)} {cc:6d} {nc:6d} {tt:7.3f} {ct:7.3f} {perc:5.1f}")
 
     def get_node(self, pos):
         return self.entries[int(pos)][0]
@@ -168,14 +173,14 @@ class Browser(cmd.Cmd):
 
     def print_caller_table(self, calls):
         for c in calls:
-            self.menu.add(Menu.CALLER, c.caller, c.cc, c.nc, c.tt, c.ct)
+            self.menu.add(Menu.CALLER, c.caller, c.cc, c.nc, c.tt, c.ct, c.ct * 100.0 / self.graph.total_time)
 
     def print_callee_table(self, calls):
         for c in calls:
-            self.menu.add(Menu.CALLEE, c.callee, c.cc, c.nc, c.tt, c.ct)
+            self.menu.add(Menu.CALLEE, c.callee, c.cc, c.nc, c.tt, c.ct, c.ct * 100.0 / self.graph.total_time)
 
     def print_node(self, node):
-        self.menu.add(Menu.NODE, node, node.cc, node.nc, node.tt, node.ct)
+        self.menu.add(Menu.NODE, node, node.cc, node.nc, node.tt, node.ct, node.ct * 100.0 / self.graph.total_time)
 
     def do_calls(self, arg):
         """
@@ -201,6 +206,9 @@ class Browser(cmd.Cmd):
             if os.path.basename(node.fname) == "site.py":
                 if node.scope in ("load", "load_content", "load_theme", "analyze"):
                     nodes.append(node)
+            if os.path.dirname(node.fname).endswith("staticsite/cmd"):
+                if node.scope == "run":
+                    nodes.append(node)
         nodes.sort(key=lambda n: -n.ct)
         for node in nodes:
             self.print_node(node)
@@ -213,16 +221,18 @@ class Browser(cmd.Cmd):
         node = self.menu.get_node(arg)
         self.menu = Menu()
 
-        self.menu.add(Menu.NODE, node, node.cc, node.nc, node.tt, node.ct)
+        self.menu.add(Menu.NODE, node, node.cc, node.nc, node.tt, node.ct, node.ct * 100.0 / self.graph.total_time)
 
         def add_callees(n, depth=0):
             # Max tree depth
-            if depth > 3:
+            if depth > 6:
                 return
 
             # Add all callees to the menu
-            for c in sorted(n.callees, key=lambda x: -x.ct)[:5]:
-                self.menu.add(Menu.CALLEE, c.callee, c.cc, c.nc, c.tt, c.ct, indent=depth * 2)
+            for c in sorted(n.callees, key=lambda x: -x.ct):
+                if c.ct < node.ct * 0.01:
+                    break
+                self.menu.add("┬", c.callee, c.cc, c.nc, c.tt, c.ct, c.ct * 100.0 / node.ct, indent=depth)
                 add_callees(c.callee, depth=depth + 1)
 
         add_callees(node, depth=1)
