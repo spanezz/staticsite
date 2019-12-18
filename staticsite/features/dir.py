@@ -41,7 +41,7 @@ class DirPages(Feature):
                 continue
             page = DirPage(self.site, relpath, pages)
             dir_pages.append(page)
-            self.site.pages[relpath] = page
+            self.site.add_page(page)
 
         # Add directory indices to their parent directory indices
         for page in dir_pages:

@@ -191,8 +191,8 @@ class TaxonomyPage(Page):
                 self.categories[v] = category_page
                 category_page.archive = archive_page
 
-                self.site.pages[category_page.src_linkpath] = category_page
-                self.site.pages[category_page.archive.src_linkpath] = archive_page
+                self.site.add_page(category_page)
+                self.site.add_page(archive_page)
             category_pages.append(category_page)
             category_page.add_page(page)
 

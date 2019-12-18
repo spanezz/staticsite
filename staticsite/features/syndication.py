@@ -104,13 +104,13 @@ class SyndicationFeature(Feature):
             rss_page = RSSPage(self.site, syndication_info)
             if rss_page.is_valid():
                 syndication_info.rss_page = rss_page
-                self.site.pages[rss_page.src_linkpath] = rss_page
+                self.site.add_page(rss_page)
                 log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
 
             atom_page = AtomPage(self.site, syndication_info)
             if atom_page.is_valid():
                 syndication_info.atom_page = atom_page
-                self.site.pages[atom_page.src_linkpath] = atom_page
+                self.site.add_page(atom_page)
                 log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
 
 
