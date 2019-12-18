@@ -176,60 +176,6 @@ class Site:
         self.add_page(page)
         return page
 
-    def read_contents_tree(self, tree_root):
-        """
-        Read static assets and pages from a directory and all its subdirectories
-        """
-        from .asset import Asset
-
-        if not os.path.exists(tree_root):
-            log.info("%s: content tree does not exist", tree_root)
-            return
-        else:
-            log.info("Loading pages from %s", tree_root)
-
-        for d in File.scan_dirs(tree_root, follow_symlinks=True, ignore_hidden=True):
-            # Handle files marked as assets in their metadata
-            taken = []
-            for fname, f in d.files.items():
-                meta = d.meta_file(fname)
-                if meta.get("asset"):
-                    p = Asset(self, f, meta=meta)
-                    self.add_page(p)
-                    taken.append(fname)
-            for fname in taken:
-                del d.files[fname]
-
-            # Let features pick their files
-            for handler in self.features.ordered():
-                for page in handler.load_dir(d):
-                    self.add_page(page)
-                if not d.files:
-                    break
-
-            # Use everything else as an asset
-            for fname, f in d.files.items():
-                if stat.S_ISREG(f.stat.st_mode):
-                    log.debug("Loading static file %s", f.relpath)
-                    p = Asset(self, f, meta=d.meta_file(fname))
-                    self.add_page(p)
-
-            # Check whether to load subdirectories as asset trees
-            not_assets = []
-            for fname in d.subdirs:
-                meta = d.meta_dir(fname)
-                if meta.get("asset"):
-                    # Scan this subdir as an asset dir
-                    for f in File.scan_subpath(d.tree_root, os.path.join(d.relpath, fname),
-                                               follow_symlinks=True, ignore_hidden=True):
-                        if not stat.S_ISREG(f.stat.st_mode):
-                            continue
-                        log.debug("Loading static file %s", f.relpath)
-                        self.add_page(Asset(self, f))
-                else:
-                    not_assets.append(fname)
-            d.subdirs[::] = not_assets
-
     def read_asset_tree(self, tree_root, subdir=None):
         """
         Read static assets from a directory and all its subdirectories
