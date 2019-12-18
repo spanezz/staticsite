@@ -181,20 +181,18 @@ class Site:
         Read static assets from a directory and all its subdirectories
         """
         from .asset import Asset
+        from .contents import AssetDir
 
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
-            files = File.scan_subpath(tree_root, subdir, follow_symlinks=True, ignore_hidden=True)
+            with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
+                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static")
+                root.load()
         else:
             log.info("Loading assets from %s", tree_root)
-            files = File.scan(tree_root, follow_symlinks=True, ignore_hidden=True)
-
-        for f in files:
-            if not stat.S_ISREG(f.stat.st_mode):
-                continue
-            log.debug("Loading static file %s", f.relpath)
-            p = Asset(self, f, dest_subdir="static")
-            self.add_page(p)
+            with open_dir_fd(tree_root) as dir_fd:
+                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static")
+                root.load()
 
     def analyze(self):
         """

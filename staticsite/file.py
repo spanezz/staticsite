@@ -59,33 +59,3 @@ class File(NamedTuple):
                         root=tree_root,
                         abspath=abspath,
                         stat=st)
-
-    @classmethod
-    def scan_subpath(cls, tree_root, relpath, follow_symlinks=False, ignore_hidden=False):
-        """
-        Scan a subdirectory of tree_root, generating relative paths based on tree_root
-        """
-        scan_path = os.path.join(tree_root, relpath)
-        for root, dnames, fnames, dirfd in os.fwalk(scan_path, follow_symlinks=follow_symlinks):
-            if ignore_hidden:
-                # Ignore hidden directories
-                filtered = [d for d in dnames if not d.startswith(".")]
-                if len(filtered) != len(dnames):
-                    dnames[::] = filtered
-
-            for f in fnames:
-                # Ignore hidden files
-                if ignore_hidden and f.startswith("."):
-                    continue
-
-                abspath = os.path.join(relpath, root, f)
-                try:
-                    st = os.stat(f, dir_fd=dirfd)
-                except FileNotFoundError:
-                    # Skip broken links
-                    continue
-                yield cls(
-                        relpath=os.path.relpath(abspath, tree_root),
-                        root=tree_root,
-                        abspath=abspath,
-                        stat=st)

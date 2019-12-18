@@ -171,7 +171,7 @@ def dump_meta(val):
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """
-    from . import Page
+    from .. import Page
     if val in (None, True, False) or isinstance(val, (int, float)):
         return val
     elif isinstance(val, str):

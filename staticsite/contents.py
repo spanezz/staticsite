@@ -146,6 +146,10 @@ class AssetDir(BaseDir):
     Loader for an asset directory, loading assets directly without consulting
     features
     """
+    def __init__(self, *args, dest_subdir=None, **kw):
+        super().__init__(*args, **kw)
+        self.dest_subdir = dest_subdir
+
     def load(self):
         """
         Read static assets from this directory and all its subdirectories
@@ -159,12 +163,12 @@ class AssetDir(BaseDir):
             # TODO: prevent loops with a set of seen directory devs/inodes
             # Recurse
             with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
-                subdir = AssetDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd)
+                subdir = AssetDir(self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd, dest_subdir=self.dest_subdir)
                 subdir.load()
 
         # Use everything else as an asset
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                p = Asset(self.site, f, meta=self.file_meta.get(fname))
+                p = Asset(self.site, f, meta=self.file_meta.get(fname), dest_subdir=self.dest_subdir)
                 self.site.add_page(p)
