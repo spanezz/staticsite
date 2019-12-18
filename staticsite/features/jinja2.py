@@ -3,7 +3,7 @@ from typing import List
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import Dir
+from staticsite.contents import ContentDir
 from staticsite.utils import compile_page_match, parse_front_matter
 import os
 import logging
@@ -23,7 +23,7 @@ class J2Pages(Feature):
     """
     RUN_BEFORE = ["contents_loaded"]
 
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 

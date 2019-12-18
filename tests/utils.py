@@ -103,20 +103,3 @@ class Args:
 
     def __getattr__(self, k):
         return self._args.get(k, None)
-
-
-class Page(staticsite.Page):
-    TYPE = "test"
-    FINDABLE = True
-
-    def __init__(self, site, relpath, **meta):
-        if "date" in meta and meta["date"].tzinfo is None:
-            meta["date"] = meta["date"].replace(tzinfo=pytz.utc)
-
-        super().__init__(
-            site=site,
-            src=staticsite.File(relpath, root="/", abspath="/" + relpath),
-            src_linkpath=relpath,
-            dst_relpath=relpath,
-            dst_link=relpath)
-        self.meta.update(**meta)

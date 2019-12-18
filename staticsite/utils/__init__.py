@@ -6,10 +6,57 @@ import contextlib
 import functools
 import time
 import logging
+import os
 import pytz
+import json
 from . import yaml_codec
 
 log = logging.getLogger("utils")
+
+# re_term_json = re.compile(r"^}\s*$")
+# re_term_yaml = re.compile(r"^---\s*$")
+# re_term_toml = re.compile(r"^\+\+\+\s*$")
+#
+#
+# def json_fenced_input(fd):
+#     yield "{\n"
+#     for line in fd:
+#         yield line
+#         if re_term_json.match(line):
+#             break
+#
+#
+# def yaml_fenced_input(fd):
+#     for line in fd:
+#         if re_term_yaml.match(line):
+#             break
+#         yield line
+#
+#
+# def toml_fenced_input(fd):
+#     for line in fd:
+#         if re_term_toml.match(line):
+#             break
+#         yield line
+#
+#
+# def parse_file_front_matter(fd):
+#     """
+#     Parse front matter from a file, leaving the file descriptor at the first
+#     line past the end of the front matter, or at the end of file
+#     """
+#     lead = fd.readline().strip()
+#     if lead == "{":
+#         return "json", json.load(json_fenced_input(fd))
+#
+#     if lead == "+++":
+#         import toml
+#         return "toml", toml.load(toml_fenced_input(fd))
+#
+#     if lead == "---":
+#         return "yaml", yaml_codec.load(yaml_fenced_input(fd))
+#
+#     return None, {}
 
 
 def parse_front_matter(lines):
@@ -21,7 +68,6 @@ def parse_front_matter(lines):
 
     if lines[0] == "{":
         # JSON
-        import json
         return "json", json.loads("\n".join(lines))
 
     if lines[0] == "+++":
@@ -46,7 +92,6 @@ def parse_front_matter(lines):
 
 def write_front_matter(meta, style="toml"):
     if style == "json":
-        import json
         return json.dumps(meta, indent=4, sort_keys=True)
     elif style == "toml":
         import toml
@@ -126,7 +171,7 @@ def dump_meta(val):
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """
-    from . import Page
+    from .. import Page
     if val in (None, True, False) or isinstance(val, (int, float)):
         return val
     elif isinstance(val, str):
@@ -164,3 +209,15 @@ class lazy:
         value = self.fget(obj)
         setattr(obj, self.fget.__name__, value)
         return value
+
+
+@contextlib.contextmanager
+def open_dir_fd(path, dir_fd=None):
+    """
+    Return a dir_fd for a directory. Supports dir_fd for opening.
+    """
+    res = os.open(path, os.O_RDONLY, dir_fd=dir_fd)
+    try:
+        yield res
+    finally:
+        os.close(res)

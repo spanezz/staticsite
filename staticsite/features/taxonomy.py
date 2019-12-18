@@ -3,7 +3,8 @@ from typing import List, Dict, Iterable
 from staticsite.page import Page
 from staticsite.render import RenderedString
 from staticsite.feature import Feature
-from staticsite.file import File, Dir
+from staticsite.file import File
+from staticsite.contents import ContentDir
 import functools
 import os
 import logging
@@ -28,7 +29,7 @@ class TaxonomyFeature(Feature):
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken = []
         pages = []
         for fname, src in sitedir.files.items():
@@ -155,7 +156,7 @@ class TaxonomyPage(Page):
         # Scan all pages for taxonomies.
         # We cannot do it by hooking into page loads, because at that point
         # .taxonomy files are not guaranteed to have been loaded
-        for page in list(self.site.pages.values()):
+        for page in list(self.site.pages_by_metadata[self.name]):
             categories = page.meta.get(self.name)
             if categories is None:
                 continue
@@ -190,8 +191,8 @@ class TaxonomyPage(Page):
                 self.categories[v] = category_page
                 category_page.archive = archive_page
 
-                self.site.pages[category_page.src_linkpath] = category_page
-                self.site.pages[category_page.archive.src_linkpath] = archive_page
+                self.site.add_page(category_page)
+                self.site.add_page(archive_page)
             category_pages.append(category_page)
             category_page.add_page(page)
 

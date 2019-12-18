@@ -1,5 +1,4 @@
-from staticsite import Site
-from staticsite.settings import Settings
+from staticsite import Site, Settings
 from staticsite.utils import timings
 import sys
 import os

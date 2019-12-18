@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import Optional, Dict, Callable, Set, List, Type
+from typing import Dict, Callable, Set, List, Type
 from collections import defaultdict
 import logging
 import sys
 from .page import Page
-from .file import File, Dir
+from . import contents
 from . import site
 from . import toposort
 
@@ -37,8 +37,6 @@ class Feature:
         self.j2_globals: Dict[str, Callable] = {}
         # Feature-provided jinja2 filters
         self.j2_filters: Dict[str, Callable] = {}
-        # Names of page.meta elements that are relevant to this feature
-        self.for_metadata = []
 
     def __str__(self):
         return self.name
@@ -55,14 +53,7 @@ class Feature:
         else:
             return self.__doc__.lstrip().splitlines()[0].strip()
 
-    def add_page(self, page):
-        """
-        Add a page to this feature, when it contains one of the metadata items
-        defined in for_metadata
-        """
-        raise NotImplementedError("Feature.add_page")
-
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: "contents.ContentDir") -> List[Page]:
         """
         Load pages from the given Dir.
 
@@ -70,26 +61,7 @@ class Feature:
 
         Return the list of loaded pages.
         """
-        taken = []
-        pages = []
-        for fname, f in sitedir.files.items():
-            page = self.try_load_page(f)
-            if page is not None:
-                pages.append(page)
-                taken.append(fname)
-
-        for fname in taken:
-            del sitedir.files[fname]
-
-        return pages
-
-    def try_load_page(self, file: File) -> Optional[Page]:
-        """
-        Try loading a page from the given path.
-
-        Returns None if this path is not handled by this Feature
-        """
-        return None
+        return []
 
     def try_load_archetype(self, archetypes, relpath, name):
         """
@@ -127,9 +99,6 @@ class Features:
 
         # Feature implementation registry
         self.features: Dict[str, Feature] = {}
-
-        # Metadata names that trigger feature hooks when loading pages
-        self.metadata_hooks: Dict[str, Feature] = defaultdict(list)
 
         # Features sorted by topological order
         self.sorted = None
@@ -192,10 +161,6 @@ class Features:
                 continue
             feature = cls(cls.NAME, self.site)
             self.features[cls.NAME] = feature
-            # Index features for metadata hooks
-            for name in feature.for_metadata:
-                self.metadata_hooks[name].append(feature)
-
             self.sorted.append(feature)
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
