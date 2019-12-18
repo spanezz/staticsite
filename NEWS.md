@@ -67,6 +67,9 @@
 * Cleaned up reference documentation.
 * Allow to select a language code for rendering. See `LANGUAGES` in [settings](doc/settings.md).
 * Added `BUILD_COMMAND` [setting](doc/settings.md).
+* Removed compatibility `Feature.load_dir` method. The old `try_load_page`
+  method is no longer supported. Now a feature that does not load files does
+  not waste time during content loading.
 
 ## Upgrade notes
 
