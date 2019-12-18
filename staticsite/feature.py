@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import Optional, Dict, Callable, Set, List, Type
+from typing import Dict, Callable, Set, List, Type
 from collections import defaultdict
 import logging
 import sys
 from .page import Page
-from .file import File, Dir
+from . import contents
 from . import site
 from . import toposort
 
@@ -62,7 +62,7 @@ class Feature:
         """
         raise NotImplementedError("Feature.add_page")
 
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: "contents.ContentDir") -> List[Page]:
         """
         Load pages from the given Dir.
 

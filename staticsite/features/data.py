@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, Dir
+from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
+from staticsite.contents import ContentDir
 import dateutil.parser
 import jinja2
 import re
@@ -45,7 +46,7 @@ class DataPages(Feature):
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
 
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # meta = sitedir.meta_features.get("md")
         # if meta is None:
         #     meta = {}

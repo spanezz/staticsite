@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, File, Dir
+from staticsite import Page, Feature, File
 from staticsite.utils import parse_front_matter, write_front_matter
 from staticsite.archetypes import Archetype
+from staticsite.contents import ContentDir
 import jinja2
 import os
 import io
@@ -135,7 +136,7 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # meta = sitedir.meta_features.get("md")
         # if meta is None:
         #     meta = {}

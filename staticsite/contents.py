@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Optional, Dict, List, Any
-from . import Site, File
 from .utils import parse_front_matter, compile_page_match, open_dir_fd
+from . import site
+from . import file
 import stat
 import os
 import logging
@@ -13,13 +14,13 @@ class BaseDir:
     """
     Base class for content loaders
     """
-    def __init__(self, site: Site, tree_root: str, relpath: str, dir_fd: int):
+    def __init__(self, site: "site.Site", tree_root: str, relpath: str, dir_fd: int):
         self.site = site
         self.tree_root = tree_root
         self.relpath = relpath
         self.dir_fd = dir_fd
         self.subdirs: List[str] = []
-        self.files: Dict[str, File] = {}
+        self.files: Dict[str, file.File] = {}
         self.meta: Optional[Dict[str, Any]] = None
 
         # Scan directory contents
@@ -43,7 +44,7 @@ class BaseDir:
                 else:
                     # Take note of files
                     relpath = os.path.join(self.relpath, entry.name)
-                    self.files[entry.name] = File(
+                    self.files[entry.name] = file.File(
                             relpath=relpath,
                             root=self.tree_root,
                             abspath=os.path.join(self.tree_root, relpath),

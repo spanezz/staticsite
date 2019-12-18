@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import List
 from staticsite.render import RenderedString
-from staticsite import Page, Feature, File, Dir
+from staticsite import Page, Feature, File
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
+from staticsite.contents import ContentDir
 import docutils.io
 import docutils.core
 import docutils.nodes
@@ -141,7 +142,7 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def load_dir(self, sitedir: Dir) -> List[Page]:
+    def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # meta = sitedir.meta_features.get("md")
         # if meta is None:
         #     meta = {}

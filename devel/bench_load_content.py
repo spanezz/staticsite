@@ -16,8 +16,8 @@ def setup():
     return site
 
 
-val = timeit.timeit("site.load_content_new()", setup="site = setup()\nsite.load_content_new()", number=300, globals=globals())
-print(f"New: {val}")
+# val = timeit.timeit("site.load_content_new()", setup="site = setup()\nsite.load_content_new()", number=300, globals=globals())
+# print(f"New: {val}")
 
 val = timeit.timeit("site.load_content()", setup="site = setup()\nsite.load_content()", number=300, globals=globals())
 print(f"Current: {val}")

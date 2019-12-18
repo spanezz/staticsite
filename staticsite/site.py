@@ -122,11 +122,6 @@ class Site:
         :arg content_root: path to read contents from. If missing,
                            settings.CONTENT is used.
         """
-        if content_root is None:
-            content_root = self.content_root
-        self.read_contents_tree(content_root)
-
-    def load_content_new(self, content_root=None):
         from .contents import ContentDir
         if content_root is None:
             content_root = self.content_root
@@ -147,7 +142,7 @@ class Site:
         """
         self.features.load_default_features()
         self.load_theme()
-        self.load_content_new(content_root=content_root)
+        self.load_content(content_root=content_root)
 
     def add_page(self, page: Page):
         """
