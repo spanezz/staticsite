@@ -156,7 +156,7 @@ class TaxonomyPage(Page):
         # Scan all pages for taxonomies.
         # We cannot do it by hooking into page loads, because at that point
         # .taxonomy files are not guaranteed to have been loaded
-        for page in list(self.site.pages.values()):
+        for page in list(self.site.pages_by_metadata[self.name]):
             categories = page.meta.get(self.name)
             if categories is None:
                 continue
