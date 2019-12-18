@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import NamedTuple, Optional, Dict, List, Tuple, Any
+from typing import Optional, Dict, List, Any
 from . import Site, File
-from .utils import parse_front_matter, compile_page_match, lazy, open_dir_fd
-from pathlib import Path
+from .utils import parse_front_matter, compile_page_match, open_dir_fd
 import stat
 import os
 import logging
@@ -11,14 +10,17 @@ log = logging.getLogger("contents")
 
 
 class BaseDir:
+    """
+    Base class for content loaders
+    """
     def __init__(self, site: Site, tree_root: str, relpath: str, dir_fd: int):
         self.site = site
         self.tree_root = tree_root
         self.relpath = relpath
         self.dir_fd = dir_fd
-        self.subdirs = []
-        self.files = {}
-        self.meta = None
+        self.subdirs: List[str] = []
+        self.files: Dict[str, File] = {}
+        self.meta: Optional[Dict[str, Any]] = None
 
         # Scan directory contents
         with os.scandir(self.dir_fd) as entries:
@@ -32,7 +34,7 @@ class BaseDir:
                     self.subdirs.append(entry.name)
                 elif entry.name == ".staticsite":
                     # Load .staticsite if found
-                    with open(entry.name, "rt", opener=lambda path, flags: os.open(path, flags, dir_fd=self.dir_fd)) as fd:
+                    with open(entry.name, "rt", opener=self._file_opener) as fd:
                         lines = [line.rstrip() for line in fd]
                         fmt, self.meta = parse_front_matter(lines)
                 elif entry.name.startswith("."):
@@ -74,15 +76,21 @@ class BaseDir:
                             res.update(meta)
                     self.file_meta[dname] = res
 
-    def meta_file(self, fname):
+    def meta_file(self, fname: str):
         res = self.file_meta.get(fname)
         if res is None:
             return {}
         else:
             return res
 
+    def _file_opener(self, path, flags):
+        return os.open(path, flags, dir_fd=self.dir_fd)
+
 
 class ContentDir(BaseDir):
+    """
+    Loader for a content directory, loading files through features
+    """
     def load(self):
         """
         Read static assets and pages from this directory and all its subdirectories
@@ -132,19 +140,14 @@ class ContentDir(BaseDir):
                 self.site.add_page(p)
 
 
-#        with os.scandir(self.dir_fd) as entries:
-#            for entry in entries:
-#                print("FOUND", entry.name)
-#                if entry.is_dir():
-#                    with open_dir_fd(entry.name, dir_fd=self.dir_fd) as subdir_fd:
-#                        subdir = ContentDir(self.site, self.tree_root, self.relpath / entry.name, subdir_fd)
-#
-
-
 class AssetDir(BaseDir):
+    """
+    Loader for an asset directory, loading assets directly without consulting
+    features
+    """
     def load(self):
         """
-        Read static assets and pages from this directory and all its subdirectories
+        Read static assets from this directory and all its subdirectories
         """
         from .asset import Asset
 
