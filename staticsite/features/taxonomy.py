@@ -85,7 +85,6 @@ class TaxonomyPage(Page):
     Root page for one taxonomy defined in the site
     """
     TYPE = "taxonomy"
-    RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site, src, meta=None):
         linkpath = os.path.splitext(src.relpath)[0]
@@ -208,7 +207,6 @@ class CategoryPage(Page):
     Index page showing all the pages tagged with a given taxonomy item
     """
     TYPE = "category"
-    RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, taxonomy, name, meta):
         relpath = os.path.join(taxonomy.src_linkpath, name)
@@ -287,7 +285,6 @@ class CategoryArchivePage(Page):
     Index page showing the archive page for a CategoryPage
     """
     TYPE = "category_archive"
-    RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, meta):
         category_page = meta["category"]

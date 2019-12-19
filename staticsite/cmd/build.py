@@ -131,12 +131,14 @@ class Builder:
         counts = defaultdict(int)
 
         # group by type
+        # This is not really needed, and we can render in any order, but this
+        # way we can easily collect rendering timings by page type
         by_type = defaultdict(list)
         for page in pages:
-            by_type[(page.RENDER_PREFERRED_ORDER, page.TYPE)].append(page)
+            by_type[page.TYPE].append(page)
 
         # Render collecting timing statistics
-        for (order, type), pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
+        for type, pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
             start = time.perf_counter()
             for page in pgs:
                 contents = page.render()

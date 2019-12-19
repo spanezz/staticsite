@@ -56,8 +56,6 @@ class J2Pages(Feature):
 class J2Page(Page):
     TYPE = "jinja2"
 
-    RENDER_PREFERRED_ORDER = 2
-
     def __init__(self, j2env, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")

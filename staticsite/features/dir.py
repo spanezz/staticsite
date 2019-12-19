@@ -60,7 +60,6 @@ class DirPage(Page):
     A directory index
     """
     TYPE = "dir"
-    RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site, relpath, pages):
         super().__init__(

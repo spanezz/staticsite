@@ -44,12 +44,6 @@ class Page:
         a dictionary with the page metadata. See the README for documentation
         about its contents.
     """
-    # Preferred order of rendering, not for functional purposes, but for
-    # purposes of collecting reasonable timings. This can be used for example
-    # to render markdown pages before taxonomies, so that the time of rendering
-    # markdown is counted as such and not as time needed for rendering
-    # taxonomies.
-    RENDER_PREFERRED_ORDER = 1
 
     def __init__(
             self,

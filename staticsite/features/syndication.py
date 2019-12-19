@@ -81,7 +81,6 @@ class SyndicationPage(Page):
     """
     Base class for syndication pages
     """
-    RENDER_PREFERRED_ORDER = 2
 
     def __init__(self, site: Site, meta: Dict[str, Any]):
         relpath = os.path.join(meta["index"].src_linkpath, f"index.{self.TYPE}")
