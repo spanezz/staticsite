@@ -1,4 +1,38 @@
+from __future__ import annotations
+from typing import Dict, Any, Tuple, Callable
+from .page import Page
 from .utils import compile_page_match
+
+
+def sort_args(sort: str) -> Tuple[str, bool, Callable[[Page], Any]]:
+    """
+    Parse a page sort string, returning a tuple of:
+    * which page metadata is used for sorting, or None if sorting is not based
+      on metadata
+    * a bool, set to True if sort order is reversed
+    * a key function for the sorting
+    """
+    if sort is None:
+        return None, None, None
+
+    # Process the '-'
+    if sort.startswith("-"):
+        reverse = True
+        sort = sort[1:]
+    else:
+        reverse = False
+
+    # Add a sort key function
+    if sort == "url":
+        sort = None
+
+        def key(page):
+            return page.dst_link
+    else:
+        def key(page):
+            return page.meta.get(sort, None)
+
+    return sort, reverse, key
 
 
 class PageFilter:
@@ -14,13 +48,7 @@ class PageFilter:
         else:
             self.re_path = None
 
-        self.sort = sort
-        if sort is not None:
-            if sort.startswith("-"):
-                self.sort = sort[1:]
-                self.sort_reverse = True
-            else:
-                self.sort_reverse = False
+        self.sort_meta, self.sort_reverse, self.sort_key = sort_args(sort)
 
         self.taxonomy_filters = []
         for taxonomy in self.site.features["taxonomy"].taxonomies.values():
@@ -39,7 +67,7 @@ class PageFilter:
                 continue
             if self.re_path is not None and not self.re_path.match(page.src.relpath):
                 continue
-            if self.sort is not None and self.sort != "url" and self.sort not in page.meta:
+            if self.sort_meta is not None and self.sort_meta not in page.meta:
                 continue
             fail_taxonomies = False
             for name, t_filter in self.taxonomy_filters:
@@ -50,14 +78,8 @@ class PageFilter:
                     continue
             pages.append(page)
 
-        if self.sort is not None:
-            if self.sort == "url":
-                def sort_by(p):
-                    return p.dst_link
-            else:
-                def sort_by(p):
-                    return p.meta.get(self.sort, None)
-            pages.sort(key=sort_by, reverse=self.sort_reverse)
+        if self.sort_key is not None:
+            pages.sort(key=self.sort_key, reverse=self.sort_reverse)
 
         if self.limit is not None:
             pages = pages[:self.limit]

@@ -57,6 +57,9 @@ for example:
    format string.
  * `|basename` returns the file name part of a pathname.
  * `|markdown` renders the string using [markdown](markdown.md).
+ * `|arrange(sort, limit=None)` sorts a list of pages, and returns the first
+   `limit` ones. If `limit` is not specified, returns the whole sorted list of
+   pages. `sort` takes the same values as in [page filters](page-filter.md).
 
 
 [Back to reference index](reference.md)

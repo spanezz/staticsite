@@ -4,7 +4,6 @@ import os
 import tempfile
 import logging
 from contextlib import contextmanager
-import pytz
 import staticsite
 from staticsite.settings import Settings
 from staticsite.utils import write_front_matter
@@ -61,6 +60,9 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
 
 @contextmanager
 def example_site():
+    """
+    Create a copy of the example site in a temporary directory
+    """
     import shutil
     src = os.path.join(os.getcwd(), "example")
     with tempfile.TemporaryDirectory() as root:

@@ -1,11 +1,15 @@
+from __future__ import annotations
+from typing import List, Optional, Union
 import jinja2
 import os
 import re
 import datetime
+import heapq
 import logging
 from pathlib import Path
+from .page import Page
 from .utils import parse_front_matter
-from .page_filter import PageFilter
+from .page_filter import PageFilter, sort_args
 
 log = logging.getLogger("theme")
 
@@ -55,6 +59,7 @@ class Theme:
 
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
         self.jinja2.filters["basename"] = self.jinja2_basename
+        self.jinja2.filters["arrange"] = self.jinja2_arrange
 
         # Add feature-provided globals and filters
         for feature in self.site.features.ordered():
@@ -97,11 +102,11 @@ class Theme:
                 continue
             self.site.read_asset_tree("/usr/share/javascript", name)
 
-    def jinja2_basename(self, val):
+    def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)
 
     @jinja2.contextfilter
-    def jinja2_datetime_format(self, context, dt, format=None):
+    def jinja2_datetime_format(self, context, dt: datetime.datetime, format: str = None) -> str:
         if not isinstance(dt, datetime.datetime):
             import dateutil.parser
             dt = dateutil.parser.parse(dt)
@@ -124,14 +129,34 @@ class Theme:
                      context.parent["page"].src.relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
+    def jinja2_arrange(self, pages: List[Page], sort: str, limit: Optional[int] = None) -> List[Page]:
+        """
+        Sort the pages by ``sort`` and take the first ``limit`` ones
+        """
+        sort_meta, reverse, key = sort_args(sort)
+        if limit is None:
+            return sorted(pages, key=key, reverse=reverse)
+        elif limit == 1:
+            if reverse:
+                return [max(pages, key=key)]
+            else:
+                return [min(pages, key=key)]
+        elif len(pages) > 10 and limit < len(pages) / 3:
+            if reverse:
+                return heapq.nlargest(limit, pages, key=key)
+            else:
+                return heapq.nsmallest(limit, pages, key=key)
+        else:
+            return sorted(pages, key=key, reverse=reverse)[:limit]
+
     @jinja2.contextfunction
-    def jinja2_has_page(self, context, arg):
+    def jinja2_has_page(self, context, arg: str) -> bool:
         cur_page = context.parent["page"]
         page = cur_page.resolve_link(arg)
         return page is not None
 
     @jinja2.contextfunction
-    def jinja2_url_for(self, context, arg):
+    def jinja2_url_for(self, context, arg: Union[str, Page]) -> str:
         if isinstance(arg, str):
             cur_page = context.parent["page"]
             page = cur_page.resolve_link(arg)
@@ -143,6 +168,7 @@ class Theme:
         return page.dst_link
 
     @jinja2.contextfunction
-    def jinja2_site_pages(self, context, path=None, limit=None, sort="-date", **kw):
+    def jinja2_site_pages(
+            self, context, path: str = None, limit: Optional[int] = None, sort: str = "-date", **kw) -> List[Page]:
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
         return page_filter.filter(self.site.pages.values())
