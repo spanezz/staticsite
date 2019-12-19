@@ -4,8 +4,6 @@
 ---
 pages:
   path: blog/*
-  limit: 10
-  sort: "-date"
 syndication:
   add_to:
     path: blog/*
@@ -25,6 +23,6 @@ syndication:
 
 <p>This the example front page for the blog.</p>
 
-{{blog.pages(page)}}
+{{blog.pages(page, limit=10)}}
 
 {% endblock %}

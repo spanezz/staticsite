@@ -9,6 +9,6 @@
 {% block content %}
 <h1 class="display-4">{{page.meta.title}}</h1>
 
-{{blog.pages(page.pages[-10:]|reverse)}}
+{{blog.pages(page.pages, limit=10)}}
 
 {% endblock %}

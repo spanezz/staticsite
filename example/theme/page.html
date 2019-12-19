@@ -25,7 +25,7 @@
       {{place.title}} {{place.index}}/{{place.length}}
     </a>
       <div class="dropdown-menu" aria-labelledby="nav_series_dropdown">
-        {% for s_page in place.pages %}
+        {% for s_page in place.pages|arrange("date") %}
           {% if page == s_page %}
             <span class="dropdown-item font-weight-bolder">{{s_page.meta.title}}</span>
           {% else %}
