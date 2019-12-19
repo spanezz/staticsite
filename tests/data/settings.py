@@ -7,4 +7,4 @@ UPPERCASE = True
 lowercase = True
 
 # This should also be ignored
-import os
+import os  # noqa

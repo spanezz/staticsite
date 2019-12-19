@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
-from staticsite.render import RenderedString
 from staticsite import Page, Site, File
 import os
 import logging

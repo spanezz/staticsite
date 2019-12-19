@@ -1,5 +1,4 @@
 from unittest import TestCase
-from staticsite.cmd.build import Build
 from . import utils as test_utils
 
 

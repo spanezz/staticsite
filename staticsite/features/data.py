@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List
-from staticsite.render import RenderedString
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec

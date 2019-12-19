@@ -61,7 +61,9 @@ try:
         # Before that version, it seems impossible to do unsorted serialization
         # with pyyaml
         # https://stackoverflow.com/questions/16782112/can-pyyaml-dump-dict-items-in-non-alphabetical-order
-        return yaml.dump(data, stream=None, default_flow_style=False, allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
+        return yaml.dump(
+                data, stream=None, default_flow_style=False,
+                allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
 
     def dump_pyyaml(data, file):
         yaml.dump(data, file, default_flow_style=False, allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)

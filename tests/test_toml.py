@@ -1,4 +1,4 @@
-from unittest import TestCase, SkipTest
+from unittest import TestCase
 from staticsite.utils import front_matter
 import toml
 

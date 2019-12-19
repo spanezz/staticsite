@@ -27,5 +27,10 @@ ipython3
 You can use `devel/profile-view` to get some ready made statistics on profile
 data, and explore the profile results.
 
+## Linting
+
+Just run `flake8` in the project directory.
+
+staticsite should be flake8-clean, with a `max-line-length` of 120.
 
 Documentation at <https://docs.python.org/3/library/profile.html>
