@@ -24,7 +24,7 @@ class DataPages(Feature):
     """
     Handle datasets in content directories.
 
-    This allows to store pure-data datasets in JSON, Yaml, or Toml format in
+    This allows storing pure-data datasets in JSON, Yaml, or Toml format in
     the contents directory, access it from pages, and render it using Jinja2
     templates.
 

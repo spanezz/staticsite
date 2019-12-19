@@ -122,7 +122,7 @@ class SyndicationPage(Page):
             meta=info.meta)
 
         # Hardcode the template
-        # FIXME: allow to customize it in syndication metadata?
+        # FIXME: allow customizing it in syndication metadata?
         self.meta["template"] = self.TEMPLATE
 
         self.meta["index"] = info.index_page

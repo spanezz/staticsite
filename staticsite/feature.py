@@ -141,7 +141,7 @@ class Features:
         sorted_features = []
         for name in sorted_names:
             feature = features.get(name)
-            # Skip names that are not features, liek well-known synchronization
+            # Skip names that are not features, like well-known synchronization
             # points
             if feature is None:
                 continue
@@ -204,6 +204,6 @@ class Features:
                 cls.NAME = name
                 old = self.feature_classes.get(name)
                 if old is not None:
-                    # Allow to replace features: see #28
+                    # Allows replacing features: see #28
                     log.info("%s: replacing feature %s with %s", name, old, cls)
                 self.feature_classes[name] = cls

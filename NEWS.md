@@ -47,7 +47,7 @@
       them in `url_for` in templates has not changed.
     * Set `asset` to true for a file in [`.staticsite` directory metadata](doc/contents.md),
       to force loading it as a static asset.
-    * Allow to mark entire subdirectories as assets in
+    * Allow marking entire subdirectories as assets in
       [directory metadata](doc/contents.md).
     * Try harder to localize timestamps as the configured site TIMEZONE.
 * Added a `ssite show` command to open a directory in a browser without loading
@@ -65,12 +65,12 @@
 * One can now match pages by regexp and not just by glob. See
   <doc/page-filter.md>.
 * Cleaned up reference documentation.
-* Allow to select a language code for rendering. See `LANGUAGES` in [settings](doc/settings.md).
+* Allow selecting a language code for rendering. See `LANGUAGES` in [settings](doc/settings.md).
 * Added `BUILD_COMMAND` [setting](doc/settings.md).
 * Removed compatibility `Feature.load_dir` method. The old `try_load_page`
   method is no longer supported. Now a feature that does not load files does
   not waste time during content loading.
-* [New `pages` feature](doc/pages.md) that allows to define a page filter in a
+* [New `pages` feature](doc/pages.md) that allows defining a page filter in a
   `pages` metadata element, and then set `page.meta.pages` to a list of the
   matching pages. This can be used to simplify templates, so that with only one
   page filter one can control both the syndication and the page listing aspect
@@ -97,7 +97,7 @@
 
 ### Settings
 
-* `PROJECT_ROOT` setting now defaults to `None` instea of `.`, and if None will
+* `PROJECT_ROOT` setting now defaults to `None` instead of `.`, and if None will
   be filled using the directory where the settings file is found, or the
   current directory otherwise. The resulting behaviour should be in practice
   very similar to the previous `.` setting.
@@ -107,7 +107,7 @@
   it to `content` explicitly if you depend on the previous value
 * `OUTPUT` setting now defaults to `None` instead of `web`, and `ssite build`
   will ask you to set it or provide a `--output` option. Set it to `web`
-  explictly if you depend on the previous value
+  explicitly if you depend on the previous value
 * `SITE_NAME` setting now defaults to `None` instead of `Site name not set`,
   and will be filled with the title of the toplevel index page, or the basename
   of the toplevel content directory if the toplevel index page has not title
@@ -138,7 +138,7 @@
 
 * Documented and consolidated the Features feature
 * Reuse existing static content in destination directory to speed up rendering
-* Allow to invoke feature-specific code from the command line
+* Allow invoking feature-specific code from the command line
   (`ssite site --cmd …`)
 
 # New in version 1.0
@@ -158,7 +158,7 @@
 
 # New in version 0.6
 
-* Allow to filter by taxonomies in `site_pages()`
+* Allow filtering by taxonomies in `site_pages()`
 * New settings `SYSTEM_ASSETS` to list directories in `/usr/share/javascript`
   to include to site assets
 * Generate unique IDs in footnotes by default. Thanks DonKult!
@@ -181,7 +181,7 @@
 
 # New in version 0.3
 
-* Allow to point to .py configuration instead of project on command line.
+* Allow pointing to .py configuration instead of project on command line.
   This means you can potentially have a farm of .py site descriptions pointing
   at various other directories in the file system.
 * archetypes and output directory configurable in `settings.py`. See

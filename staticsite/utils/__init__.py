@@ -157,7 +157,7 @@ def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
       * if it's a re.Pattern instance, it is returned as is
       * if it starts with ``^`` or ends with ``$``, it is compiled as a regular
         expression
-      * otherwise, it is considered a glob experssion, and fnmatch.translate()
+      * otherwise, it is considered a glob expression, and fnmatch.translate()
         is used to convert it to a regular expression, then compiled
     """
     if hasattr(pattern, "match"):

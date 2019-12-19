@@ -1,13 +1,13 @@
 # Selecting site pages
 
 Functions like `site_pages` in [templates](templages.md) or `filter`/`add_to`
-in [syndication](syndication.md) allow to select pages from the site.
+in [syndication](syndication.md) allow selecting pages from the site.
 
 These parameters can be used to choose pages:
 
  * `path`: glob or regular expression that matches the file name in the site
    contents directory. It is used as a file glob (like `"blog/*"`), unless it
-   starts with `^` or ends with `$`: then it is is considered a regular
+   starts with `^` or ends with `$`: then it is considered a regular
    expression.
 
  * `sort`: order the results according to the given metadata item. Prepend a

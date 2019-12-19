@@ -27,7 +27,7 @@ options that will be found:
 2. ``blog/images/photo.jpg``
 3. ``images/photo.jpg``
 
-This allows to organise pages pointing to other pages or assets without needing
+This allows organising pages pointing to other pages or assets without needing
 to worry about where they are located in the site.
 
 You can link to other Markdown or RestructuredText pages with the ``.md`` or
