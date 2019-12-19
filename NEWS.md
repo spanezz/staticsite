@@ -75,6 +75,8 @@
   matching pages. This can be used to simplify templates, so that with only one
   page filter one can control both the syndication and the page listing aspect
   of a blog page.
+* [New `arrange()` template filter](doc/templates.md) to do efficient sorted
+  sampling from a list of pages.
 
 ## Upgrade notes
 
