@@ -1,8 +1,10 @@
-staticsite (1.2-1) UNRELEASED; urgency=medium
+staticsite (1.2-1) unstable; urgency=medium
 
   * New upstream version
+     - Significant code and feature cleanup
+     - Requires some porting on existing sites. See upgrade notes in NEWS.md
 
- -- Enrico Zini <enrico@debian.org>  Tue, 03 Dec 2019 22:13:07 +0100
+ -- Enrico Zini <enrico@debian.org>  Thu, 19 Dec 2019 18:45:37 +0100
 
 staticsite (1.1-1) unstable; urgency=medium
 
