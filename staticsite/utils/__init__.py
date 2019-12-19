@@ -172,6 +172,7 @@ def dump_meta(val):
     Dump data into a dict, for use with dump_meta in to_dict methods
     """
     from .. import Page
+    import jinja2
     if val in (None, True, False) or isinstance(val, (int, float)):
         return val
     elif isinstance(val, str):
@@ -182,6 +183,8 @@ def dump_meta(val):
         return {k: dump_meta(v) for k, v in val.items()}
     elif isinstance(val, (list, tuple, set)):
         return [dump_meta(v) for v in val]
+    elif isinstance(val, jinja2.Template):
+        return f"compiled:{val.name}"
     elif hasattr(val, "to_dict"):
         return dump_meta(val.to_dict())
     else:

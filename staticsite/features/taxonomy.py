@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import List, Dict, Iterable
 from staticsite.page import Page
-from staticsite.render import RenderedString
 from staticsite.feature import Feature
 from staticsite.file import File
 from staticsite.contents import ContentDir
@@ -202,11 +201,6 @@ class TaxonomyPage(Page):
         # Set self.meta.pages to the sorted list of categories
         self.meta["pages"] = list(self.categories.values())
 
-    def render(self):
-        return {
-            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
-        }
-
 
 @functools.total_ordering
 class CategoryPage(Page):
@@ -287,11 +281,6 @@ class CategoryPage(Page):
             "title": series_title,
         }
 
-    def render(self):
-        return {
-            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
-        }
-
 
 class CategoryArchivePage(Page):
     """
@@ -318,11 +307,6 @@ class CategoryArchivePage(Page):
         res = super().to_dict()
         res["name"] = self.name
         return res
-
-    def render(self):
-        return {
-            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
-        }
 
 
 class TestTaxonomyPage(TaxonomyPage):

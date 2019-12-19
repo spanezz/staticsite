@@ -81,6 +81,8 @@
   sampling from a list of pages.
 * `ssite edit`: when paginating results, an empty input goes to the next page
 * cleanup and documented [directory index](doc/dir.md) feature
+* `page.meta.alias` is honored for all page types
+* `page.meta.template` is honored for all page types
 
 ## Upgrade notes
 
@@ -144,6 +146,12 @@
 ### Templates
 
 * Where you used `page.pages`, now use `page.meta.pages`
+* Where you used `contents` for rendered page contents, now you use
+  `page.contents`
+* Data pages now honor the `page.meta.template` metadata, and are rendered
+  directly by that template, with using one template for contents and one for
+  the page layout. If you use data pages, change your `data-$TYPE.html`
+  templates to extend `page.html` and render into the `page_content` block.
 
 # New in version 1.1
 

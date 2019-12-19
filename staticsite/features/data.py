@@ -178,65 +178,14 @@ class DataPage(Page):
         if date is not None and not isinstance(date, datetime.datetime):
             self.meta["date"] = dateutil.parser.parse(date)
 
-        self._content = None
+        if "template" not in self.meta:
+            self.meta["template"] = self.site.theme.jinja2.select_template(
+                    [f"data-{self.meta['type']}.html", "data.html"])
 
     def to_dict(self):
         from staticsite.utils import dump_meta
         res = super().to_dict()
         res["data"] = dump_meta(self.data)
-        return res
-
-    @property
-    def content(self):
-        if self._content is None:
-            data_type = self.meta.get("type")
-            template = None
-
-            if data_type is not None:
-                template_name = "data-" + data_type + ".html"
-                try:
-                    template = self.site.theme.jinja2.get_template(template_name)
-                except jinja2.TemplateNotFound:
-                    pass
-                except Exception:
-                    log.exception("%s: cannot load template %s", self.src.relpath, template_name)
-                    return "cannot load template {}".format(template_name)
-
-            if template is None:
-                # Fallback to data.html
-                try:
-                    template = self.site.theme.jinja2.get_template("data.html")
-                except Exception:
-                    log.exception("%s: cannot load template", self.src.relpath)
-                    return "cannot load template data.html"
-
-            self._content = self.render_template(template, {
-                "data": self.data,
-            })
-
-        return self._content
-
-    def render(self):
-        res = {}
-
-        html = self.render_template(self.page_template, {
-            "content": self.content,
-            **self.meta
-        })
-        res[self.dst_relpath] = RenderedString(html)
-
-        aliases = self.meta.get("aliases", ())
-        if aliases:
-            for relpath in aliases:
-                html = self.render_template(self.redirect_template)
-                res[os.path.join(relpath, "index.html")] = RenderedString(html)
-
-        return res
-
-    def target_relpaths(self):
-        res = [self.dst_relpath]
-        for relpath in self.meta.get("aliases", ()):
-            res.append(os.path.join(relpath, "index.html"))
         return res
 
 

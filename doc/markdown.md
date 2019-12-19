@@ -84,4 +84,12 @@ MARKDOWN_EXTENSION_CONFIGS = {
 }
 ```
 
+## Rendering markdown pages
+
+Besides the usual `meta`, markdown pages have also these attributes:
+
+* `page.contents`: the Markdown contents rendered as HTML. You may want to use
+  it with the [`|safe` filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#safe)
+  to prevent double escaping
+
 [Back to reference index](reference.md)

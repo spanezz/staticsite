@@ -99,12 +99,6 @@ class SyndicationPage(Page):
         else:
             self.meta["date"] = self.site.generation_time
 
-    def render(self):
-        body = self.render_template(self.page_template)
-        return {
-            self.dst_relpath: RenderedString(body)
-        }
-
 
 class RSSPage(SyndicationPage):
     """

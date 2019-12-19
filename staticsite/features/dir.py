@@ -1,5 +1,4 @@
 from staticsite.page import Page
-from staticsite.render import RenderedString
 from staticsite.feature import Feature
 from staticsite.file import File
 from collections import defaultdict
@@ -106,11 +105,6 @@ class DirPage(Page):
         # Since finalize is called from the bottom up, our child pages should
         # all have updated dates
         self.meta["date"] = max(page.meta["date"] for page in self.meta["pages"])
-
-    def render(self):
-        return {
-            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
-        }
 
 
 FEATURES = {

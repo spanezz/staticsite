@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List
-from staticsite.render import RenderedString
 from staticsite import Page, Feature, File
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
@@ -323,27 +322,6 @@ class RstPage(Page):
         if self.body_html is None:
             self.body_html = self._render_page()
         return self.body_html
-
-    def render(self):
-        res = {}
-
-        html = self.render_template(self.page_template, {
-            "content": self.content,
-            **self.meta,
-        })
-        res[self.dst_relpath] = RenderedString(html)
-
-        for relpath in self.meta.get("aliases", ()):
-            html = self.render_template(self.redirect_template)
-            res[os.path.join(relpath, "index.html")] = RenderedString(html)
-
-        return res
-
-    def target_relpaths(self):
-        res = [self.dst_relpath]
-        for relpath in self.meta.get("aliases", ()):
-            res.append(os.path.join(relpath, "index.html"))
-        return res
 
 
 FEATURES = {

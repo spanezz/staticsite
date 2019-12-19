@@ -5,6 +5,7 @@ import logging
 import datetime
 from urllib.parse import urlparse, urlunparse
 from .utils import lazy
+from .render import RenderedString
 import jinja2
 import dateutil
 import staticsite
@@ -151,7 +152,10 @@ class Page:
 
     @lazy
     def page_template(self):
-        return self.site.theme.jinja2.get_template(self.meta["template"])
+        template = self.meta["template"]
+        if isinstance(template, jinja2.Template):
+            return template
+        return self.site.theme.jinja2.get_template(template)
 
     @lazy
     def redirect_template(self):
@@ -234,7 +238,7 @@ class Page:
                 return None
 
             # Treat .md and .rst as strippable extensions
-            # TODO: deprecate this function and always link to full source
+            # TODO: deprecate this functionality and always link to full source
             #       paths with extension instead
             # TODO: have features provide this list instead of hardcoding it
             ext = parsed.path[pos:]
@@ -259,7 +263,10 @@ class Page:
         pass
 
     def target_relpaths(self):
-        return [self.dst_relpath]
+        res = [self.dst_relpath]
+        for relpath in self.meta.get("aliases", ()):
+            res.append(os.path.join(relpath, "index.html"))
+        return res
 
     def __str__(self):
         return self.src.relpath
@@ -280,6 +287,19 @@ class Page:
             "dst_link": str(self.dst_link),
             "meta": dump_meta(self.meta),
         }
+        return res
+
+    def render(self):
+        res = {
+            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
+        }
+
+        aliases = self.meta.get("aliases", ())
+        if aliases:
+            for relpath in aliases:
+                html = self.render_template(self.redirect_template)
+                res[os.path.join(relpath, "index.html")] = RenderedString(html)
+
         return res
 
     def render_template(self, template: jinja2.Template, template_args: Dict[Any, Any] = None) -> str:

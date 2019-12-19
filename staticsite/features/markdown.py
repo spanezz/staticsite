@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List
-from staticsite.render import RenderedString
 from staticsite import Page, Feature, File
 from staticsite.utils import parse_front_matter, write_front_matter
 from staticsite.archetypes import Archetype
@@ -322,27 +321,6 @@ class MarkdownPage(Page):
         if self.md_html is None:
             self.md_html = self.mdpages.render_page(self)
         return self.md_html
-
-    def render(self):
-        res = {}
-
-        html = self.render_template(self.page_template, {
-            "content": self.content,
-            **self.meta,
-        })
-        res[self.dst_relpath] = RenderedString(html)
-
-        for relpath in self.meta.get("aliases", ()):
-            html = self.render_template(self.redirect_template)
-            res[os.path.join(relpath, "index.html")] = RenderedString(html)
-
-        return res
-
-    def target_relpaths(self):
-        res = [self.dst_relpath]
-        for relpath in self.meta.get("aliases", ()):
-            res.append(os.path.join(relpath, "index.html"))
-        return res
 
 
 FEATURES = {

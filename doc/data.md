@@ -12,13 +12,19 @@ with markdown pages.
 
 ## Page metadata
 
-The same metadata as with [markdown pages](markdown.md) can be used, plus the
-following items:
+The [usual metadata](metadata.md) can be used, plus the following items:
 
-### `type`
+### `page.meta.type`
 
-The name of a Jinja2 template to load from the theme directory, as
-`data-[type].html`. If it is not found, `data.html` is tried for a generic
-template.
+Identifies the data type. Internally, the data feature groups data pages by
+type, so further features can efficiently access thematic datasets.
+
+The `page.meta.template` metadata for data pages, when not specificed, defaults
+to `dir-[type].html`, or if that is missing, to `data.html`.
+
+### `page.data`
+
+The data found in this page
+
 
 [Back to reference index](reference.md)

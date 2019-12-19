@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import List
 from staticsite.page import Page
-from staticsite.render import RenderedString
 from staticsite.feature import Feature
 from staticsite.contents import ContentDir
 from staticsite.utils import compile_page_match, parse_front_matter
@@ -78,23 +77,19 @@ class J2Page(Page):
             meta=meta)
 
         try:
-            self.template = self.site.theme.jinja2.get_template(self.src.relpath)
+            template = self.site.theme.jinja2.get_template(self.src.relpath)
         except Exception:
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
 
         # If the page has a front_matter block, render it to get the front matter
-        front_matter_block = self.template.blocks.get("front_matter")
+        front_matter_block = template.blocks.get("front_matter")
         if front_matter_block:
-            fm = "".join(front_matter_block(self.template.new_context())).strip().splitlines()
+            fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
             fmt, meta = parse_front_matter(fm)
             self.meta.update(**meta)
 
-    def render(self):
-        body = self.render_template(self.template)
-        return {
-            self.dst_relpath: RenderedString(body),
-        }
+        self.meta["template"] = template
 
 
 FEATURES = {
