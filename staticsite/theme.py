@@ -8,7 +8,7 @@ import heapq
 import logging
 from pathlib import Path
 from .page import Page
-from .utils import parse_front_matter
+from .utils import front_matter
 from .page_filter import PageFilter, sort_args
 
 log = logging.getLogger("theme")
@@ -71,7 +71,7 @@ class Theme:
         if config.is_file():
             with open(config, "rt") as fd:
                 lines = [line.rstrip() for line in fd]
-                fmt, self.config = parse_front_matter(lines)
+                fmt, self.config = front_matter.parse(lines)
         else:
             self.config = {}
 

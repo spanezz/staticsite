@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Dict, List, Any
-from .utils import parse_front_matter, compile_page_match, open_dir_fd
+from .utils import front_matter, open_dir_fd
+from .page_filter import compile_page_match
 from . import site
 from . import file
 import stat
@@ -37,7 +38,7 @@ class BaseDir:
                     # Load .staticsite if found
                     with open(entry.name, "rt", opener=self._file_opener) as fd:
                         lines = [line.rstrip() for line in fd]
-                        fmt, self.meta = parse_front_matter(lines)
+                        fmt, self.meta = front_matter.parse(lines)
                 elif entry.name.startswith("."):
                     # Skip hidden files
                     continue

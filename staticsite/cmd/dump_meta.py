@@ -1,5 +1,6 @@
 from .command import SiteCommand
-from staticsite.utils import write_front_matter, compile_page_match
+from staticsite.utils import front_matter
+from staticsite.page_filter import compile_page_match
 import sys
 import logging
 
@@ -29,4 +30,4 @@ class DumpMeta(SiteCommand):
             if filters and not any(f.match(relpath) for f in filters):
                 continue
             res[f"/{relpath}"] = page.to_dict()
-        sys.stdout.write(write_front_matter(res, self.args.format))
+        sys.stdout.write(front_matter.write(res, self.args.format))

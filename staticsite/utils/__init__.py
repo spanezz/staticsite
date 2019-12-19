@@ -1,117 +1,27 @@
 from __future__ import annotations
-from typing import Union
-import re
-import fnmatch
+from typing import Union, Any, List, Tuple, Set, Dict
 import contextlib
 import functools
 import time
 import logging
 import os
 import pytz
-import json
-from . import yaml_codec
+import datetime
 
 log = logging.getLogger("utils")
 
-# re_term_json = re.compile(r"^}\s*$")
-# re_term_yaml = re.compile(r"^---\s*$")
-# re_term_toml = re.compile(r"^\+\+\+\s*$")
-#
-#
-# def json_fenced_input(fd):
-#     yield "{\n"
-#     for line in fd:
-#         yield line
-#         if re_term_json.match(line):
-#             break
-#
-#
-# def yaml_fenced_input(fd):
-#     for line in fd:
-#         if re_term_yaml.match(line):
-#             break
-#         yield line
-#
-#
-# def toml_fenced_input(fd):
-#     for line in fd:
-#         if re_term_toml.match(line):
-#             break
-#         yield line
-#
-#
-# def parse_file_front_matter(fd):
-#     """
-#     Parse front matter from a file, leaving the file descriptor at the first
-#     line past the end of the front matter, or at the end of file
-#     """
-#     lead = fd.readline().strip()
-#     if lead == "{":
-#         return "json", json.load(json_fenced_input(fd))
-#
-#     if lead == "+++":
-#         import toml
-#         return "toml", toml.load(toml_fenced_input(fd))
-#
-#     if lead == "---":
-#         return "yaml", yaml_codec.load(yaml_fenced_input(fd))
-#
-#     return None, {}
 
-
-def parse_front_matter(lines):
-    """
-    Parse lines of front matter
-    """
-    if not lines:
-        return "toml", {}
-
-    if lines[0] == "{":
-        # JSON
-        return "json", json.loads("\n".join(lines))
-
-    if lines[0] == "+++":
-        # TOML
-        import toml
-        return "toml", toml.loads("\n".join(lines[1:-1]))
-
-    if lines[0] == "---":
-        # YAML
-        if len(lines) == 1:
-            return "yaml", {}
-
-        # Optionally remove a trailing ---
-        if lines[-1] == "---":
-            lines = lines[:-1]
-
-        yaml_body = "\n".join(lines)
-        return "yaml", yaml_codec.loads(yaml_body)
-
-    return None, {}
-
-
-def write_front_matter(meta, style="toml"):
-    if style == "json":
-        return json.dumps(meta, indent=4, sort_keys=True)
-    elif style == "toml":
-        import toml
-        return "+++\n" + toml.dumps(meta) + "+++\n"
-    elif style == "yaml":
-        return yaml_codec.dumps(meta) + "---\n"
-    return ""
-
-
-def format_date_rfc822(dt):
+def format_date_rfc822(dt: datetime.datetime) -> str:
     from email.utils import formatdate
     return formatdate(dt.timestamp())
 
 
-def format_date_rfc3339(dt):
+def format_date_rfc3339(dt: datetime.datetime) -> str:
     dt = dt.astimezone(pytz.utc)
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def format_date_w3cdtf(dt):
+def format_date_w3cdtf(dt: datetime.datetime) -> str:
     offset = dt.utcoffset()
     offset_sec = (offset.days * 24 * 3600 + offset.seconds)
     offset_hrs = offset_sec // 3600
@@ -123,7 +33,7 @@ def format_date_w3cdtf(dt):
     return dt.strftime("%Y-%m-%dT%H:%M:%S") + tz_str
 
 
-def format_date_iso8601(dt):
+def format_date_iso8601(dt: datetime.datetime) -> str:
     offset = dt.utcoffset()
     offset_sec = (offset.days * 24 * 3600 + offset.seconds)
     offset_hrs = offset_sec // 3600
@@ -149,25 +59,7 @@ def timings(fmtstr, *args, **kw):
     log.info(fmtstr, end - start, *args, extra=kw)
 
 
-def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
-    """
-    Return a compiled re.Pattrn from a glob or regular expression.
-
-    :arg pattern:
-      * if it's a re.Pattern instance, it is returned as is
-      * if it starts with ``^`` or ends with ``$``, it is compiled as a regular
-        expression
-      * otherwise, it is considered a glob expression, and fnmatch.translate()
-        is used to convert it to a regular expression, then compiled
-    """
-    if hasattr(pattern, "match"):
-        return pattern
-    if pattern and (pattern[0] == '^' or pattern[-1] == '$'):
-        return re.compile(pattern)
-    return re.compile(fnmatch.translate(pattern))
-
-
-def dump_meta(val):
+def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, Dict]:
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """

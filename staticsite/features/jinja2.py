@@ -3,7 +3,8 @@ from typing import List
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.contents import ContentDir
-from staticsite.utils import compile_page_match, parse_front_matter
+from staticsite.utils import front_matter
+from staticsite.page_filter import compile_page_match
 import os
 import logging
 
@@ -84,7 +85,7 @@ class J2Page(Page):
         front_matter_block = template.blocks.get("front_matter")
         if front_matter_block:
             fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
-            fmt, meta = parse_front_matter(fm)
+            fmt, meta = front_matter.parse(fm)
             self.meta.update(**meta)
 
         self.meta["template"] = template

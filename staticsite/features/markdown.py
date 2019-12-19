@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List
 from staticsite import Page, Feature, File
-from staticsite.utils import parse_front_matter, write_front_matter
+from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
 from staticsite.contents import ContentDir
 import jinja2
@@ -188,7 +188,7 @@ def parse_markdown_with_front_matter(fd):
     Returns two arrays: one with the lines of front matter and one with the
     lines of markdown.
     """
-    front_matter = []
+    fmatter = []
     body = []
 
     front_matter_end = None
@@ -207,13 +207,13 @@ def parse_markdown_with_front_matter(fd):
                 in_front_matter = False
 
         if in_front_matter:
-            front_matter.append(line)
+            fmatter.append(line)
             if lineno > 1 and line == front_matter_end:
                 in_front_matter = False
         else:
             body.append(line)
 
-    return front_matter, body
+    return fmatter, body
 
 
 class MarkdownArchetype(Archetype):
@@ -227,9 +227,9 @@ class MarkdownArchetype(Archetype):
         # Reparse the rendered version
         with io.StringIO(rendered) as fd:
             # Reparse it separating front matter and markdown content
-            front_matter, body = parse_markdown_with_front_matter(fd)
+            fmatter, body = parse_markdown_with_front_matter(fd)
         try:
-            style, meta = parse_front_matter(front_matter)
+            style, meta = front_matter.parse(fmatter)
         except Exception:
             log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=True)
             log.warn("archetype %s: failed to parse front matter", self.relpath)
@@ -241,9 +241,9 @@ class MarkdownArchetype(Archetype):
         meta.pop("path", None)
 
         # Reserialize the page with the edited metadata
-        front_matter = write_front_matter(meta, style)
+        fmatter = front_matter.write(meta, style)
         with io.StringIO() as fd:
-            fd.write(front_matter)
+            fd.write(fmatter)
             print(file=fd)
             for line in body:
                 print(line, file=fd)
@@ -291,7 +291,7 @@ class MarkdownPage(Page):
             self.front_matter, self.body = parse_markdown_with_front_matter(fd)
 
         try:
-            style, fm_meta = parse_front_matter(self.front_matter)
+            style, fm_meta = front_matter.parse(self.front_matter)
             self.meta.update(**fm_meta)
         except Exception:
             log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=True)

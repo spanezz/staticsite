@@ -1,8 +1,27 @@
 from __future__ import annotations
-from typing import Optional, Any, Tuple, Callable, List, Iterable
+from typing import Optional, Any, Tuple, Callable, List, Iterable, Union
+import fnmatch
+import re
 from .page import Page
 from . import site
-from .utils import compile_page_match
+
+
+def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
+    """
+    Return a compiled re.Pattrn from a glob or regular expression.
+
+    :arg pattern:
+      * if it's a re.Pattern instance, it is returned as is
+      * if it starts with ``^`` or ends with ``$``, it is compiled as a regular
+        expression
+      * otherwise, it is considered a glob expression, and fnmatch.translate()
+        is used to convert it to a regular expression, then compiled
+    """
+    if hasattr(pattern, "match"):
+        return pattern
+    if pattern and (pattern[0] == '^' or pattern[-1] == '$'):
+        return re.compile(pattern)
+    return re.compile(fnmatch.translate(pattern))
 
 
 def sort_args(sort: str) -> Tuple[str, bool, Callable[[Page], Any]]:

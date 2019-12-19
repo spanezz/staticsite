@@ -6,7 +6,7 @@ import logging
 from contextlib import contextmanager
 import staticsite
 from staticsite.settings import Settings
-from staticsite.utils import write_front_matter
+from staticsite.utils import front_matter
 
 
 class TestSettings(Settings):
@@ -52,7 +52,7 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
                     fd.write(content)
             elif isinstance(content, dict):
                 with open(abspath, "wt") as fd:
-                    fd.write(write_front_matter(content, style="json"))
+                    fd.write(front_matter.write(content, style="json"))
             else:
                 raise TypeError("content should be a str or bytes")
         yield root

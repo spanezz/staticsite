@@ -133,11 +133,11 @@ class TaxonomyPage(Page):
         """
         Parse the taxonomy file to read its description
         """
-        from staticsite.utils import parse_front_matter
+        from staticsite.utils import front_matter
         with open(self.src.abspath, "rt") as fd:
             lines = [x.rstrip() for x in fd]
         try:
-            style, meta = parse_front_matter(lines)
+            style, meta = front_matter.parse(lines)
             self.meta.update(**meta)
         except Exception:
             log.exception("%s: cannot parse taxonomy information", self.src.relpath)
