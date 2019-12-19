@@ -4,6 +4,7 @@ import os
 import logging
 import datetime
 from urllib.parse import urlparse, urlunparse
+from .utils import lazy
 import jinja2
 import dateutil
 import staticsite
@@ -70,10 +71,6 @@ class Page:
         else:
             self.meta = dict(meta)
         log.debug("%s: new page, src_link: %s", self.src.relpath, src_linkpath)
-
-        # Cached templates
-        self._page_template = None
-        self._redirect_template = None
 
     def is_valid(self) -> bool:
         """
@@ -149,17 +146,13 @@ class Page:
             return False
         return True
 
-    @property
+    @lazy
     def page_template(self):
-        if not self._page_template:
-            self._page_template = self.site.theme.jinja2.get_template(self.meta["template"])
-        return self._page_template
+        return self.site.theme.jinja2.get_template(self.meta["template"])
 
-    @property
+    @lazy
     def redirect_template(self):
-        if not self._redirect_template:
-            self._redirect_template = self.site.theme.jinja2.get_template("redirect.html")
-        return self._redirect_template
+        return self.site.theme.jinja2.get_template("redirect.html")
 
     @property
     def date_as_iso8601(self):

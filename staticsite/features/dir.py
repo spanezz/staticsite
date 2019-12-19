@@ -66,6 +66,8 @@ class DirPage(Page):
             dst_relpath=os.path.join(relpath, "index.html"),
             dst_link=os.path.join(site.settings.SITE_ROOT, relpath))
 
+        self.meta.setdefault("template", "dir.html")
+
         self.pages = list(pages)
         self.subdirs = []
 
@@ -123,7 +125,7 @@ class DirPage(Page):
             parent = os.path.dirname(self.src.relpath)
             parent_page = self.site.pages.get(parent, None)
 
-        body = self.render_template(self.site.theme.dir_template, {
+        body = self.render_template(self.page_template, {
             "parent_page": parent_page,
             "pages": self.subdirs + self.pages,
         })

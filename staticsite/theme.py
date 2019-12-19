@@ -61,8 +61,6 @@ class Theme:
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
-        self.dir_template = self.jinja2.get_template("dir.html")
-
         # Load theme configuration if present
         config = self.root / "config"
         if config.is_file():
