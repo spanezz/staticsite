@@ -73,7 +73,10 @@
 </figure>
 {% endif %}
 
-{{page.content|safe}}
+{% block page_content %}
+{{content|safe}}
+{% endblock %}
+
 {% endblock %}
 
 {% block footer_content %}
