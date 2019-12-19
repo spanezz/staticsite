@@ -15,7 +15,7 @@
     {% endblock %}
 
     {% block meta_opengraph %}
-    <meta property="og:title" content="{{title}}" />
+    <meta property="og:title" content="{{page.meta.title|striptags}}" />
     {% if page.meta.image %}<meta property="og:image" content="{{url_for(page.meta.image)}}" />{% endif %}
     {% if page.meta.imagelabel %}<meta property="og:image:alt" content="{{page.meta.imagelabel}}" />{% endif %}
     <meta property="og:url" content="{{url_for(page)}}" />
