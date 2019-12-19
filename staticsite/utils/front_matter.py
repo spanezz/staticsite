@@ -1,13 +1,6 @@
 from __future__ import annotations
-from typing import Union
-import re
-import fnmatch
-import contextlib
-import functools
-import time
+from typing import Dict, Any, Tuple
 import logging
-import os
-import pytz
 import json
 from . import yaml_codec
 
@@ -59,7 +52,7 @@ log = logging.getLogger("utils")
 #     return None, {}
 
 
-def parse(lines):
+def parse(lines) -> Tuple[str, Dict[str, Any]]:
     """
     Parse lines of front matter
     """
@@ -90,7 +83,7 @@ def parse(lines):
     return None, {}
 
 
-def write(meta, style="toml"):
+def write(meta: Dict[str, Any], style: str = "toml") -> str:
     if style == "json":
         return json.dumps(meta, indent=4, sort_keys=True)
     elif style == "toml":
