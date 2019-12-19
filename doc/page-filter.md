@@ -20,6 +20,9 @@ Any taxonomy defined in the site becomes a possible parameter for filtering,
 and is a list of categories of that taxonomy: pages must have all those
 categories to be selected.
 
+Note that in many cases, you may want to omit `sort` and `limit` from
+`site_pages` and page front matter, and decide sorting and limit in templates
+with [the `arrange()` filter](templates.md).
 
 ## Example:
 
