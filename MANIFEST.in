@@ -4,7 +4,6 @@ include README.md
 include NEWS.md
 include coverage.sh
 include .coveragerc
-include setup.cfg
 recursive-include example *
 recursive-include doc *
 recursive-include tests *
