@@ -148,9 +148,9 @@ class MarkdownPages(Feature):
 
             try:
                 page = MarkdownPage(self, f, meta=sitedir.meta_file(fname))
-            except Exception:
+            except Exception as e:
                 log.warn("%s: Failed to parse markdown page: skipped", f)
-                log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=True)
+                log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=e)
                 continue
 
             if not page.is_valid():
@@ -230,8 +230,8 @@ class MarkdownArchetype(Archetype):
             fmatter, body = parse_markdown_with_front_matter(fd)
         try:
             style, meta = front_matter.parse(fmatter)
-        except Exception:
-            log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=True)
+        except Exception as e:
+            log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=e)
             log.warn("archetype %s: failed to parse front matter", self.relpath)
 
         # Make a copy of the full parsed metadata
@@ -293,8 +293,8 @@ class MarkdownPage(Page):
         try:
             style, fm_meta = front_matter.parse(self.front_matter)
             self.meta.update(**fm_meta)
-        except Exception:
-            log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=True)
+        except Exception as e:
+            log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", self.src.relpath)
 
         # Remove leading empty lines
