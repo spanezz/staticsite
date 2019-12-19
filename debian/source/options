@@ -1,1 +1,1 @@
-extend-diff-ignore="(^\.egt)|\.egg-info$"
+extend-diff-ignore="^\.egt$|^setup.cfg$|\.egg-info$"
