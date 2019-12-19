@@ -15,8 +15,8 @@ class TestTags(TestCase):
         page1 = site.add_test_page("md", "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
         site.analyze()
 
-        self.assertEqual(tax1.categories["a"].pages, [page1])
-        self.assertEqual(tax1.categories["b"].pages, [page1])
+        self.assertEqual(tax1.categories["a"].meta["pages"], [page1])
+        self.assertEqual(tax1.categories["b"].meta["pages"], [page1])
 
     def test_load(self):
         """
@@ -39,5 +39,5 @@ tags: [cat]
             cat = tags.categories["cat"]
             page = site.pages["page"]
 
-            self.assertEqual(cat.pages, [page])
+            self.assertEqual(cat.meta["pages"], [page])
             self.assertEqual(page.meta["tags"], [cat])

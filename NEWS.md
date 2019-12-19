@@ -96,6 +96,7 @@
 * You may need to update the series rendering part of your templates: see
   [the series documentation](doc/series.md) and the `page.html` example template
   for details and an example.
+* In templates, use `page.meta.pages` instead of `page.pages`
 
 ### Settings
 
@@ -135,6 +136,10 @@
   the rendered website. `url_for` generates the right links for them, but if
   one had hardcoded links to them in the site, or external sites linked to the
   site static assets, those links may end up broken
+
+### Templates
+
+* Where you used `page.pages`, now use `page.meta.pages`
 
 # New in version 1.1
 

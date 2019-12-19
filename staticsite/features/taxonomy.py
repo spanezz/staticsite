@@ -5,6 +5,7 @@ from staticsite.render import RenderedString
 from staticsite.feature import Feature
 from staticsite.file import File
 from staticsite.contents import ContentDir
+from collections import defaultdict
 import functools
 import os
 import logging
@@ -112,10 +113,13 @@ class TaxonomyPage(Page):
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
         self.category_meta.setdefault("template", "tag.html")
+        self.category_meta.setdefault("template_title", "{{page.name}}")
+        self.category_meta.setdefault("syndication", {})
 
         # Metadata for archive pages
         self.archive_meta = self.meta.get("archive", {})
         self.archive_meta.setdefault("template", "tag-archive.html")
+        self.archive_meta.setdefault("template_title", "{{page.name}} archive")
 
         # Template used to render this taxonomy
         self.template_tags = self.site.theme.jinja2.get_template(self.meta.get("template_tags", "tags.html"))
@@ -153,52 +157,59 @@ class TaxonomyPage(Page):
         return self.categories[name]
 
     def finalize(self):
-        # Scan all pages for taxonomies.
-        # We cannot do it by hooking into page loads, because at that point
-        # .taxonomy files are not guaranteed to have been loaded
-        for page in list(self.site.pages_by_metadata[self.name]):
+        # Group pages by category
+        by_category = defaultdict(list)
+        for page in self.site.pages_by_metadata[self.name]:
             categories = page.meta.get(self.name)
-            if categories is None:
+            if not categories:
                 continue
-            self.add_page(page, categories)
+            # Make sure page.meta.$category is a list
+            if isinstance(categories, str):
+                categories = page.meta[self.name] = (categories,)
+            # File the page in its category lists
+            for category in categories:
+                by_category[category].append(page)
 
-        # Finalize categories
+        # Create category pages
+        for category, pages in by_category.items():
+            # Sort pages by date, used by series sequencing
+            pages.sort(key=lambda p: p.meta["date"])
+
+            # Create category page
+            category_meta = dict(self.category_meta)
+            category_meta["taxonomy"] = self
+            category_meta["pages"] = pages
+            category_meta["date"] = pages[-1].meta["date"]
+            category_page = CategoryPage(self, category, meta=category_meta)
+            if not category_page.is_valid():
+                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
+            self.categories[category] = category_page
+            self.site.add_page(category_page)
+
+            # Create archive page
+            archive_meta = dict(self.archive_meta)
+            archive_meta["taxonomy"] = self
+            archive_meta["pages"] = pages
+            archive_meta["category"] = category_page
+            archive_meta["date"] = category_meta["date"]
+            archive_page = CategoryArchivePage(meta=archive_meta)
+            if not archive_page.is_valid():
+                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", archive_page)
+            category_page.meta["archive"] = archive_page
+            self.site.add_page(archive_page)
+
+        # Replace category names with category pages in each categorized page
+        for page in self.site.pages_by_metadata[self.name]:
+            categories = page.meta.get(self.name)
+            if not categories:
+                continue
+            page.meta[self.name] = [self.categories[c] for c in categories]
+
+        # Sort categories dict by category name
         self.categories = {k: v for k, v in sorted(self.categories.items())}
-        for category in self.categories.values():
-            category.finalize()
 
-    def add_page(self, page, categories):
-        """
-        Add a page to this taxonomy.
-
-        :arg categories: a sequence of categories that the page declares for
-                         this taxonomy
-        """
-        if isinstance(categories, str):
-            categories = (categories,)
-        category_pages = []
-        for v in categories:
-            category_page = self.categories.get(v, None)
-            if category_page is None:
-                category_page = CategoryPage(self, v, meta=self.category_meta)
-                if not category_page.is_valid():
-                    log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
-
-                archive_page = CategoryArchivePage(category_page, meta=self.archive_meta)
-                if not archive_page.is_valid():
-                    log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
-
-                self.categories[v] = category_page
-                category_page.archive = archive_page
-
-                self.site.add_page(category_page)
-                self.site.add_page(archive_page)
-            category_pages.append(category_page)
-            category_page.add_page(page)
-
-        # Replace tag names in page.meta with CategoryPage pages
-        category_pages.sort(key=lambda p: p.name)
-        page.meta[self.name] = category_pages
+        # Set self.meta.pages to the sorted list of categories
+        self.meta["pages"] = list(self.categories.values())
 
     def render(self):
         res = {}
@@ -218,7 +229,7 @@ class CategoryPage(Page):
     TYPE = "category"
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, taxonomy, name, meta=None):
+    def __init__(self, taxonomy, name, meta):
         relpath = os.path.join(taxonomy.src_linkpath, name)
         super().__init__(
             site=taxonomy.site,
@@ -229,28 +240,12 @@ class CategoryPage(Page):
             meta=meta)
         # Category name
         self.name = name
-        # Taxonomy we belong to
-        self.taxonomy: TaxonomyPage = taxonomy
-        # Pages that have this category
-        self.pages: List[Page] = []
         # Index of each page in the category sequence
-        self.page_index: Dict[Page, int] = {}
-
-        self.meta.setdefault("template_title", "{{page.name}}")
-        self.meta.setdefault("date", taxonomy.meta["date"])
-        self.meta.setdefault("syndication", {})
-        self.meta["pages"] = self.pages
-
-        # Archive page
-        self.archive = None
+        self.page_index: Dict[Page, int] = {page.src_linkpath: idx for idx, page in enumerate(self.meta["pages"])}
 
     def to_dict(self):
-        from staticsite.utils import dump_meta
         res = super().to_dict()
         res["name"] = self.name
-        res["taxonomy"] = dump_meta(self.taxonomy)
-        res["pages"] = dump_meta(self.pages)
-        res["archive"] = dump_meta(self.archive)
         return res
 
     def __lt__(self, o):
@@ -275,23 +270,6 @@ class CategoryPage(Page):
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
-    def add_page(self, page):
-        """
-        Add a page to this category.
-        """
-        # Our date is the maximum of all pages
-        page_date = page.meta["date"]
-        if page_date > self.meta["date"]:
-            self.meta["date"] = page_date
-
-        self.pages.append(page)
-
-    def finalize(self):
-        self.pages.sort(key=lambda x: x.meta["date"])
-        # Store page indices
-        self.page_index = {page.src_linkpath: idx for idx, page in enumerate(self.pages)}
-        self.archive.finalize()
-
     def sequence(self, page):
         idx = self.page_index.get(page.src_linkpath)
         if idx is None:
@@ -300,8 +278,9 @@ class CategoryPage(Page):
         # Compute a series title for this page.
         # Look for the last defined series title, defaulting to the title of
         # the first page in the series.
-        series_title = self.pages[0].meta["title"]
-        for p in self.pages:
+        pages = self.meta["pages"]
+        series_title = pages[0].meta["title"]
+        for p in pages:
             title = p.meta.get("series_title")
             if title is not None:
                 series_title = title
@@ -310,20 +289,20 @@ class CategoryPage(Page):
 
         return {
             # Array with all the pages in the series
-            "pages": self.pages,
+            "pages": pages,
             # Assign series_prev and series_next metadata elements to pages
             "index": idx + 1,
-            "length": len(self.pages),
-            "first": self.pages[0],
-            "last": self.pages[-1],
-            "prev": self.pages[idx - 1] if idx > 0 else None,
-            "next": self.pages[idx + 1] if idx < len(self.pages) - 1 else None,
+            "length": len(pages),
+            "first": pages[0],
+            "last": pages[-1],
+            "prev": pages[idx - 1] if idx > 0 else None,
+            "next": pages[idx + 1] if idx < len(pages) - 1 else None,
             "title": series_title,
         }
 
     def render(self):
         return {
-            self.dst_relpath: RenderedString(self.render_template(self.taxonomy.template_tag)),
+            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
         }
 
 
@@ -334,7 +313,8 @@ class CategoryArchivePage(Page):
     TYPE = "category_archive"
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, category_page, meta=None):
+    def __init__(self, meta):
+        category_page = meta["category"]
         relpath = os.path.join(category_page.src_linkpath, "archive")
         super().__init__(
             site=category_page.site,
@@ -347,31 +327,15 @@ class CategoryArchivePage(Page):
         # Category name
         self.name = category_page.name
 
-        # Taxonomy we belong to
-        self.taxonomy: TaxonomyPage = category_page.taxonomy
-
-        # Category we belong to
-        self.category: CategoryPage = category_page
-
-        self.meta.setdefault("template_title", "{{page.name}} archive")
-        self.meta.setdefault("date", category_page.meta["date"])
-        self.meta["pages"] = category_page.pages
-
     def to_dict(self):
         from staticsite.utils import dump_meta
         res = super().to_dict()
         res["name"] = self.name
-        res["taxonomy"] = dump_meta(self.taxonomy)
-        res["category"] = dump_meta(self.category)
         return res
-
-    def finalize(self):
-        self.meta["date"] = self.category.meta["date"]
-        self.pages = self.category.pages
 
     def render(self):
         return {
-            self.dst_relpath: RenderedString(self.render_template(self.taxonomy.template_tag_archive)),
+            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
         }
 
 

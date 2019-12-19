@@ -33,6 +33,12 @@ class SyndicationFeature(Feature):
             if syndication_meta is None:
                 continue
 
+            # Make a shallow copy to prevent undesired side effects if multiple
+            # pages share the same syndication dict, as may be the case with
+            # taxonomies
+            syndication_meta = dict(syndication_meta)
+            page.meta["syndication"] = syndication_meta
+
             # Index page for the syndication
             syndication_meta["index"] = page
 

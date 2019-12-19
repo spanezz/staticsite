@@ -3,12 +3,12 @@
 
 {% block nav %}
 {{super()}}
-<li class="nav-item"><a class="nav-link" href="{{url_for(page.archive)}}">Archive</a></li>
+<li class="nav-item"><a class="nav-link" href="{{url_for(page.meta["archive"])}}">Archive</a></li>
 {% endblock %}
 
 {% block content %}
 <h1 class="display-4">{{page.meta.title}}</h1>
 
-{{blog.pages(page.pages, limit=10)}}
+{{blog.pages(page, limit=10)}}
 
 {% endblock %}

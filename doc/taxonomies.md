@@ -104,18 +104,18 @@ usual [meta](metadata.md), documented here.
 
 **Category index page**:
 
-* `name`: the category name
-* `taxonomy`: the taxonomy index page for this category
-* `archive`: the archive page for this category
-* `pages`: the pages who have this category
+* `page.name`: the category name
+* `page.meta.pages`: the pages that have this category
+* `page.meta.taxonomy`: the taxonomy index page for this category
+* `page.meta.archive`: the archive page for this category
 
 
 **Category archive**:
 
-* `name`: the category name
-* `taxonomy`: the taxonomy index page for this category
-* `category`: the category index page for this category
-* `pages`: the pages who have this category
+* `page.name`: the category name
+* `page.meta.pages`: the pages that have this category
+* `page.meta.taxonomy`: the taxonomy index page for this category
+* `page.meta.category`: the category index page for this category
 
 
 [Back to reference index](reference.md)

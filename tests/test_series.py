@@ -40,9 +40,9 @@ class TestSeries(TestCase):
         self.assertEquals(len(series.categories), 3)
 
         # Check the contents of series (check in tags)
-        self.assertEquals(series.categories["seriesa"].pages, [seriesa1, seriesa2, seriesa3, seriesa4])
-        self.assertEquals(series.categories["seriesb"].pages, [seriesb1, seriesb2])
-        self.assertEquals(series.categories["seriesc"].pages, [seriesc1])
+        self.assertEquals(series.categories["seriesa"].meta["pages"], [seriesa1, seriesa2, seriesa3, seriesa4])
+        self.assertEquals(series.categories["seriesb"].meta["pages"], [seriesb1, seriesb2])
+        self.assertEquals(series.categories["seriesc"].meta["pages"], [seriesc1])
 
         # Check computed series metadata
         s = series.categories["seriesa"].sequence(seriesa1)

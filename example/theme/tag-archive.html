@@ -9,7 +9,7 @@
 {% block content %}
 <h1 class="display-4">{{page.meta.title}}</h1>
 
-{{blog.archive(pages=page.pages|arrange("-date"))}}
+{{blog.archive(page)}}
 
 {% endblock %}
 
