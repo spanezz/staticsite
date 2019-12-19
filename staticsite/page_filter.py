@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Dict, Any, Tuple, Callable
+from typing import Optional, Any, Tuple, Callable, List, Iterable
 from .page import Page
+from . import site
 from .utils import compile_page_match
 
 
@@ -40,7 +41,13 @@ class PageFilter:
     Engine for selecting pages in the site
     """
 
-    def __init__(self, site, path=None, limit=None, sort=None, **kw):
+    def __init__(
+            self,
+            site: "site.Site",
+            path: Optional[str] = None,
+            limit: Optional[int] = None,
+            sort: Optional[str] = None,
+            **kw):
         self.site = site
 
         if path is not None:
@@ -59,7 +66,7 @@ class PageFilter:
 
         self.limit = limit
 
-    def filter(self, all_pages):
+    def filter(self, all_pages: Iterable[Page]) -> List[Page]:
         pages = []
 
         for page in all_pages:

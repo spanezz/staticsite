@@ -18,8 +18,6 @@ date: 2016-04-16 10:23:00+02:00
 syndication:
   filter:
     path: blog/*
-    limit: 5
-    sort: "-date"
   add_to:
     path: blog/*
 ---
@@ -41,8 +39,8 @@ Example blog post in reStructuredText
 
         site.analyze()
 
-        self.assertIn("syndication_info", blog.meta)
-        self.assertIn("syndication_info", post.meta)
+        self.assertIn("syndication", blog.meta)
+        self.assertIn("syndication", post.meta)
 
         # See what the site would generate
         rendered_pages = {}

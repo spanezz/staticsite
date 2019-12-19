@@ -10,44 +10,6 @@ import logging
 log = logging.getLogger("syndication")
 
 
-class SyndicationInfo:
-    def __init__(self, index_page: Page, syndication: Dict[str, Any] = None):
-        if syndication is None:
-            syndication = {}
-        self.index_page = index_page
-        self.meta = syndication
-
-        # Dict with PageFilter arguments to select the pages to show in this
-        # syndication
-        select = syndication.get("filter")
-        self.select: Optional[Dict[str, Any]] = dict(select) if select is not None else None
-
-        # Dict with PageFilter arguments to select the pages that should link
-        # to this syndication
-        add_to = syndication.get("add_to")
-        self.add_to: Optional[Dict[str, Any]] = dict(add_to) if add_to is not None else None
-
-        # Pages included in this syndication
-        self.pages = index_page.meta.get("pages", [])
-
-        # RSS page for this syndication
-        self.rss_page: Optional[Page] = None
-
-        # Atom page for this syndication
-        self.atom_page: Optional[Page] = None
-
-    def to_dict(self):
-        return {
-            "index_page": self.index_page,
-            "meta": self.meta,
-            "select": self.select,
-            "add_to": self.add_to,
-            "pages": self.pages,
-            "rss_page": self.rss_page,
-            "atom_page": self.atom_page,
-        }
-
-
 class SyndicationFeature(Feature):
     """
     Build syndication feeds for groups of pages.
@@ -67,41 +29,46 @@ class SyndicationFeature(Feature):
     def finalize(self):
         # Build syndications from pages with a 'syndication' metadata
         for page in self.site.pages_by_metadata["syndication"]:
-            syndication = page.meta.get("syndication")
-            if syndication is None:
+            syndication_meta = page.meta.get("syndication")
+            if syndication_meta is None:
                 continue
-            syndication_info = SyndicationInfo(page, syndication)
-            self.syndications.append(syndication_info)
-            page.meta["syndication_info"] = syndication_info
 
-        for syndication_info in self.syndications:
-            # Compute the pages to show
-            if syndication_info.select:
-                f = PageFilter(self.site, **syndication_info.select)
-                syndication_info.pages.extend(f.filter(self.site.pages.values()))
+            # Index page for the syndication
+            syndication_meta["index"] = page
 
-            # Add a link to the syndication to the affected pages
-            if syndication_info.add_to:
-                f = PageFilter(self.site, **syndication_info.add_to)
-                for page in f.filter(self.site.pages.values()):
-                    old = page.meta.get("syndication_info")
-                    if old is not None:
-                        log.warn("%s: page has syndication info from %s, and %s also wants to add to it",
-                                 page, old.index_page, syndication_info.index_page)
-                    page.meta["syndication_info"] = syndication_info
+            # Pages in the syndication
+            select = syndication_meta.get("filter")
+            if select:
+                f = PageFilter(self.site, **select)
+                pages = f.filter(self.site.pages.values())
+            else:
+                pages = page.meta.get("pages", [])
+            syndication_meta["pages"] = pages
 
-            # Generate the syndication pages in the site
-            rss_page = RSSPage(self.site, syndication_info)
+            # RSS feed
+            rss_page = RSSPage(self.site, syndication_meta)
             if rss_page.is_valid():
-                syndication_info.rss_page = rss_page
+                syndication_meta["rss_page"] = rss_page
                 self.site.add_page(rss_page)
-                log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
+                log.debug("%s: adding syndication page for %s", rss_page, page)
 
-            atom_page = AtomPage(self.site, syndication_info)
+            # Atom feed
+            atom_page = AtomPage(self.site, syndication_meta)
             if atom_page.is_valid():
-                syndication_info.atom_page = atom_page
+                syndication_meta["atom_page"] = atom_page
                 self.site.add_page(atom_page)
-                log.debug("%s: adding syndication page for %s", rss_page, syndication_info.index_page)
+                log.debug("%s: adding syndication page for %s", rss_page, page)
+
+            # Add a link to the syndication to the pages listed in add_to
+            add_to = syndication_meta.get("add_to")
+            if add_to:
+                f = PageFilter(self.site, **add_to)
+                for dest in f.filter(self.site.pages.values()):
+                    old = dest.meta.get("syndication")
+                    if old is not None:
+                        log.warn("%s: attempted to add meta.syndication from %s, but it already has it from %s",
+                                 dest, page, old["index"])
+                    dest.meta["syndication"] = syndication_meta
 
 
 class SyndicationPage(Page):
@@ -110,8 +77,8 @@ class SyndicationPage(Page):
     """
     RENDER_PREFERRED_ORDER = 2
 
-    def __init__(self, site: Site, info: SyndicationInfo):
-        relpath = f"{info.index_page.src_linkpath}/index.{self.TYPE}"
+    def __init__(self, site: Site, meta: Dict[str, Any]):
+        relpath = os.path.join(meta["index"].src_linkpath, f"index.{self.TYPE}")
 
         super().__init__(
             site=site,
@@ -119,51 +86,12 @@ class SyndicationPage(Page):
             src_linkpath=relpath,
             dst_relpath=relpath,
             dst_link=os.path.join(site.settings.SITE_ROOT, relpath),
-            meta=info.meta)
-
-        # Hardcode the template
-        # FIXME: allow customizing it in syndication metadata?
-        self.meta["template"] = self.TEMPLATE
-
-        self.meta["index"] = info.index_page
-        self.meta["pages"] = list(info.pages)
-        self.meta["pages"].sort(key=lambda p: p.meta["date"], reverse=True)
-        # Limit to 15 entries (TODO: make it configurable)
-        self.meta["pages"] = self.meta["pages"][:15]
-        self.info = info
-
-    def to_dict(self):
-        from staticsite.utils import dump_meta
-        res = super().to_dict()
-        res["info"] = dump_meta(self.info)
-        return res
-
-    def is_valid(self):
-        if not self.meta.get("title") and not self.meta.get("template_title"):
-            if self.info.index_page.meta.get("title"):
-                self.meta["title"] = self.info.index_page.meta.get("title")
-            elif self.info.index_page.meta.get("template_title"):
-                self.meta["template_title"] = self.info.index_page.meta.get("template_title")
-            else:
-                log.warn("%s: syndication index page %s has no title", self, self.info.index_page)
-                self.meta["title"] = self.site.site_name
-
-        if not self.meta.get("description") and not self.meta.get("template_description"):
-            if self.info.index_page.meta.get("description"):
-                self.meta["description"] = self.info.index_page.meta.get("description")
-            elif self.info.index_page.meta.get("template_description"):
-                self.meta["template_description"] = self.info.index_page.meta.get("template_description")
-
-        if self.meta.get("date") is None:
-            if self.info.pages:
-                self.meta["date"] = max(p.meta["date"] for p in self.info.pages)
-            else:
-                self.meta["date"] = self.site.generation_time
-
-        if not super().is_valid():
-            return False
-
-        return True
+            meta=meta)
+        self.meta.setdefault("template", self.TEMPLATE)
+        if self.meta["pages"]:
+            self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
+        else:
+            self.meta["date"] = self.site.generation_time
 
     def render(self):
         body = self.render_template(self.page_template)

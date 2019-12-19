@@ -17,11 +17,9 @@ metadata](contents.md)):
 ---
 files:
   index.html:
+    pages:
+      path: blog/*
     syndication:
-      filter:
-        path: blog/*
-        limit: 10
-        sort: "-date"
       add_to:
         path: blog/*
       title: "Example blog feed"
@@ -30,8 +28,8 @@ files:
 `syndication` is placed alongside the usual [metadata](metadata.md),
 and contains various fields:
 
-* `filter`: chooses which pages are shown in the RSS/Atom feeds
 * `add_to`: chooses which pages will include a link to the RSS/Atom feeds
+* `filter`: chooses which pages are shown in the RSS/Atom feeds
 
 Any other metadata are used when generating pages for the RSS/Atom feeds, so
 you can use `title`, `template_title`, `description`, and so on, to personalize
@@ -41,17 +39,19 @@ the feeds.
 to the `site_pages` function in [templates](templates.md). See
 [Selecting pages](page-filter.md) for details.
 
-**Updated in 1.2**: `filter` is now optional, and if missing, `page.meta.pages`
-is used. This way, [using the `pages` metadata](pages.md), you can define a
-single expression for both syndication and page listing.
+`filter` is optional, and if missing, `page.meta.pages` is used. This way,
+[using the `pages` metadata](pages.md), you can define a single expression for
+both syndication and page listing.
+
 
 ## Syndication of taxonomies
 
-The syndication feature automatically turns each category of each taxonomy into
-a syndication index, showing the pages with that category.
+Each category page in each taxonomy automatically defines a syndication
+metadata, and therefore automatically generates RSS and Atom feeds with all
+pages in that category.
 
 You can use the `syndication` metadata in your taxonomy categories to customize
-titles and description in your categories feeds.
+titles and description in your categories feeds, like with any other page.
 
 
 ## Templates
@@ -64,9 +64,11 @@ templates, that are used by the generated RSS and Atom pages.
 
 RSS and Atom pages have these extra properties:
 
+* `page.meta.template` defaults to `syndication.rss` or `syndication.atom`
+  instead of `page.html`
 * `page.meta.date` is the most recent date of the pages in the feed
 * `page.meta.index` is the page defining the syndication
-* `page.pages` is a list of all the pages included in the syndication
+* `page.meta.pages` is a list of all the pages included in the syndication
 
 
 [Back to reference index](reference.md)
