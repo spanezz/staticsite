@@ -98,6 +98,7 @@ class TaxonomyPage(Page):
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
             meta=meta)
+
         self.meta.setdefault("template", "tags.html")
 
         # Taxonomy name (e.g. "tags")
@@ -120,16 +121,6 @@ class TaxonomyPage(Page):
         self.archive_meta = self.meta.get("archive", {})
         self.archive_meta.setdefault("template", "tag-archive.html")
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
-
-        # Template used to render this taxonomy
-        self.template_tags = self.site.theme.jinja2.get_template(self.meta.get("template_tags", "tags.html"))
-
-        # Template used to render each single category index
-        self.template_tag = self.site.theme.jinja2.get_template(self.meta.get("template_tag", "tag.html"))
-
-        # Template used to render the archive view of each single category index
-        self.template_tag_archive = self.site.theme.jinja2.get_template(
-                self.meta.get("template_archive", "tag-archive.html"))
 
     def to_dict(self):
         from staticsite.utils import dump_meta
@@ -212,13 +203,9 @@ class TaxonomyPage(Page):
         self.meta["pages"] = list(self.categories.values())
 
     def render(self):
-        res = {}
-
-        if self.template_tags is not None:
-            body = self.render_template(self.template_tags)
-            res[self.dst_relpath] = RenderedString(body)
-
-        return res
+        return {
+            self.dst_relpath: RenderedString(self.render_template(self.page_template)),
+        }
 
 
 @functools.total_ordering
@@ -328,7 +315,6 @@ class CategoryArchivePage(Page):
         self.name = category_page.name
 
     def to_dict(self):
-        from staticsite.utils import dump_meta
         res = super().to_dict()
         res["name"] = self.name
         return res
