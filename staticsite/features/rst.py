@@ -234,8 +234,6 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    FINDABLE = True
-
     def __init__(self, feature, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.rst", "README.rst"):
@@ -249,6 +247,9 @@ class RstPage(Page):
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(feature.site.settings.SITE_ROOT, linkpath),
             meta=meta)
+
+        # Indexed by default
+        self.meta.setdefault("indexed", True)
 
         # Shared RestructuredText environment
         self.rst = feature

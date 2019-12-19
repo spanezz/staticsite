@@ -40,4 +40,5 @@ Example blog post in reStructuredText
             "foo": "line1\nline2\nline3",
             "template": "page.html",
             "title": "Example blog post in reStructuredText",
+            "indexed": True,
         })

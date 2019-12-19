@@ -43,9 +43,6 @@ class Page:
         a dictionary with the page metadata. See the README for documentation
         about its contents.
     """
-    # True if the page can be found when search site contents
-    FINDABLE = False
-
     # Preferred order of rendering, not for functional purposes, but for
     # purposes of collecting reasonable timings. This can be used for example
     # to render markdown pages before taxonomies, so that the time of rendering
@@ -81,6 +78,12 @@ class Page:
         :return: True if the page is valid and ready to be added to the site,
                  False if it should be discarded
         """
+        # indexed must exist and be a bool
+        indexed = self.meta.get("indexed", False)
+        if isinstance(indexed, str):
+            indexed = indexed.lower() in ("yes", "true", "1")
+        self.meta["indexed"] = indexed
+
         # date must exist, and be a datetime
         date = self.meta.get("date")
         if date is None:

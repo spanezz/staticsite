@@ -256,8 +256,6 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    FINDABLE = True
-
     def __init__(self, mdpages, src, meta=None):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.md", "README.md"):
@@ -271,6 +269,9 @@ class MarkdownPage(Page):
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(mdpages.site.settings.SITE_ROOT, linkpath),
             meta=meta)
+
+        # Indexed by default
+        self.meta.setdefault("indexed", True)
 
         # Shared markdown environment
         self.mdpages = mdpages

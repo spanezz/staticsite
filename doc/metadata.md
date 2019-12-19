@@ -64,5 +64,12 @@ existing links when moving a page to a different location.
 If set to True in [`.staticsite` directory metadata](contents.md), the file is
 loaded as a static asset, regardless of whether a feature would load it.
 
+### `indexed`
+
+If true, the page appears in [directory indices](dir.md) and in
+[page filter results](page_filter.md). It defaults to true for
+[Markdown](markdown.md), [reStructuredText](rst.rst), and [data](data.md)
+pages.
+
 
 [Back to reference index](reference.md)

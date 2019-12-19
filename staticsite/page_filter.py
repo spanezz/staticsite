@@ -70,7 +70,7 @@ class PageFilter:
         pages = []
 
         for page in all_pages:
-            if not page.FINDABLE:
+            if not page.meta["indexed"]:
                 continue
             if self.re_path is not None and not self.re_path.match(page.src.relpath):
                 continue

@@ -121,6 +121,8 @@ class ContentDir(BaseDir):
             meta = self.file_meta.get(fname)
             if meta and meta.get("asset"):
                 p = Asset(self.site, f, meta=meta)
+                if not p.is_valid():
+                    continue
                 self.site.add_page(p)
                 taken.append(fname)
         for fname in taken:
@@ -138,6 +140,8 @@ class ContentDir(BaseDir):
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
                 p = Asset(self.site, f, meta=self.file_meta.get(fname))
+                if not p.is_valid():
+                    continue
                 self.site.add_page(p)
 
 
@@ -176,4 +180,6 @@ class AssetDir(BaseDir):
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
                 p = Asset(self.site, f, meta=self.file_meta.get(fname), dest_subdir=self.dest_subdir)
+                if not p.is_valid():
+                    continue
                 self.site.add_page(p)

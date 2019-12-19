@@ -145,7 +145,6 @@ def write_data(fd, data, fmt):
 
 class DataPage(Page):
     TYPE = "data"
-    FINDABLE = True
 
     def __init__(self, site, src, data, meta=None):
         dirname, basename = os.path.split(src.relpath)
@@ -160,6 +159,9 @@ class DataPage(Page):
             dst_relpath=os.path.join(linkpath, "index.html"),
             dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
             meta=meta)
+
+        # Indexed by default
+        self.meta.setdefault("indexed", True)
 
         # Read and parse the contents
         if self.src.stat is None:

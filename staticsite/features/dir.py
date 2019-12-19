@@ -23,7 +23,7 @@ class DirPages(Feature):
         by_dir = defaultdict(list)
         for page in self.site.pages.values():
             # Harvest content for directory indices
-            if not page.FINDABLE or not page.src.relpath:
+            if not page.meta["indexed"] or not page.src.relpath:
                 continue
             dir_relpath = os.path.dirname(page.src.relpath)
             by_dir[dir_relpath].append(page)
@@ -40,6 +40,8 @@ class DirPages(Feature):
             if relpath in self.site.pages:
                 continue
             page = DirPage(self.site, relpath, pages)
+            if not page.is_valid():
+                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", page)
             dir_pages.append(page)
             self.site.add_page(page)
 

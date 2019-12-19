@@ -23,6 +23,8 @@
       details.
     * `template` metadata can be used to choose a custom template to render the
       page, similar to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+    * `indexed` (true or false) is used to tell if a page appears in a
+      directory index and in [page filter](doc/page-filter.md) results.
 * Themes:
     * Vendorized assets in `theme/static/` are now read by asset library name, as
       if `static/` were the same as `/usr/share/javascript/`. Now you need to refer
