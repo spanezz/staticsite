@@ -1,6 +1,7 @@
 import subprocess
 import shlex
 from .command import SiteCommand, Fail
+from staticsite.page_filter import PageFilter
 import logging
 
 log = logging.getLogger("edit")
@@ -73,9 +74,9 @@ class Edit(SiteCommand):
     def run(self):
         site = self.load_site()
 
-        # Build a list of all findable pages sorted with the newest first
-        pages = [p for p in site.pages.values() if p.FINDABLE and p.src.stat is not None]
-        pages.sort(key=lambda x: x.meta["date"], reverse=True)
+        # Build a list of all findable pages, present on disk, sorted with the newest first
+        f = PageFilter(site, sort="-date")
+        pages = [page for page in f.filter(site.pages.values()) if page.src.stat is not None]
 
         selected = []
         for page in pages:
