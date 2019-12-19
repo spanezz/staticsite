@@ -34,8 +34,8 @@
 
     {% block head_syndication %}
     {% if page.meta.syndication %}
-    <link href="{{ url_for(page.meta.syndication.rss_page) }}" rel="alternate" type="application/rss+xml" title="{{page.meta.syndication.title}}"/>
-    <link href="{{ url_for(page.meta.syndication.atom_page) }}" rel="alternate" type="application/atom+xml" title="{{page.meta.syndication.title}}"/>
+    <link href="{{ url_for(page.meta.syndication.rss_page) }}" rel="alternate" type="application/rss+xml" title="{{page.meta.syndication.rss_page.meta.title}}"/>
+    <link href="{{ url_for(page.meta.syndication.atom_page) }}" rel="alternate" type="application/atom+xml" title="{{page.meta.syndication.atom_page.meta.title}}"/>
     {% endif %}
     {% endblock %}
 
