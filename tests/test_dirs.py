@@ -30,11 +30,7 @@ class TestDirs(TestCase):
             self.assertEqual(dir_dir3.TYPE, "dir")
 
             # Check the contents of all dirs
-            self.assertEqual(dir_root.pages, [site.pages["page_root"]])
-            self.assertEqual(dir_root.subdirs, [dir_dir1])
-            self.assertEqual(dir_dir1.pages, [site.pages["dir1/page_sub"]])
-            self.assertEqual(dir_dir1.subdirs, [dir_dir2])
-            self.assertEqual(dir_dir2.pages, [])
-            self.assertEqual(dir_dir2.subdirs, [dir_dir3])
-            self.assertEqual(dir_dir3.pages, [site.pages["dir1/dir2/dir3/page_sub3"]])
-            self.assertEqual(dir_dir3.subdirs, [])
+            self.assertCountEqual(dir_root.meta["pages"], [site.pages["page_root"], dir_dir1])
+            self.assertCountEqual(dir_dir1.meta["pages"], [site.pages["dir1/page_sub"], dir_dir2])
+            self.assertCountEqual(dir_dir2.meta["pages"], [dir_dir3])
+            self.assertCountEqual(dir_dir3.meta["pages"], [site.pages["dir1/dir2/dir3/page_sub3"]])

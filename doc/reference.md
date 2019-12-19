@@ -23,5 +23,6 @@
 * [Listing subpages](pages.md)
 * [RSS/Atom feed generation](syndication.md)
 * [Series of pages](series.md)
+* [Directory indices](dir.md)
 
 [Back to README](../README.md)
