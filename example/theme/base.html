@@ -9,17 +9,22 @@
     <meta name="language" content="EN">
     <meta name="robots" content="index, follow"/>
     <meta name="keywords" content="{% for tag in page.meta.tags -%}{% if loop.index0 %}, {% endif %}{{tag.name}}{% endfor %}"/>
-    {% if page.meta.description %}<meta name="description" content="{{page.meta.description}}" />{% endif %}
     <meta name="author" content="{{SITE_AUTHOR}}"/>
     <meta name="generator" content="staticsite"/>
     {% endblock %}
 
     {% block meta_opengraph %}
-    <meta property="og:title" content="{{page.meta.title|striptags}}" />
-    {% if page.meta.image %}<meta property="og:image" content="{{url_for(page.meta.image)}}" />{% endif %}
+    <meta property="og:title" content="{{page.meta.title}}">
+    {% if page.meta.description -%}
+      <meta name="description" property="og:description" content="{{page.meta.description|striptags}}" />
+    {%- endif %}
+    {% if page.meta.image -%}
+      <meta property="og:image" content="{{SITE_URL}}{{url_for(page.meta.image)}}" />
+      <meta name="twitter:card" content="{{SITE_URL}}{{url_for(page.meta.image)}}" />
+    {%- endif %}
+    <meta property="og:url" content="{{SITE_URL}}{{url_for(page)}}" />
+
     {% if page.meta.imagelabel %}<meta property="og:image:alt" content="{{page.meta.imagelabel}}" />{% endif %}
-    <meta property="og:url" content="{{url_for(page)}}" />
-    {% if page.meta.description %}<meta property="og:description" content="{{page.meta.description}}" />{% endif %}
     <meta property="og:site_name" content="{{site.site_name}}" />
     {% block meta_opengraph_article %}
     <meta property="og:type" content="article" />

@@ -80,6 +80,8 @@ Some tips:
 
 ## Index of the documentation
 
+* [HOWTO guides](doc/howto/README.md): step by step guides for getting specific
+  works done with staticsite
 * [Reference documentation](doc/reference.md): description of each part of
   staticsite
 * [Developer documentation](doc/devel/README.md): documentation for developing
