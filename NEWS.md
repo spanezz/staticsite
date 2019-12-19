@@ -77,6 +77,7 @@
   of a blog page.
 * [New `arrange()` template filter](doc/templates.md) to do efficient sorted
   sampling from a list of pages.
+* `ssite edit`: when paginating results, an empty input goes to the next page
 
 ## Upgrade notes
 
