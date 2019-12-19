@@ -55,6 +55,9 @@ overridden by `settings.py` or `.staticsite.py`.
 * `CACHE_REBUILDS`: If True, store cached data to speed up rebuilds. Defaults
   to True.
 * `BUILD_COMMAND`: set to the name of the `ssite` command being run.
+* `JINJA2_SANDBOXED`: disable jinja2 sandboxing, making it noticeably faster,
+  but allowing template designer to inject insecure code. Turn it on if you can
+  trust the authors of templates.
 
 
 ## `ssite new` settings

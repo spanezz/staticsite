@@ -79,6 +79,10 @@ TAXONOMIES: Sequence[str] = []
 # are parsed as jinja2 templates
 JINJA2_PAGES: Sequence[str] = ["*.html", "*.j2.*"]
 
+# Set to false to disable running Jinja2 in a sandboxed environnment.
+# If you trust your site sources, it renders noticeably faster.
+JINJA2_SANDBOXED = True
+
 # Languages used to build the site
 # For now, only the first one is used, and only its locale is used.
 LANGUAGES: Sequence[Dict[str, Any]] = [

@@ -28,8 +28,15 @@ class Theme:
         self.site.features.commit()
 
         # Jinja2 template engine
-        from jinja2 import Environment, FileSystemLoader
-        self.jinja2 = Environment(
+        from jinja2 import FileSystemLoader
+        if self.site.settings.JINJA2_SANDBOXED:
+            from jinja2.sandbox import ImmutableSandboxedEnvironment
+            env_cls = ImmutableSandboxedEnvironment
+        else:
+            from jinja2 import Environment
+            env_cls = Environment
+
+        self.jinja2 = env_cls(
             loader=FileSystemLoader([
                 self.site.content_root,
                 self.root.as_posix(),

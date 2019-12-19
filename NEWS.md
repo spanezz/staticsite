@@ -85,6 +85,13 @@
 * `page.meta.template` is honored for all page types
 * Started [developers documentation](doc/devel/README.md)
 * Started [usage HOWTO documentation](doc/howto/README.md)
+* Switch to [jinja2 sandboxed environment](https://jinja.palletsprojects.com/en/2.10.x/sandbox/)
+  by default. Site [settings](doc/settings.md) can turn it off, which is ok
+  because `settings.py` is a point where arbitrary code can be injected. This
+  means that you now only have to secure access to `settings.py`, and can be a
+  bit more free with allowing others to participate in the site development.
+  Also, you need to use `ssite show`, and *not* `ssite serve`, to preview
+  potentially untrusted sites: `ssite show` will not load a `settings.py`.
 
 ## Upgrade notes
 
