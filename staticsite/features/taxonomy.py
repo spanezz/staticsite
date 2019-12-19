@@ -296,6 +296,18 @@ class CategoryPage(Page):
         idx = self.page_index.get(page.src_linkpath)
         if idx is None:
             return None
+
+        # Compute a series title for this page.
+        # Look for the last defined series title, defaulting to the title of
+        # the first page in the series.
+        series_title = self.pages[0].meta["title"]
+        for p in self.pages:
+            title = p.meta.get("series_title")
+            if title is not None:
+                series_title = title
+            if p == page:
+                break
+
         return {
             # Array with all the pages in the series
             "pages": self.pages,
@@ -306,7 +318,7 @@ class CategoryPage(Page):
             "last": self.pages[-1],
             "prev": self.pages[idx - 1] if idx > 0 else None,
             "next": self.pages[idx + 1] if idx < len(self.pages) - 1 else None,
-            "title": self.pages[0].meta.get("title", self.name),
+            "title": series_title,
         }
 
     def render(self):

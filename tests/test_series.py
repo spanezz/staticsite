@@ -64,7 +64,7 @@ class TestSeries(TestCase):
         self.assertEquals(s["length"], 4)
 
         s = series.categories["seriesa"].sequence(seriesa3)
-        self.assertEquals(s["title"], "Series A")
+        self.assertEquals(s["title"], "Series A part Two")
         self.assertEquals(s["prev"], seriesa2)
         self.assertEquals(s["next"], seriesa4)
         self.assertEquals(s["first"], seriesa1)
@@ -73,7 +73,7 @@ class TestSeries(TestCase):
         self.assertEquals(s["length"], 4)
 
         s = series.categories["seriesa"].sequence(seriesa4)
-        self.assertEquals(s["title"], "Series A")
+        self.assertEquals(s["title"], "Series A part Two")
         self.assertEquals(s["prev"], seriesa3)
         self.assertEquals(s["next"], None)
         self.assertEquals(s["first"], seriesa1)
@@ -82,7 +82,7 @@ class TestSeries(TestCase):
         self.assertEquals(s["length"], 4)
 
         s = series.categories["seriesb"].sequence(seriesb1)
-        self.assertEquals(s["title"], "Series B")
+        self.assertEquals(s["title"], "Series B part One")
         self.assertEquals(s["prev"], None)
         self.assertEquals(s["next"], seriesb2)
         self.assertEquals(s["first"], seriesb1)
@@ -91,7 +91,7 @@ class TestSeries(TestCase):
         self.assertEquals(s["length"], 2)
 
         s = series.categories["seriesb"].sequence(seriesb2)
-        self.assertEquals(s["title"], "Series B")
+        self.assertEquals(s["title"], "Series B part One")
         self.assertEquals(s["prev"], seriesb1)
         self.assertEquals(s["next"], None)
         self.assertEquals(s["first"], seriesb1)

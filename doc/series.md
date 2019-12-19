@@ -26,7 +26,16 @@ as a series the first category of the page in a taxonomy called `series`:
 {% endwith %}
 ```
 
-The series title is the title of the first page in the series.
+## Series title
+
+The series title is, by default, the title of the first page in the series.
+
+If a page defines a `series_title` header, then it becomes the series title
+from that page onwards. It is possible to redefine the series title during a
+series, like for example a "My trip" series that later becomes "My trip:
+Italy", "My trip: France", "My trip: Spain", and so on.
+
+## Multiple series for a page
 
 A page is part of one series for each category of each taxonomy it has.
 Templates need to choose which categories are relevant for use in generating
