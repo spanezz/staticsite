@@ -41,4 +41,21 @@ mypy staticsite ssite
 ```
 
 
+## Release checklist
+
+* Run tests
+    * `nose2-3`
+    * `flake8`
+    * `mypy ssite staticsite`
+* Build for debian
+    * `debian/rules debsrc`
+    * `sudo cowbuilder update`
+    * `sudo cowbuilder build staticsite_$version.dsc`
+    * `debsign staticsite_$version_source.changes`
+    * `dput staticsite_$version_source.changes`
+* Tag release in git
+    * `git tag -s v$version`
+    * `git push --tags`
+
+
 Documentation at <https://docs.python.org/3/library/profile.html>
