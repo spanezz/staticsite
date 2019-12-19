@@ -83,6 +83,8 @@
 * cleanup and documented [directory index](doc/dir.md) feature
 * `page.meta.alias` is honored for all page types
 * `page.meta.template` is honored for all page types
+* Started [developers documentation](doc/devel/README.md)
+* Started [usage HOWTO documentation](doc/howto/README.md)
 
 ## Upgrade notes
 
