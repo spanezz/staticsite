@@ -136,12 +136,8 @@ class MarkdownPages(Feature):
         return self.markdown.convert(content)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
-        # meta = sitedir.meta_features.get("md")
-        # if meta is None:
-        #     meta = {}
-
-        taken = []
-        pages = []
+        taken: List[str] = []
+        pages: List[Page] = []
         for fname, f in sitedir.files.items():
             if not fname.endswith(".md"):
                 continue

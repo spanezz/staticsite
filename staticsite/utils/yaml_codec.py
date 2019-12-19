@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TextIO, Optional, Callable, Any
 import io
 
 #
@@ -15,6 +17,26 @@ import io
 # So we mix and match, trying to use PyYAML for loading, and ruamel for
 # dumping.
 #
+
+Load = Callable[[TextIO], Any]
+Loads = Callable[[str], Any]
+Dump = Callable[[Any, TextIO], None]
+Dumps = Callable[[Any], str]
+
+load_ruamel: Optional[Load]
+loads_ruamel: Optional[Loads]
+dump_ruamel: Optional[Dump]
+dumps_ruamel: Optional[Dumps]
+
+load_pyyaml: Optional[Load]
+loads_pyyaml: Optional[Loads]
+dump_pyyaml: Optional[Dump]
+dumps_pyyaml: Optional[Dumps]
+
+load: Load
+loads: Loads
+dump: Dump
+dumps: Dumps
 
 try:
     import ruamel.yaml
@@ -74,20 +96,34 @@ except ModuleNotFoundError:
     dumps_pyyaml = None
 
 
-if load_ruamel and load_pyyaml:
+# Prefer pyyaml for loading, because it's significantly faster
+if load_pyyaml:
     load = load_pyyaml
-    loads = loads_pyyaml
-    dump = dump_ruamel
-    dumps = dumps_ruamel
 elif load_ruamel:
     load = load_ruamel
-    loads = loads_ruamel
-    dump = dump_ruamel
-    dumps = dumps_ruamel
-elif load_pyyaml:
-    load = load_pyyaml
+else:
+    raise RuntimeError("Neither PyYAML nor ruamel.YAML are installed")
+
+if loads_pyyaml:
     loads = loads_pyyaml
+elif loads_ruamel:
+    loads = loads_ruamel
+else:
+    raise RuntimeError("Neither PyYAML nor ruamel.YAML are installed")
+
+
+# Prefer ruamel for dumping, because it supports unsorted keys, that are useful
+# when rendering archetypes
+if dump_ruamel:
+    dump = dump_ruamel
+elif dump_pyyaml:
     dump = dump_pyyaml
+else:
+    raise RuntimeError("Neither PyYAML nor ruamel.YAML are installed")
+
+if dumps_ruamel:
+    dumps = dumps_ruamel
+elif dumps_pyyaml:
     dumps = dumps_pyyaml
 else:
     raise RuntimeError("Neither PyYAML nor ruamel.YAML are installed")

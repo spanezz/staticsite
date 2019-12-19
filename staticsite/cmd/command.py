@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Optional
 from staticsite import Site, Settings
 from staticsite.utils import timings
 import sys
@@ -26,11 +28,11 @@ class Success(Exception):
 class Command:
     # Command name (as used in command line)
     # Defaults to the lowercased class name
-    NAME = None
+    NAME: Optional[str] = None
 
     # Command description (as used in command line help)
     # Defaults to the strip()ped class docstring.
-    DESC = None
+    DESC: Optional[str] = None
 
     def __init__(self, args):
         self.args = args

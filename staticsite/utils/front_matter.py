@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 import logging
 import json
 from . import yaml_codec
@@ -52,7 +52,7 @@ log = logging.getLogger("utils")
 #     return None, {}
 
 
-def parse(lines) -> Tuple[str, Dict[str, Any]]:
+def parse(lines) -> Tuple[Optional[str], Dict[str, Any]]:
     """
     Parse lines of front matter
     """

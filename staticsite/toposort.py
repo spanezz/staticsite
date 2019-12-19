@@ -64,7 +64,7 @@ def strongly_connected_components(graph: Graph):
 
 
 def topological_sort(graph: Graph) -> List[Node]:
-    count = Counter()
+    count: Counter = Counter()
     for node in graph:
         for successor in graph[node]:
             count[successor] += 1

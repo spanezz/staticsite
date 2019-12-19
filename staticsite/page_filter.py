@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Any, Tuple, Callable, List, Iterable, Union
+from typing import Optional, Any, Tuple, Callable, List, Iterable, Union, FrozenSet
 import fnmatch
 import re
 from .page import Page
@@ -24,7 +24,7 @@ def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
     return re.compile(fnmatch.translate(pattern))
 
 
-def sort_args(sort: str) -> Tuple[str, bool, Callable[[Page], Any]]:
+def sort_args(sort: Optional[str]) -> Tuple[Optional[str], bool, Optional[Callable[[Page], Any]]]:
     """
     Parse a page sort string, returning a tuple of:
     * which page metadata is used for sorting, or None if sorting is not based
@@ -33,7 +33,7 @@ def sort_args(sort: str) -> Tuple[str, bool, Callable[[Page], Any]]:
     * a key function for the sorting
     """
     if sort is None:
-        return None, None, None
+        return None, False, None
 
     # Process the '-'
     if sort.startswith("-"):
@@ -76,7 +76,7 @@ class PageFilter:
 
         self.sort_meta, self.sort_reverse, self.sort_key = sort_args(sort)
 
-        self.taxonomy_filters = []
+        self.taxonomy_filters: List[Tuple[str, FrozenSet[str]]] = []
         for taxonomy in self.site.features["taxonomy"].taxonomies.values():
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:

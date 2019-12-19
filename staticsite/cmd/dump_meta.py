@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .command import SiteCommand
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match

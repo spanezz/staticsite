@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Set
 import os
 import pytz
 import datetime
@@ -38,10 +38,10 @@ class Site:
         self.pages: Dict[str, Page] = {}
 
         # Metadata for which we add pages to pages_by_metadata
-        self.tracked_metadata = set(settings.TAXONOMIES)
+        self.tracked_metadata: Set[str] = set(settings.TAXONOMIES)
 
         # Site pages that have the given metadata
-        self.pages_by_metadata = defaultdict(list)
+        self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)
 
         # Site time zone
         if settings.TIMEZONE is None:

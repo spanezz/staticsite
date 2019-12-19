@@ -27,8 +27,8 @@ class J2Pages(Feature):
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
-        taken = []
-        pages = []
+        taken: List[str] = []
+        pages: List[Page] = []
         for fname, f in sitedir.files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:

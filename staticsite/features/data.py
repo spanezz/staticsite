@@ -4,6 +4,7 @@ from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.contents import ContentDir
+from staticsite.page_filter import PageFilter
 import dateutil.parser
 import jinja2
 import re
@@ -102,7 +103,6 @@ class DataPages(Feature):
 
     @jinja2.contextfunction
     def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
-        from .theme import PageFilter
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
         return page_filter.filter(self.by_type.get(type, []))
 

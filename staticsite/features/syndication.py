@@ -80,6 +80,8 @@ class SyndicationPage(Page):
     """
     Base class for syndication pages
     """
+    # Default template to use for this type of page
+    TEMPLATE: str
 
     def __init__(self, site: Site, meta: Dict[str, Any]):
         relpath = os.path.join(meta["index"].src_linkpath, f"index.{self.TYPE}")

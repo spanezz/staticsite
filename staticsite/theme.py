@@ -134,20 +134,26 @@ class Theme:
         Sort the pages by ``sort`` and take the first ``limit`` ones
         """
         sort_meta, reverse, key = sort_args(sort)
-        if limit is None:
-            return sorted(pages, key=key, reverse=reverse)
-        elif limit == 1:
-            if reverse:
-                return [max(pages, key=key)]
+        if key is None:
+            if limit is None:
+                return pages
             else:
-                return [min(pages, key=key)]
-        elif len(pages) > 10 and limit < len(pages) / 3:
-            if reverse:
-                return heapq.nlargest(limit, pages, key=key)
-            else:
-                return heapq.nsmallest(limit, pages, key=key)
+                return pages[:limit]
         else:
-            return sorted(pages, key=key, reverse=reverse)[:limit]
+            if limit is None:
+                return sorted(pages, key=key, reverse=reverse)
+            elif limit == 1:
+                if reverse:
+                    return [max(pages, key=key)]
+                else:
+                    return [min(pages, key=key)]
+            elif len(pages) > 10 and limit < len(pages) / 3:
+                if reverse:
+                    return heapq.nlargest(limit, pages, key=key)
+                else:
+                    return heapq.nsmallest(limit, pages, key=key)
+            else:
+                return sorted(pages, key=key, reverse=reverse)[:limit]
 
     @jinja2.contextfunction
     def jinja2_has_page(self, context, arg: str) -> bool:

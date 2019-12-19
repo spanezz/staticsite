@@ -23,10 +23,10 @@ def format_date_rfc3339(dt: datetime.datetime) -> str:
 
 def format_date_w3cdtf(dt: datetime.datetime) -> str:
     offset = dt.utcoffset()
-    offset_sec = (offset.days * 24 * 3600 + offset.seconds)
-    offset_hrs = offset_sec // 3600
-    offset_min = offset_sec % 3600
     if offset:
+        offset_sec = (offset.days * 24 * 3600 + offset.seconds)
+        offset_hrs = offset_sec // 3600
+        offset_min = offset_sec % 3600
         tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
     else:
         tz_str = 'Z'
@@ -35,10 +35,10 @@ def format_date_w3cdtf(dt: datetime.datetime) -> str:
 
 def format_date_iso8601(dt: datetime.datetime) -> str:
     offset = dt.utcoffset()
-    offset_sec = (offset.days * 24 * 3600 + offset.seconds)
-    offset_hrs = offset_sec // 3600
-    offset_min = offset_sec % 3600
     if offset:
+        offset_sec = (offset.days * 24 * 3600 + offset.seconds)
+        offset_hrs = offset_sec // 3600
+        offset_min = offset_sec % 3600
         tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
     else:
         tz_str = 'Z'

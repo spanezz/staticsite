@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Iterable
+from typing import List, Dict, Iterable, Optional
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.file import File
@@ -30,8 +30,8 @@ class TaxonomyFeature(Feature):
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
-        taken = []
-        pages = []
+        taken: List[str] = []
+        pages: List[Page] = []
         for fname, src in sitedir.files.items():
             if not fname.endswith(".taxonomy"):
                 continue
@@ -63,7 +63,7 @@ class TaxonomyFeature(Feature):
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
         return self.taxonomies.values()
 
-    def jinja2_taxonomy(self, name) -> "TaxonomyPage":
+    def jinja2_taxonomy(self, name) -> Optional["TaxonomyPage"]:
         return self.taxonomies.get(name)
 
     def finalize(self):

@@ -52,7 +52,7 @@ class BaseDir:
                             stat=entry.stat())
 
         # Postprocess directory metadata
-        self.file_meta = {}
+        self.file_meta: Dict[str, Any] = {}
         if self.meta is None:
             self.meta = {}
         else:
@@ -61,7 +61,7 @@ class BaseDir:
             if file_meta is not None:
                 rules = [(compile_page_match(k), v) for k, v in file_meta.items()]
                 for fname in self.files.keys():
-                    res = {}
+                    res: Dict[str, Any] = {}
                     for pattern, meta in rules:
                         if pattern.match(fname):
                             res.update(meta)

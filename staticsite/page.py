@@ -7,7 +7,7 @@ from urllib.parse import urlparse, urlunparse
 from .utils import lazy
 from .render import RenderedString
 import jinja2
-import dateutil
+import dateutil.parser
 import staticsite
 
 log = logging.getLogger("page")
@@ -44,6 +44,8 @@ class Page:
         a dictionary with the page metadata. See the README for documentation
         about its contents.
     """
+    # Page type
+    TYPE: str
 
     def __init__(
             self,
@@ -58,6 +60,7 @@ class Page:
         self.src_linkpath = src_linkpath
         self.dst_relpath = dst_relpath
         self.dst_link = dst_link
+        self.meta: Dict[str, Any]
         if meta is None:
             self.meta = {}
         else:

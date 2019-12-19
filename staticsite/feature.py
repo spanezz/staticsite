@@ -18,6 +18,9 @@ class Feature:
     It contains dependencies on other features, and hooks called in various
     stages of site processing.
     """
+    # Name with which the feature class was loaded
+    NAME: str
+
     # List names of features that should run after us.
     # The dependency order is taken into account when calling try_load_page and
     # finalize.
@@ -140,12 +143,12 @@ class Features:
         log.debug("Feature run order: %r", sorted_names)
         sorted_features = []
         for name in sorted_names:
-            feature = features.get(name)
+            f = features.get(name)
             # Skip names that are not features, like well-known synchronization
             # points
-            if feature is None:
+            if f is None:
                 continue
-            sorted_features.append(feature)
+            sorted_features.append(f)
         return sorted_features
 
     def commit(self):
