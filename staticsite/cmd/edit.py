@@ -60,7 +60,7 @@ class Edit(SiteCommand):
             elif pagination and selection == "p":
                 first = max(0, first - self.MENU_SIZE)
                 continue
-            elif pagination and selection == "n":
+            elif pagination and selection == "n" or selection == "":
                 first = min(first + self.MENU_SIZE, self.MENU_SIZE * (len(pages) // self.MENU_SIZE))
                 continue
 
