@@ -13,10 +13,10 @@ In staticsite templates, this becomes:
   <meta name="description" property="og:description" content="{{page.meta.description|striptags}}" />
 {%- endif %}
 {% if page.meta.image -%}
-  <meta property="og:image" content="{{SITE_URL}}{{url_for(page.meta.image)}}" />
-  <meta name="twitter:card" content="{{SITE_URL}}{{url_for(page.meta.image)}}" />
+  <meta property="og:image" content="{{url_for(page.meta.image, absolute=True)}}" />
+  <meta name="twitter:card" content="{{url_for(page.meta.image, absolute=True)}}" />
 {%- endif %}
-<meta property="og:url" content="{{SITE_URL}}{{url_for(page)}}" />
+<meta property="og:url" content="{{url_for(page, absolute=True)}}" />
 ```
 
 Notes:
