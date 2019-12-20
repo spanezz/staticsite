@@ -84,11 +84,8 @@ class BaseDir:
             self.file_meta[dname] = res
 
     def meta_file(self, fname: str):
-        res = self.file_meta.get(fname)
-        if res is None:
-            return {}
-        else:
-            return res
+        # TODO: deprecate, and just use self.file_meta[fname]
+        return self.file_meta[fname]
 
     def _file_opener(self, path, flags):
         return os.open(path, flags, dir_fd=self.dir_fd)
@@ -112,8 +109,8 @@ class ContentDir(BaseDir):
         # Load subdirectories
         for fname in self.subdirs:
             # Check whether to load subdirectories as asset trees
-            meta = self.file_meta.get(fname)
-            if meta and meta.get("asset"):
+            meta = self.file_meta[fname]
+            if meta.get("asset"):
                 with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
                     subdir = AssetDir(
                                 self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd, meta=meta)
@@ -129,7 +126,7 @@ class ContentDir(BaseDir):
         # Handle files marked as assets in their metadata
         taken = []
         for fname, f in self.files.items():
-            meta = self.file_meta.get(fname)
+            meta = self.file_meta[fname]
             if meta and meta.get("asset"):
                 p = Asset(self.site, f, meta=meta)
                 if not p.is_valid():
@@ -150,7 +147,7 @@ class ContentDir(BaseDir):
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                p = Asset(self.site, f, meta=self.file_meta.get(fname))
+                p = Asset(self.site, f, meta=self.file_meta[fname])
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
