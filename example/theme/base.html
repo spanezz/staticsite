@@ -9,7 +9,9 @@
     <meta name="language" content="EN">
     <meta name="robots" content="index, follow"/>
     <meta name="keywords" content="{% for tag in page.meta.tags -%}{% if loop.index0 %}, {% endif %}{{tag.name}}{% endfor %}"/>
-    <meta name="author" content="{{SITE_AUTHOR}}"/>
+    {% if page.meta.author -%}
+    <meta name="author" content="{{page.meta.author}}"/>
+    {%- endif %}
     <meta name="generator" content="staticsite"/>
     {% endblock %}
 
@@ -28,7 +30,9 @@
     <meta property="og:site_name" content="{{site.site_name}}" />
     {% block meta_opengraph_article %}
     <meta property="og:type" content="article" />
-    <meta property="og:article:author" content="{{SITE_AUTHOR}}" />
+    {% if page.meta.author -%}
+    <meta property="og:article:author" content="{{page.meta.author}}" />
+    {%- endif %}
     <meta property="og:article:published_time" content="{{page.meta.date.isoformat()}}" />
     {% for tag in page.meta.tags -%}
     <meta property="og:article:tag" content="{{tag.name}}" />
