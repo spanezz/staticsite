@@ -40,7 +40,10 @@ class DirPages(Feature):
             # We only build indices where there is not already a page
             if relpath in self.site.pages:
                 continue
-            page = DirPage(self.site, relpath, pages)
+            meta = self.site.dirs.get(relpath)
+            if meta is None:
+                meta = {}
+            page = DirPage(self.site, relpath, pages, meta=meta)
             if not page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", page)
             dir_pages.append(page)
@@ -61,13 +64,14 @@ class DirPage(Page):
     """
     TYPE = "dir"
 
-    def __init__(self, site, relpath, pages):
+    def __init__(self, site, relpath, pages, meta):
         super().__init__(
             site=site,
             src=File(relpath=relpath),
             src_linkpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(site.settings.SITE_ROOT, relpath))
+            dst_link=os.path.join(site.settings.SITE_ROOT, relpath),
+            meta=meta)
 
         self.meta.setdefault("template", "dir.html")
         self.meta["pages"] = pages

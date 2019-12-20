@@ -2,6 +2,9 @@
 
 # New in version 1.3
 
+* New [page metadata](doc/metadata.md): `author`, `site_name`, `site_url`, and
+  `site_root`.
+
 # New in version 1.2
 
 * RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl.

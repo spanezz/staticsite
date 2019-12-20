@@ -116,6 +116,7 @@ class Page:
         if self.draft:
             log.info("%s: still a draft", self.src.relpath)
             return False
+
         return True
 
     def _fill_possibly_templatized_meta_value(self, name):

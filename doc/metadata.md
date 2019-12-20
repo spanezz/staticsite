@@ -22,6 +22,10 @@ A python datetime object, timezone aware. If the date is in the future when
 `ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
 --draft` to also consider draft pages.
 
+### `author`
+
+A string with the name of the author for this page.
+
 ### `title`
 
 The page title. If omitted, the first title found in the page is used. If the
@@ -70,6 +74,21 @@ If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md). It defaults to true for
 [Markdown](markdown.md), [reStructuredText](rst.rst), and [data](data.md)
 pages.
+
+### `site_name`
+
+Name of the site.
+
+### `site_url`
+
+Base URL for the site, used to generate an absolute URL to the page.
+
+### `site_root
+
+Root directory of the site in URLs to the page.
+
+If you are publishing the site at `/prefix` instead of the root of the domain,
+override this with `/prefix`.
 
 
 [Back to reference index](reference.md)

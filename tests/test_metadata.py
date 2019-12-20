@@ -48,6 +48,37 @@ title: Test1 title
             self.assertEqual(test.meta["title"], "Test title")
             self.assertEqual(test1.meta["title"], "Test1 title")
 
+    def test_tree_meta(self):
+        files = {
+            ".staticsite": {
+                "site": {
+                    "site_name": "Root site",
+                },
+            },
+            "page.md": {},
+            "page1.md": {"site_name": "Page 1 site"},
+            "dir1/page.md": {},
+            "dir1/dir2/.staticsite": {
+                "site": {
+                    "site_name": "dir2 site",
+                },
+            },
+            "dir1/dir2/page.md": {},
+        }
+
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site(PROJECT_ROOT=root)
+            site.load()
+            site.analyze()
+
+            self.assertEqual(site.pages[""].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["page"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["page1"].meta["site_name"], "Page 1 site")
+            self.assertEqual(site.pages["dir1"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["dir1/page"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["dir1/dir2"].meta["site_name"], "dir2 site")
+            self.assertEqual(site.pages["dir1/dir2/page"].meta["site_name"], "dir2 site")
+
     def test_asset(self):
         files = {
             ".staticsite": {

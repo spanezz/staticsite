@@ -16,7 +16,7 @@ setup(
         'serve': ['livereload'],
         'fast_caching': ['lmdb'],
     },
-    version="1.2",
+    version="1.3",
     description="Static site generator",
     author="Enrico Zini",
     author_email="enrico@enricozini.org",

@@ -32,6 +32,23 @@ features.
 
 Entries currently supported:
 
+### `site`
+
+Metadata for this directory and all its contents, recursively down into
+subdirectories.
+
+You can use this to set [metadata](metadata.md) like `site_name`, `author`,
+`site_url`, `site_root`.
+
+If you set `asset` to true, the subdirectory is loaded as static files, and not
+passed through site features.
+
+### `dirs`
+
+Provides extra metadata for subdirectories of the given directory.
+
+It is equivalent to setting `site` in each of the matching subdirectories.
+
 ### `files`
 
 Provides extra metadata for files found in the directory.
@@ -42,13 +59,6 @@ File names can be given as glob expressions or regular expressions, as with
 [page selection](page-filter.md). If a file matches multiple entries, it gets
 all the matching metadata, with the later ones potentially overwriting the
 previous ones.
-
-### `dirs`
-
-Provides extra metadata for subdirectories of the given directory.
-
-At the moment only `asset` is supported: if set to true, the subdirectory is
-loaded as static files, and not passed through site features.
 
 
 ### Example directory metadata

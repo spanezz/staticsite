@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set
+from typing import Optional, Dict, List, Set, Any
 import os
 import pytz
 import datetime
@@ -11,6 +11,8 @@ from .utils import lazy, open_dir_fd
 import logging
 
 log = logging.getLogger("site")
+
+Meta = Dict[str, Any]
 
 
 class Site:
@@ -36,6 +38,9 @@ class Site:
 
         # Site pages
         self.pages: Dict[str, Page] = {}
+
+        # Site directory metadata
+        self.dirs: Dict[str, Meta] = {}
 
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: Set[str] = set(settings.TAXONOMIES)
@@ -118,6 +123,21 @@ class Site:
         self.theme = Theme(self, theme_root)
         self.theme.load_assets()
 
+    def _settings_to_meta(self) -> Dict[str, Any]:
+        """
+        Build directory metadata based on site settings
+        """
+        meta = {}
+        if self.settings.SITE_URL:
+            meta["site_url"] = self.settings.SITE_URL
+        if self.settings.SITE_ROOT:
+            meta["site_root"] = self.settings.SITE_ROOT
+        if self.settings.SITE_NAME:
+            meta["site_name"] = self.settings.SITE_NAME
+        if self.settings.SITE_AUTHOR:
+            meta["author"] = self.settings.SITE_AUTHOR
+        return meta
+
     def load_content(self, content_root=None):
         """
         Load site page and assets from the given directory.
@@ -138,7 +158,7 @@ class Site:
             log.info("Loading pages from %s", content_root)
 
         with open_dir_fd(content_root) as dir_fd:
-            root = ContentDir(self, content_root, "", dir_fd)
+            root = ContentDir(self, content_root, "", dir_fd, meta=self._settings_to_meta())
             root.load()
 
     def load(self, content_root=None):
@@ -185,12 +205,12 @@ class Site:
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
             with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static")
+                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=self._settings_to_meta())
                 root.load()
         else:
             log.info("Loading assets from %s", tree_root)
             with open_dir_fd(tree_root) as dir_fd:
-                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static")
+                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=self._settings_to_meta())
                 root.load()
 
     def analyze(self):

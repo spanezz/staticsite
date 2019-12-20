@@ -8,6 +8,9 @@ import os
 # Default if None: the directory where the settings file is found
 PROJECT_ROOT: Optional[str] = None
 
+# Base URL for the site, used to generate absolute URLs
+SITE_URL: str = None
+
 # Root directory of the site in the URLs we generate.
 #
 # If you are publishing the site at /prefix instead of root of the domain,
