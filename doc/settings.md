@@ -30,7 +30,7 @@ overridden by `settings.py` or `.staticsite.py`.
 ## Site-wide metadata
 
 * `SITE_NAME`: Site name. It defaults to the title of the toplevel page.
-* `SITE_AUTHOR`: Default author for site contents.
+* `SITE_AUTHOR`: default value for the [`author` metadata](metadata.md)
 * `TIMEZONE`: Default timezone used for datetimes in site contents.
 * `TAXONOMIES`: List of [taxonomy](taxonomies.md) names used on the site.
   Defaults to no taxonomies.
@@ -43,10 +43,8 @@ overridden by `settings.py` or `.staticsite.py`.
 
 ## `ssite build` settings
 
-* `SITE_URL`: Absolute URL to the root of the site.
-* `SITE_ROOT`: Root directory of the site in the URLs we generate. If you are
-  publishing the site at `/prefix` instead of root of the domain, override this
-  with `/prefix`. Defaults to `/`.
+* `SITE_URL`: default value for the [`site_url` metadata](metadata.md).
+* `SITE_ROOT`: default value for the [`site_root` metadata](metadata.md).
 * `OUTPUT`: Directory where the output of `ssite build` will go. If not set,
   `ssite build` will ask for it.
 * `DRAFT_MODE`: If True, do not ignore pages with dates in the future. Defaults

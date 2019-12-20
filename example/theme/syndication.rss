@@ -5,8 +5,8 @@
      xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
   <title>{{page.meta.title}}</title>
-  <link>{{SITE_URL}}{{url_for(page.meta.index)}}</link>
-  <atom:link href="{{SITE_URL}}{{url_for(page.meta.index)}}" rel="self" type="application/rss+xml"/>
+  <link>{{url_for(page.meta.index, absolute=True)}}</link>
+  <atom:link href="{{url_for(page.meta.index, absolute=True)}}" rel="self" type="application/rss+xml"/>
   {% if page.meta.description -%}
   <description>{{page.meta.description}}</description>
   {%- else -%}
@@ -17,8 +17,8 @@
   {% for page in page.meta.pages|arrange("-date", 15) -%}
   <item>
     <title>{{page.meta.title}}</title>
-    <guid isPermaLink="false">{{SITE_URL}}{{ url_for(page) }}</guid>
-    <link>{{SITE_URL}}{{ url_for(page) }}</link>
+    <guid isPermaLink="false">{{url_for(page, absolute=True)}}</guid>
+    <link>{{url_for(page, absolute=True)}}</link>
     {% for tag in page.meta.tags -%}
     <category>{{tag.name}}</category>
     {%- endfor %}

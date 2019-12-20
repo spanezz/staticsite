@@ -29,7 +29,7 @@ Any setting defined in `settings.py` is also available to Jinja2, so you can do
 for example:
 
 ```jinja2
-<a class="navbar-brand" href="{{SITE_ROOT}}">{{SITE_NAME}}</a>
+<small>Built with staticsite and theme {{THEME|basename}}</small>
 ```
 
 ### Functions
