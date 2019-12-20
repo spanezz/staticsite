@@ -70,9 +70,8 @@ class J2Page(Page):
         super().__init__(
             site=j2env.site,
             src=src,
-            src_linkpath=linkpath,
+            site_relpath=linkpath,
             dst_relpath=dst_relpath,
-            dst_link=os.path.join(j2env.site.settings.SITE_ROOT, linkpath),
             meta=meta)
 
         try:

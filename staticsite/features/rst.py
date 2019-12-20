@@ -64,9 +64,9 @@ class DoctreeScan:
 
 class RestructuredText(Feature):
     """
-    Render ``.md`` markdown pages, with front matter.
+    Render ``.rst`` reStructuredText pages, with front matter.
 
-    See doc/markdown.md for details.
+    See doc/rst.rst for details.
     """
     RUN_BEFORE = ["contents_loaded"]
 
@@ -238,9 +238,8 @@ class RstPage(Page):
         super().__init__(
             site=feature.site,
             src=src,
-            src_linkpath=linkpath,
+            site_relpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(feature.site.settings.SITE_ROOT, linkpath),
             meta=meta)
 
         # Indexed by default

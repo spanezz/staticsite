@@ -6,7 +6,7 @@ from staticsite.theme import PageFilter
 
 def select(site, *args, **kw):
     f = PageFilter(site, *args, **kw)
-    return [p.src_linkpath for p in f.filter(site.pages.values())]
+    return [p.site_relpath for p in f.filter(site.pages.values())]
 
 
 class TestPageFilter(TestCase):

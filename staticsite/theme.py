@@ -174,11 +174,15 @@ class Theme:
             cur_page = context.parent["page"]
             page = cur_page.resolve_link(arg)
             if page is None:
+                page = cur_page.resolve_link("/static" + arg)
+                if page is not None:
+                    log.warn("%s+%s: please use /static%s instead of %s", cur_page.src.relpath, context.name, arg, arg)
+            if page is None:
                 log.warn("%s+%s: unresolved link %s passed to url_for", cur_page.src.relpath, context.name, arg)
                 return ""
         else:
             page = arg
-        return page.dst_link
+        return os.path.join(self.site.settings.SITE_ROOT, page.site_relpath)
 
     @jinja2.contextfunction
     def jinja2_site_pages(

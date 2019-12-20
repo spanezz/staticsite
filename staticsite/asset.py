@@ -15,17 +15,15 @@ class Asset(Page):
 
         if dest_subdir:
             dst_relpath = os.path.join(dest_subdir, src.relpath)
-            dst_link = os.path.join(site.settings.SITE_ROOT, dest_subdir, linkpath)
+            linkpath = os.path.join(dest_subdir, linkpath)
         else:
             dst_relpath = src.relpath
-            dst_link = os.path.join(site.settings.SITE_ROOT, linkpath)
 
         super().__init__(
             site=site,
             src=src,
-            src_linkpath=linkpath,
+            site_relpath=linkpath,
             dst_relpath=dst_relpath,
-            dst_link=dst_link,
             meta=meta)
 
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)

@@ -84,14 +84,13 @@ class SyndicationPage(Page):
     TEMPLATE: str
 
     def __init__(self, site: Site, meta: Dict[str, Any]):
-        relpath = os.path.join(meta["index"].src_linkpath, f"index.{self.TYPE}")
+        relpath = os.path.join(meta["index"].site_relpath, f"index.{self.TYPE}")
 
         super().__init__(
             site=site,
             src=File(relpath=relpath),
-            src_linkpath=relpath,
+            site_relpath=relpath,
             dst_relpath=relpath,
-            dst_link=os.path.join(site.settings.SITE_ROOT, relpath),
             meta=meta)
         self.meta.setdefault("template", self.TEMPLATE)
         if self.meta["pages"]:

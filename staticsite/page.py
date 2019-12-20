@@ -26,20 +26,14 @@ class Page:
         the Site that contains the page
     `src`:
         the File object with informationm about the source file
-    `src_linkpath`:
-        the path used by other pages to link to this page, when referencing its
-        source. For example, blog/2016/example.md is linked as
-        blog/2016/example.
+    `site_relpath`:
+        path in the site namespace used to link to this page in webpages. For
+        example, `blog/2016/example.md` is linked as `blog/2016/example/` in
+        the built website.
     `dst_relpath`:
-        relative path of the file that will be generated for this page when it
-        gets rendered.
-        FIXME: now that a resource can generate multiple files, this is not
-        really needed.
-    `dst_link`:
-        absolute path in the site namespace used to link to this page in
-        webpages.
-        FIXME: now that a resource can generate multiple files, this is not
-        really needed.
+        relative path in the build directory for the file that will be written
+        when this page gets rendered. For example, `blog/2016/example.md`
+        generates `blog/2016/example/index.html`.
     `meta`:
         a dictionary with the page metadata. See the README for documentation
         about its contents.
@@ -51,21 +45,18 @@ class Page:
             self,
             site: "staticsite.Site",
             src: "staticsite.File",
-            src_linkpath: str,
+            site_relpath: str,
             dst_relpath: str,
-            dst_link: str,
             meta: Dict[str, Any] = None):
         self.site = site
         self.src = src
-        self.src_linkpath = src_linkpath
+        self.site_relpath = site_relpath
         self.dst_relpath = dst_relpath
-        self.dst_link = dst_link
         self.meta: Dict[str, Any]
         if meta is None:
             self.meta = {}
         else:
             self.meta = dict(meta)
-        log.debug("%s: new page, src_link: %s", self.src.relpath, src_linkpath)
 
     def is_valid(self) -> bool:
         """
@@ -105,7 +96,7 @@ class Page:
         # title must exist
         title = self._fill_possibly_templatized_meta_value("title")
         if title is None:
-            self.meta["title"] = os.path.basename(self.src_linkpath)
+            self.meta["title"] = os.path.basename(self.site_relpath)
 
         # description may exist
         self._fill_possibly_templatized_meta_value("description")
@@ -280,9 +271,8 @@ class Page:
                 "root": str(self.src.root),
                 "abspath": str(self.src.abspath),
             },
-            "src_linkpath": str(self.src_linkpath),
+            "site_relpath": str(self.site_relpath),
             "dst_relpath": str(self.dst_relpath),
-            "dst_link": str(self.dst_link),
             "meta": dump_meta(self.meta),
         }
         return res

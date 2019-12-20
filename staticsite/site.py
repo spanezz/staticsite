@@ -177,7 +177,7 @@ class Site:
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        self.pages[page.src_linkpath] = page
+        self.pages[page.site_relpath] = page
 
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.tracked_metadata:

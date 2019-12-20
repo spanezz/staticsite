@@ -54,7 +54,7 @@ class DirPages(Feature):
             page.attach_to_parent()
 
         # Finalize dir_pages from the bottom up
-        for page in sorted(dir_pages, key=lambda page: len(page.src_linkpath), reverse=True):
+        for page in sorted(dir_pages, key=lambda page: len(page.site_relpath), reverse=True):
             page.finalize()
 
 
@@ -68,9 +68,8 @@ class DirPage(Page):
         super().__init__(
             site=site,
             src=File(relpath=relpath),
-            src_linkpath=relpath,
+            site_relpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(site.settings.SITE_ROOT, relpath),
             meta=meta)
 
         self.meta.setdefault("template", "dir.html")
@@ -88,11 +87,11 @@ class DirPage(Page):
 
     def attach_to_parent(self):
         # If we are the root, we have nothing to do
-        if not self.src_linkpath:
+        if not self.site_relpath:
             return
 
         # Find parent page
-        parent_relpath = os.path.dirname(self.src_linkpath)
+        parent_relpath = os.path.dirname(self.site_relpath)
         parent = self.site.pages[parent_relpath]
 
         # Set it as meta["parent"]

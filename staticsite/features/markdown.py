@@ -260,9 +260,8 @@ class MarkdownPage(Page):
         super().__init__(
             site=mdpages.site,
             src=src,
-            src_linkpath=linkpath,
+            site_relpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(mdpages.site.settings.SITE_ROOT, linkpath),
             meta=meta)
 
         # Indexed by default

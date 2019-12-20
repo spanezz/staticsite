@@ -92,9 +92,8 @@ class TaxonomyPage(Page):
         super().__init__(
             site=site,
             src=src,
-            src_linkpath=linkpath,
+            site_relpath=linkpath,
             dst_relpath=os.path.join(linkpath, "index.html"),
-            dst_link=os.path.join(site.settings.SITE_ROOT, linkpath),
             meta=meta)
 
         self.meta.setdefault("template", "tags.html")
@@ -209,18 +208,17 @@ class CategoryPage(Page):
     TYPE = "category"
 
     def __init__(self, taxonomy, name, meta):
-        relpath = os.path.join(taxonomy.src_linkpath, name)
+        relpath = os.path.join(taxonomy.site_relpath, name)
         super().__init__(
             site=taxonomy.site,
             src=File(relpath=relpath),
-            src_linkpath=relpath,
+            site_relpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(taxonomy.site.settings.SITE_ROOT, relpath),
             meta=meta)
         # Category name
         self.name = name
         # Index of each page in the category sequence
-        self.page_index: Dict[Page, int] = {page.src_linkpath: idx for idx, page in enumerate(self.meta["pages"])}
+        self.page_index: Dict[Page, int] = {page.site_relpath: idx for idx, page in enumerate(self.meta["pages"])}
 
     def to_dict(self):
         res = super().to_dict()
@@ -250,7 +248,7 @@ class CategoryPage(Page):
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
     def sequence(self, page):
-        idx = self.page_index.get(page.src_linkpath)
+        idx = self.page_index.get(page.site_relpath)
         if idx is None:
             return None
 
@@ -288,13 +286,12 @@ class CategoryArchivePage(Page):
 
     def __init__(self, meta):
         category_page = meta["category"]
-        relpath = os.path.join(category_page.src_linkpath, "archive")
+        relpath = os.path.join(category_page.site_relpath, "archive")
         super().__init__(
             site=category_page.site,
             src=File(relpath=relpath),
-            src_linkpath=relpath,
+            site_relpath=relpath,
             dst_relpath=os.path.join(relpath, "index.html"),
-            dst_link=os.path.join(category_page.site.settings.SITE_ROOT, relpath),
             meta=meta)
 
         # Category name
