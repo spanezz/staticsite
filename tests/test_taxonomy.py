@@ -11,8 +11,8 @@ class TestTags(TestCase):
         site = test_utils.Site(TAXONOMIES=["tags"])
         site.load_without_content()
 
-        tax1 = site.add_test_page("taxonomy", name="tags")
-        page1 = site.add_test_page("md", "page1", date=datetime.datetime(2016, 1, 1), tags=["a", "b"])
+        tax1 = site.add_test_page("taxonomy", "tags")
+        page1 = site.add_test_page("md", "page1", meta={"date": datetime.datetime(2016, 1, 1), "tags": ["a", "b"]})
         site.analyze()
 
         self.assertEqual(tax1.categories["a"].meta["pages"], [page1])

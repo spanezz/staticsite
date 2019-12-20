@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Dict, Any, Optional
 from staticsite import Page, Feature, File
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
@@ -12,6 +12,8 @@ import tempfile
 import logging
 
 log = logging.getLogger("markdown")
+
+Meta = Dict[str, Any]
 
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
@@ -177,7 +179,7 @@ class MarkdownPages(Feature):
             return None
         return MarkdownArchetype(archetypes, relpath, self)
 
-    def build_test_page(self, relpath: str, content: str = None, **kw) -> Page:
+    def build_test_page(self, relpath: str, content: str = None, meta: Optional[Meta] = None) -> Page:
         with tempfile.NamedTemporaryFile("wt", suffix=".md") as tf:
             if content:
                 tf.write(content)
@@ -186,7 +188,7 @@ class MarkdownPages(Feature):
                        root=None,
                        abspath=os.path.abspath(tf.name),
                        stat=os.stat(tf.fileno()))
-            return MarkdownPage(self, src, meta=kw)
+            return MarkdownPage(self, src, meta=meta)
 
 
 def parse_markdown_with_front_matter(fd):

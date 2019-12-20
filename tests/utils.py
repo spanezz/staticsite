@@ -20,6 +20,8 @@ class TestSettings(Settings):
 
 class Site(staticsite.Site):
     def __init__(self, **kw):
+        kw.setdefault("SITE_NAME", "Test site")
+        kw.setdefault("SITE_URL", "https://www.example.org")
         settings = TestSettings(**kw)
         super().__init__(settings=settings)
 

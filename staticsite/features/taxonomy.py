@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Iterable, Optional
+from typing import List, Dict, Iterable, Optional, Any
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.file import File
@@ -10,6 +10,9 @@ import os
 import logging
 
 log = logging.getLogger("taxonomy")
+
+
+Meta = Dict[str, Any]
 
 
 class TaxonomyFeature(Feature):
@@ -52,11 +55,11 @@ class TaxonomyFeature(Feature):
 
         return pages
 
-    def build_test_page(self, name: str, **kw) -> Page:
+    def build_test_page(self, relpath: str, meta: Optional[Meta] = None) -> Page:
         page = TestTaxonomyPage(
                 self.site,
-                File(relpath=name + ".taxonomy", root="/", abspath="/" + name + ".taxonomy"),
-                meta=kw)
+                File(relpath=relpath + ".taxonomy", root="/", abspath="/" + relpath + ".taxonomy"),
+                meta=meta)
         self.taxonomies[page.name] = page
         return page
 
@@ -121,7 +124,7 @@ class TaxonomyPage(Page):
 
         # Copy well known meta keys
         for key in "site_root", "site_url", "author", "site_name":
-            val = self.meta[key]
+            val = self.meta.get(key)
             self.category_meta.setdefault(key, val)
             self.archive_meta.setdefault(key, val)
 

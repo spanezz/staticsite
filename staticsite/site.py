@@ -187,14 +187,28 @@ class Site:
         for tracked in page.meta.keys() & self.tracked_metadata:
             self.pages_by_metadata[tracked].append(page)
 
-    def add_test_page(self, feature: str, *args, **kw) -> Page:
+    def add_test_page(self, feature: str, relpath, *args, meta=None, **kw) -> Page:
         """
         Add a page instantiated using the given feature for the purpose of unit
         testing.
 
         :return: the Page added
         """
-        page = self.features[feature].build_test_page(*args, **kw)
+        if meta is None:
+            meta = {}
+        for k, v in self._settings_to_meta().items():
+            meta.setdefault(k, v)
+
+        # Populate directory metadata for all path components
+        path = relpath
+        while True:
+            path = os.path.dirname(path)
+            if path not in self.dirs:
+                self.dirs[path] = self._settings_to_meta()
+            if not path:
+                break
+
+        page = self.features[feature].build_test_page(relpath, *args, meta=meta, **kw)
         if not page.is_valid():
             raise RuntimeError("Tried to add an invalid test page")
         self.add_page(page)

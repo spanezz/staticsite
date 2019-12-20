@@ -101,7 +101,7 @@ class SyndicationPage(Page):
 
         # Copy well known keys from index page
         for key in "site_root", "site_url", "author", "site_name":
-            self.meta.setdefault(key, index.meta[key])
+            self.meta.setdefault(key, index.meta.get(key))
 
 
 class RSSPage(SyndicationPage):

@@ -13,21 +13,29 @@ class TestSeries(TestCase):
         site.load_without_content()
 
         # TODO: say that all categories are series (or make it default to True if called 'series'?)
-        site.add_test_page("taxonomy", name="series")
+        site.add_test_page("taxonomy", "series")
 
-        seriesa1 = site.add_test_page("md", "seriesa1", series="seriesa", title="Series A", date=dt(2016, 1, 1))
-        seriesa2 = site.add_test_page("md", "seriesa2", date=dt(2016, 1, 2), series="seriesa", title="A2")
-        seriesa3 = site.add_test_page("md", "seriesa3", date=dt(2016, 1, 3), series="seriesa", title="A3",
-                                      series_title="Series A part Two")
-        seriesa4 = site.add_test_page("md", "seriesa4", date=dt(2016, 1, 4), series="seriesa", title="A4")
+        seriesa1 = site.add_test_page("md", "seriesa1",
+                                      meta={"series": "seriesa", "title": "Series A", "date": dt(2016, 1, 1)})
+        seriesa2 = site.add_test_page("md", "seriesa2",
+                                      meta={"date": dt(2016, 1, 2), "series": "seriesa", "title": "A2"})
+        seriesa3 = site.add_test_page("md", "seriesa3",
+                                      meta={"date": dt(2016, 1, 3), "series": "seriesa", "title": "A3",
+                                            "series_title": "Series A part Two"})
+        seriesa4 = site.add_test_page("md", "seriesa4",
+                                      meta={"date": dt(2016, 1, 4), "series": "seriesa", "title": "A4"})
 
-        seriesb1 = site.add_test_page("md", "seriesb1", date=dt(2016, 1, 1), series="seriesb",
-                                      title="Series B", series_title="Series B part One")
-        seriesb2 = site.add_test_page("md", "seriesb2", date=dt(2016, 1, 2), series="seriesb", title="B2")
+        seriesb1 = site.add_test_page("md", "seriesb1",
+                                      meta={"date": dt(2016, 1, 1), "series": "seriesb",
+                                            "title": "Series B", "series_title": "Series B part One"})
+        seriesb2 = site.add_test_page("md", "seriesb2",
+                                      meta={"date": dt(2016, 1, 2), "series": "seriesb", "title": "B2"})
 
-        seriesc1 = site.add_test_page("md", "seriesc1", date=dt(2016, 1, 1), series="seriesc")
+        seriesc1 = site.add_test_page("md", "seriesc1",
+                                      meta={"date": dt(2016, 1, 1), "series": "seriesc"})
 
-        noseries = site.add_test_page("md", "noseries", date=dt(2016, 1, 1), title="Other things")
+        noseries = site.add_test_page("md", "noseries",
+                                      meta={"date": dt(2016, 1, 1), "title": "Other things"})
 
         series = site.pages["series"]
 

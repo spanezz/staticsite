@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Optional, Dict, Any
 from staticsite import Page, Feature, File
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
@@ -16,6 +16,9 @@ import tempfile
 import logging
 
 log = logging.getLogger("rst")
+
+
+Meta = Dict[str, Any]
 
 
 class DoctreeScan:
@@ -171,7 +174,7 @@ class RestructuredText(Feature):
             return None
         return RestArchetype(archetypes, relpath, self)
 
-    def build_test_page(self, relpath: str, content: str) -> Page:
+    def build_test_page(self, relpath: str, content: str = None, meta: Optional[Meta] = None) -> Page:
         with tempfile.NamedTemporaryFile("wt", suffix=".rst") as tf:
             tf.write(content)
             tf.flush()
@@ -179,7 +182,7 @@ class RestructuredText(Feature):
                        root=None,
                        abspath=os.path.abspath(tf.name),
                        stat=os.stat(tf.fileno()))
-            return RstPage(self, src)
+            return RstPage(self, src, meta=meta)
 
 
 class RestArchetype(Archetype):

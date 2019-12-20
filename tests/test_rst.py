@@ -24,7 +24,7 @@ class TestRst(TestCase):
 Example blog post in reStructuredText
 =====================================
 """)
-        tags = site.add_test_page("taxonomy", name="tags")
+        tags = site.add_test_page("taxonomy", "tags")
 
         site.analyze()
 
@@ -41,4 +41,7 @@ Example blog post in reStructuredText
             "template": "page.html",
             "title": "Example blog post in reStructuredText",
             "indexed": True,
+            "site_name": "Test site",
+            "site_root": "/",
+            "site_url": "https://www.example.org",
         })
