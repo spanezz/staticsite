@@ -44,9 +44,21 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         new_url = self.substituted.get(url)
         if new_url is not None:
             return new_url
+
+        from markdown.util import AMP_SUBSTITUTE
+        if url.startswith(AMP_SUBSTITUTE):
+            # Possibly an overencoded mailto: link.
+            # see https://bugs.debian.org/816218
+            #
+            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
+            # we look for it here.
+            return None
+
         new_url = self.page.resolve_url(url)
-        if new_url is not None:
-            self.substituted[url] = new_url
+        if new_url is url:
+            return None
+
+        self.substituted[url] = new_url
         return new_url
 
 

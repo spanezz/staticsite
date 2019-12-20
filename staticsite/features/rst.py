@@ -267,13 +267,9 @@ class RstPage(Page):
     def _render_page(self):
         if not self.doctree_scan.links_rewritten:
             for node in self.doctree_scan.links_target:
-                new_val = self.resolve_url(node.attributes["refuri"])
-                if new_val is not None:
-                    node.attributes["refuri"] = new_val
+                node.attributes["refuri"] = self.resolve_url(node.attributes["refuri"])
             for node in self.doctree_scan.links_image:
-                new_val = self.resolve_url(node.attributes["uri"])
-                if new_val is not None:
-                    node.attributes["uri"] = new_val
+                node.attributes["uri"] = self.resolve_url(node.attributes["uri"])
 
         # TODO: caching
         # cached = self.render_cache.get(page.src.relpath)

@@ -7,7 +7,7 @@ import datetime
 import heapq
 import logging
 from pathlib import Path
-from .page import Page
+from .page import Page, PageNotFoundError
 from .utils import front_matter
 from .page_filter import PageFilter, sort_args
 
@@ -165,24 +165,39 @@ class Theme:
     @jinja2.contextfunction
     def jinja2_has_page(self, context, arg: str) -> bool:
         cur_page = context.parent["page"]
-        page = cur_page.resolve_link(arg)
-        return page is not None
+        try:
+            cur_page.resolve_path(arg)
+        except PageNotFoundError:
+            return False
+        else:
+            return True
 
     @jinja2.contextfunction
-    def jinja2_url_for(self, context, arg: Union[str, Page]) -> str:
+    def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False) -> str:
+        """
+        Generate a URL for a page, specified by path or with the page itself
+        """
         if isinstance(arg, str):
             cur_page = context.parent["page"]
-            page = cur_page.resolve_link(arg)
-            if page is None:
-                page = cur_page.resolve_link("/static" + arg)
-                if page is not None:
-                    log.warn("%s+%s: please use /static%s instead of %s", cur_page.src.relpath, context.name, arg, arg)
-            if page is None:
-                log.warn("%s+%s: unresolved link %s passed to url_for", cur_page.src.relpath, context.name, arg)
+            try:
+                page: Page = cur_page.resolve_path(arg)
+            except PageNotFoundError as e:
+                log.warn("%s+%s: url_for: %s", cur_page, context.name, e)
                 return ""
         else:
             page = arg
-        return os.path.join(self.site.settings.SITE_ROOT, page.site_relpath)
+
+        # Compute relative path
+        site_root = page.meta["site_root"]
+        if not site_root.startswith("/"):
+            site_root = "/" + site_root
+        path = os.path.join(site_root, page.site_relpath)
+
+        if absolute:
+            site_url = page.meta["site_url"].rstrip("/")
+            return site_url + path
+        else:
+            return path
 
     @jinja2.contextfunction
     def jinja2_site_pages(

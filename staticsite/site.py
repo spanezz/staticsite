@@ -36,8 +36,11 @@ class Site:
         if self.settings.CONTENT is None:
             self.settings.CONTENT = "."
 
-        # Site pages
+        # Site pages indexed by site_relpath
         self.pages: Dict[str, Page] = {}
+
+        # Site pages indexed by src.relpath
+        self.pages_by_src_relpath: Dict[str, Page] = {}
 
         # Site directory metadata
         self.dirs: Dict[str, Meta] = {}
@@ -178,6 +181,7 @@ class Site:
         unit tests.
         """
         self.pages[page.site_relpath] = page
+        self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.tracked_metadata:

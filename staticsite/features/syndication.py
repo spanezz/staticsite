@@ -84,7 +84,8 @@ class SyndicationPage(Page):
     TEMPLATE: str
 
     def __init__(self, site: Site, meta: Dict[str, Any]):
-        relpath = os.path.join(meta["index"].site_relpath, f"index.{self.TYPE}")
+        index = meta["index"]
+        relpath = os.path.join(index.site_relpath, f"index.{self.TYPE}")
 
         super().__init__(
             site=site,
@@ -97,6 +98,10 @@ class SyndicationPage(Page):
             self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
         else:
             self.meta["date"] = self.site.generation_time
+
+        # Copy well known keys from index page
+        for key in "site_root", "site_url", "author", "site_name":
+            self.meta.setdefault(key, index.meta[key])
 
 
 class RSSPage(SyndicationPage):

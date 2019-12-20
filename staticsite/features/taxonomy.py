@@ -119,6 +119,12 @@ class TaxonomyPage(Page):
         self.archive_meta.setdefault("template", "tag-archive.html")
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
 
+        # Copy well known meta keys
+        for key in "site_root", "site_url", "author", "site_name":
+            val = self.meta[key]
+            self.category_meta.setdefault(key, val)
+            self.archive_meta.setdefault(key, val)
+
     def to_dict(self):
         from staticsite.utils import dump_meta
         res = super().to_dict()

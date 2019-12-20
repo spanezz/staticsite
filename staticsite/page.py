@@ -13,6 +13,10 @@ import staticsite
 log = logging.getLogger("page")
 
 
+class PageNotFoundError(Exception):
+    pass
+
+
 class Page:
     """
     A source page in the site.
@@ -108,6 +112,14 @@ class Page:
             log.info("%s: still a draft", self.src.relpath)
             return False
 
+        # Check the existance of other mandatory fields
+        if "site_root" not in self.meta:
+            log.warn("%s: missing meta.site_root", self)
+            return False
+        if "site_url" not in self.meta:
+            log.warn("%s: missing meta.site_url", self)
+            return False
+
         return True
 
     def _fill_possibly_templatized_meta_value(self, name):
@@ -169,83 +181,93 @@ class Page:
             tz_str = 'Z'
         return ts.strftime("%Y-%m-%d %H:%M:%S") + tz_str
 
-    def resolve_link(self, target):
-        dirname, basename = os.path.split(target)
-        if basename == "index.html":
-            # log.debug("%s: resolve %s using %s", self.src.relpath, target, dirname)
-            target = dirname
-        # else:
-            # log.debug("%s: resolve %s using %s", self.src.relpath, target, target)
+    def resolve_path(self, target: str) -> "Page":
+        """
+        Return a Page from the site, given a source or site path relative to
+        this page.
 
+        The path is resolved relative to this page, and if not found, relative
+        to the parent page, and so on until the top.
+        """
         # Absolute URLs are resolved as is
         if target.startswith("/"):
             if target == "/":
                 target_relpath = ""
             else:
                 target_relpath = os.path.normpath(target.lstrip("/"))
-            # log.debug("%s: resolve absolute path using %s", self.src.relpath, target_relpath)
-            return self.site.pages.get(target_relpath, None)
 
+            # Try by source path
+            res = self.site.pages_by_src_relpath.get(target_relpath)
+            if res is not None:
+                return res
+
+            # Try by site path
+            res = self.site.pages.get(target_relpath)
+            if res is not None:
+                return res
+
+            # Try adding /static as a compatibility with old links
+            target_relpath = "static/" + target_relpath
+
+            # Try by source path
+            res = self.site.pages_by_src_relpath.get(target_relpath)
+            if res is not None:
+                log.warn("%s+%s: please use /static/%s instead of %s", self, target, target)
+                return res
+
+            raise PageNotFoundError(f"cannot resolve {target} relative to {self}")
+
+        # Relative urls are tried based on all path components of this page,
+        # from the bottom up
         root = os.path.dirname(self.src.relpath)
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
             if target_relpath == ".":
                 target_relpath = ""
-            res = self.site.pages.get(target_relpath, None)
+
+            res = self.site.pages_by_src_relpath.get(target_relpath)
             if res is not None:
                 return res
-            if not root or root == "/":
-                return None
+
+            res = self.site.pages.get(target_relpath)
+            if res is not None:
+                return res
+
+            # print("RES", res)
+            if not root:
+                raise PageNotFoundError(f"cannot resolve `{target}` relative to `{self}`")
             root = os.path.dirname(root)
 
-    def resolve_url(self, url):
+    def resolve_url(self, url: str) -> str:
         """
         Resolve internal URLs.
 
-        Returns None if the URL does not need changing, else returns the new URL.
+        Returns the argument itself if the URL does not need changing, else
+        returns the new URL.
+
+        To check for a noop, check like ``if page.resolve_url(url) is url``
+
+        This is used by url resolver postprocessors, like in markdown or
+        restructured text pages.
+
+        For resolving urls in templates, see Theme.jinja2_url_for().
         """
-        from markdown.util import AMP_SUBSTITUTE
-        if not url:
-            return None
-        if url.startswith(AMP_SUBSTITUTE):
-            # Possibly an overencoded mailto: link.
-            # see https://bugs.debian.org/816218
-            #
-            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
-            # we look for it here.
-            return None
         parsed = urlparse(url)
         if parsed.scheme or parsed.netloc:
-            return None
+            return url
         if not parsed.path:
-            return None
-        dest = self.resolve_link(parsed.path)
-        if dest is None:
-            # If resolving the full path failed, try resolving without extension
-            pos = parsed.path.rfind(".")
-            if pos == -1:
-                return None
+            return url
 
-            # Treat .md and .rst as strippable extensions
-            # TODO: deprecate this functionality and always link to full source
-            #       paths with extension instead
-            # TODO: have features provide this list instead of hardcoding it
-            ext = parsed.path[pos:]
-            if ext not in (".md", ".rst"):
-                return None
-
-            dirname, basename = os.path.split(parsed.path)
-            # TODO: also generate this list from features
-            if basename in ("index.md", "README.md", "index.rst", "README.rst"):
-                dest = self.resolve_link(dirname)
-            else:
-                dest = self.resolve_link(parsed.path[:-len(ext)])
-        if dest is None:
-            log.warn("%s: internal link %r does not resolve to any site page", self.src.relpath, url)
-            return None
+        try:
+            dest: "Page" = self.resolve_path(parsed.path)
+        except PageNotFoundError as e:
+            log.warn("%s", e)
+            return url
 
         return urlunparse(
-            (parsed.scheme, parsed.netloc, dest.dst_link, parsed.params, parsed.query, parsed.fragment)
+            (parsed.scheme, parsed.netloc,
+             os.path.join(dest.meta["site_root"], dest.site_relpath),
+             parsed.params, parsed.query, parsed.fragment)
         )
 
     def check(self, checker):
