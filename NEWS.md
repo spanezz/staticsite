@@ -1,5 +1,7 @@
 # staticsite user-relevant changes
 
+# New in version 1.3
+
 # New in version 1.2
 
 * RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl.
