@@ -32,7 +32,7 @@ class TestSeries(TestCase):
                                       meta={"date": dt(2016, 1, 2), "series": "seriesb", "title": "B2"})
 
         seriesc1 = site.add_test_page("md", "seriesc1",
-                                      meta={"date": dt(2016, 1, 1), "series": "seriesc"})
+                                      meta={"date": dt(2016, 1, 1), "title": "Series C", "series": "seriesc"})
 
         noseries = site.add_test_page("md", "noseries",
                                       meta={"date": dt(2016, 1, 1), "title": "Other things"})
@@ -108,7 +108,7 @@ class TestSeries(TestCase):
         self.assertEquals(s["length"], 2)
 
         s = series.categories["seriesc"].sequence(seriesc1)
-        self.assertEquals(s["title"], "seriesc1")
+        self.assertEquals(s["title"], "Series C")
         self.assertEquals(s["prev"], None)
         self.assertEquals(s["next"], None)
         self.assertEquals(s["first"], seriesc1)

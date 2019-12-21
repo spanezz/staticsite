@@ -101,7 +101,7 @@ class Page:
         # title must exist
         title = self._fill_possibly_templatized_meta_value("title")
         if title is None:
-            self.meta["title"] = os.path.basename(self.site_relpath)
+            self.meta["title"] = self.meta["site_name"]
 
         # description may exist
         self._fill_possibly_templatized_meta_value("description")
