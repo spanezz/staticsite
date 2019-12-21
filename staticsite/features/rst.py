@@ -69,7 +69,7 @@ class RestructuredText(Feature):
 
     See doc/rst.rst for details.
     """
-    RUN_BEFORE = ["contents_loaded"]
+    RUN_AFTER = ["taxonomy"]
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -77,7 +77,7 @@ class RestructuredText(Feature):
         # self.render_cache = self.site.caches.get("markdown")
 
         # Names of tags whose content should be parsed as yaml
-        self.yaml_tags = {"site"}
+        self.yaml_tags = {"pages"}
 
     def parse_rest(self, fd, remove_docinfo=True):
         """

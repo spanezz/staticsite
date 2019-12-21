@@ -83,8 +83,6 @@ class MarkdownPages(Feature):
 
     See doc/markdown.md for details.
     """
-    RUN_BEFORE = ["contents_loaded"]
-
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         md_staticsite = StaticSiteExtension()

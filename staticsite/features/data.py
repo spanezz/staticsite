@@ -35,8 +35,6 @@ class DataPages(Feature):
     taxonomy names are handled as with other pages. The rest of the dictionary
     is ignored and can contain any data one wants.
     """
-    RUN_BEFORE = ["contents_loaded"]
-
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.by_type = defaultdict(list)
@@ -98,7 +96,7 @@ class DataPages(Feature):
         return DataArchetype(archetypes, relpath, self, fmt)
 
     def finalize(self):
-        for type, pages in self.by_type.items():
+        for pages in self.by_type.values():
             pages.sort(key=lambda x: x.meta["date"])
 
     @jinja2.contextfunction

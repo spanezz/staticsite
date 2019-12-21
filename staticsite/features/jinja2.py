@@ -46,8 +46,6 @@ class J2Pages(Feature):
 
     See doc/templates.md for details.
     """
-    RUN_BEFORE = ["contents_loaded"]
-
     def load_dir_meta(self, sitedir: ContentDir):
         # Load front matter from index.html
         index = sitedir.files.get("index.html")
