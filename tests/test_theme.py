@@ -87,3 +87,22 @@ class TestUrlFor(TestCase):
 
             # Test absolute urls
             self.assertEqual(url_for("page1", parent=parent, absolute=True), "https://www.example.org/prefix/page1")
+
+
+class TestMarkdownFilter(TestCase):
+    def test_markdown(self):
+        files = {
+            "index.html": "",
+        }
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site(PROJECT_ROOT=root)
+            site.load()
+            site.analyze()
+
+            page = site.pages[""]
+
+            tpl = site.theme.jinja2.from_string(
+                    "{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")
+
+            res = tpl.render(page=page)
+            self.assertEqual(res, '<p><em>This</em> is an <a href="http://example.org">example</a></p>')
