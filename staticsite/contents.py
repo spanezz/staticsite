@@ -34,8 +34,6 @@ class BaseDir:
         # Computed metadata for files and subdirectories
         self.file_meta: Dict[str, Meta] = {}
 
-        config: Dict[str, Any] = {}
-
         # Scan directory contents
         with os.scandir(self.dir_fd) as entries:
             for entry in entries:
@@ -46,12 +44,7 @@ class BaseDir:
                         continue
                     # Take note of directories
                     self.subdirs.append(entry.name)
-                elif entry.name == ".staticsite":
-                    # Load .staticsite if found
-                    with open(entry.name, "rt", opener=self._file_opener) as fd:
-                        lines = [line.rstrip() for line in fd]
-                        fmt, config = front_matter.parse(lines)
-                elif entry.name.startswith("."):
+                elif entry.name.startswith(".") and entry.name != ".staticsite":
                     # Skip hidden files
                     continue
                 else:
@@ -63,27 +56,34 @@ class BaseDir:
                             abspath=os.path.join(self.tree_root, relpath),
                             stat=entry.stat())
 
-        # Read site metadata
-        if "site" in config:
-            self.meta.update(config["site"])
+        dircfg = self.files.pop(".staticsite", None)
+        if dircfg is not None:
+            config: Dict[str, Any] = {}
+
+            # Load .staticsite if found
+            with open(dircfg.abspath, "rt", opener=self._file_opener) as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, config = front_matter.parse(lines)
+
+            # Read site metadata
+            if "site" in config:
+                self.meta.update(config["site"])
+
+            # Compile directory matching rules
+            dir_meta = config.get("dirs")
+            if dir_meta is None:
+                dir_meta = {}
+            self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
+
+            # Compute file matching rules
+            file_meta = config.get("files")
+            if file_meta is None:
+                file_meta = {}
+            self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
         # Lead features add to directory metadata
         for feature in self.site.features.ordered():
             feature.load_dir_meta(self)
-
-        # Postprocess directory metadata
-
-        # Compile directory matching rules
-        dir_meta = config.get("dirs")
-        if dir_meta is None:
-            dir_meta = {}
-        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
-
-        # Compute file matching rules
-        file_meta = config.get("files")
-        if file_meta is None:
-            file_meta = {}
-        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
         # Store directory metadata
         self.site.dir_meta[self.relpath] = self.meta
