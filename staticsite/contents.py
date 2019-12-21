@@ -56,6 +56,8 @@ class BaseDir:
                             abspath=os.path.join(self.tree_root, relpath),
                             stat=entry.stat())
 
+        # Load dir metadata from .staticsite, if present
+        # TODO: move this to a feature implementing just load_dir_meta?
         dircfg = self.files.pop(".staticsite", None)
         if dircfg is not None:
             config: Dict[str, Any] = {}
@@ -65,21 +67,7 @@ class BaseDir:
                 lines = [line.rstrip() for line in fd]
                 fmt, config = front_matter.parse(lines)
 
-            # Read site metadata
-            if "site" in config:
-                self.meta.update(config["site"])
-
-            # Compile directory matching rules
-            dir_meta = config.get("dirs")
-            if dir_meta is None:
-                dir_meta = {}
-            self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
-
-            # Compute file matching rules
-            file_meta = config.get("files")
-            if file_meta is None:
-                file_meta = {}
-            self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
+            self.add_dir_config(config)
 
         # Lead features add to directory metadata
         for feature in self.site.features.ordered():
@@ -103,6 +91,26 @@ class BaseDir:
                 if pattern.match(fname):
                     res.update(meta)
             self.file_meta[fname] = res
+
+    def add_dir_config(self, meta: Meta):
+        """
+        Acquire directory configuration from a page metadata
+        """
+        # Read site metadata
+        if "site" in meta:
+            self.meta.update(meta["site"])
+
+        # Compile directory matching rules
+        dir_meta = meta.get("dirs")
+        if dir_meta is None:
+            dir_meta = {}
+        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
+
+        # Compute file matching rules
+        file_meta = meta.get("files")
+        if file_meta is None:
+            file_meta = {}
+        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
