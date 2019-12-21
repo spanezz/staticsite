@@ -77,7 +77,7 @@ class RestructuredText(Feature):
         # self.render_cache = self.site.caches.get("markdown")
 
         # Names of tags whose content should be parsed as yaml
-        self.yaml_tags = set()
+        self.yaml_tags = {"site"}
 
     def parse_rest(self, fd, remove_docinfo=True):
         """
@@ -141,6 +141,23 @@ class RestructuredText(Feature):
                     meta[tag] = yaml_codec.loads(val)
 
         return meta, doctree_scan
+
+    def load_dir_meta(self, sitedir: ContentDir):
+        # Load front matter from index.rst
+        # Do not try to load front matter from README.md, as one wouldn't
+        # clutter a repo README with staticsite front matter
+        index = sitedir.files.get("index.rst")
+        if index is None:
+            return
+
+        # Parse to get at the front matter
+        with open(index.abspath, "rt") as fd:
+            meta, doctree_scan = self.rst.parse_rest(fd, remove_docinfo=False)
+
+        # Add 'site' data from front matter to dir metadata
+        site_meta = meta.get("site")
+        if site_meta:
+            sitedir.meta.update(site_meta)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken: List[str] = []

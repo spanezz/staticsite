@@ -56,6 +56,16 @@ class Feature:
         else:
             return self.__doc__.lstrip().splitlines()[0].strip()
 
+    def load_dir_meta(self, sitedir: "contents.ContentDir"):
+        """
+        Hook to load extra directory metadata for the given sitedir.
+
+        sitedir will be already populated with directory contents, but not yet
+        loaded.
+        """
+        # Do nothing by default
+        pass
+
     def load_dir(self, sitedir: "contents.ContentDir") -> List[Page]:
         """
         Load pages from the given Dir.

@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 
+{% block front_matter %}
+---
+site:
+    # Author of the website
+    site_author: Example author
+
+    # Absolute URL to the root of the website
+    site_url: "https://www.example.org"
+{% endblock %}
+
 {% block title %}{{site.site_name}}{% endblock %}
 
 {% block content %}

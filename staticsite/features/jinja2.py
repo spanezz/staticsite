@@ -24,6 +24,28 @@ class J2Pages(Feature):
     """
     RUN_BEFORE = ["contents_loaded"]
 
+    def load_dir_meta(self, sitedir: ContentDir):
+        # Load front matter from index.html
+        index = sitedir.files.get("index.html")
+        if index is None:
+            return
+
+        try:
+            template = self.site.theme.jinja2.get_template(index.relpath)
+        except Exception:
+            log.exception("%s: cannot load template", index.relpath)
+        else:
+            # If the page has a front_matter block, render it to get the front matter
+            front_matter_block = template.blocks.get("front_matter")
+            if front_matter_block:
+                fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
+                fmt, meta = front_matter.parse(fm)
+
+                # Add 'site' data from front matter to dir metadata
+                site_meta = meta.get("site")
+                if site_meta:
+                    sitedir.meta.update(site_meta)
+
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]

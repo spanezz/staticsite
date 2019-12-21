@@ -56,6 +56,10 @@ class BaseDir:
         if "site" in self.config:
             self.meta.update(self.config["site"])
 
+        # Lead features add to directory metadata
+        for feature in self.site.features.ordered():
+            feature.load_dir_meta(self)
+
         # Postprocess directory metadata
         self.file_meta: Dict[str, Any] = {}
 
@@ -105,9 +109,6 @@ class ContentDir(BaseDir):
         from .asset import Asset
 
         log.debug("Loading pages from %s:%s", self.tree_root, self.relpath)
-
-        # Store directory metadata
-        self.site.dirs[self.relpath] = self.meta
 
         # Load subdirectories
         for fname in self.subdirs:
@@ -172,9 +173,6 @@ class AssetDir(BaseDir):
         from .asset import Asset
 
         log.debug("Loading pages from %s:%s", self.tree_root, self.relpath)
-
-        # Store directory metadata
-        self.site.dirs[self.relpath] = self.meta
 
         # Load subdirectories
         for fname in self.subdirs:

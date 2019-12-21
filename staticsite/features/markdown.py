@@ -173,6 +173,29 @@ class MarkdownPages(Feature):
 
         return pages
 
+    def load_dir_meta(self, sitedir: ContentDir):
+        # Load front matter from index.md
+        # Do not try to load front matter from README.md, as one wouldn't
+        # clutter a repo README with staticsite front matter
+        index = sitedir.files.get("index.md")
+        if index is None:
+            return
+
+        # Parse separating front matter and markdown content
+        # TODO: use a parser that stops reading at the front matter
+        with open(index.abspath, "rt") as fd:
+            front_matter, body = parse_markdown_with_front_matter(fd)
+        try:
+            style, meta = front_matter.parse(front_matter)
+        except Exception as e:
+            log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
+            log.warn("%s: failed to parse front matter", index.relpath)
+        else:
+            # Add 'site' data from front matter to dir metadata
+            site_meta = meta.get("site")
+            if site_meta:
+                sitedir.meta.update(site_meta)
+
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".md":
             return None
