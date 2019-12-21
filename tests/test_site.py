@@ -24,6 +24,7 @@ class TestMarkdownInJinja2(TestCase):
 
 
 class TestBuild(TestCase):
+    # @test_utils.assert_no_logs()
     def test_dots(self):
         with test_utils.example_site() as root:
             args = test_utils.Args(project=root)

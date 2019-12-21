@@ -41,10 +41,7 @@ class J2Pages(Feature):
                 fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
                 fmt, meta = front_matter.parse(fm)
 
-                # Add 'site' data from front matter to dir metadata
-                site_meta = meta.get("site")
-                if site_meta:
-                    sitedir.meta.update(site_meta)
+                sitedir.add_dir_config(meta)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # Precompile JINJA2_PAGES patterns

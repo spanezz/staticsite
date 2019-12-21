@@ -191,10 +191,7 @@ class MarkdownPages(Feature):
             log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", index.relpath)
         else:
-            # Add 'site' data from front matter to dir metadata
-            site_meta = meta.get("site")
-            if site_meta:
-                sitedir.meta.update(site_meta)
+            sitedir.add_dir_config(meta)
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".md":

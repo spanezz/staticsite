@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from .utils import front_matter, open_dir_fd
+from .utils.typing import Meta
 from .page_filter import compile_page_match
 from . import site
 from . import file
 import stat
 import os
+import re
 import logging
 
 log = logging.getLogger("contents")
@@ -20,10 +22,17 @@ class BaseDir:
         self.tree_root = tree_root
         self.relpath = relpath
         self.dir_fd = dir_fd
+        # Subdirectory of this directory
         self.subdirs: List[str] = []
+        # Files found in this directory
         self.files: Dict[str, file.File] = {}
         self.meta: Dict[str, Any] = meta
-        self.config: Dict[str, Any] = {}
+        # Rules for assigning metadata to subdirectories
+        self.dir_rules: List[Tuple[re.Pattern, Meta]] = []
+        # Rules for assigning metadata to files
+        self.file_rules: List[Tuple[re.Pattern, Meta]] = []
+        # Computed metadata for files and subdirectories
+        self.file_meta: Dict[str, Meta] = {}
 
         # Scan directory contents
         with os.scandir(self.dir_fd) as entries:
@@ -35,12 +44,7 @@ class BaseDir:
                         continue
                     # Take note of directories
                     self.subdirs.append(entry.name)
-                elif entry.name == ".staticsite":
-                    # Load .staticsite if found
-                    with open(entry.name, "rt", opener=self._file_opener) as fd:
-                        lines = [line.rstrip() for line in fd]
-                        fmt, self.config = front_matter.parse(lines)
-                elif entry.name.startswith("."):
+                elif entry.name.startswith(".") and entry.name != ".staticsite":
                     # Skip hidden files
                     continue
                 else:
@@ -52,43 +56,61 @@ class BaseDir:
                             abspath=os.path.join(self.tree_root, relpath),
                             stat=entry.stat())
 
-        # Read site metadata
-        if "site" in self.config:
-            self.meta.update(self.config["site"])
+        # Load dir metadata from .staticsite, if present
+        # TODO: move this to a feature implementing just load_dir_meta?
+        dircfg = self.files.pop(".staticsite", None)
+        if dircfg is not None:
+            config: Dict[str, Any] = {}
+
+            # Load .staticsite if found
+            with open(dircfg.abspath, "rt", opener=self._file_opener) as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, config = front_matter.parse(lines)
+
+            self.add_dir_config(config)
 
         # Lead features add to directory metadata
         for feature in self.site.features.ordered():
             feature.load_dir_meta(self)
 
-        # Postprocess directory metadata
-        self.file_meta: Dict[str, Any] = {}
-
-        # Compute metadata for files
-        file_meta = self.config.get("files")
-        if file_meta is None:
-            file_meta = {}
-        rules = [(compile_page_match(k), v) for k, v in file_meta.items()]
-        for fname in self.files.keys():
-            res: Dict[str, Any] = dict(self.meta)
-            for pattern, meta in rules:
-                if pattern.match(fname):
-                    res.update(meta)
-            self.file_meta[fname] = res
+        # Store directory metadata
+        self.site.dir_meta[self.relpath] = self.meta
 
         # Compute metadata for directories
-        dir_meta = self.config.get("dirs")
-        if dir_meta is None:
-            dir_meta = {}
-        rules = [(compile_page_match(k), v) for k, v in dir_meta.items()]
         for dname in self.subdirs:
             res: Dict[str, Any] = dict(self.meta)
-            for pattern, meta in rules:
+            for pattern, meta in self.dir_rules:
                 if pattern.match(dname):
                     res.update(meta)
             self.file_meta[dname] = res
 
-        # Store directory metadata
-        self.site.dir_meta[self.relpath] = self.meta
+        # Compute metadata for files
+        for fname in self.files.keys():
+            res: Dict[str, Any] = dict(self.meta)
+            for pattern, meta in self.file_rules:
+                if pattern.match(fname):
+                    res.update(meta)
+            self.file_meta[fname] = res
+
+    def add_dir_config(self, meta: Meta):
+        """
+        Acquire directory configuration from a page metadata
+        """
+        # Read site metadata
+        if "site" in meta:
+            self.meta.update(meta["site"])
+
+        # Compile directory matching rules
+        dir_meta = meta.get("dirs")
+        if dir_meta is None:
+            dir_meta = {}
+        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
+
+        # Compute file matching rules
+        file_meta = meta.get("files")
+        if file_meta is None:
+            file_meta = {}
+        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]

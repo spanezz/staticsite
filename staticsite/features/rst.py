@@ -154,10 +154,7 @@ class RestructuredText(Feature):
         with open(index.abspath, "rt") as fd:
             meta, doctree_scan = self.rst.parse_rest(fd, remove_docinfo=False)
 
-        # Add 'site' data from front matter to dir metadata
-        site_meta = meta.get("site")
-        if site_meta:
-            sitedir.meta.update(site_meta)
+        sitedir.add_dir_config(meta)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken: List[str] = []
