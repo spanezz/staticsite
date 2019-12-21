@@ -27,7 +27,8 @@ class BaseDir:
         # Files found in this directory
         self.files: Dict[str, file.File] = {}
         self.meta: Dict[str, Any] = meta
-        self.config: Dict[str, Any] = {}
+
+        config: Dict[str, Any] = {}
 
         # Scan directory contents
         with os.scandir(self.dir_fd) as entries:
@@ -43,7 +44,7 @@ class BaseDir:
                     # Load .staticsite if found
                     with open(entry.name, "rt", opener=self._file_opener) as fd:
                         lines = [line.rstrip() for line in fd]
-                        fmt, self.config = front_matter.parse(lines)
+                        fmt, config = front_matter.parse(lines)
                 elif entry.name.startswith("."):
                     # Skip hidden files
                     continue
@@ -57,8 +58,8 @@ class BaseDir:
                             stat=entry.stat())
 
         # Read site metadata
-        if "site" in self.config:
-            self.meta.update(self.config["site"])
+        if "site" in config:
+            self.meta.update(config["site"])
 
         # Lead features add to directory metadata
         for feature in self.site.features.ordered():
@@ -68,7 +69,7 @@ class BaseDir:
         self.file_meta: Dict[str, Any] = {}
 
         # Compute metadata for files
-        file_meta = self.config.get("files")
+        file_meta = config.get("files")
         if file_meta is None:
             file_meta = {}
         rules = [(compile_page_match(k), v) for k, v in file_meta.items()]
@@ -80,7 +81,7 @@ class BaseDir:
             self.file_meta[fname] = res
 
         # Compute metadata for directories
-        dir_meta = self.config.get("dirs")
+        dir_meta = config.get("dirs")
         if dir_meta is None:
             dir_meta = {}
         rules = [(compile_page_match(k), v) for k, v in dir_meta.items()]
