@@ -82,7 +82,8 @@ class TestExampleProject(TestCase):
             settings = cmd.settings
             self.assertEqual(settings.PROJECT_ROOT, root)
             self.assertEqual(settings.SITE_ROOT, "/")
-            self.assertEqual(settings.SITE_NAME, "Example web site")
+            # self.assertEqual(settings.SITE_NAME, "Example web site")
+            self.assertIsNone(settings.SITE_NAME)
             self.assertEqual(settings.ARCHETYPES, "archetypes")
             self.assertEqual(settings.CONTENT, "content")
             self.assertEqual(settings.THEME, "theme")

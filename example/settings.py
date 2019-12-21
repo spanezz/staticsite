@@ -1,6 +1,3 @@
-# Name of the website
-SITE_NAME = "Example web site"
-
 # Time zone used for site posts
 TIMEZONE = "Europe/Rome"
 

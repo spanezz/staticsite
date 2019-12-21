@@ -61,7 +61,7 @@
 
     {% block favicon %}<link rel="icon" href="{{ url_for('images/favicon.ico') }}">{% endblock %}
 
-    <title>{% block title %}{{title}}{% endblock %}</title>
+    <title>{% block title %}{{page.meta.title}}{% endblock %}</title>
 
     {% block head %}
     {% endblock %}
