@@ -44,6 +44,6 @@ class TestAsset(TestCase):
                 # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
                 os.utime(f.name, (1477958400, 1477958400))
                 src = File(os.path.basename(f.name), root=os.path.dirname(f.name), abspath=f.name, stat=os.stat(f.name))
-                page = Asset(site, src)
+                page = Asset(site, src, meta={})
 
                 self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))

@@ -1,12 +1,13 @@
 from .page import Page
 from .render import RenderedFile
+from .utils.typing import Meta
 import os
 
 
 class Asset(Page):
     TYPE = "asset"
 
-    def __init__(self, site, src, dest_subdir=None, meta=None):
+    def __init__(self, site, src, meta: Meta, dest_subdir=None):
         dirname, basename = os.path.split(src.relpath)
         if basename == "index.html":
             linkpath = dirname
