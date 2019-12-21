@@ -5,6 +5,7 @@ import logging
 import datetime
 from urllib.parse import urlparse, urlunparse
 from .utils import lazy
+from .utils.typing import Meta
 from .render import RenderedString
 import jinja2
 import dateutil.parser
@@ -51,12 +52,12 @@ class Page:
             src: "staticsite.File",
             site_relpath: str,
             dst_relpath: str,
-            meta: Dict[str, Any] = None):
+            meta: Meta):
         self.site = site
         self.src = src
         self.site_relpath = site_relpath
         self.dst_relpath = dst_relpath
-        self.meta: Dict[str, Any]
+        self.meta: Meta
         if meta is None:
             self.meta = {}
         else:

@@ -5,6 +5,7 @@ from staticsite.feature import Feature
 from staticsite.contents import ContentDir
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
+from staticsite.utils.typing import Meta
 import os
 import logging
 
@@ -57,7 +58,7 @@ class J2Pages(Feature):
 class J2Page(Page):
     TYPE = "jinja2"
 
-    def __init__(self, j2env, src, meta=None):
+    def __init__(self, j2env, src, meta: Meta):
         dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")
         dst_relpath = os.path.join(dirname, dst_basename)

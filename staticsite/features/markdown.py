@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 from staticsite import Page, Feature, File
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
 from staticsite.contents import ContentDir
+from staticsite.utils.typing import Meta
 import jinja2
 import os
 import io
@@ -12,8 +13,6 @@ import tempfile
 import logging
 
 log = logging.getLogger("markdown")
-
-Meta = Dict[str, Any]
 
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
@@ -265,7 +264,7 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, mdpages, src, meta=None):
+    def __init__(self, mdpages, src, meta: Meta):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.md", "README.md"):
             linkpath = dirname

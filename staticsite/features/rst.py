@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from staticsite import Page, Feature, File
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.contents import ContentDir
+from staticsite.utils.typing import Meta
 import docutils.io
 import docutils.core
 import docutils.nodes
@@ -16,9 +17,6 @@ import tempfile
 import logging
 
 log = logging.getLogger("rst")
-
-
-Meta = Dict[str, Any]
 
 
 class DoctreeScan:
@@ -232,7 +230,7 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, feature, src, meta=None):
+    def __init__(self, feature, src, meta: Meta):
         dirname, basename = os.path.split(src.relpath)
         if basename in ("index.rst", "README.rst"):
             linkpath = dirname
