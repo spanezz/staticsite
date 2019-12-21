@@ -27,6 +27,12 @@ class BaseDir:
         # Files found in this directory
         self.files: Dict[str, file.File] = {}
         self.meta: Dict[str, Any] = meta
+        # Rules for assigning metadata to subdirectories
+        self.dir_rules: List[Tuple[re.Pattern, Meta]] = []
+        # Rules for assigning metadata to files
+        self.file_rules: List[Tuple[re.Pattern, Meta]] = []
+        # Computed metadata for files and subdirectories
+        self.file_meta: Dict[str, Meta] = {}
 
         config: Dict[str, Any] = {}
 
@@ -66,34 +72,37 @@ class BaseDir:
             feature.load_dir_meta(self)
 
         # Postprocess directory metadata
-        self.file_meta: Dict[str, Any] = {}
 
-        # Compute metadata for files
-        file_meta = config.get("files")
-        if file_meta is None:
-            file_meta = {}
-        rules = [(compile_page_match(k), v) for k, v in file_meta.items()]
-        for fname in self.files.keys():
-            res: Dict[str, Any] = dict(self.meta)
-            for pattern, meta in rules:
-                if pattern.match(fname):
-                    res.update(meta)
-            self.file_meta[fname] = res
-
-        # Compute metadata for directories
+        # Compile directory matching rules
         dir_meta = config.get("dirs")
         if dir_meta is None:
             dir_meta = {}
-        rules = [(compile_page_match(k), v) for k, v in dir_meta.items()]
+        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
+
+        # Compute file matching rules
+        file_meta = config.get("files")
+        if file_meta is None:
+            file_meta = {}
+        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
+
+        # Store directory metadata
+        self.site.dir_meta[self.relpath] = self.meta
+
+        # Compute metadata for directories
         for dname in self.subdirs:
             res: Dict[str, Any] = dict(self.meta)
-            for pattern, meta in rules:
+            for pattern, meta in self.dir_rules:
                 if pattern.match(dname):
                     res.update(meta)
             self.file_meta[dname] = res
 
-        # Store directory metadata
-        self.site.dir_meta[self.relpath] = self.meta
+        # Compute metadata for files
+        for fname in self.files.keys():
+            res: Dict[str, Any] = dict(self.meta)
+            for pattern, meta in self.file_rules:
+                if pattern.match(fname):
+                    res.update(meta)
+            self.file_meta[fname] = res
 
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
