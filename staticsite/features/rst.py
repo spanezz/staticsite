@@ -126,23 +126,23 @@ class RestructuredText(Feature):
                     date = date.replace(tzinfo=self.site.timezone)
             meta["date"] = date
 
-        # Parse taxonomy-related metadata as lists of strings
-        for taxonomy in self.site.settings.TAXONOMIES:
-            elements = meta.get(taxonomy, None)
-            if elements is not None and isinstance(elements, str):
-                # if vals is a string, parse it
-                meta[taxonomy] = yaml_codec.loads(elements)
-
         # If requested, parse some tag contents as yaml
         if self.yaml_tags:
             for tag in self.yaml_tags:
                 val = meta.get(tag)
-                if val is not None:
+                if val is not None and isinstance(val, str):
                     meta[tag] = yaml_codec.loads(val)
 
         return meta, doctree_scan
 
     def load_dir_meta(self, sitedir: ContentDir):
+        if sitedir.relpath == "":
+            taxonomy = self.site.features.get("taxonomy")
+            if taxonomy is not None:
+                # taxonomy has already scanned the toplevel dir, and we can query
+                # it for which taxonomies we should parse as yaml tags
+                self.yaml_tags.update(taxonomy.known_taxonomies)
+
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter

@@ -25,11 +25,24 @@ class TaxonomyFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        self.known_taxonomies = set(self.site.settings.TAXONOMIES)
+
         # All TaxonomyPages found
         self.taxonomies: Dict[str, TaxonomyPage] = {}
 
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
+
+    def load_dir_meta(self, sitedir: ContentDir):
+        if sitedir.relpath:
+            return
+
+        for fname in sitedir.files.keys():
+            if not fname.endswith(".taxonomy"):
+                continue
+            self.known_taxonomies.add(fname[:-9])
+
+        self.site.tracked_metadata.update(self.known_taxonomies)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken: List[str] = []
@@ -38,8 +51,9 @@ class TaxonomyFeature(Feature):
             if not fname.endswith(".taxonomy"):
                 continue
 
-            if os.path.basename(src.relpath)[:-9] not in self.site.settings.TAXONOMIES:
-                log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings", src.relpath)
+            if fname[:-9] not in self.known_taxonomies:
+                log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings"
+                         " or .taxonomy files in toplevel content directory", src.relpath)
                 continue
 
             page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
@@ -76,7 +90,7 @@ class TaxonomyFeature(Feature):
 
         # Warn of taxonomies configured in settings.TAXONOMIES but not mounted
         # with a <name>.taxonomy
-        for name in self.site.settings.TAXONOMIES:
+        for name in self.known_taxonomies:
             if name not in self.taxonomies:
                 log.warn("Taxonomy %s defined in settings, but no %s.taxonomy file found in site contents: ignoring it",
                          name, name)

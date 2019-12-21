@@ -33,7 +33,8 @@ overridden by `settings.py` or `.staticsite.py`.
 * `SITE_AUTHOR`: default value for the [`author` metadata](metadata.md)
 * `TIMEZONE`: Default timezone used for datetimes in site contents.
 * `TAXONOMIES`: List of [taxonomy](taxonomies.md) names used on the site.
-  Defaults to no taxonomies.
+  Defaults to no taxonomies, but `.taxonomy` files present in the toplevel
+  content directory will be correctly used even if not listed in settings.
 * `LANGUAGES`: List of dicts representing which languages to build the site
   for. Currently only the first entry is used, and it should contain a `locale`
   key with the locale to use to build the site. In the future this can grow

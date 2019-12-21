@@ -11,6 +11,8 @@
   to the rendered `{% block title %}`
 * `site_name`, if not set, defaults to the title of the toplevel index page, if
   present
+* `.taxonomy` files found in the toplevel content directory now do not need to
+  be listed in [`TAXONOMIES` settings](doc/settings.md)
 
 ## Upgrade notes
 

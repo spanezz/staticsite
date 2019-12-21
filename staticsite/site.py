@@ -46,7 +46,7 @@ class Site:
         self.dir_meta: Dict[str, Meta] = {}
 
         # Metadata for which we add pages to pages_by_metadata
-        self.tracked_metadata: Set[str] = set(settings.TAXONOMIES)
+        self.tracked_metadata: Set[str] = set()
 
         # Site pages that have the given metadata
         self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)

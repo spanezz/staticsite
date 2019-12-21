@@ -18,6 +18,3 @@ THEME = "theme"
 
 # Directory where the static site will be written by build
 OUTPUT = "web"
-
-# Enable a 'tags' taxonomy
-TAXONOMIES = ["tags", "series"]
