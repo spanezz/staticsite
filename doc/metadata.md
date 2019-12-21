@@ -77,7 +77,8 @@ pages.
 
 ### `site_name`
 
-Name of the site.
+Name of the site. If missing, it defaults to the title of the toplevel index
+page. If missing, it defaults to the name of the content directory.
 
 ### `site_url`
 

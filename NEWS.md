@@ -4,6 +4,21 @@
 
 * New [page metadata](doc/metadata.md): `author`, `site_name`, `site_url`, and
   `site_root`.
+* The contents of a `.staticsite` file can also now be loaded from the
+  `index.html`/`index.md`/`index.rst` file in the directory, if present. This
+  is now the recommended way to set directory metadata
+* If no title is set in the front matter of a jinja2 template page, it defaults
+  to the rendered `{% block title %}`
+* `site_name`, if not set, defaults to the title of the toplevel index page, if
+  present
+
+## Upgrade notes
+
+### Templates
+
+* If you used `SITE_NAME` or `site.site_name`, use `page.meta.site_name`
+  instead
+
 
 # New in version 1.2
 

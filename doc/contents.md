@@ -27,21 +27,21 @@ downloadable content.
 ## Directory metadata
 
 If a `.staticsite` file is found in a content directory, it is parsed as
-`yaml`, `json`, or `toml`, and its contents are available to staticsite
-features.
-
-Entries currently supported:
-
-### `site`
-
-Metadata for this directory and all its contents, recursively down into
+`yaml`, `json`, or `toml`, and its contents become default
+[metadata](metadata.md) for all the pages in that directory, and all its
 subdirectories.
 
-You can use this to set [metadata](metadata.md) like `site_name`, `author`,
-`site_url`, `site_root`.
+Likewise, the metadata found in the index file for a directory, become default
+metadata for all the pages in that directory, and all its subdirectories.
 
-If you set `asset` to true, the subdirectory is loaded as static files, and not
-passed through site features.
+You can use this to set metadata like `site_name`, `author`, `site_url`,
+`site_root`.
+
+Also, if you set `asset` to true in `.staticsite`, the subdirectory is loaded
+as static files, and not passed through site features.
+
+A `.staticsite` or directory index file can also have these entries to control
+metadata of other files:
 
 ### `dirs`
 
