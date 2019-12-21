@@ -1,4 +1,5 @@
 from unittest import TestCase
+import os
 from . import utils as test_utils
 
 
@@ -143,3 +144,73 @@ title: Test1 title
             self.assertEqual(test.TYPE, "markdown")
             self.assertEqual(test1.TYPE, "asset")
             self.assertEqual(test2.TYPE, "asset")
+
+
+class TestSiteName(TestCase):
+    def test_from_content_dir_name(self):
+        files = {
+            "index.md": {},
+            "page.md": {},
+            "dir/page.md": {},
+        }
+
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site(SITE_NAME=None)
+            site.load(content_root=root)
+            site.analyze()
+
+            expected = os.path.basename(root)
+
+            self.assertEqual(site.pages[""].meta["site_name"], expected)
+            self.assertEqual(site.pages["page"].meta["site_name"], expected)
+            self.assertEqual(site.pages["dir/page"].meta["site_name"], expected)
+
+    def test_from_settings(self):
+        files = {
+            "index.md": {},
+            "page.md": {},
+            "dir/page.md": {},
+        }
+
+        with test_utils.workdir(files) as root:
+            # Site name from settings
+            site = test_utils.Site(SITE_NAME="Site Name")
+            site.load(content_root=root)
+            site.analyze()
+
+            self.assertEqual(site.pages[""].meta["site_name"], "Site Name")
+            self.assertEqual(site.pages["page"].meta["site_name"], "Site Name")
+            self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name")
+
+    def test_from_dir_meta(self):
+        files = {
+            ".staticsite": {"site": {"site_name": "Site Name dirmeta"}},
+            "index.md": {},
+            "page.md": {},
+            "dir/page.md": {},
+        }
+
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site()
+            site.load(content_root=root)
+            site.analyze()
+
+            self.assertEqual(site.pages[""].meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(site.pages["page"].meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name dirmeta")
+
+    def test_from_root_title(self):
+        files = {
+            "index.md": {"title": "Site Name title"},
+            "page.md": {},
+            "dir/page.md": {},
+        }
+
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site(SITE_NAME=None)
+            site.load(content_root=root)
+            site.analyze()
+
+            self.assertEqual(site.pages[""].meta["site_name"], "Site Name title")
+            self.assertEqual(site.pages["page"].meta["site_name"], "Site Name title")
+            self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name title")

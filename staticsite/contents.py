@@ -73,6 +73,9 @@ class BaseDir:
         for feature in self.site.features.ordered():
             feature.load_dir_meta(self)
 
+        # If site_name is not defined, use the content directory name
+        self.meta.setdefault("site_name", os.path.basename(tree_root))
+
         # Store directory metadata
         self.site.dir_meta[self.relpath] = self.meta
 
@@ -97,8 +100,16 @@ class BaseDir:
         Acquire directory configuration from a page metadata
         """
         # Read site metadata
-        if "site" in meta:
-            self.meta.update(meta["site"])
+        site = meta.get("site")
+        if site:
+            self.meta.update(site)
+
+        # Default site name to the root page title, if site name has not been
+        # set yet
+        # TODO: template_title is not supported (yet)
+        title = meta.get("title")
+        if title is not None:
+            self.meta.setdefault("site_name", title)
 
         # Compile directory matching rules
         dir_meta = meta.get("dirs")
