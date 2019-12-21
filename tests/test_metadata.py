@@ -52,17 +52,13 @@ title: Test1 title
     def test_tree_meta(self):
         files = {
             ".staticsite": {
-                "site": {
-                    "site_name": "Root site",
-                },
+                "site_name": "Root site",
             },
             "page.md": {},
             "page1.md": {"site_name": "Page 1 site"},
             "dir1/page.md": {},
             "dir1/dir2/.staticsite": {
-                "site": {
-                    "site_name": "dir2 site",
-                },
+                "site_name": "dir2 site",
             },
             "dir1/dir2/page.md": {},
         }
@@ -184,7 +180,7 @@ class TestSiteName(TestCase):
 
     def test_from_dir_meta(self):
         files = {
-            ".staticsite": {"site": {"site_name": "Site Name dirmeta"}},
+            ".staticsite": {"site_name": "Site Name dirmeta"},
             "index.md": {},
             "page.md": {},
             "dir/page.md": {},

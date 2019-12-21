@@ -1,6 +1,7 @@
 from __future__ import annotations
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
+from staticsite.contents import ContentDir
 import logging
 
 log = logging.getLogger("pages")
@@ -16,6 +17,11 @@ class PagesFeature(Feature):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("pages")
         self.site.features["rst"].yaml_tags.add("pages")
+
+    def load_dir_meta(self, sitedir: ContentDir):
+        # Remove 'pages' from directory metadata, to avoid propagating
+        # the toplevel page filter data to the rest of the site.
+        sitedir.meta.pop("pages", None)
 
     def finalize(self):
         # Expand pages expressions

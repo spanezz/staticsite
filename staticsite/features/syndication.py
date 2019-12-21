@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, Any
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
+from staticsite.contents import ContentDir
 from staticsite import Page, Site, File
 import os
 import logging
@@ -24,6 +25,11 @@ class SyndicationFeature(Feature):
         self.site.tracked_metadata.add("syndication")
         self.site.features["rst"].yaml_tags.add("syndication")
         self.syndications = []
+
+    def load_dir_meta(self, sitedir: ContentDir):
+        # Remove 'syndication' from directory metadata, to avoid propagating
+        # the toplevel index syndication data to the rest of the site.
+        sitedir.meta.pop("syndication", None)
 
     def finalize(self):
         # Build syndications from pages with a 'syndication' metadata

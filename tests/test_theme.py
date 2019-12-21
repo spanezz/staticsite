@@ -59,10 +59,8 @@ class TestUrlFor(TestCase):
     def test_site_root(self):
         files = {
             ".staticsite": {
-                "site": {
-                    "site_url": "https://www.example.org",
-                    "site_root": "prefix",
-                },
+                "site_url": "https://www.example.org",
+                "site_root": "prefix",
             },
             "page1.md": {},
             "dir/page2.md": {},

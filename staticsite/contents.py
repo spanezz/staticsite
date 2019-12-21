@@ -99,10 +99,20 @@ class BaseDir:
         """
         Acquire directory configuration from a page metadata
         """
-        # Read site metadata
-        site = meta.get("site")
-        if site:
-            self.meta.update(site)
+        # Compile directory matching rules
+        dir_meta = meta.pop("dirs", None)
+        if dir_meta is None:
+            dir_meta = {}
+        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
+
+        # Compute file matching rules
+        file_meta = meta.pop("files", None)
+        if file_meta is None:
+            file_meta = {}
+        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
+
+        # Merge in metadata
+        self.meta.update(meta)
 
         # Default site name to the root page title, if site name has not been
         # set yet
@@ -110,18 +120,6 @@ class BaseDir:
         title = meta.get("title")
         if title is not None:
             self.meta.setdefault("site_name", title)
-
-        # Compile directory matching rules
-        dir_meta = meta.get("dirs")
-        if dir_meta is None:
-            dir_meta = {}
-        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
-
-        # Compute file matching rules
-        file_meta = meta.get("files")
-        if file_meta is None:
-            file_meta = {}
-        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
