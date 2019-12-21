@@ -179,6 +179,7 @@ class ContentDir(BaseDir):
                 break
 
         # Use everything else as an asset
+        # TODO: move into an asset feature?
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
@@ -186,6 +187,8 @@ class ContentDir(BaseDir):
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
+
+        # TODO: warn of contents not loaded at this point?
 
 
 class AssetDir(BaseDir):
