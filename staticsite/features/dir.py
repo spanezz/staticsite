@@ -1,6 +1,10 @@
+from __future__ import annotations
+from typing import List
+from staticsite.site import Site
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.file import File
+from staticsite.utils.typing import Meta
 from collections import defaultdict
 import os
 import logging
@@ -40,7 +44,7 @@ class DirPages(Feature):
             # We only build indices where there is not already a page
             if relpath in self.site.pages:
                 continue
-            meta = self.site.dirs.get(relpath)
+            meta = self.site.dir_meta.get(relpath)
             if meta is None:
                 meta = {}
             page = DirPage(self.site, relpath, pages, meta=meta)
@@ -64,7 +68,7 @@ class DirPage(Page):
     """
     TYPE = "dir"
 
-    def __init__(self, site, relpath, pages, meta):
+    def __init__(self, site: Site, relpath: str, pages: List[Page], meta: Meta):
         super().__init__(
             site=site,
             src=File(relpath=relpath),

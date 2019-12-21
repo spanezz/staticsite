@@ -43,7 +43,7 @@ class Site:
         self.pages_by_src_relpath: Dict[str, Page] = {}
 
         # Site directory metadata
-        self.dirs: Dict[str, Meta] = {}
+        self.dir_meta: Dict[str, Meta] = {}
 
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: Set[str] = set(settings.TAXONOMIES)
@@ -125,7 +125,7 @@ class Site:
         from .theme import Theme
         self.theme = Theme(self, theme_root)
 
-    def _settings_to_meta(self) -> Dict[str, Any]:
+    def _settings_to_meta(self) -> Meta:
         """
         Build directory metadata based on site settings
         """
@@ -203,8 +203,8 @@ class Site:
         path = relpath
         while True:
             path = os.path.dirname(path)
-            if path not in self.dirs:
-                self.dirs[path] = self._settings_to_meta()
+            if path not in self.dir_meta:
+                self.dir_meta[path] = self._settings_to_meta()
             if not path:
                 break
 
@@ -220,15 +220,19 @@ class Site:
         """
         from .contents import AssetDir
 
+        root_meta = self.dir_meta.get("")
+        if root_meta is None:
+            root_meta = self._settings_to_meta()
+
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
             with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=self._settings_to_meta())
+                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=root_meta)
                 root.load()
         else:
             log.info("Loading assets from %s", tree_root)
             with open_dir_fd(tree_root) as dir_fd:
-                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=self._settings_to_meta())
+                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=root_meta)
                 root.load()
 
     def analyze(self):

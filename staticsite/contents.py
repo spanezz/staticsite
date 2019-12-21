@@ -83,6 +83,9 @@ class BaseDir:
                     res.update(meta)
             self.file_meta[dname] = res
 
+        # Store directory metadata
+        self.site.dir_meta[self.relpath] = self.meta
+
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
         return self.file_meta[fname]
