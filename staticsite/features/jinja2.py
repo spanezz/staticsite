@@ -6,6 +6,7 @@ from staticsite.contents import ContentDir
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
 from staticsite.utils.typing import Meta
+import jinja2
 import os
 import logging
 
@@ -14,6 +15,29 @@ log = logging.getLogger("jinja2")
 
 class IgnorePage(Exception):
     pass
+
+
+def load_front_matter(template: jinja2.Template) -> Meta:
+    """
+    Load front matter from a jinja2 template
+    """
+    # If the page has a front_matter block, render it to get the front matter
+    front_matter_block = template.blocks.get("front_matter")
+    if front_matter_block:
+        fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
+        fmt, meta = front_matter.parse(fm)
+    else:
+        meta = {}
+
+    # If the metadata do not have a title, try rendering the title block
+    if "title" not in meta:
+        title_block = template.blocks.get("title")
+        if title_block:
+            title = "".join(title_block(template.new_context())).strip()
+            if title:
+                meta["title"] = title
+
+    return meta
 
 
 class J2Pages(Feature):
@@ -35,12 +59,8 @@ class J2Pages(Feature):
         except Exception:
             log.exception("%s: cannot load template", index.relpath)
         else:
-            # If the page has a front_matter block, render it to get the front matter
-            front_matter_block = template.blocks.get("front_matter")
-            if front_matter_block:
-                fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
-                fmt, meta = front_matter.parse(fm)
-
+            meta = load_front_matter(template)
+            if meta:
                 sitedir.add_dir_config(meta)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
@@ -100,11 +120,8 @@ class J2Page(Page):
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
 
-        # If the page has a front_matter block, render it to get the front matter
-        front_matter_block = template.blocks.get("front_matter")
-        if front_matter_block:
-            fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
-            fmt, meta = front_matter.parse(fm)
+        meta = load_front_matter(template)
+        if meta:
             self.meta.update(**meta)
 
         self.meta["template"] = template
