@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from .utils import front_matter, open_dir_fd
+from .utils.typing import Meta
 from .page_filter import compile_page_match
 from . import site
 from . import file
 import stat
 import os
+import re
 import logging
 
 log = logging.getLogger("contents")
@@ -20,7 +22,9 @@ class BaseDir:
         self.tree_root = tree_root
         self.relpath = relpath
         self.dir_fd = dir_fd
+        # Subdirectory of this directory
         self.subdirs: List[str] = []
+        # Files found in this directory
         self.files: Dict[str, file.File] = {}
         self.meta: Dict[str, Any] = meta
         self.config: Dict[str, Any] = {}
