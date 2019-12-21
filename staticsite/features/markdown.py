@@ -184,9 +184,9 @@ class MarkdownPages(Feature):
         # Parse separating front matter and markdown content
         # TODO: use a parser that stops reading at the front matter
         with open(index.abspath, "rt") as fd:
-            front_matter, body = parse_markdown_with_front_matter(fd)
+            fmatter, body = parse_markdown_with_front_matter(fd)
         try:
-            style, meta = front_matter.parse(front_matter)
+            style, meta = front_matter.parse(fmatter)
         except Exception as e:
             log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", index.relpath)
