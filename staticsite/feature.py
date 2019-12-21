@@ -122,6 +122,9 @@ class Features:
     def __getitem__(self, key):
         return self.features[key]
 
+    def get(self, key, default=None):
+        return self.features.get(key, default)
+
     def _sort_features(self, features: Dict[str, Feature]):
         graph: Dict[str, Set[str]] = defaultdict(set)
 

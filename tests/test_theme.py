@@ -2,9 +2,9 @@ from unittest import TestCase
 from . import utils as test_utils
 
 
-class MockContext:
-    def __init__(self, **kw):
-        self.parent = kw
+class MockContext(dict):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.name = "test"
 
 

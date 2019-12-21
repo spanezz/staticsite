@@ -178,7 +178,10 @@ class Theme:
         Generate a URL for a page, specified by path or with the page itself
         """
         if isinstance(arg, str):
-            cur_page = context.parent["page"]
+            cur_page = context.get("page")
+            if cur_page is None:
+                log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
+                return ""
             try:
                 page: Page = cur_page.resolve_path(arg)
             except PageNotFoundError as e:
