@@ -27,7 +27,7 @@
     <meta property="og:url" content="{{url_for(page, absolute=True)}}" />
 
     {% if page.meta.imagelabel %}<meta property="og:image:alt" content="{{page.meta.imagelabel}}" />{% endif %}
-    <meta property="og:site_name" content="{{site.site_name}}" />
+    <meta property="og:site_name" content="{{page.meta.site_name}}" />
     {% block meta_opengraph_article %}
     <meta property="og:type" content="article" />
     {% if page.meta.author -%}
@@ -70,7 +70,7 @@
 
     <!-- Fixed navbar -->
     <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
-      <a class="navbar-brand" href="{{url_for('/')}}">{{site.site_name}}</a>
+      <a class="navbar-brand" href="{{url_for('/')}}">{{page.meta.site_name}}</a>
 
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">

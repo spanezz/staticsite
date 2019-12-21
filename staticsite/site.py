@@ -80,9 +80,6 @@ class Site:
         # Content root for the website
         self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
 
-        # Pick an initial site name from settings
-        self.site_name = self.settings.SITE_NAME
-
     @lazy
     def archetypes(self) -> "archetypes.Archetypes":
         """
@@ -251,16 +248,6 @@ class Site:
         # Call finalize hook on features
         for feature in self.features.ordered():
             feature.finalize()
-
-        # Set a default SITE_NAME if none was provided
-        if self.site_name is None:
-            toplevel_index = self.pages.get("")
-            if toplevel_index is not None:
-                self.site_name = toplevel_index.meta.get("title")
-
-        # Fallback site name for sites without a toplevel index
-        if self.site_name is None:
-            self.site_name = "/"
 
     def slugify(self, text):
         """

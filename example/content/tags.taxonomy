@@ -22,8 +22,8 @@ category:
   template_title: "Latest posts for tag <strong>{{page.name}}</strong>"
   template_description: "Most recent posts with tag <strong>{{page.name}}</strong>"
   syndication:
-    template_title: "{{page.site.site_name}}: posts with tag {{page.meta.index.name}}"
-    template_description: "{{page.site.site_name}}: most recent posts with tag {{page.meta.index.name}}"
+    template_title: "{{page.meta.site_name}}: posts with tag {{page.meta.index.name}}"
+    template_description: "{{page.meta.site_name}}: most recent posts with tag {{page.meta.index.name}}"
 
 # Archive metadata is used for each tag archive page
 archive:
