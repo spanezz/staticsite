@@ -28,6 +28,7 @@ class Site(staticsite.Site):
     def load_without_content(self):
         self.features.load_default_features()
         self.load_theme()
+        self.theme.load_assets()
 
 
 def datafile_abspath(relpath):

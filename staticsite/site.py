@@ -124,7 +124,6 @@ class Site:
 
         from .theme import Theme
         self.theme = Theme(self, theme_root)
-        self.theme.load_assets()
 
     def _settings_to_meta(self) -> Dict[str, Any]:
         """
@@ -162,6 +161,7 @@ class Site:
 
         with open_dir_fd(content_root) as dir_fd:
             root = ContentDir(self, content_root, "", dir_fd, meta=self._settings_to_meta())
+            self.theme.load_assets()
             root.load()
 
     def load(self, content_root=None):
