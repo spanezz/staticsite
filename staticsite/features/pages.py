@@ -2,6 +2,7 @@ from __future__ import annotations
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
 from staticsite.contents import ContentDir
+from staticsite.metadata import Metadata
 import logging
 
 log = logging.getLogger("pages")
@@ -14,6 +15,19 @@ class PagesFeature(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("pages")
+        self.site.register_metadata(Metadata("syndication", inherited=False, doc=f"""
+If using the [pages](pages.md) feature, or for taxonomy or syndication pages,
+this is a list of pages selected by the current page.
+
+The `pages` feature allows defining a [page filter](page-filter.md) in the
+`pages` metadata element, which will be replaced with a list of matching pages.
+
+To select pages, the `pages` metadata is set to a dictionary that select pages
+in the site, similar to the `site_pages` function in [templates](templates.md),
+and to [`filter` in syndication](syndication.md).
+
+See [Selecting pages](page-filter.md) for details.
+"""))
 
     def load_dir_meta(self, sitedir: ContentDir):
         # Remove 'pages' from directory metadata, to avoid propagating

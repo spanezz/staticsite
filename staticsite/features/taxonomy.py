@@ -4,6 +4,7 @@ from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.file import File
 from staticsite.contents import ContentDir
+from staticsite.metadata import Metadata
 from collections import defaultdict
 import functools
 import os
@@ -36,6 +37,12 @@ class TaxonomyFeature(Feature):
     def register_taxonomy_name(self, name):
         self.known_taxonomies.add(name)
         self.site.tracked_metadata.add(name)
+        self.site.register_metadata(Metadata(name, inherited=False, doc=f"""
+List of categories for the `{name}` taxonomy.
+
+Setting this as a simple string is the same as setting it as a list of one
+element.
+"""))
 
     def load_dir_meta(self, sitedir: ContentDir):
         for fname in sitedir.files.keys():
