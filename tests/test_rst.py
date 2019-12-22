@@ -7,7 +7,7 @@ import datetime
 
 class TestRst(TestCase):
     def test_simple(self):
-        site = test_utils.Site(TAXONOMIES=["tags"])
+        site = test_utils.Site(taxonomies=["tags"])
         site.load_without_content()
 
         site.add_test_page(

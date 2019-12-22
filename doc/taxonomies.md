@@ -7,8 +7,8 @@ For example, `dir/tags.taxonomy` will become `dir/tags/…` in the built site,
 and contain an index of all categories in the taxonomy, and for each category
 an index page, an archive page, and rss and atom feeds.
 
-**Added in 1.3**: Relaxed the need to list in [`TAXONOMIES` settings](settings.md)
-the taxonomies that have `.taxonomy` files in the toplevel content directory.
+**Added in 1.3**: Removed again the need to list in [`TAXONOMIES` settings](settings.md)
+the taxonomies used in the site.
 
 **Added in 1.2**: Any taxonomy you use needs to be explicitly listed in
 settings as a `TAXONOMIES` list of taxonomy names. staticsite prints a warning

@@ -27,7 +27,6 @@ class TestBuildSettings(TestCase):
             self.assertEqual(settings.SYSTEM_ASSETS, [])
             self.assertFalse(settings.DRAFT_MODE)
             self.assertTrue(settings.CACHE_REBUILDS)
-            self.assertEqual(settings.TAXONOMIES, [])
 
     def test_find_settings_py(self):
         files = {
@@ -49,7 +48,6 @@ class TestBuildSettings(TestCase):
             self.assertEqual(settings.SYSTEM_ASSETS, [])
             self.assertFalse(settings.DRAFT_MODE)
             self.assertTrue(settings.CACHE_REBUILDS)
-            self.assertEqual(settings.TAXONOMIES, [])
 
     def test_find_dotstaticsite_py(self):
         files = {
@@ -71,7 +69,6 @@ class TestBuildSettings(TestCase):
             self.assertEqual(settings.SYSTEM_ASSETS, [])
             self.assertFalse(settings.DRAFT_MODE)
             self.assertTrue(settings.CACHE_REBUILDS)
-            self.assertEqual(settings.TAXONOMIES, [])
 
 
 class TestExampleProject(TestCase):
@@ -92,7 +89,6 @@ class TestExampleProject(TestCase):
             self.assertEqual(settings.SYSTEM_ASSETS, [])
             self.assertFalse(settings.DRAFT_MODE)
             self.assertTrue(settings.CACHE_REBUILDS)
-            self.assertEqual(settings.TAXONOMIES, [])
 
     def _test_project(self, root, title='Example web site', cfg='', **kw):
         args = test_utils.Args(project=root + cfg, **kw)

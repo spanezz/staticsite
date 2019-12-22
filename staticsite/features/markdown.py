@@ -318,7 +318,6 @@ class MarkdownPage(Page):
 
         try:
             style, fm_meta = front_matter.parse(self.front_matter)
-            self.meta.update(**fm_meta)
         except Exception as e:
             log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", self.src.relpath)
@@ -328,13 +327,15 @@ class MarkdownPage(Page):
             self.body.pop(0)
 
         # Read title from first # title if not specified in metadata
-        if not self.meta.get("title", ""):
+        if not fm_meta.get("title", ""):
             if self.body and self.body[0].startswith("# "):
-                self.meta["title"] = self.body.pop(0)[2:].strip()
+                fm_meta["title"] = self.body.pop(0)[2:].strip()
 
                 # Remove leading empty lines again
                 while self.body and not self.body[0]:
                     self.body.pop(0)
+
+        self.meta.update(**fm_meta)
 
     def get_content(self):
         return "\n".join(self.body)

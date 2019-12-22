@@ -156,11 +156,11 @@ class Site:
         else:
             log.info("Loading pages from %s", content_root)
 
+        root = ContentDir(self, content_root, "", meta=self._settings_to_meta())
         with open_dir_fd(content_root) as dir_fd:
-            root = ContentDir(self, content_root, "", dir_fd, meta=self._settings_to_meta())
-            root.scan()
+            root.scan(dir_fd)
             self.theme.load_assets()
-            root.load()
+            root.load(dir_fd)
 
     def load_asset_tree(self, tree_root, subdir=None):
         """
@@ -175,15 +175,15 @@ class Site:
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
             with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = ContentDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=root_meta)
-                root.scan()
-                root.load_assets()
+                root = ContentDir(self, tree_root, subdir, dest_subdir="static", meta=root_meta)
+                root.scan(dir_fd)
+                root.load_assets(dir_fd)
         else:
             log.info("Loading assets from %s", tree_root)
             with open_dir_fd(tree_root) as dir_fd:
-                root = ContentDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=root_meta)
-                root.scan()
-                root.load_assets()
+                root = ContentDir(self, tree_root, "", dest_subdir="static", meta=root_meta)
+                root.scan(dir_fd)
+                root.load_assets(dir_fd)
 
     def load(self, content_root=None):
         """

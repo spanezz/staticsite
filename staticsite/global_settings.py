@@ -75,9 +75,6 @@ DRAFT_MODE: bool = False
 # If True, store cached data to speed up rebuilds
 CACHE_REBUILDS: bool = True
 
-# List of taxonomy names used on this site
-TAXONOMIES: Sequence[str] = []
-
 # Patterns (glob or regexps) that identify files in content directories that
 # are parsed as jinja2 templates
 JINJA2_PAGES: Sequence[str] = ["*.html", "*.j2.*"]

@@ -9,7 +9,7 @@ def dt(*args):
 
 class TestSeries(TestCase):
     def test_site(self):
-        site = test_utils.Site(TAXONOMIES=["series"])
+        site = test_utils.Site(taxonomies=["series"])
         site.load_without_content()
 
         # TODO: say that all categories are series (or make it default to True if called 'series'?)
