@@ -238,7 +238,7 @@ class Page:
             root = os.path.dirname(root)
 
         # The using the site paths
-        root = os.path.dirname(self.site_relpath)
+        root = self.site_relpath
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
             if target_relpath == ".":
