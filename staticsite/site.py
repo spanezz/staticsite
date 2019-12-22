@@ -8,6 +8,7 @@ from .settings import Settings
 from .page import Page
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd
+from .metadata import Metadata
 import logging
 
 log = logging.getLogger("site")
@@ -36,6 +37,9 @@ class Site:
         if self.settings.CONTENT is None:
             self.settings.CONTENT = "."
 
+        # Repository of metadata descriptions
+        self.metadata: Dict[str, Metadata] = {}
+
         # Site pages indexed by site_relpath
         self.pages: Dict[str, Page] = {}
 
@@ -50,6 +54,18 @@ class Site:
 
         # Site pages that have the given metadata
         self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)
+
+        # Set to True when feature constructors have been called
+        self.stage_features_constructed = False
+
+        # Set to True when content directories have been scanned
+        self.stage_content_directory_scanned = False
+
+        # Set to True when content directories have been loaded
+        self.stage_content_directory_loaded = False
+
+        # Set to True when pages have been analyzed
+        self.stage_pages_analyzed = False
 
         # Site time zone
         if settings.TIMEZONE is None:
@@ -79,6 +95,109 @@ class Site:
 
         # Content root for the website
         self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
+
+        # Register well-known metadata
+        self.register_metadata(Metadata("template", inherited=False, doc="""
+Template used to render the page. Defaults to `page.html`, although specific
+pages of some features can default to other template names.
+
+Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+"""))
+
+        self.register_metadata(Metadata("date", inherited=False, doc="""
+Publication date for the page.
+
+A python datetime object, timezone aware. If the date is in the future when
+`ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
+--draft` to also consider draft pages.
+
+If missing, the modification time of the file is used.
+"""))
+
+        self.register_metadata(Metadata("author", inherited=True, doc="""
+            A string with the name of the author for this page.
+        """))
+        self.register_metadata(Metadata("title", inherited=True, doc="""
+The page title.
+
+If omitted:
+
+ * the first title found in the page contents is used.
+ * in the case of jinaj2 template pages, the contents of `{% block title %}`,
+   if present, is rendered and used.
+ * if the page has no title, the title of directory indices above this page is
+   inherited.
+ * if still no title can be found, the site name is used as a default.
+"""))
+        self.register_metadata(Metadata("template_title", inherited=True, doc="""
+If set instead of title, it is a jinja2 template used to generate the title.
+The template context will have `page` available, with the current page. The
+result of the template will not be further escaped, so you can use HTML markup
+in it.
+"""))
+        self.register_metadata(Metadata("description", inherited=True, doc="""
+The page description. If omitted, the page will have no description.
+"""))
+        self.register_metadata(Metadata("template_description", inherited=True, doc="""
+If set instead of description, it is a jinja2 template used to generate the
+description. The template context will have `page` available, with the current
+page. The result of the template will not be further escaped, so you can use
+HTML markup in it.
+"""))
+
+        self.register_metadata(Metadata("site_name", inherited=True, doc="""
+Name of the site. If missing, it defaults to the title of the toplevel index
+page. If missing, it defaults to the name of the content directory.
+"""))
+
+        self.register_metadata(Metadata("site_url", inherited=True, doc="""
+Base URL for the site, used to generate an absolute URL to the page.
+"""))
+
+        self.register_metadata(Metadata("site_root", inherited=True, doc="""
+Root directory of the site in URLs to the page.
+
+If you are publishing the site at `/prefix` instead of the root of the domain,
+override this with `/prefix`.
+"""))
+
+        self.register_metadata(Metadata("asset", inherited=True, doc="""
+If set to True for a file (for example, by a `file:` pattern in a directory
+index), the file is loaded as a static asset, regardless of whether a feature
+would load it.
+
+If set to True in a directory index, the directory and all its subdirectories
+are loaded as static assets, without the interventions of features.
+"""))
+
+        self.register_metadata(Metadata("aliases", inherited=False, structure=True, doc="""
+Relative paths in the destination directory where the page should also show up.
+[Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
+existing links when moving a page to a different location.
+"""))
+
+        self.register_metadata(Metadata("indexed", inherited=False, doc="""
+If true, the page appears in [directory indices](dir.md) and in
+[page filter results](page_filter.md).
+
+It defaults to true at least for [Markdown](markdown.md),
+[reStructuredText](rst.rst), and [data](data.md) pages.
+"""))
+
+    def register_metadata(self, metadata: Metadata):
+        """
+        Add a well-known metadata description to the metadata registry.
+
+        This can be called safely by feature constructors and features
+        `load_dir_meta` methods.
+
+        After directory metadata have been loaded, this method should not be
+        called anymore.
+        """
+        if self.stage_content_directory_scanned:
+            log.warn("register_metadata called after content directory has been scanned")
+        metadata.site = self
+        self.metadata[metadata.name] = metadata
 
     @lazy
     def archetypes(self) -> "archetypes.Archetypes":
@@ -150,6 +269,9 @@ class Site:
         if content_root is None:
             content_root = self.content_root
 
+        if not self.stage_features_constructed:
+            log.warn("load_content called before site features have been loaded")
+
         if not os.path.exists(content_root):
             log.info("%s: content tree does not exist", content_root)
             return
@@ -159,8 +281,10 @@ class Site:
         root = ContentDir(self, content_root, "", meta=self._settings_to_meta())
         with open_dir_fd(content_root) as dir_fd:
             root.scan(dir_fd)
+            self.stage_content_directory_scanned = True
             self.theme.load_assets()
             root.load(dir_fd)
+            self.stage_content_directory_loaded = True
 
     def load_asset_tree(self, tree_root, subdir=None):
         """
@@ -245,6 +369,9 @@ class Site:
 
         Call this after all Pages have been added to the site.
         """
+        if not self.stage_content_directory_loaded:
+            log.warn("analyze called before loading site contents")
+
         # Add missing pages_by_metadata entries in case no matching page were
         # found for some of them
         for key in self.tracked_metadata:
@@ -254,6 +381,8 @@ class Site:
         # Call finalize hook on features
         for feature in self.features.ordered():
             feature.finalize()
+
+        self.stage_pages_analyzed = True
 
     def slugify(self, text):
         """

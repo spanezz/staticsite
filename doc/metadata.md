@@ -1,95 +1,129 @@
 # Common page metadata
 
-This is a list of metadata elements that are currently used by staticsite.
-
-Features can make use of other metadata. See for example
-[syndication](syndication.md), and [taxonomies](taxonomies.md).
+This is a list of metadata elements that have special meaning in this site.
 
 You can use `ssite dump_meta` to see all the content and metadata that pages
 make available to templates via the `page` variable.
 
+### template
 
-### `template`
+Template used to render the page. Defaults to `page.html`, although specific
+pages of some features can default to other template names.
 
-Template used to render the page. Defaults to `page.html`,
-
-Although specific pages of some features can default to other template names.
 Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 
-### `date`
+### date
+
+Publication date for the page.
 
 A python datetime object, timezone aware. If the date is in the future when
 `ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
 --draft` to also consider draft pages.
 
-### `author`
+If missing, the modification time of the file is used.
+
+### author
+
+*Inherited from directory indices.*
 
 A string with the name of the author for this page.
 
-### `title`
+### title
 
-The page title. If omitted, the first title found in the page is used. If the
-page has no title, the file name for the page will be used.
+*Inherited from directory indices.*
 
-### `template_title`
+The page title.
+
+If omitted:
+
+ * the first title found in the page contents is used.
+ * in the case of jinaj2 template pages, the contents of `{% block title %}`,
+   if present, is rendered and used.
+ * if the page has no title, the title of directory indices above this page is
+   inherited.
+ * if still no title can be found, the site name is used as a default.
+
+### template_title
+
+*Inherited from directory indices.*
 
 If set instead of title, it is a jinja2 template used to generate the title.
 The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
 in it.
 
-### `description`
+### description
+
+*Inherited from directory indices.*
 
 The page description. If omitted, the page will have no description.
 
-### `template_description`
+### template_description
+
+*Inherited from directory indices.*
 
 If set instead of description, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use
 HTML markup in it.
 
-### *`any_taxonomy_name`*
+### site_name
 
-If you define a taxonomy, its name will be used in the metadata as the list of
-categories for the page.
-
-For example, if you define a `tags` taxonomy, you can set `tags` to a list of
-tags for the page.
-
-### `aliases`
-
-Relative paths in the destination directory where the page should also show up.
-[Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
-existing links when moving a page to a different location.
-
-### `asset`
-
-If set to True in [`.staticsite` directory metadata](contents.md), the file is
-loaded as a static asset, regardless of whether a feature would load it.
-
-### `indexed`
-
-If true, the page appears in [directory indices](dir.md) and in
-[page filter results](page_filter.md). It defaults to true for
-[Markdown](markdown.md), [reStructuredText](rst.rst), and [data](data.md)
-pages.
-
-### `site_name`
+*Inherited from directory indices.*
 
 Name of the site. If missing, it defaults to the title of the toplevel index
 page. If missing, it defaults to the name of the content directory.
 
-### `site_url`
+### site_url
+
+*Inherited from directory indices.*
 
 Base URL for the site, used to generate an absolute URL to the page.
 
-### `site_root
+### site_root
+
+*Inherited from directory indices.*
 
 Root directory of the site in URLs to the page.
 
 If you are publishing the site at `/prefix` instead of the root of the domain,
 override this with `/prefix`.
 
+### asset
 
-[Back to reference index](reference.md)
+*Inherited from directory indices.*
+
+If set to True for a file (for example, by a `file:` pattern in a directory
+index), the file is loaded as a static asset, regardless of whether a feature
+would load it.
+
+If set to True in a directory index, the directory and all its subdirectories
+are loaded as static assets, without the interventions of features.
+
+### aliases
+
+Relative paths in the destination directory where the page should also show up.
+[Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
+existing links when moving a page to a different location.
+
+### indexed
+
+If true, the page appears in [directory indices](dir.md) and in
+[page filter results](page_filter.md).
+
+It defaults to true at least for [Markdown](markdown.md),
+[reStructuredText](rst.rst), and [data](data.md) pages.
+
+### series
+
+List of categories for the `series` taxonomy.
+
+Setting this as a simple string is the same as setting it as a list of one
+element.
+
+### tags
+
+List of categories for the `tags` taxonomy.
+
+Setting this as a simple string is the same as setting it as a list of one
+element.

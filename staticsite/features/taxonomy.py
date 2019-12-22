@@ -4,6 +4,7 @@ from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.file import File
 from staticsite.contents import ContentDir
+from staticsite.metadata import Metadata
 from collections import defaultdict
 import functools
 import os
@@ -36,6 +37,18 @@ class TaxonomyFeature(Feature):
     def register_taxonomy_name(self, name):
         self.known_taxonomies.add(name)
         self.site.tracked_metadata.add(name)
+        # Note that if we want to make the tags inheritable, we need to
+        # interface with 'rst' (or 'rst' to interface with us) because rst
+        # needs to know which metadata items are taxonomies in order to parse
+        # them.
+        # Instead of making tags inheritable from normal metadata, we can offer
+        # them to be added by 'files' or 'dirs' directives.
+        self.site.register_metadata(Metadata(name, inherited=False, structure=True, doc=f"""
+List of categories for the `{name}` taxonomy.
+
+Setting this as a simple string is the same as setting it as a list of one
+element.
+"""))
 
     def load_dir_meta(self, sitedir: ContentDir):
         for fname in sitedir.files.keys():

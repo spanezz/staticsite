@@ -26,6 +26,7 @@ class Theme:
 
         # We are done adding features
         self.site.features.commit()
+        self.site.stage_features_constructed = True
 
         # Jinja2 template engine
         from jinja2 import FileSystemLoader
