@@ -198,6 +198,9 @@ class Site:
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
+        old = self.pages.get(page.site_relpath)
+        if old is not None:
+            log.warn("%s: replacing page %s", page, old)
         self.pages[page.site_relpath] = page
         self.pages_by_src_relpath[page.src.relpath] = page
 
