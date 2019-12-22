@@ -25,7 +25,7 @@ syndication:
   title: "Enrico's blog feed"
 {% endblock %}
   
-{% import 'blog.html' as blog %}
+{% import 'lib/blog.html' as blog %}
   
 {% block title %}Enrico's blog{% endblock %}
   

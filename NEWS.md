@@ -13,6 +13,7 @@
   present
 * `.taxonomy` files do not need to be listed in [`TAXONOMIES`
   settings](doc/settings.md) anymore: `TAXONOMIES` is now ignored in settings.
+* Restructured theme directory organization. See Upgrade notes for details.
 
 ## Upgrade notes
 
@@ -20,6 +21,8 @@
 
 * If you used `SITE_NAME` or `site.site_name`, use `page.meta.site_name`
   instead
+* `blog.html` is now in `lib/blog.html` in default theme, to make space for the
+  intruction of a default blog page template.
 
 
 # New in version 1.2

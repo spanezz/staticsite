@@ -31,9 +31,9 @@ These templates are expected to be present by the Jinja2 templates
 inside `content`:
 
 * `base.html` is used for the common parts of all pages.
-* `blog.html` macro library with functions to render blogs and category pages.
 * `syndication.xml` contains jinja2 macros used to generate RSS2 and Atom
   feeds.
+* `lib/blog.html` macro library with functions to render blogs and category pages.
 
 For each [taxonomy](taxonomies.md), a number of templates are also expected. In
 the case of a taxonomy called `tags` with `item_name` `tag`:
