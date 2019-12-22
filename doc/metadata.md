@@ -114,6 +114,27 @@ If true, the page appears in [directory indices](dir.md) and in
 It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 
+### syndication
+
+Defines syndication for the contents of this page.
+
+It is a structure which can contain various fields:
+
+* `add_to`: chooses which pages will include a link to the RSS/Atom feeds
+* `filter`: chooses which pages are shown in the RSS/Atom feeds
+
+Any other metadata found in the structure are used when generating pages for
+the RSS/Atom feeds, so you can use `title`, `template_title`, `description`,
+and so on, to personalize the feeds.
+
+`filter` and `add_to` are dictionaries that select pages in the site, similar
+to the `site_pages` function in [templates](templates.md). See
+[Selecting pages](page-filter.md) for details.
+
+`filter` is optional, and if missing, `page.meta.pages` is used. This way,
+[using the `pages` metadata](pages.md), you can define a single expression for
+both syndication and page listing.
+
 ### series
 
 List of categories for the `series` taxonomy.
