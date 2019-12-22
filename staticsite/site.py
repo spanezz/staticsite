@@ -161,6 +161,27 @@ class Site:
             self.theme.load_assets()
             root.load()
 
+    def load_asset_tree(self, tree_root, subdir=None):
+        """
+        Read static assets from a directory and all its subdirectories
+        """
+        from .contents import AssetDir
+
+        root_meta = self.dir_meta.get("")
+        if root_meta is None:
+            root_meta = self._settings_to_meta()
+
+        if subdir:
+            log.info("Loading assets from %s / %s", tree_root, subdir)
+            with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
+                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=root_meta)
+                root.load()
+        else:
+            log.info("Loading assets from %s", tree_root)
+            with open_dir_fd(tree_root) as dir_fd:
+                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=root_meta)
+                root.load()
+
     def load(self, content_root=None):
         """
         Load all site components
@@ -210,27 +231,6 @@ class Site:
             raise RuntimeError("Tried to add an invalid test page")
         self.add_page(page)
         return page
-
-    def read_asset_tree(self, tree_root, subdir=None):
-        """
-        Read static assets from a directory and all its subdirectories
-        """
-        from .contents import AssetDir
-
-        root_meta = self.dir_meta.get("")
-        if root_meta is None:
-            root_meta = self._settings_to_meta()
-
-        if subdir:
-            log.info("Loading assets from %s / %s", tree_root, subdir)
-            with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=root_meta)
-                root.load()
-        else:
-            log.info("Loading assets from %s", tree_root)
-            with open_dir_fd(tree_root) as dir_fd:
-                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=root_meta)
-                root.load()
 
     def analyze(self):
         """

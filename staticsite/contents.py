@@ -74,7 +74,7 @@ class BaseDir:
             feature.load_dir_meta(self)
 
         # If site_name is not defined, use the content directory name
-        self.meta.setdefault("site_name", os.path.basename(tree_root))
+        self.meta.setdefault("site_name", os.path.basename(self.tree_root))
 
         # Store directory metadata
         self.site.dir_meta[self.relpath] = self.meta
