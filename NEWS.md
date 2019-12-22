@@ -23,6 +23,9 @@
   instead
 * `blog.html` is now in `lib/blog.html` in default theme, to make space for the
   intruction of a default blog page template.
+* `tags.html` is now `taxonomy/taxonomy.html`
+* `tag.html` is now `taxonomy/category.html`
+* `tag-archive.html` is now `taxonomy/archive.html`
 
 
 # New in version 1.2

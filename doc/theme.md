@@ -35,14 +35,11 @@ inside `content`:
   feeds.
 * `lib/blog.html` macro library with functions to render blogs and category pages.
 
-For each [taxonomy](taxonomies.md), a number of templates are also expected. In
-the case of a taxonomy called `tags` with `item_name` `tag`:
+These templates are used by [taxonomy pages](taxonomies.md):
 
-* `tags.html` is used for the main page of the taxonomy.
-* `tag.html` is used to generate each tag page.
-* `tag-archive.html` is used to generate an archive page for each tag.
-* `tag.atom` is used for the Atom feed for each tag.
-* `tag.rss` is used for the RSS2 feed for each tag.
+* `taxonomy/taxonomy.html` is used for the index of all categories in the taxonomy.
+* `taxonomy/category.html` is used to generate the page for each category.
+* `taxonomy/archive.html` is used to generate the archive page for each category.
 
 See [the template documentation](templates.md) for a reference on writing
 templates.

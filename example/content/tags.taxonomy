@@ -14,11 +14,11 @@
 # Any toplevel metadata is used for the tag index
 title: "All tags"
 description: "Index of all tags in the site."
-# template: tags.html
+# template: taxonomy/taxonomy.html
 
 # Category metadata is used for each tag page
 category:
-  # template: tag.html
+  # template: taxonomy/category.html
   template_title: "Latest posts for tag <strong>{{page.name}}</strong>"
   template_description: "Most recent posts with tag <strong>{{page.name}}</strong>"
   syndication:
@@ -27,6 +27,6 @@ category:
 
 # Archive metadata is used for each tag archive page
 archive:
-  # template: tag-archive.html
+  # template: taxonomy/archive.html
   template_title: "Archive of posts for tag <strong>{{page.name}}</strong>"
   template_description: "Archive of all posts with tag <strong>{{page.name}}</strong>"

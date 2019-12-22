@@ -112,7 +112,7 @@ class TaxonomyPage(Page):
             dst_relpath=os.path.join(linkpath, "index.html"),
             meta=meta)
 
-        self.meta.setdefault("template", "tags.html")
+        self.meta.setdefault("template", "taxonomy/taxonomy.html")
 
         # Taxonomy name (e.g. "tags")
         self.name = os.path.basename(linkpath)
@@ -126,13 +126,13 @@ class TaxonomyPage(Page):
 
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
-        self.category_meta.setdefault("template", "tag.html")
+        self.category_meta.setdefault("template", "taxonomy/category.html")
         self.category_meta.setdefault("template_title", "{{page.name}}")
         self.category_meta.setdefault("syndication", {})
 
         # Metadata for archive pages
         self.archive_meta = self.meta.get("archive", {})
-        self.archive_meta.setdefault("template", "tag-archive.html")
+        self.archive_meta.setdefault("template", "taxonomy/archive.html")
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
 
         # Copy well known meta keys
