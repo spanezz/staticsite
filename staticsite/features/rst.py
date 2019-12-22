@@ -75,7 +75,8 @@ class RestructuredText(Feature):
         # self.render_cache = self.site.caches.get("markdown")
 
         # Names of tags whose content should be parsed as yaml
-        self.yaml_tags = {"pages", "files", "firs"}
+        self.yaml_tags = {"files", "dirs"}
+        self.yaml_tags_filled = False
 
     def parse_rest(self, fd, remove_docinfo=True):
         """
@@ -143,12 +144,18 @@ class RestructuredText(Feature):
 
         # Parse to get at the front matter
         with open(index.abspath, "rt") as fd:
-            meta, doctree_scan = self.rst.parse_rest(fd, remove_docinfo=False)
+            meta, doctree_scan = self.parse_rest(fd, remove_docinfo=False)
 
         sitedir.add_dir_config(meta)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
-        # TODO: update the list of yaml tags with information from site.metadata
+        # Update the list of yaml tags with information from site.metadata
+        if not self.yaml_tags_filled:
+            for meta in self.site.metadata.values():
+                if meta.structure:
+                    self.yaml_tags.add(meta.name)
+            self.yaml_tags_filled = True
+
         taken: List[str] = []
         pages: List[Page] = []
         for fname, f in sitedir.files.items():
