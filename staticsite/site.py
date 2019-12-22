@@ -158,6 +158,7 @@ class Site:
 
         with open_dir_fd(content_root) as dir_fd:
             root = ContentDir(self, content_root, "", dir_fd, meta=self._settings_to_meta())
+            root.scan()
             self.theme.load_assets()
             root.load()
 
@@ -165,7 +166,7 @@ class Site:
         """
         Read static assets from a directory and all its subdirectories
         """
-        from .contents import AssetDir
+        from .contents import ContentDir
 
         root_meta = self.dir_meta.get("")
         if root_meta is None:
@@ -174,13 +175,15 @@ class Site:
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
             with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = AssetDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=root_meta)
-                root.load()
+                root = ContentDir(self, tree_root, subdir, dir_fd, dest_subdir="static", meta=root_meta)
+                root.scan()
+                root.load_assets()
         else:
             log.info("Loading assets from %s", tree_root)
             with open_dir_fd(tree_root) as dir_fd:
-                root = AssetDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=root_meta)
-                root.load()
+                root = ContentDir(self, tree_root, "", dir_fd, dest_subdir="static", meta=root_meta)
+                root.scan()
+                root.load_assets()
 
     def load(self, content_root=None):
         """

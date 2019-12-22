@@ -13,15 +13,17 @@ import logging
 log = logging.getLogger("contents")
 
 
-class BaseDir:
+class ContentDir:
     """
     Base class for content loaders
     """
-    def __init__(self, site: "site.Site", tree_root: str, relpath: str, dir_fd: int, meta: Dict[str, Any]):
+    def __init__(
+            self, site: "site.Site", tree_root: str, relpath: str, dir_fd: int, meta: Dict[str, Any], dest_subdir=None):
         self.site = site
         self.tree_root = tree_root
         self.relpath = relpath
         self.dir_fd = dir_fd
+        self.dest_subdir = dest_subdir
         # Subdirectory of this directory
         self.subdirs: List[str] = []
         # Files found in this directory
@@ -34,6 +36,7 @@ class BaseDir:
         # Computed metadata for files and subdirectories
         self.file_meta: Dict[str, Meta] = {}
 
+    def scan(self):
         # Scan directory contents
         with os.scandir(self.dir_fd) as entries:
             for entry in entries:
@@ -128,14 +131,11 @@ class BaseDir:
     def _file_opener(self, path, flags):
         return os.open(path, flags, dir_fd=self.dir_fd)
 
-
-class ContentDir(BaseDir):
-    """
-    Loader for a content directory, loading files through features
-    """
     def load(self):
         """
         Read static assets and pages from this directory and all its subdirectories
+
+        Load files through features by default
         """
         from .asset import Asset
 
@@ -147,15 +147,17 @@ class ContentDir(BaseDir):
             meta = self.file_meta[fname]
             if meta.get("asset"):
                 with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
-                    subdir = AssetDir(
+                    subdir = ContentDir(
                                 self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd, meta=meta)
-                    subdir.load()
+                    subdir.scan()
+                    subdir.load_assets()
             else:
                 # TODO: prevent loops with a set of seen directory devs/inodes
                 # Recurse
                 with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
                     subdir = ContentDir(
                                 self.site, self.tree_root, os.path.join(self.relpath, fname), subdir_fd, meta=meta)
+                    subdir.scan()
                     subdir.load()
 
         # Handle files marked as assets in their metadata
@@ -190,19 +192,11 @@ class ContentDir(BaseDir):
 
         # TODO: warn of contents not loaded at this point?
 
-
-class AssetDir(BaseDir):
-    """
-    Loader for an asset directory, loading assets directly without consulting
-    features
-    """
-    def __init__(self, *args, dest_subdir=None, **kw):
-        super().__init__(*args, **kw)
-        self.dest_subdir = dest_subdir
-
-    def load(self):
+    def load_assets(self):
         """
         Read static assets from this directory and all its subdirectories
+
+        Loader load assets directly without consulting features
         """
         from .asset import Asset
 
@@ -214,13 +208,14 @@ class AssetDir(BaseDir):
             # Recurse
             meta = self.file_meta.get(fname)
             with open_dir_fd(fname, dir_fd=self.dir_fd) as subdir_fd:
-                subdir = AssetDir(
+                subdir = ContentDir(
                             self.site,
                             self.tree_root,
                             os.path.join(self.relpath, fname),
                             subdir_fd,
                             dest_subdir=self.dest_subdir, meta=meta)
-                subdir.load()
+                subdir.scan()
+                subdir.load_assets()
 
         # Use everything else as an asset
         for fname, f in self.files.items():
