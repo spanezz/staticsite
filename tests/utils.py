@@ -19,15 +19,18 @@ class TestSettings(Settings):
 
 
 class Site(staticsite.Site):
-    def __init__(self, **kw):
+    def __init__(self, taxonomies=(), **kw):
         kw.setdefault("SITE_NAME", "Test site")
         kw.setdefault("SITE_URL", "https://www.example.org")
         settings = TestSettings(**kw)
         super().__init__(settings=settings)
+        self._taxonomies = taxonomies
 
     def load_without_content(self):
         self.features.load_default_features()
         self.load_theme()
+        for name in self._taxonomies:
+            self.features["taxonomy"].register_taxonomy_name(name)
         with tempfile.TemporaryDirectory() as dir:
             self.load_content(content_root=dir)
 

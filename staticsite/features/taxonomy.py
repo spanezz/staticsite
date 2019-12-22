@@ -25,7 +25,7 @@ class TaxonomyFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.known_taxonomies = set(self.site.settings.TAXONOMIES)
+        self.known_taxonomies = set()
 
         # All TaxonomyPages found
         self.taxonomies: Dict[str, TaxonomyPage] = {}
@@ -33,27 +33,21 @@ class TaxonomyFeature(Feature):
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
-    def load_dir_meta(self, sitedir: ContentDir):
-        if sitedir.relpath:
-            return
+    def register_taxonomy_name(self, name):
+        self.known_taxonomies.add(name)
+        self.site.tracked_metadata.add(name)
 
+    def load_dir_meta(self, sitedir: ContentDir):
         for fname in sitedir.files.keys():
             if not fname.endswith(".taxonomy"):
                 continue
-            self.known_taxonomies.add(fname[:-9])
-
-        self.site.tracked_metadata.update(self.known_taxonomies)
+            self.register_taxonomy_name(fname[:-9])
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken: List[str] = []
         pages: List[Page] = []
         for fname, src in sitedir.files.items():
             if not fname.endswith(".taxonomy"):
-                continue
-
-            if fname[:-9] not in self.known_taxonomies:
-                log.warn("%s: ignoring taxonomy not listed in TAXONOMIES settings"
-                         " or .taxonomy files in toplevel content directory", src.relpath)
                 continue
 
             page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
@@ -87,13 +81,6 @@ class TaxonomyFeature(Feature):
         # site pages
         for taxonomy in self.taxonomies.values():
             taxonomy.finalize()
-
-        # Warn of taxonomies configured in settings.TAXONOMIES but not mounted
-        # with a <name>.taxonomy
-        for name in self.known_taxonomies:
-            if name not in self.taxonomies:
-                log.warn("Taxonomy %s defined in settings, but no %s.taxonomy file found in site contents: ignoring it",
-                         name, name)
 
 
 class TaxonomyPage(Page):

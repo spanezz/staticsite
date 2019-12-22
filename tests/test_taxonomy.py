@@ -8,7 +8,7 @@ class TestTags(TestCase):
         """
         Test simply assigning pages to taxonomies
         """
-        site = test_utils.Site(TAXONOMIES=["tags"])
+        site = test_utils.Site(taxonomies=["tags"])
         site.load_without_content()
 
         tax1 = site.add_test_page("taxonomy", "tags")
@@ -31,7 +31,7 @@ tags: [cat]
 """
         }
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(TAXONOMIES=["tags"])
+            site = test_utils.Site(taxonomies=["tags"])
             site.load(content_root=root)
             site.analyze()
 
