@@ -1,7 +1,6 @@
 from __future__ import annotations
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
-from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
 import logging
 
@@ -28,11 +27,6 @@ and to [`filter` in syndication](syndication.md).
 
 See [Selecting pages](page-filter.md) for details.
 """))
-
-    def load_dir_meta(self, sitedir: ContentDir):
-        # Remove 'pages' from directory metadata, to avoid propagating
-        # the toplevel page filter data to the rest of the site.
-        sitedir.meta.pop("pages", None)
 
     def finalize(self):
         # Expand pages expressions

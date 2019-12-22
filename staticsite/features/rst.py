@@ -69,15 +69,13 @@ class RestructuredText(Feature):
 
     See doc/rst.rst for details.
     """
-    RUN_AFTER = ["taxonomy"]
-
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
         # self.render_cache = self.site.caches.get("markdown")
 
         # Names of tags whose content should be parsed as yaml
-        self.yaml_tags = {"pages"}
+        self.yaml_tags = {"pages", "files", "firs"}
 
     def parse_rest(self, fd, remove_docinfo=True):
         """
@@ -136,13 +134,6 @@ class RestructuredText(Feature):
         return meta, doctree_scan
 
     def load_dir_meta(self, sitedir: ContentDir):
-        if sitedir.relpath == "":
-            taxonomy = self.site.features.get("taxonomy")
-            if taxonomy is not None:
-                # taxonomy has already scanned the toplevel dir, and we can query
-                # it for which taxonomies we should parse as yaml tags
-                self.yaml_tags.update(taxonomy.known_taxonomies)
-
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
@@ -157,6 +148,7 @@ class RestructuredText(Feature):
         sitedir.add_dir_config(meta)
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
+        # TODO: update the list of yaml tags with information from site.metadata
         taken: List[str] = []
         pages: List[Page] = []
         for fname, f in sitedir.files.items():

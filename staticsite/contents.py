@@ -126,7 +126,10 @@ class ContentDir:
         self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
         # Merge in metadata
-        self.meta.update(meta)
+        for name in self.site.metadata.keys() & meta.keys():
+            metadata = self.site.metadata[name]
+            if metadata.inherited:
+                self.meta[name] = meta[name]
 
         # Default site name to the root page title, if site name has not been
         # set yet
