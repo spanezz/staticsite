@@ -170,7 +170,7 @@ If set to True in a directory index, the directory and all its subdirectories
 are loaded as static assets, without the interventions of features.
 """))
 
-        self.register_metadata(Metadata("aliases", inherited=False, doc="""
+        self.register_metadata(Metadata("aliases", inherited=False, structure=True, doc="""
 Relative paths in the destination directory where the page should also show up.
 [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
 existing links when moving a page to a different location.

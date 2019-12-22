@@ -26,7 +26,7 @@ class SyndicationFeature(Feature):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("syndication")
         self.site.features["rst"].yaml_tags.add("syndication")
-        self.site.register_metadata(Metadata("syndication", inherited=False, doc=f"""
+        self.site.register_metadata(Metadata("syndication", inherited=False, structure=True, doc=f"""
 Defines syndication for the contents of this page.
 
 It is a structure which can contain various fields:
