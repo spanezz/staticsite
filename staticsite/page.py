@@ -220,6 +220,8 @@ class Page:
 
         # Relative urls are tried based on all path components of this page,
         # from the bottom up
+
+        # First using the source paths
         root = os.path.dirname(self.src.relpath)
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
@@ -230,14 +232,29 @@ class Page:
             if res is not None:
                 return res
 
+            if not root:
+                break
+
+            root = os.path.dirname(root)
+
+        # The using the site paths
+        root = os.path.dirname(self.site_relpath)
+        while True:
+            target_relpath = os.path.normpath(os.path.join(root, target))
+            if target_relpath == ".":
+                target_relpath = ""
+
             res = self.site.pages.get(target_relpath)
             if res is not None:
                 return res
 
             # print("RES", res)
             if not root:
-                raise PageNotFoundError(f"cannot resolve `{target}` relative to `{self}`")
+                break
+
             root = os.path.dirname(root)
+
+        raise PageNotFoundError(f"cannot resolve `{target}` relative to `{self}`")
 
     def resolve_url(self, url: str) -> str:
         """
