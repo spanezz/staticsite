@@ -1,19 +1,17 @@
 from __future__ import annotations
-from typing import List, Dict, Iterable, Optional, Any
+from typing import List, Dict, Iterable, Optional
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.file import File
 from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
+from staticsite.utils.typing import Meta
 from collections import defaultdict
 import functools
 import os
 import logging
 
 log = logging.getLogger("taxonomy")
-
-
-Meta = Dict[str, Any]
 
 
 class TaxonomyFeature(Feature):
@@ -63,7 +61,12 @@ element.
             if not fname.endswith(".taxonomy"):
                 continue
 
-            page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
+            name = fname[:-9]
+
+            meta = sitedir.meta_file(fname)
+            meta["site_path"] = os.path.join(meta["site_path"], name)
+
+            page = TaxonomyPage(self.site, src, name, meta=meta)
             if not page.is_valid():
                 continue
             self.taxonomies[page.name] = page
@@ -79,7 +82,7 @@ element.
         page = TestTaxonomyPage(
                 self.site,
                 File(relpath=relpath + ".taxonomy", abspath="/" + relpath + ".taxonomy"),
-                meta=meta)
+                os.path.basename(relpath), meta=meta)
         self.taxonomies[page.name] = page
         return page
 
@@ -102,20 +105,18 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, site, src, meta=None):
-        linkpath = os.path.splitext(src.relpath)[0]
-
+    def __init__(self, site, src, name, meta: Meta):
         super().__init__(
             site=site,
             src=src,
-            site_path=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            site_path=meta["site_path"],
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         self.meta.setdefault("template", "taxonomy/taxonomy.html")
 
         # Taxonomy name (e.g. "tags")
-        self.name = os.path.basename(linkpath)
+        self.name = name
 
         # Map all possible values for this taxonomy to the pages that reference
         # them
@@ -136,10 +137,12 @@ class TaxonomyPage(Page):
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
 
         # Copy well known meta keys
-        for key in "site_root", "site_url", "author", "site_name":
-            val = self.meta.get(key)
-            self.category_meta.setdefault(key, val)
-            self.archive_meta.setdefault(key, val)
+        for name, metadata in self.site.metadata.items():
+            if not metadata.inherited:
+                continue
+            val = self.meta.get(name)
+            self.category_meta.setdefault(name, val)
+            self.archive_meta.setdefault(name, val)
 
     def to_dict(self):
         from staticsite.utils import dump_meta
@@ -190,6 +193,7 @@ class TaxonomyPage(Page):
             category_meta["taxonomy"] = self
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
+            category_meta["site_path"] = os.path.join(category_meta["site_path"], category)
             category_page = CategoryPage(self, category, meta=category_meta)
             if not category_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
@@ -202,6 +206,7 @@ class TaxonomyPage(Page):
             archive_meta["pages"] = pages
             archive_meta["category"] = category_page
             archive_meta["date"] = category_meta["date"]
+            archive_meta["site_path"] = os.path.join(archive_meta["site_path"], category, "archive")
             archive_page = CategoryArchivePage(meta=archive_meta)
             if not archive_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", archive_page)
@@ -230,12 +235,12 @@ class CategoryPage(Page):
     TYPE = "category"
 
     def __init__(self, taxonomy, name, meta):
-        relpath = os.path.join(taxonomy.site_path, name)
         super().__init__(
             site=taxonomy.site,
-            src=File(relpath=relpath),
-            site_path=relpath,
-            dst_relpath=os.path.join(relpath, "index.html"),
+            # TODO: set src=None
+            src=File(relpath=meta["site_path"]),
+            site_path=meta["site_path"],
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
         # Category name
         self.name = name
@@ -308,12 +313,11 @@ class CategoryArchivePage(Page):
 
     def __init__(self, meta):
         category_page = meta["category"]
-        relpath = os.path.join(category_page.site_path, "archive")
         super().__init__(
             site=category_page.site,
-            src=File(relpath=relpath),
-            site_path=relpath,
-            dst_relpath=os.path.join(relpath, "index.html"),
+            src=File(relpath=meta["site_path"]),
+            site_path=meta["site_path"],
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Category name

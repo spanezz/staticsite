@@ -114,12 +114,17 @@ class Page:
             return False
 
         # Check the existance of other mandatory fields
-        if "site_root" not in self.meta:
-            log.warn("%s: missing meta.site_root", self)
-            return False
         if "site_url" not in self.meta:
             log.warn("%s: missing meta.site_url", self)
             return False
+
+        # Make sure site_path exists and is relative
+        site_path = self.meta.get("site_path")
+        if site_path is None:
+            log.warn("%s: missing meta.site_path", self)
+            return False
+        if site_path.startswith("/"):
+            self.meta["site_path"] = site_path.lstrip("/")
 
         return True
 
@@ -283,8 +288,7 @@ class Page:
             return url
 
         return urlunparse(
-            (parsed.scheme, parsed.netloc,
-             os.path.join(dest.meta["site_root"], dest.site_path),
+            (parsed.scheme, parsed.netloc, "/" + dest.site_path,
              parsed.params, parsed.query, parsed.fragment)
         )
 

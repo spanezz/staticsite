@@ -59,6 +59,7 @@ both syndication and page listing.
             # pages share the same syndication dict, as may be the case with
             # taxonomies
             syndication_meta = dict(syndication_meta)
+            syndication_meta["site_path"] = page.meta["site_path"]
             page.meta["syndication"] = syndication_meta
 
             # Index page for the syndication
@@ -108,13 +109,15 @@ class SyndicationPage(Page):
 
     def __init__(self, site: Site, meta: Dict[str, Any]):
         index = meta["index"]
-        relpath = os.path.join(index.site_path, f"index.{self.TYPE}")
+        meta = dict(meta)
+        meta["site_path"] = os.path.join(meta["site_path"], f"index.{self.TYPE}")
 
         super().__init__(
             site=site,
-            src=File(relpath=relpath),
-            site_path=relpath,
-            dst_relpath=relpath,
+            # TODO: set src=None?
+            src=File(relpath=meta["site_path"]),
+            site_path=meta["site_path"],
+            dst_relpath=meta["site_path"],
             meta=meta)
         self.meta.setdefault("template", self.TEMPLATE)
         if self.meta["pages"]:

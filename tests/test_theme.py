@@ -56,13 +56,15 @@ class TestUrlFor(TestCase):
             # Test absolute urls
             self.assertEqual(url_for("page1", parent=parent, absolute=True), "https://www.example.org/page1")
 
-    def test_site_root(self):
+    def test_site_path(self):
         files = {
             ".staticsite": {
                 "site_url": "https://www.example.org",
-                "site_root": "prefix",
+                "site_path": "prefix",
             },
             "page1.md": {},
+            "page2.rst": {},
+            "page3.yaml": {"type": "page"},
             "dir/page2.md": {},
             "dir/index.html": {},
         }
@@ -79,9 +81,15 @@ class TestUrlFor(TestCase):
                     context = None
                 return site.theme.jinja2_url_for(context, dest, **kw)
 
-            parent = site.pages[""]
+            parent = site.pages["prefix"]
             self.assertEqual(url_for("page1.md", parent=parent), "/prefix/page1")
             self.assertEqual(url_for("page1", parent=parent), "/prefix/page1")
+
+            self.assertEqual(url_for("page2.rst", parent=parent), "/prefix/page2")
+            self.assertEqual(url_for("page2", parent=parent), "/prefix/page2")
+
+            self.assertEqual(url_for("page3.yaml", parent=parent), "/prefix/page3")
+            self.assertEqual(url_for("page3", parent=parent), "/prefix/page3")
 
             # Test absolute urls
             self.assertEqual(url_for("page1", parent=parent, absolute=True), "https://www.example.org/prefix/page1")

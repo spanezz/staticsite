@@ -97,12 +97,15 @@ class Theme:
         """
         Load static assets
         """
+        meta = dict(self.site.content_roots[0].meta)
+        meta["asset"] = True
+        meta["site_path"] = os.path.join(meta["site_path"], "static")
+
         theme_static = self.root / "static"
         if theme_static.is_dir():
             self.site.scan_tree(
                 src=File("", theme_static.resolve().as_posix(), theme_static.stat()),
-                site_path="static",
-                asset=True,
+                meta=meta,
             )
 
         # Load system assets from site settings and theme configuration
@@ -113,10 +116,12 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
+            meta = dict(meta)
+            meta["site_path"] = os.path.join("static", name)
+            # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
                 src=File(name, root, os.stat(root)),
-                site_path=os.path.join("static", name),
-                asset=True,
+                meta=meta,
             )
 
     def jinja2_basename(self, val: str) -> str:
@@ -200,17 +205,11 @@ class Theme:
         else:
             page = arg
 
-        # Compute relative path
-        site_root = page.meta["site_root"]
-        if not site_root.startswith("/"):
-            site_root = "/" + site_root
-        path = os.path.join(site_root, page.site_path)
-
         if absolute:
             site_url = page.meta["site_url"].rstrip("/")
-            return site_url + path
+            return f"{site_url}/{page.site_path}"
         else:
-            return path
+            return "/" + page.site_path
 
     @jinja2.contextfunction
     def jinja2_site_pages(

@@ -153,8 +153,12 @@ class MarkdownPages(Feature):
             if not fname.endswith(".md"):
                 continue
 
+            meta = sitedir.meta_file(fname)
+            if fname not in ("index.md", "README.md"):
+                meta["site_path"] = os.path.join(meta["site_path"], fname[:-3])
+
             try:
-                page = MarkdownPage(self, f, meta=sitedir.meta_file(fname))
+                page = MarkdownPage(self, f, meta=meta)
             except Exception as e:
                 log.warn("%s: Failed to parse markdown page: skipped", f)
                 log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=e)
@@ -282,16 +286,11 @@ class MarkdownPage(Page):
     TYPE = "markdown"
 
     def __init__(self, mdpages, src, meta: Meta):
-        dirname, basename = os.path.split(src.relpath)
-        if basename in ("index.md", "README.md"):
-            linkpath = dirname
-        else:
-            linkpath = os.path.splitext(src.relpath)[0]
         super().__init__(
             site=mdpages.site,
             src=src,
-            site_path=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            site_path=meta["site_path"],
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Indexed by default

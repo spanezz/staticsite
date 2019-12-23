@@ -8,15 +8,20 @@ class TestTags(TestCase):
         """
         Test simply assigning pages to taxonomies
         """
-        site = test_utils.Site(taxonomies=["tags"])
-        site.load_without_content()
+        files = {
+            "taxonomies/tags.taxonomy": "---\n",
+            "page1.md": {"date": str(datetime.datetime(2016, 1, 1)), "tags": ["a", "b"]},
+        }
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site(taxonomies=["tags"])
+            site.load(content_root=root)
+            site.analyze()
 
-        tax1 = site.add_test_page("taxonomy", "tags")
-        page1 = site.add_test_page("md", "page1", meta={"date": datetime.datetime(2016, 1, 1), "tags": ["a", "b"]})
-        site.analyze()
+            tags = site.pages["taxonomies/tags"]
+            page1 = site.pages["page1"]
 
-        self.assertEqual(tax1.categories["a"].meta["pages"], [page1])
-        self.assertEqual(tax1.categories["b"].meta["pages"], [page1])
+            self.assertEqual(tags.categories["a"].meta["pages"], [page1])
+            self.assertEqual(tags.categories["b"].meta["pages"], [page1])
 
     def test_load(self):
         """

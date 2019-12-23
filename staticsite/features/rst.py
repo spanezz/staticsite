@@ -162,6 +162,10 @@ class RestructuredText(Feature):
             if not fname.endswith(".rst"):
                 continue
 
+            meta = sitedir.meta_file(fname)
+            if fname not in ("index.rst", "README.rst"):
+                meta["site_path"] = os.path.join(meta["site_path"], fname[:-4])
+
             try:
                 page = RstPage(self, f, meta=sitedir.meta_file(fname))
             except Exception:
@@ -243,16 +247,11 @@ class RstPage(Page):
     TYPE = "rst"
 
     def __init__(self, feature, src, meta: Meta):
-        dirname, basename = os.path.split(src.relpath)
-        if basename in ("index.rst", "README.rst"):
-            linkpath = dirname
-        else:
-            linkpath = os.path.splitext(src.relpath)[0]
         super().__init__(
             site=feature.site,
             src=src,
-            site_path=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            site_path=meta["site_path"],
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Indexed by default

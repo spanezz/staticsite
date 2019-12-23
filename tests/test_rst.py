@@ -42,6 +42,6 @@ Example blog post in reStructuredText
                 "title": "Example blog post in reStructuredText",
                 "indexed": True,
                 "site_name": "Test site",
-                "site_root": "/",
+                "site_path": "",
                 "site_url": "https://www.example.org",
             })

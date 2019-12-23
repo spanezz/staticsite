@@ -43,7 +43,7 @@ class DirPages(Feature):
                 continue
             meta = self.site.dir_meta.get(relpath)
             if meta is None:
-                meta = {}
+                continue
             page = DirPage(self.site, relpath, pages, meta=meta)
             if not page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", page)
@@ -93,6 +93,8 @@ class DirPage(Page):
 
         # Find parent page
         parent_relpath = os.path.dirname(self.site_path)
+        if parent_relpath not in self.site.dir_meta:
+            return
         parent = self.site.pages[parent_relpath]
 
         # Set it as meta["parent"]

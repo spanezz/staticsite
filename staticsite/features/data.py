@@ -3,6 +3,7 @@ from typing import List
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
+from staticsite.utils.typing import Meta
 from staticsite.contents import ContentDir
 from staticsite.page_filter import PageFilter
 import dateutil.parser
@@ -69,6 +70,11 @@ class DataPages(Feature):
             if type is None:
                 log.error("%s: data type not found: ignoring page", src.relpath)
                 continue
+
+            meta = sitedir.meta_file(fname)
+            page_name = fname[:-len(mo.group(0))]
+            if page_name != "index":
+                meta["site_path"] = os.path.join(meta["site_path"], page_name)
 
             cls = self.page_class_by_type.get(type, DataPage)
             page = cls(self.site, src, data, meta=sitedir.meta_file(fname))
@@ -143,17 +149,12 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, site, src, data, meta=None):
-        dirname, basename = os.path.split(src.relpath)
-        if basename.startswith("index.") or basename.startswith("README."):
-            linkpath = dirname
-        else:
-            linkpath = os.path.splitext(src.relpath)[0]
+    def __init__(self, site, src, data, meta: Meta):
         super().__init__(
             site=site,
             src=src,
-            site_path=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            site_path=meta["site_path"],
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Indexed by default

@@ -21,13 +21,13 @@ class TestSite(TestCase):
                 page = site.pages[""]
                 self.assertEqual(page.meta["site_name"], "Example web site")
                 self.assertEqual(page.meta["site_url"], "https://www.example.org")
-                self.assertEqual(page.meta["site_root"], "/")
+                self.assertEqual(page.meta["site_path"], "")
                 self.assertEqual(page.meta["author"], "Example author")
 
                 page = site.pages["blog"]
                 self.assertEqual(page.meta["site_name"], "Example web site")
                 self.assertEqual(page.meta["site_url"], "https://www.example.org")
-                self.assertEqual(page.meta["site_root"], "/")
+                self.assertEqual(page.meta["site_path"], "blog")
                 self.assertEqual(page.meta["author"], "Example author")
 
 

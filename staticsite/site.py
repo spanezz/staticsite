@@ -159,11 +159,14 @@ page. If missing, it defaults to the name of the content directory.
 Base URL for the site, used to generate an absolute URL to the page.
 """))
 
-        self.register_metadata(Metadata("site_root", inherited=True, doc="""
-Root directory of the site in URLs to the page.
+        self.register_metadata(Metadata("site_path", inherited=True, doc="""
+Where a content directory appears in the site.
+
+By default, is is the `site_path` of the parent directory, plus the directory
+name.
 
 If you are publishing the site at `/prefix` instead of the root of the domain,
-override this with `/prefix`.
+override this with `/prefix` in the content root.
 """))
 
         self.register_metadata(Metadata("asset", inherited=True, doc="""
@@ -254,7 +257,9 @@ It defaults to true at least for [Markdown](markdown.md),
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            meta["site_root"] = self.settings.SITE_ROOT
+            meta["site_path"] = self.settings.SITE_ROOT.lstrip("/")
+        else:
+            meta["site_path"] = ""
         if self.settings.SITE_NAME:
             meta["site_name"] = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
@@ -280,29 +285,18 @@ It defaults to true at least for [Markdown](markdown.md),
             return
 
         src = File("", os.path.abspath(content_root), os.stat(content_root))
-        self.scan_tree(src)
+        self.scan_tree(src, meta=self._settings_to_meta())
         self.theme.scan_assets()
         self.stage_content_directory_scanned = True
 
-    def scan_tree(self, src: File, site_path: str = "", asset: bool = False):
+    def scan_tree(self, src: File, meta: Meta):
         """
         Scan the contents of the given directory, mounting them under the given
         site_path
         """
+        # site_path: str = "", asset: bool = False):
         # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-
-        meta = self.dir_meta.get(site_path)
-        if meta is None:
-            if site_path:
-                # Link with parent dir instead
-                meta = self.dir_meta.get("")
-            else:
-                meta = self._settings_to_meta()
-        meta = dict(meta)
-        if asset:
-            meta["asset"] = True
-
-        root = contents.Dir.create(self, src, site_path=site_path, meta=meta)
+        root = contents.Dir.create(self, src, meta=meta)
         self.content_roots.append(root)
         with open_dir_fd(src.abspath) as dir_fd:
             root.scan(dir_fd)
