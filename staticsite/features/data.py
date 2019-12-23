@@ -161,7 +161,7 @@ class DataPage(Page):
         self.meta.setdefault("indexed", True)
 
         # Read and parse the contents
-        if self.src.stat is None:
+        if self.src is None or self.src.stat is None:
             if self.meta.get("date", None) is None:
                 self.meta["date"] = self.site.generation_time
         else:
