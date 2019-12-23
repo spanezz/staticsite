@@ -158,7 +158,7 @@ class MarkdownPages(Feature):
                 meta["site_path"] = os.path.join(meta["site_path"], fname[:-3])
 
             try:
-                page = MarkdownPage(self, f, meta=meta)
+                page = MarkdownPage(self, sitedir, f, meta=meta)
             except Exception as e:
                 log.warn("%s: Failed to parse markdown page: skipped", f)
                 log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=e)
@@ -285,9 +285,9 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, mdpages, src, meta: Meta):
+    def __init__(self, mdpages, parent, src, meta: Meta):
         super().__init__(
-            site=mdpages.site,
+            parent=parent,
             src=src,
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)

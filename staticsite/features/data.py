@@ -77,7 +77,7 @@ class DataPages(Feature):
                 meta["site_path"] = os.path.join(meta["site_path"], page_name)
 
             cls = self.page_class_by_type.get(type, DataPage)
-            page = cls(self.site, src, data, meta=sitedir.meta_file(fname))
+            page = cls(sitedir, src, data, meta=sitedir.meta_file(fname))
             if not page.is_valid():
                 continue
 
@@ -149,9 +149,9 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, site, src, data, meta: Meta):
+    def __init__(self, parent, src, data, meta: Meta):
         super().__init__(
-            site=site,
+            parent=parent,
             src=src,
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)

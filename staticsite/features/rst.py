@@ -167,7 +167,7 @@ class RestructuredText(Feature):
                 meta["site_path"] = os.path.join(meta["site_path"], fname[:-4])
 
             try:
-                page = RstPage(self, f, meta=sitedir.meta_file(fname))
+                page = RstPage(self, sitedir, f, meta=sitedir.meta_file(fname))
             except Exception:
                 log.debug("%s: Failed to parse RestructuredText page: skipped", f, exc_info=True)
                 log.warn("%s: Failed to parse RestructuredText page: skipped", f)
@@ -246,9 +246,9 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, feature, src, meta: Meta):
+    def __init__(self, feature, parent, src, meta: Meta):
         super().__init__(
-            site=feature.site,
+            parent=parent,
             src=src,
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)

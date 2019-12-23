@@ -44,7 +44,8 @@ class DirPages(Feature):
             meta = self.site.dir_meta.get(relpath)
             if meta is None:
                 continue
-            page = DirPage(self.site, relpath, pages, meta=meta)
+            # TODO: passing self is a hack: it needs to be a page
+            page = DirPage(self, relpath, pages, meta=meta)
             if not page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", page)
             dir_pages.append(page)
@@ -65,9 +66,9 @@ class DirPage(Page):
     """
     TYPE = "dir"
 
-    def __init__(self, site: Site, relpath: str, pages: List[Page], meta: Meta):
+    def __init__(self, parent: Page, relpath: str, pages: List[Page], meta: Meta):
         super().__init__(
-            site=site,
+            parent=parent,
             src=File(relpath=relpath),
             dst_relpath=os.path.join(relpath, "index.html"),
             meta=meta)

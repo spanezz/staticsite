@@ -44,11 +44,12 @@ class Page:
 
     def __init__(
             self,
-            site: "staticsite.Site",
+            parent: "Page",
             src: "staticsite.File",
             dst_relpath: str,
             meta: Meta):
-        self.site = site
+        self.site = parent.site
+        self.parent = parent
         self.src = src
         self.dst_relpath = dst_relpath
         self.meta: Meta

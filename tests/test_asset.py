@@ -33,6 +33,11 @@ def override_tz(val):
     time.tzset()
 
 
+class FakeParent:
+    def __init__(self, site):
+        self.site = site
+
+
 class TestAsset(TestCase):
     @test_utils.assert_no_logs()
     def test_timestamps(self):
@@ -44,6 +49,6 @@ class TestAsset(TestCase):
                 # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
                 os.utime(f.name, (1477958400, 1477958400))
                 src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
-                page = Asset(site, src, meta={"site_path": src.relpath})
+                page = Asset(FakeParent(site), src, meta={"site_path": src.relpath})
 
                 self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))

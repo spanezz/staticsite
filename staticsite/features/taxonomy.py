@@ -66,7 +66,7 @@ element.
             meta = sitedir.meta_file(fname)
             meta["site_path"] = os.path.join(meta["site_path"], name)
 
-            page = TaxonomyPage(self.site, src, name, meta=meta)
+            page = TaxonomyPage(sitedir, src, name, meta=meta)
             if not page.is_valid():
                 continue
             self.taxonomies[page.name] = page
@@ -105,9 +105,9 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, site, src, name, meta: Meta):
+    def __init__(self, parent, src, name, meta: Meta):
         super().__init__(
-            site=site,
+            parent=parent,
             src=src,
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
@@ -206,7 +206,7 @@ class TaxonomyPage(Page):
             archive_meta["category"] = category_page
             archive_meta["date"] = category_meta["date"]
             archive_meta["site_path"] = os.path.join(archive_meta["site_path"], category, "archive")
-            archive_page = CategoryArchivePage(meta=archive_meta)
+            archive_page = CategoryArchivePage(self, meta=archive_meta)
             if not archive_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", archive_page)
             category_page.meta["archive"] = archive_page
@@ -233,9 +233,9 @@ class CategoryPage(Page):
     """
     TYPE = "category"
 
-    def __init__(self, taxonomy, name, meta):
+    def __init__(self, parent: Page, name: str, meta: Meta):
         super().__init__(
-            site=taxonomy.site,
+            parent=parent,
             src=None,
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
@@ -308,10 +308,10 @@ class CategoryArchivePage(Page):
     """
     TYPE = "category_archive"
 
-    def __init__(self, meta):
+    def __init__(self, parent: Page, meta: Meta):
         category_page = meta["category"]
         super().__init__(
-            site=category_page.site,
+            parent=parent,
             src=None,
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)

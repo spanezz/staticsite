@@ -75,14 +75,14 @@ both syndication and page listing.
             syndication_meta["pages"] = pages
 
             # RSS feed
-            rss_page = RSSPage(self.site, syndication_meta)
+            rss_page = RSSPage(page.parent, syndication_meta)
             if rss_page.is_valid():
                 syndication_meta["rss_page"] = rss_page
                 self.site.add_page(rss_page)
                 log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
-            atom_page = AtomPage(self.site, syndication_meta)
+            atom_page = AtomPage(page.parent, syndication_meta)
             if atom_page.is_valid():
                 syndication_meta["atom_page"] = atom_page
                 self.site.add_page(atom_page)
@@ -107,13 +107,13 @@ class SyndicationPage(Page):
     # Default template to use for this type of page
     TEMPLATE: str
 
-    def __init__(self, site: Site, meta: Dict[str, Any]):
+    def __init__(self, parent: Page, meta: Dict[str, Any]):
         index = meta["index"]
         meta = dict(meta)
         meta["site_path"] = os.path.join(meta["site_path"], f"index.{self.TYPE}")
 
         super().__init__(
-            site=site,
+            parent=parent,
             src=None,
             dst_relpath=meta["site_path"],
             meta=meta)
