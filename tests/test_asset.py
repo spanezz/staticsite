@@ -42,7 +42,6 @@ class TestAsset(TestCase):
     @test_utils.assert_no_logs()
     def test_timestamps(self):
         site = test_utils.Site()
-        site.load_without_content()
 
         with override_tz("Pacific/Samoa"):
             with tempfile.NamedTemporaryFile() as f:
