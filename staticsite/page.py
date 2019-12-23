@@ -78,7 +78,7 @@ class Page:
             log.info("%s: still a draft", self.src.relpath)
             return False
 
-        # Check the existance of other mandatory fields
+        # Check the existence of other mandatory fields
         if "site_url" not in self.meta:
             log.warn("%s: missing meta.site_url", self)
             return False

@@ -19,7 +19,7 @@ The [usual metadata](metadata.md) can be used, plus the following items:
 Identifies the data type. Internally, the data feature groups data pages by
 type, so further features can efficiently access thematic datasets.
 
-The `page.meta.template` metadata for data pages, when not specificed, defaults
+The `page.meta.template` metadata for data pages, when not specified, defaults
 to `dir-[type].html`, or if that is missing, to `data.html`.
 
 ### `page.data`

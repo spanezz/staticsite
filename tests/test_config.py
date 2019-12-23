@@ -103,7 +103,7 @@ class TestExampleProject(TestCase):
             content = fd.read()
 
         # FIXME: this does not make sense anymore, since title is not defined
-        # by settings anymoer
+        # by settings anymore
         self.assertIn(title, content)
 
     def test_default_name(self):
