@@ -14,6 +14,10 @@
 * `.taxonomy` files do not need to be listed in [`TAXONOMIES`
   settings](doc/settings.md) anymore: `TAXONOMIES` is now ignored in settings.
 * Restructured theme directory organization. See Upgrade notes for details.
+* Set `site_path` in a directory metadata to choose where that directory
+  appears in the target site. This replaces
+  [`settings.SITE_ROOT`](doc/settings.md), which now acts as a default
+  `site_path` for the toplevel directory.
 
 ## Upgrade notes
 
