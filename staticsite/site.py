@@ -278,7 +278,7 @@ It defaults to true at least for [Markdown](markdown.md),
         else:
             log.info("Loading pages from %s", content_root)
 
-        root = contents.Dir.create(self, content_root, "", meta=self._settings_to_meta())
+        root = contents.Dir.create(self, content_root, "", "", meta=self._settings_to_meta())
         with open_dir_fd(content_root) as dir_fd:
             root.scan(dir_fd)
             self.stage_content_directory_scanned = True
@@ -299,13 +299,13 @@ It defaults to true at least for [Markdown](markdown.md),
         if subdir:
             log.info("Loading assets from %s / %s", tree_root, subdir)
             with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = contents.Dir.create(self, tree_root, subdir, dest_subdir="static", meta=root_meta)
+                root = contents.Dir.create(self, tree_root, subdir, os.path.join("static", subdir), meta=root_meta)
                 root.scan(dir_fd)
                 root.load(dir_fd)
         else:
             log.info("Loading assets from %s", tree_root)
             with open_dir_fd(tree_root) as dir_fd:
-                root = contents.Dir.create(self, tree_root, "", dest_subdir="static", meta=root_meta)
+                root = contents.Dir.create(self, tree_root, "", "static", meta=root_meta)
                 root.scan(dir_fd)
                 root.load(dir_fd)
 
