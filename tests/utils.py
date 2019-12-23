@@ -32,7 +32,8 @@ class Site(staticsite.Site):
         for name in self._taxonomies:
             self.features["taxonomy"].register_taxonomy_name(name)
         with tempfile.TemporaryDirectory() as dir:
-            self.load_content(content_root=dir)
+            self.scan_content(content_root=dir)
+            self.load_content()
 
 
 def datafile_abspath(relpath):

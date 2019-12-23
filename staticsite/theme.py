@@ -10,6 +10,7 @@ from pathlib import Path
 from .page import Page, PageNotFoundError
 from .utils import front_matter
 from .page_filter import PageFilter, sort_args
+from .file import File
 
 log = logging.getLogger("theme")
 
@@ -92,13 +93,17 @@ class Theme:
             return
         self.site.features.load_feature_dir([features_dir.as_posix()])
 
-    def load_assets(self):
+    def scan_assets(self):
         """
         Load static assets
         """
         theme_static = self.root / "static"
         if theme_static.is_dir():
-            self.site.load_asset_tree(theme_static)
+            self.site.scan_tree(
+                src=File("", theme_static.resolve().as_posix(), theme_static.stat()),
+                site_relpath="static",
+                asset=True,
+            )
 
         # Load system assets from site settings and theme configuration
         system_assets = set(self.site.settings.SYSTEM_ASSETS)
@@ -108,7 +113,11 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            self.site.load_asset_tree("/usr/share/javascript", name)
+            self.site.scan_tree(
+                src=File(name, root, os.stat(root)),
+                site_relpath=os.path.join("static", name),
+                asset=True,
+            )
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)

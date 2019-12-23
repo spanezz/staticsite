@@ -7,7 +7,7 @@ from collections import defaultdict
 from .settings import Settings
 from .page import Page
 from .cache import Caches, DisabledCaches
-from .utils import lazy, open_dir_fd
+from .utils import lazy, open_dir_fd, timings
 from .metadata import Metadata
 from . import contents
 from .file import File
@@ -97,6 +97,9 @@ class Site:
 
         # Content root for the website
         self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
+
+        # List of content roots scanned for this site
+        self.content_roots: List[contents.Dir] = []
 
         # Register well-known metadata
         self.register_metadata(Metadata("template", inherited=False, doc="""
@@ -258,11 +261,10 @@ It defaults to true at least for [Markdown](markdown.md),
             meta["author"] = self.settings.SITE_AUTHOR
         return meta
 
-    def load_content(self, content_root=None):
+    def scan_content(self, content_root=None):
         """
-        Load site page and assets from the given directory.
-
-        Can be called multiple times.
+        Scan content root directories, building metadata for the directories in
+        the site tree
 
         :arg content_root: path to read contents from. If missing,
                            settings.CONTENT is used.
@@ -271,56 +273,65 @@ It defaults to true at least for [Markdown](markdown.md),
             content_root = self.content_root
 
         if not self.stage_features_constructed:
-            log.warn("load_content called before site features have been loaded")
+            log.warn("scan_content called before site features have been loaded")
 
         if not os.path.exists(content_root):
             log.info("%s: content tree does not exist", content_root)
             return
-        else:
-            log.info("Loading pages from %s", content_root)
 
         src = File("", os.path.abspath(content_root), os.stat(content_root))
-        root = contents.Dir.create(self, src, site_relpath="", meta=self._settings_to_meta())
-        with open_dir_fd(content_root) as dir_fd:
+        self.scan_tree(src)
+        self.theme.scan_assets()
+        self.stage_content_directory_scanned = True
+
+    def scan_tree(self, src: File, site_relpath: str = "", asset: bool = False):
+        """
+        Scan the contents of the given directory, mounting them under the given
+        site_relpath
+        """
+        # TODO: site_relpath becomes meta.site_root, asset becomes meta.asset?
+
+        meta = self.dir_meta.get(site_relpath)
+        if meta is None:
+            if site_relpath:
+                # Link with parent dir instead
+                meta = self.dir_meta.get("")
+            else:
+                meta = self._settings_to_meta()
+        meta = dict(meta)
+        if asset:
+            meta["asset"] = True
+
+        root = contents.Dir.create(self, src, site_relpath=site_relpath, meta=meta)
+        self.content_roots.append(root)
+        with open_dir_fd(src.abspath) as dir_fd:
             root.scan(dir_fd)
-            self.stage_content_directory_scanned = True
-            self.theme.load_assets()
-            root.load(dir_fd)
-            self.stage_content_directory_loaded = True
 
-    def load_asset_tree(self, tree_root, subdir=None):
+    def load_content(self):
         """
-        Read static assets from a directory and all its subdirectories
+        Load site page and assets from scanned content roots.
         """
-        root_meta = self.dir_meta.get("")
-        if root_meta is None:
-            root_meta = self._settings_to_meta()
-        root_meta = dict(root_meta)
-        root_meta["asset"] = True
+        if not self.stage_content_directory_scanned:
+            log.warn("laod_content called before site features have been loaded")
 
-        if subdir:
-            log.info("Loading assets from %s / %s", tree_root, subdir)
-            abspath = os.path.join(os.path.abspath(tree_root), subdir)
-            src = File(subdir, abspath, os.stat(abspath))
-            with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = contents.Dir.create(self, src, os.path.join("static", subdir), meta=root_meta)
-                root.scan(dir_fd)
+        for root in self.content_roots:
+            with open_dir_fd(root.src.abspath) as dir_fd:
                 root.load(dir_fd)
-        else:
-            log.info("Loading assets from %s", tree_root)
-            src = File("", os.path.abspath(tree_root), os.stat(tree_root))
-            with open_dir_fd(tree_root) as dir_fd:
-                root = contents.Dir.create(self, src, "static", meta=root_meta)
-                root.scan(dir_fd)
-                root.load(dir_fd)
+
+        self.stage_content_directory_loaded = True
 
     def load(self, content_root=None):
         """
         Load all site components
         """
-        self.features.load_default_features()
-        self.load_theme()
-        self.load_content(content_root=content_root)
+        with timings("Loaded default features in %fs"):
+            self.features.load_default_features()
+        with timings("Loaded theme in %fs"):
+            self.load_theme()
+        with timings("Scanned contents in %fs"):
+            self.scan_content(content_root=content_root)
+        with timings("Loaded contents in %fs"):
+            self.load_content()
 
     def add_page(self, page: Page):
         """
