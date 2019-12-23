@@ -174,7 +174,8 @@ class ContentDir(Dir):
         for fname, f in self.files.items():
             meta = self.file_meta[fname]
             if meta and meta.get("asset"):
-                p = Asset(self.site, f, site_path=os.path.join(site_path, fname), meta=meta)
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
+                p = Asset(self.site, f, meta=meta)
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
@@ -195,8 +196,9 @@ class ContentDir(Dir):
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
+                meta = self.file_meta[fname]
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
                 p = Asset(self.site, f,
-                          site_path=os.path.join(site_path, fname),
                           meta=self.file_meta[fname])
                 if not p.is_valid():
                     continue
@@ -230,9 +232,9 @@ class AssetDir(ContentDir):
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                meta = self.file_meta.get(fname)
+                meta = self.file_meta[fname]
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
                 p = Asset(self.site, f,
-                          site_path=os.path.join(site_path, fname),
                           meta=meta)
                 if not p.is_valid():
                     continue

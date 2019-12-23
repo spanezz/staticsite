@@ -109,7 +109,6 @@ class TaxonomyPage(Page):
         super().__init__(
             site=site,
             src=src,
-            site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
@@ -238,13 +237,12 @@ class CategoryPage(Page):
         super().__init__(
             site=taxonomy.site,
             src=None,
-            site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
         # Category name
         self.name = name
         # Index of each page in the category sequence
-        self.page_index: Dict[Page, int] = {page.site_path: idx for idx, page in enumerate(self.meta["pages"])}
+        self.page_index: Dict[Page, int] = {page: idx for idx, page in enumerate(self.meta["pages"])}
 
     def to_dict(self):
         res = super().to_dict()
@@ -274,7 +272,7 @@ class CategoryPage(Page):
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
     def sequence(self, page):
-        idx = self.page_index.get(page.site_path)
+        idx = self.page_index.get(page)
         if idx is None:
             return None
 
@@ -315,7 +313,6 @@ class CategoryArchivePage(Page):
         super().__init__(
             site=category_page.site,
             src=None,
-            site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 

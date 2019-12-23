@@ -115,7 +115,6 @@ class SyndicationPage(Page):
         super().__init__(
             site=site,
             src=None,
-            site_path=meta["site_path"],
             dst_relpath=meta["site_path"],
             meta=meta)
         self.meta.setdefault("template", self.TEMPLATE)

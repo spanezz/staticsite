@@ -289,7 +289,6 @@ class MarkdownPage(Page):
         super().__init__(
             site=mdpages.site,
             src=src,
-            site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 

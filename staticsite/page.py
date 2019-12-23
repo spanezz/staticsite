@@ -50,12 +50,10 @@ class Page:
             self,
             site: "staticsite.Site",
             src: "staticsite.File",
-            site_path: str,
             dst_relpath: str,
             meta: Meta):
         self.site = site
         self.src = src
-        self.site_path = site_path
         self.dst_relpath = dst_relpath
         self.meta: Meta
         if meta is None:
@@ -244,7 +242,7 @@ class Page:
                 root = os.path.dirname(root)
 
         # The using the site paths
-        root = self.site_path
+        root = self.meta["site_path"]
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
             if target_relpath == ".":
@@ -289,7 +287,7 @@ class Page:
             return url
 
         return urlunparse(
-            (parsed.scheme, parsed.netloc, "/" + dest.site_path,
+            (parsed.scheme, parsed.netloc, "/" + dest.meta["site_path"],
              parsed.params, parsed.query, parsed.fragment)
         )
 
@@ -316,7 +314,6 @@ class Page:
                 "root": str(self.src.root),
                 "abspath": str(self.src.abspath),
             },
-            "site_path": str(self.site_path),
             "dst_relpath": str(self.dst_relpath),
             "meta": dump_meta(self.meta),
         }

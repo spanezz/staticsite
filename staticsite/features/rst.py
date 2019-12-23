@@ -250,7 +250,6 @@ class RstPage(Page):
         super().__init__(
             site=feature.site,
             src=src,
-            site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 

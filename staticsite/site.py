@@ -335,10 +335,11 @@ It defaults to true at least for [Markdown](markdown.md),
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        old = self.pages.get(page.site_path)
+        site_path = page.meta["site_path"]
+        old = self.pages.get(site_path)
         if old is not None:
             log.warn("%s: replacing page %s", page, old)
-        self.pages[page.site_path] = page
+        self.pages[site_path] = page
         if page.src is not None:
             self.pages_by_src_relpath[page.src.relpath] = page
 

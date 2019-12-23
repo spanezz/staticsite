@@ -207,9 +207,9 @@ class Theme:
 
         if absolute:
             site_url = page.meta["site_url"].rstrip("/")
-            return f"{site_url}/{page.site_path}"
+            return f"{site_url}/{page.meta['site_path']}"
         else:
-            return "/" + page.site_path
+            return "/" + page.meta["site_path"]
 
     @jinja2.contextfunction
     def jinja2_site_pages(

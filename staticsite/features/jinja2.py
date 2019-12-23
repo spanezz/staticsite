@@ -75,8 +75,12 @@ class J2Pages(Feature):
             else:
                 continue
 
+            meta = sitedir.meta_file(fname)
+            if fname != "index.html":
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
+
             try:
-                page = J2Page(self, f, meta=sitedir.meta_file(fname))
+                page = J2Page(self, f, meta=meta)
             except IgnorePage:
                 continue
 
@@ -100,15 +104,9 @@ class J2Page(Page):
         dst_basename = basename.replace(".j2", "")
         dst_relpath = os.path.join(dirname, dst_basename)
 
-        if dst_basename == "index.html":
-            linkpath = dirname
-        else:
-            linkpath = os.path.join(dirname, dst_basename)
-
         super().__init__(
             site=j2env.site,
             src=src,
-            site_path=linkpath,
             dst_relpath=dst_relpath,
             meta=meta)
 

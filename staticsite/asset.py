@@ -10,14 +10,13 @@ import os
 class Asset(Page):
     TYPE = "asset"
 
-    def __init__(self, site: "site.Site", src: File, site_path: str, meta: Meta):
+    def __init__(self, site: "site.Site", src: File, meta: Meta):
         dirname, basename = os.path.split(src.relpath)
 
         super().__init__(
             site=site,
             src=src,
-            site_path=site_path,
-            dst_relpath=site_path,
+            dst_relpath=meta["site_path"],
             meta=meta)
 
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
