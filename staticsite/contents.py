@@ -13,7 +13,7 @@ import logging
 log = logging.getLogger("contents")
 
 
-class ContentDir:
+class Dir:
     """
     Base class for content loaders
     """
@@ -34,6 +34,48 @@ class ContentDir:
         self.file_rules: List[Tuple[re.Pattern, Meta]] = []
         # Computed metadata for files and subdirectories
         self.file_meta: Dict[str, Meta] = {}
+
+    @classmethod
+    def create(
+            cls, site: "site.Site", tree_root: str, relpath: str, meta: Dict[str, Any], dest_subdir=None):
+        # Check whether to load subdirectories as asset trees
+        if meta.get("asset"):
+            return AssetDir(site, tree_root, relpath, meta, dest_subdir=dest_subdir)
+        else:
+            return ContentDir(site, tree_root, relpath, meta, dest_subdir=dest_subdir)
+
+    def add_dir_config(self, meta: Meta):
+        """
+        Acquire directory configuration from a page metadata
+        """
+        # Compile directory matching rules
+        dir_meta = meta.pop("dirs", None)
+        if dir_meta is None:
+            dir_meta = {}
+        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
+
+        # Compute file matching rules
+        file_meta = meta.pop("files", None)
+        if file_meta is None:
+            file_meta = {}
+        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
+
+        # Merge in metadata
+        for name in self.site.metadata.keys() & meta.keys():
+            metadata = self.site.metadata[name]
+            if metadata.inherited:
+                self.meta[name] = meta[name]
+
+        # Default site name to the root page title, if site name has not been
+        # set yet
+        # TODO: template_title is not supported (yet)
+        title = meta.get("title")
+        if title is not None:
+            self.meta.setdefault("site_name", title)
+
+    def meta_file(self, fname: str):
+        # TODO: deprecate, and just use self.file_meta[fname]
+        return self.file_meta[fname]
 
     def scan(self, dir_fd: int):
         # Scan directory contents
@@ -102,46 +144,18 @@ class ContentDir:
 
         # Scan subdirectories
         for subdir in subdirs:
-            subdir = ContentDir(
+            subdir = Dir.create(
                         self.site, self.tree_root, os.path.join(self.relpath, subdir),
                         meta=self.file_meta[subdir], dest_subdir=self.dest_subdir)
             with open_dir_fd(os.path.basename(subdir.relpath), dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
 
-    def add_dir_config(self, meta: Meta):
-        """
-        Acquire directory configuration from a page metadata
-        """
-        # Compile directory matching rules
-        dir_meta = meta.pop("dirs", None)
-        if dir_meta is None:
-            dir_meta = {}
-        self.dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
 
-        # Compute file matching rules
-        file_meta = meta.pop("files", None)
-        if file_meta is None:
-            file_meta = {}
-        self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
-
-        # Merge in metadata
-        for name in self.site.metadata.keys() & meta.keys():
-            metadata = self.site.metadata[name]
-            if metadata.inherited:
-                self.meta[name] = meta[name]
-
-        # Default site name to the root page title, if site name has not been
-        # set yet
-        # TODO: template_title is not supported (yet)
-        title = meta.get("title")
-        if title is not None:
-            self.meta.setdefault("site_name", title)
-
-    def meta_file(self, fname: str):
-        # TODO: deprecate, and just use self.file_meta[fname]
-        return self.file_meta[fname]
-
+class ContentDir(Dir):
+    """
+    Content path which uses features for content loading
+    """
     def load(self, dir_fd: int):
         """
         Read static assets and pages from this directory and all its subdirectories
@@ -187,13 +201,14 @@ class ContentDir:
         # Load subdirectories
         for subdir in self.subdirs:
             with open_dir_fd(os.path.basename(subdir.relpath), dir_fd=dir_fd) as subdir_fd:
-                # Check whether to load subdirectories as asset trees
-                if subdir.meta.get("asset"):
-                    subdir.load_assets(subdir_fd)
-                else:
-                    subdir.load(subdir_fd)
+                subdir.load(subdir_fd)
 
-    def load_assets(self, dir_fd: int):
+
+class AssetDir(ContentDir):
+    """
+    Content path which loads everything as assets
+    """
+    def load(self, dir_fd: int):
         """
         Read static assets from this directory and all its subdirectories
 
@@ -217,4 +232,4 @@ class ContentDir:
         for subdir in self.subdirs:
             # TODO: prevent loops with a set of seen directory devs/inodes
             with open_dir_fd(os.path.basename(subdir.relpath), dir_fd=dir_fd) as subdir_fd:
-                subdir.load_assets(subdir_fd)
+                subdir.load(subdir_fd)
