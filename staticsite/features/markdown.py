@@ -202,7 +202,6 @@ class MarkdownPages(Feature):
                 tf.write(content)
             tf.flush()
             src = File(relpath=relpath,
-                       root=None,
                        abspath=os.path.abspath(tf.name),
                        stat=os.stat(tf.fileno()))
             return MarkdownPage(self, src, meta=meta)

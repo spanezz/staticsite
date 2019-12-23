@@ -97,7 +97,6 @@ class Dir:
                     relpath = os.path.join(self.relpath, entry.name)
                     self.files[entry.name] = file.File(
                             relpath=relpath,
-                            root=self.tree_root,
                             abspath=os.path.join(self.tree_root, relpath),
                             stat=entry.stat())
 

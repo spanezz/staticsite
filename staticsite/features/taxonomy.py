@@ -78,7 +78,7 @@ element.
     def build_test_page(self, relpath: str, meta: Optional[Meta] = None) -> Page:
         page = TestTaxonomyPage(
                 self.site,
-                File(relpath=relpath + ".taxonomy", root="/", abspath="/" + relpath + ".taxonomy"),
+                File(relpath=relpath + ".taxonomy", abspath="/" + relpath + ".taxonomy"),
                 meta=meta)
         self.taxonomies[page.name] = page
         return page

@@ -190,7 +190,6 @@ class RestructuredText(Feature):
             tf.write(content)
             tf.flush()
             src = File(relpath=relpath,
-                       root=None,
                        abspath=os.path.abspath(tf.name),
                        stat=os.stat(tf.fileno()))
             return RstPage(self, src, meta=meta)
