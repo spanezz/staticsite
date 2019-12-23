@@ -17,6 +17,8 @@ class Dir(Page):
     """
     Base class for content loaders
     """
+    TYPE = "dir"
+
     def __init__(
             self, parent: Page, src: file.File, meta: Dict[str, Any]):
         super().__init__(parent, src, os.path.join(meta["site_path"], "index.html"), meta)
@@ -30,6 +32,9 @@ class Dir(Page):
         self.file_rules: List[Tuple[re.Pattern, Meta]] = []
         # Computed metadata for files and subdirectories
         self.file_meta: Dict[str, Meta] = {}
+
+        # Pages loaded from this directory
+        self.pages = []
 
     @classmethod
     def create(cls, parent: Page, src: file.File, meta: Dict[str, Any]):
@@ -147,6 +152,47 @@ class Dir(Page):
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
 
+    def finalize(self):
+        # Finalize from the bottom up
+        for subdir in self.subdirs:
+            subdir.finalize()
+
+        # TODO if self.src.relpath:
+        # TODO     self.meta["title"] = os.path.basename(self.src.relpath)
+        # TODO elif self.site.settings.SITE_NAME:
+        # TODO     # If src_relpath is empty, we are the toplevel directory index
+        # TODO     self.meta["title"] = self.site.settings.SITE_NAME
+        # TODO else:
+        # TODO     # If we have no site name and we need to generate the toplevel
+        # TODO     # directory index, pick a fallback title.
+        # TODO     self.meta["title"] = os.path.dirname(self.site.content_root)
+
+        self.meta["pages"] = self.pages
+        self.meta.setdefault("template", "dir.html")
+
+        self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
+
+        # Since finalize is called from the bottom up, subdirs have their date
+        # up to date
+        self.subdirs.sort(key=lambda p: p.meta["date"])
+        self.meta["pages"].sort(key=lambda p: p.meta["date"])
+
+        date_pages = []
+        if self.subdirs:
+            date_pages.append(self.subdirs[-1].meta["date"])
+        if self.meta["pages"]:
+            date_pages.append(self.meta["pages"][-1].meta["date"])
+
+        if date_pages:
+            self.meta["date"] = max(date_pages)
+        else:
+            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+
+        if self.meta["indexed"] and self.meta["site_path"] not in self.site.pages:
+            if not self.is_valid():
+                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", self)
+            self.site.add_page(self)
+
 
 class ContentDir(Dir):
     """
@@ -182,6 +228,8 @@ class ContentDir(Dir):
         for handler in self.site.features.ordered():
             for page in handler.load_dir(self):
                 self.site.add_page(page)
+                if page.meta["indexed"]:
+                    self.pages.append(page)
             if not self.files:
                 break
 

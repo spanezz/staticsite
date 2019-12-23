@@ -11,8 +11,8 @@
     </tr>
   </thead>
   <tbody>
-  {% if page.meta.parent %}
-  {% with parent = page.meta.parent %}
+  {% if page.parent %}
+  {% with parent = page.parent %}
   <tr>
     <td><a href="{{url_for(parent)}}">{{parent.meta.date.strftime("%Y-%m-%d")}}</a></td>
     <td><a href="{{url_for(parent)}}">.. {% if parent.meta.site_path|basename %}({{parent.meta.site_path|basename}}){% endif %}</a></td>
@@ -20,6 +20,13 @@
   </tr>
   {% endwith %}
   {% endif %}
+  {% for p in page.subdirs|arrange("title") %}
+  <tr>
+    <td><a href="{{url_for(p)}}">{{p.meta.date.strftime("%Y-%m-%d")}}</a></td>
+    <td><a href="{{url_for(p)}}">{{p.meta.site_path|basename}}/</a></td>
+    <td><a href="{{url_for(p)}}">{{p.meta.title}}</a></td>
+  </tr>
+  {% endfor %}
   {% for p in page.meta.pages|arrange("title") %}
   <tr>
     <td><a href="{{url_for(p)}}">{{p.meta.date.strftime("%Y-%m-%d")}}</a></td>
