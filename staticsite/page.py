@@ -31,10 +31,6 @@ class Page:
         the Site that contains the page
     `src`:
         the File object with informationm about the source file
-    `site_path`:
-        path in the site namespace used to link to this page in webpages. For
-        example, `blog/2016/example.md` is linked as `blog/2016/example/` in
-        the built website.
     `dst_relpath`:
         relative path in the build directory for the file that will be written
         when this page gets rendered. For example, `blog/2016/example.md`
