@@ -3,8 +3,8 @@ from typing import Dict, List, Any, Tuple
 from .utils import front_matter, open_dir_fd
 from .utils.typing import Meta
 from .page_filter import compile_page_match
-from . import site
 from . import file
+from .page import Page
 import stat
 import os
 import re
@@ -13,20 +13,17 @@ import logging
 log = logging.getLogger("contents")
 
 
-class Dir:
+class Dir(Page):
     """
     Base class for content loaders
     """
     def __init__(
-            self, site: "site.Site", src: file.File, meta: Dict[str, Any]):
-        self.site = site
-        # File object for the source directory in the filesystem
-        self.src = src
+            self, parent: Page, src: file.File, meta: Dict[str, Any]):
+        super().__init__(parent, src, os.path.join(meta["site_path"], "index.html"), meta)
         # Subdirectory of this directory
         self.subdirs: List["ContentDir"] = []
         # Files found in this directory
         self.files: Dict[str, file.File] = {}
-        self.meta: Dict[str, Any] = meta
         # Rules for assigning metadata to subdirectories
         self.dir_rules: List[Tuple[re.Pattern, Meta]] = []
         # Rules for assigning metadata to files
@@ -35,12 +32,12 @@ class Dir:
         self.file_meta: Dict[str, Meta] = {}
 
     @classmethod
-    def create(cls, site: "site.Site", src: file.File, meta: Dict[str, Any]):
+    def create(cls, parent: Page, src: file.File, meta: Dict[str, Any]):
         # Check whether to load subdirectories as asset trees
         if meta.get("asset"):
-            return AssetDir(site, src, meta)
+            return AssetDir(parent, src, meta)
         else:
-            return ContentDir(site, src, meta)
+            return ContentDir(parent, src, meta)
 
     def add_dir_config(self, meta: Meta):
         """
@@ -145,9 +142,7 @@ class Dir:
 
         # Scan subdirectories
         for name, f in subdirs.items():
-            subdir = Dir.create(
-                        self.site, f,
-                        meta=self.file_meta[name])
+            subdir = Dir.create(self, f, meta=self.file_meta[name])
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)

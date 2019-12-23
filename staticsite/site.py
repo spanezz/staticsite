@@ -296,7 +296,8 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         # site_path: str = "", asset: bool = False):
         # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-        root = contents.Dir.create(self, src, meta=meta)
+        root = contents.Dir.create(None, src, meta=meta)
+        root.site = self
         self.content_roots.append(root)
         with open_dir_fd(src.abspath) as dir_fd:
             root.scan(dir_fd)
