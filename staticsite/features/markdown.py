@@ -9,7 +9,6 @@ import jinja2
 import os
 import io
 import markdown
-import tempfile
 import logging
 
 log = logging.getLogger("markdown")
@@ -199,16 +198,6 @@ class MarkdownPages(Feature):
         if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
-
-    def build_test_page(self, relpath: str, content: str = None, meta: Optional[Meta] = None) -> Page:
-        with tempfile.NamedTemporaryFile("wt", suffix=".md") as tf:
-            if content:
-                tf.write(content)
-            tf.flush()
-            src = File(relpath=relpath,
-                       abspath=os.path.abspath(tf.name),
-                       stat=os.stat(tf.fileno()))
-            return MarkdownPage(self, src, meta=meta)
 
 
 def parse_markdown_with_front_matter(fd):

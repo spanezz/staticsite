@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import List, Optional
-from staticsite import Page, Feature, File
+from typing import List
+from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.contents import ContentDir
@@ -13,7 +13,6 @@ import os
 import io
 import datetime
 import dateutil.parser
-import tempfile
 import logging
 
 log = logging.getLogger("rst")
@@ -188,15 +187,6 @@ class RestructuredText(Feature):
         if os.path.basename(relpath) != name + ".rst":
             return None
         return RestArchetype(archetypes, relpath, self)
-
-    def build_test_page(self, relpath: str, content: str = None, meta: Optional[Meta] = None) -> Page:
-        with tempfile.NamedTemporaryFile("wt", suffix=".rst") as tf:
-            tf.write(content)
-            tf.flush()
-            src = File(relpath=relpath,
-                       abspath=os.path.abspath(tf.name),
-                       stat=os.stat(tf.fileno()))
-            return RstPage(self, src, meta=meta)
 
 
 class RestArchetype(Archetype):

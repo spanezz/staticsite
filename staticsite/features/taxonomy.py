@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List, Dict, Iterable, Optional
 from staticsite.page import Page
 from staticsite.feature import Feature
-from staticsite.file import File
 from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
 from staticsite.utils.typing import Meta
@@ -77,14 +76,6 @@ element.
             del sitedir.files[fname]
 
         return pages
-
-    def build_test_page(self, relpath: str, meta: Optional[Meta] = None) -> Page:
-        page = TestTaxonomyPage(
-                self.site,
-                File(relpath=relpath + ".taxonomy", abspath="/" + relpath + ".taxonomy"),
-                os.path.basename(relpath), meta=meta)
-        self.taxonomies[page.name] = page
-        return page
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
         return self.taxonomies.values()
