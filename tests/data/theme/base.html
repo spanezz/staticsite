@@ -59,7 +59,7 @@
     <link href="{{ url_for('/css/site.css') }}" rel="stylesheet"/>
     <link href="{{ url_for('/css/github.css') }}" rel="stylesheet"/>
 
-    {% block favicon %}<link rel="icon" href="{{ url_for('images/favicon.ico') }}">{% endblock %}
+    {% block favicon %}<link rel="icon" href="{{ url_for('/images/favicon.ico') }}">{% endblock %}
 
     <title>{% block title %}{{page.meta.title}}{% endblock %}</title>
 

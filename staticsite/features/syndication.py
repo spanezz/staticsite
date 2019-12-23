@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Dict, Any
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
-from staticsite import Page, Site, File
+from staticsite import Page, Site
 from staticsite.metadata import Metadata
 import os
 import logging
@@ -114,8 +114,7 @@ class SyndicationPage(Page):
 
         super().__init__(
             site=site,
-            # TODO: set src=None?
-            src=File(relpath=meta["site_path"]),
+            src=None,
             site_path=meta["site_path"],
             dst_relpath=meta["site_path"],
             meta=meta)

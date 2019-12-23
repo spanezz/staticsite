@@ -227,20 +227,21 @@ class Page:
         # from the bottom up
 
         # First using the source paths
-        root = os.path.dirname(self.src.relpath)
-        while True:
-            target_relpath = os.path.normpath(os.path.join(root, target))
-            if target_relpath == ".":
-                target_relpath = ""
+        if self.src is not None:
+            root = os.path.dirname(self.src.relpath)
+            while True:
+                target_relpath = os.path.normpath(os.path.join(root, target))
+                if target_relpath == ".":
+                    target_relpath = ""
 
-            res = self.site.pages_by_src_relpath.get(target_relpath)
-            if res is not None:
-                return res
+                res = self.site.pages_by_src_relpath.get(target_relpath)
+                if res is not None:
+                    return res
 
-            if not root:
-                break
+                if not root:
+                    break
 
-            root = os.path.dirname(root)
+                root = os.path.dirname(root)
 
         # The using the site paths
         root = self.site_path
@@ -302,7 +303,7 @@ class Page:
         return res
 
     def __str__(self):
-        return self.src.relpath
+        return self.meta["site_path"]
 
     def __repr__(self):
         return "{}:{}".format(self.TYPE, self.src.relpath)

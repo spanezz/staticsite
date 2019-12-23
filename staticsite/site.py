@@ -339,7 +339,8 @@ It defaults to true at least for [Markdown](markdown.md),
         if old is not None:
             log.warn("%s: replacing page %s", page, old)
         self.pages[page.site_path] = page
-        self.pages_by_src_relpath[page.src.relpath] = page
+        if page.src is not None:
+            self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.tracked_metadata:

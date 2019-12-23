@@ -237,8 +237,7 @@ class CategoryPage(Page):
     def __init__(self, taxonomy, name, meta):
         super().__init__(
             site=taxonomy.site,
-            # TODO: set src=None
-            src=File(relpath=meta["site_path"]),
+            src=None,
             site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
@@ -315,7 +314,7 @@ class CategoryArchivePage(Page):
         category_page = meta["category"]
         super().__init__(
             site=category_page.site,
-            src=File(relpath=meta["site_path"]),
+            src=None,
             site_path=meta["site_path"],
             dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
