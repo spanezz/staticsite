@@ -1,0 +1,7 @@
+{% extends "page.html" %}
+
+{% block page_content %}
+<pre> {# highlight as json, or as yaml #}
+{{page.data|tojson(indent=2)}}
+</pre>
+{% endblock %}
