@@ -31,7 +31,7 @@ class Page:
         the Site that contains the page
     `src`:
         the File object with informationm about the source file
-    `site_relpath`:
+    `site_path`:
         path in the site namespace used to link to this page in webpages. For
         example, `blog/2016/example.md` is linked as `blog/2016/example/` in
         the built website.
@@ -50,12 +50,12 @@ class Page:
             self,
             site: "staticsite.Site",
             src: "staticsite.File",
-            site_relpath: str,
+            site_path: str,
             dst_relpath: str,
             meta: Meta):
         self.site = site
         self.src = src
-        self.site_relpath = site_relpath
+        self.site_path = site_path
         self.dst_relpath = dst_relpath
         self.meta: Meta
         if meta is None:
@@ -216,7 +216,7 @@ class Page:
                 log.warn("%s+%s: please use /static/%s instead of %s", self, target, target)
                 return res
 
-            raise PageNotFoundError(f"cannot resolve {target} relative to {self}")
+            raise PageNotFoundError(f"cannot resolve absolute path {target}")
 
         # Relative urls are tried based on all path components of this page,
         # from the bottom up
@@ -238,7 +238,7 @@ class Page:
             root = os.path.dirname(root)
 
         # The using the site paths
-        root = self.site_relpath
+        root = self.site_path
         while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
             if target_relpath == ".":
@@ -284,7 +284,7 @@ class Page:
 
         return urlunparse(
             (parsed.scheme, parsed.netloc,
-             os.path.join(dest.meta["site_root"], dest.site_relpath),
+             os.path.join(dest.meta["site_root"], dest.site_path),
              parsed.params, parsed.query, parsed.fragment)
         )
 
@@ -311,7 +311,7 @@ class Page:
                 "root": str(self.src.root),
                 "abspath": str(self.src.abspath),
             },
-            "site_relpath": str(self.site_relpath),
+            "site_path": str(self.site_path),
             "dst_relpath": str(self.dst_relpath),
             "meta": dump_meta(self.meta),
         }

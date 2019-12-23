@@ -42,7 +42,7 @@ class Site:
         # Repository of metadata descriptions
         self.metadata: Dict[str, Metadata] = {}
 
-        # Site pages indexed by site_relpath
+        # Site pages indexed by site_path
         self.pages: Dict[str, Page] = {}
 
         # Site pages indexed by src.relpath
@@ -284,16 +284,16 @@ It defaults to true at least for [Markdown](markdown.md),
         self.theme.scan_assets()
         self.stage_content_directory_scanned = True
 
-    def scan_tree(self, src: File, site_relpath: str = "", asset: bool = False):
+    def scan_tree(self, src: File, site_path: str = "", asset: bool = False):
         """
         Scan the contents of the given directory, mounting them under the given
-        site_relpath
+        site_path
         """
-        # TODO: site_relpath becomes meta.site_root, asset becomes meta.asset?
+        # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
 
-        meta = self.dir_meta.get(site_relpath)
+        meta = self.dir_meta.get(site_path)
         if meta is None:
-            if site_relpath:
+            if site_path:
                 # Link with parent dir instead
                 meta = self.dir_meta.get("")
             else:
@@ -302,7 +302,7 @@ It defaults to true at least for [Markdown](markdown.md),
         if asset:
             meta["asset"] = True
 
-        root = contents.Dir.create(self, src, site_relpath=site_relpath, meta=meta)
+        root = contents.Dir.create(self, src, site_path=site_path, meta=meta)
         self.content_roots.append(root)
         with open_dir_fd(src.abspath) as dir_fd:
             root.scan(dir_fd)
@@ -312,7 +312,7 @@ It defaults to true at least for [Markdown](markdown.md),
         Load site page and assets from scanned content roots.
         """
         if not self.stage_content_directory_scanned:
-            log.warn("laod_content called before site features have been loaded")
+            log.warn("load_content called before site features have been loaded")
 
         for root in self.content_roots:
             with open_dir_fd(root.src.abspath) as dir_fd:
@@ -341,10 +341,10 @@ It defaults to true at least for [Markdown](markdown.md),
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        old = self.pages.get(page.site_relpath)
+        old = self.pages.get(page.site_path)
         if old is not None:
             log.warn("%s: replacing page %s", page, old)
-        self.pages[page.site_relpath] = page
+        self.pages[page.site_path] = page
         self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata

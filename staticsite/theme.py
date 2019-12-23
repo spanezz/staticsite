@@ -101,7 +101,7 @@ class Theme:
         if theme_static.is_dir():
             self.site.scan_tree(
                 src=File("", theme_static.resolve().as_posix(), theme_static.stat()),
-                site_relpath="static",
+                site_path="static",
                 asset=True,
             )
 
@@ -115,7 +115,7 @@ class Theme:
                 continue
             self.site.scan_tree(
                 src=File(name, root, os.stat(root)),
-                site_relpath=os.path.join("static", name),
+                site_path=os.path.join("static", name),
                 asset=True,
             )
 
@@ -204,7 +204,7 @@ class Theme:
         site_root = page.meta["site_root"]
         if not site_root.startswith("/"):
             site_root = "/" + site_root
-        path = os.path.join(site_root, page.site_relpath)
+        path = os.path.join(site_root, page.site_path)
 
         if absolute:
             site_url = page.meta["site_url"].rstrip("/")
