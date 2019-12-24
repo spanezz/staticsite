@@ -134,7 +134,7 @@ If omitted:
    inherited.
  * if still no title can be found, the site name is used as a default.
 """))
-        self.register_metadata(Metadata("template_title", inherited=True, doc="""
+        self.register_metadata(Metadata("template_title", inherited=True, template_for="title", doc="""
 If set instead of title, it is a jinja2 template used to generate the title.
 The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
@@ -143,7 +143,7 @@ in it.
         self.register_metadata(Metadata("description", inherited=True, doc="""
 The page description. If omitted, the page will have no description.
 """))
-        self.register_metadata(Metadata("template_description", inherited=True, doc="""
+        self.register_metadata(Metadata("template_description", inherited=True, template_for="description", doc="""
 If set instead of description, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use

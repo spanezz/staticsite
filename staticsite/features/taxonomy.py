@@ -120,11 +120,13 @@ class TaxonomyPage(Page):
         self.category_meta.setdefault("template", "taxonomy/category.html")
         self.category_meta.setdefault("template_title", "{{page.name}}")
         self.category_meta.setdefault("syndication", {})
+        self.site.theme.precompile_metadata_templates(self.category_meta)
 
         # Metadata for archive pages
         self.archive_meta = self.meta.get("archive", {})
         self.archive_meta.setdefault("template", "taxonomy/archive.html")
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
+        self.site.theme.precompile_metadata_templates(self.archive_meta)
 
         # Copy well known meta keys
         for name, metadata in self.site.metadata.items():

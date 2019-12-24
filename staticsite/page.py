@@ -83,13 +83,13 @@ class Page:
             else:
                 self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
 
-        # title must exist
-        title = self._fill_possibly_templatized_meta_value("title")
-        if title is None:
-            self.meta["title"] = self.meta["site_name"]
+        # Render the metadata entres generated that are templates for other
+        # entries
+        self.site.theme.render_metadata_templates(self)
 
-        # description may exist
-        self._fill_possibly_templatized_meta_value("description")
+        # title must exist
+        if "title" not in self.meta:
+            self.meta["title"] = self.meta["site_name"]
 
         # Check draft status
         if self.site.settings.DRAFT_MODE:
@@ -112,23 +112,6 @@ class Page:
             self.meta["site_path"] = site_path.lstrip("/")
 
         return True
-
-    def _fill_possibly_templatized_meta_value(self, name):
-        # If there is a value for the field, we're done
-        val = self.meta.get(name)
-        if val is not None:
-            return val
-
-        # If there's a templatized value for the field, render it
-        template_val = self.meta.get(f"template_{name}")
-        if template_val is not None:
-            val = jinja2.Markup(self.render_template(
-                    self.site.theme.jinja2.from_string(template_val)))
-            self.meta[name] = val
-            return val
-
-        # Else we could not fill
-        return None
 
     @property
     def draft(self):

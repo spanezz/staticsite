@@ -74,6 +74,8 @@ both syndication and page listing.
                 pages = page.meta.get("pages", [])
             syndication_meta["pages"] = pages
 
+            self.site.theme.precompile_metadata_templates(syndication_meta)
+
             # RSS feed
             rss_page = RSSPage(page.parent, syndication_meta)
             if rss_page.is_valid():
