@@ -219,19 +219,24 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         Choose a theme root from the ones listed in the configuration
         """
-        # Pick the first valid theme directory
-        candidate_themes = self.settings.THEME
-        if isinstance(candidate_themes, str):
-            candidate_themes = (candidate_themes,)
+        if isinstance(self.settings.THEME, str):
+            for path in self.settings.THEME_PATHS:
+                theme_root = os.path.join(path, self.settings.THEME)
+                if os.path.isdir(theme_root):
+                    return theme_root
+        else:
+            # Pick the first valid theme directory
+            candidate_themes = self.settings.THEME
+            if isinstance(candidate_themes, str):
+                candidate_themes = (candidate_themes,)
 
-        for theme_root in candidate_themes:
-            theme_root = os.path.join(self.settings.PROJECT_ROOT, theme_root)
-            if os.path.isdir(theme_root):
-                return theme_root
+            for theme_root in candidate_themes:
+                theme_root = os.path.join(self.settings.PROJECT_ROOT, theme_root)
+                if os.path.isdir(theme_root):
+                    return theme_root
 
         raise RuntimeError(
-                "None of the configured theme directories ({}) seem to exist".format(
-                    ", ".join(self.settings.THEME)))
+                f"No theme found for THEME_PATHS={self.settings.THEME_PATHS!r} and THEME={self.settings.THEME!r}")
 
     def load_theme(self):
         """

@@ -33,7 +33,7 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertCountEqual(site.pages.keys(), [
+            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
                 "", "test.html", "test1.html"
             ])
 
@@ -77,6 +77,8 @@ title: Test1 title
             self.assertEqual(site.pages["dir1/dir2/page"].meta["site_name"], "dir2 site")
 
     def test_asset(self):
+        self.maxDiff = None
+
         files = {
             ".staticsite": {
                 "files": {
@@ -94,7 +96,7 @@ title: Test1 title
             site.load(content_root=root)
             site.analyze()
 
-            self.assertCountEqual(site.pages.keys(), [
+            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
                 "", "test.md", "test1",
             ])
 
@@ -125,7 +127,7 @@ title: Test1 title
             site.load(content_root=root)
             site.analyze()
 
-            self.assertCountEqual(site.pages.keys(), [
+            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
                 "", "test",
                 "examples/test1.md",
                 "examples/subdir/test2.md",
