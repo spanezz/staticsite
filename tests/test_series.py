@@ -4,118 +4,115 @@ import datetime
 
 
 def dt(*args):
-    return datetime.datetime(*args)
+    return str(datetime.datetime(*args))
 
 
 class TestSeries(TestCase):
     def test_site(self):
-        site = test_utils.Site(taxonomies=["series"])
-        site.load_without_content()
+        files = {
+            "series.taxonomy": "",
+            "seriesa1.md": {"series": "seriesa", "title": "Series A", "date": dt(2016, 1, 1)},
+            "seriesa2.md": {"date": dt(2016, 1, 2), "series": "seriesa", "title": "A2"},
+            "seriesa3.md": {"date": dt(2016, 1, 3), "series": "seriesa", "title": "A3",
+                            "series_title": "Series A part Two"},
+            "seriesa4.md": {"date": dt(2016, 1, 4), "series": "seriesa", "title": "A4"},
+            "seriesb1.md": {"date": dt(2016, 1, 1), "series": "seriesb",
+                            "title": "Series B", "series_title": "Series B part One"},
+            "seriesb2.md": {"date": dt(2016, 1, 2), "series": "seriesb", "title": "B2"},
+            "seriesc1.md": {"date": dt(2016, 1, 1), "title": "Series C", "series": "seriesc"},
+            "noseries.md": {"date": dt(2016, 1, 1), "title": "Other things"},
+        }
 
-        # TODO: say that all categories are series (or make it default to True if called 'series'?)
-        site.add_test_page("taxonomy", "series")
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site()
+            site.load(content_root=root)
+            site.analyze()
 
-        seriesa1 = site.add_test_page("md", "seriesa1",
-                                      meta={"series": "seriesa", "title": "Series A", "date": dt(2016, 1, 1)})
-        seriesa2 = site.add_test_page("md", "seriesa2",
-                                      meta={"date": dt(2016, 1, 2), "series": "seriesa", "title": "A2"})
-        seriesa3 = site.add_test_page("md", "seriesa3",
-                                      meta={"date": dt(2016, 1, 3), "series": "seriesa", "title": "A3",
-                                            "series_title": "Series A part Two"})
-        seriesa4 = site.add_test_page("md", "seriesa4",
-                                      meta={"date": dt(2016, 1, 4), "series": "seriesa", "title": "A4"})
+            seriesa1 = site.pages["seriesa1"]
+            seriesa2 = site.pages["seriesa2"]
+            seriesa3 = site.pages["seriesa3"]
+            seriesa4 = site.pages["seriesa4"]
+            seriesb1 = site.pages["seriesb1"]
+            seriesb2 = site.pages["seriesb2"]
+            seriesc1 = site.pages["seriesc1"]
+            noseries = site.pages["noseries"]
+            series = site.pages["series"]
 
-        seriesb1 = site.add_test_page("md", "seriesb1",
-                                      meta={"date": dt(2016, 1, 1), "series": "seriesb",
-                                            "title": "Series B", "series_title": "Series B part One"})
-        seriesb2 = site.add_test_page("md", "seriesb2",
-                                      meta={"date": dt(2016, 1, 2), "series": "seriesb", "title": "B2"})
+            # Check that series have been built (check in tags)
+            self.assertIn("seriesa", series.categories)
+            self.assertIn("seriesb", series.categories)
+            self.assertIn("seriesc", series.categories)
+            self.assertEquals(len(series.categories), 3)
 
-        seriesc1 = site.add_test_page("md", "seriesc1",
-                                      meta={"date": dt(2016, 1, 1), "title": "Series C", "series": "seriesc"})
+            # Check the contents of series (check in tags)
+            self.assertEquals(series.categories["seriesa"].meta["pages"], [seriesa1, seriesa2, seriesa3, seriesa4])
+            self.assertEquals(series.categories["seriesb"].meta["pages"], [seriesb1, seriesb2])
+            self.assertEquals(series.categories["seriesc"].meta["pages"], [seriesc1])
 
-        noseries = site.add_test_page("md", "noseries",
-                                      meta={"date": dt(2016, 1, 1), "title": "Other things"})
+            # Check computed series metadata
+            s = series.categories["seriesa"].sequence(seriesa1)
+            self.assertEquals(s["title"], "Series A")
+            self.assertEquals(s["prev"], None)
+            self.assertEquals(s["next"], seriesa2)
+            self.assertEquals(s["first"], seriesa1)
+            self.assertEquals(s["last"], seriesa4)
+            self.assertEquals(s["index"], 1)
+            self.assertEquals(s["length"], 4)
 
-        series = site.pages["series"]
+            s = series.categories["seriesa"].sequence(seriesa2)
+            self.assertEquals(s["title"], "Series A")
+            self.assertEquals(s["prev"], seriesa1)
+            self.assertEquals(s["next"], seriesa3)
+            self.assertEquals(s["first"], seriesa1)
+            self.assertEquals(s["last"], seriesa4)
+            self.assertEquals(s["index"], 2)
+            self.assertEquals(s["length"], 4)
 
-        site.analyze()
+            s = series.categories["seriesa"].sequence(seriesa3)
+            self.assertEquals(s["title"], "Series A part Two")
+            self.assertEquals(s["prev"], seriesa2)
+            self.assertEquals(s["next"], seriesa4)
+            self.assertEquals(s["first"], seriesa1)
+            self.assertEquals(s["last"], seriesa4)
+            self.assertEquals(s["index"], 3)
+            self.assertEquals(s["length"], 4)
 
-        # Check that series have been built (check in tags)
-        self.assertIn("seriesa", series.categories)
-        self.assertIn("seriesb", series.categories)
-        self.assertIn("seriesc", series.categories)
-        self.assertEquals(len(series.categories), 3)
+            s = series.categories["seriesa"].sequence(seriesa4)
+            self.assertEquals(s["title"], "Series A part Two")
+            self.assertEquals(s["prev"], seriesa3)
+            self.assertEquals(s["next"], None)
+            self.assertEquals(s["first"], seriesa1)
+            self.assertEquals(s["last"], seriesa4)
+            self.assertEquals(s["index"], 4)
+            self.assertEquals(s["length"], 4)
 
-        # Check the contents of series (check in tags)
-        self.assertEquals(series.categories["seriesa"].meta["pages"], [seriesa1, seriesa2, seriesa3, seriesa4])
-        self.assertEquals(series.categories["seriesb"].meta["pages"], [seriesb1, seriesb2])
-        self.assertEquals(series.categories["seriesc"].meta["pages"], [seriesc1])
+            s = series.categories["seriesb"].sequence(seriesb1)
+            self.assertEquals(s["title"], "Series B part One")
+            self.assertEquals(s["prev"], None)
+            self.assertEquals(s["next"], seriesb2)
+            self.assertEquals(s["first"], seriesb1)
+            self.assertEquals(s["last"], seriesb2)
+            self.assertEquals(s["index"], 1)
+            self.assertEquals(s["length"], 2)
 
-        # Check computed series metadata
-        s = series.categories["seriesa"].sequence(seriesa1)
-        self.assertEquals(s["title"], "Series A")
-        self.assertEquals(s["prev"], None)
-        self.assertEquals(s["next"], seriesa2)
-        self.assertEquals(s["first"], seriesa1)
-        self.assertEquals(s["last"], seriesa4)
-        self.assertEquals(s["index"], 1)
-        self.assertEquals(s["length"], 4)
+            s = series.categories["seriesb"].sequence(seriesb2)
+            self.assertEquals(s["title"], "Series B part One")
+            self.assertEquals(s["prev"], seriesb1)
+            self.assertEquals(s["next"], None)
+            self.assertEquals(s["first"], seriesb1)
+            self.assertEquals(s["last"], seriesb2)
+            self.assertEquals(s["index"], 2)
+            self.assertEquals(s["length"], 2)
 
-        s = series.categories["seriesa"].sequence(seriesa2)
-        self.assertEquals(s["title"], "Series A")
-        self.assertEquals(s["prev"], seriesa1)
-        self.assertEquals(s["next"], seriesa3)
-        self.assertEquals(s["first"], seriesa1)
-        self.assertEquals(s["last"], seriesa4)
-        self.assertEquals(s["index"], 2)
-        self.assertEquals(s["length"], 4)
+            s = series.categories["seriesc"].sequence(seriesc1)
+            self.assertEquals(s["title"], "Series C")
+            self.assertEquals(s["prev"], None)
+            self.assertEquals(s["next"], None)
+            self.assertEquals(s["first"], seriesc1)
+            self.assertEquals(s["last"], seriesc1)
+            self.assertEquals(s["index"], 1)
+            self.assertEquals(s["length"], 1)
 
-        s = series.categories["seriesa"].sequence(seriesa3)
-        self.assertEquals(s["title"], "Series A part Two")
-        self.assertEquals(s["prev"], seriesa2)
-        self.assertEquals(s["next"], seriesa4)
-        self.assertEquals(s["first"], seriesa1)
-        self.assertEquals(s["last"], seriesa4)
-        self.assertEquals(s["index"], 3)
-        self.assertEquals(s["length"], 4)
-
-        s = series.categories["seriesa"].sequence(seriesa4)
-        self.assertEquals(s["title"], "Series A part Two")
-        self.assertEquals(s["prev"], seriesa3)
-        self.assertEquals(s["next"], None)
-        self.assertEquals(s["first"], seriesa1)
-        self.assertEquals(s["last"], seriesa4)
-        self.assertEquals(s["index"], 4)
-        self.assertEquals(s["length"], 4)
-
-        s = series.categories["seriesb"].sequence(seriesb1)
-        self.assertEquals(s["title"], "Series B part One")
-        self.assertEquals(s["prev"], None)
-        self.assertEquals(s["next"], seriesb2)
-        self.assertEquals(s["first"], seriesb1)
-        self.assertEquals(s["last"], seriesb2)
-        self.assertEquals(s["index"], 1)
-        self.assertEquals(s["length"], 2)
-
-        s = series.categories["seriesb"].sequence(seriesb2)
-        self.assertEquals(s["title"], "Series B part One")
-        self.assertEquals(s["prev"], seriesb1)
-        self.assertEquals(s["next"], None)
-        self.assertEquals(s["first"], seriesb1)
-        self.assertEquals(s["last"], seriesb2)
-        self.assertEquals(s["index"], 2)
-        self.assertEquals(s["length"], 2)
-
-        s = series.categories["seriesc"].sequence(seriesc1)
-        self.assertEquals(s["title"], "Series C")
-        self.assertEquals(s["prev"], None)
-        self.assertEquals(s["next"], None)
-        self.assertEquals(s["first"], seriesc1)
-        self.assertEquals(s["last"], seriesc1)
-        self.assertEquals(s["index"], 1)
-        self.assertEquals(s["length"], 1)
-
-        self.assertIsNone(series.categories["seriesa"].sequence(noseries))
-        self.assertIsNone(series.categories["seriesb"].sequence(noseries))
-        self.assertIsNone(series.categories["seriesc"].sequence(noseries))
+            self.assertIsNone(series.categories["seriesa"].sequence(noseries))
+            self.assertIsNone(series.categories["seriesb"].sequence(noseries))
+            self.assertIsNone(series.categories["seriesc"].sequence(noseries))

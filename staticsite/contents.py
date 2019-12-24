@@ -1,113 +1,63 @@
 from __future__ import annotations
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 from .utils import front_matter, open_dir_fd
 from .utils.typing import Meta
 from .page_filter import compile_page_match
-from . import site
 from . import file
+from .page import Page
+import functools
 import stat
 import os
+import io
 import re
 import logging
 
 log = logging.getLogger("contents")
 
 
-class ContentDir:
+def with_dir_fd(f):
+    @functools.wraps(f)
+    def wrapper(self, dir_fd: int):
+        self.dir_fd = dir_fd
+        try:
+            return f(self, dir_fd)
+        finally:
+            self.dir_fd = None
+    return wrapper
+
+
+class Dir(Page):
     """
     Base class for content loaders
     """
+    TYPE = "dir"
+
     def __init__(
-            self, site: "site.Site", tree_root: str, relpath: str, meta: Dict[str, Any], dest_subdir=None):
-        self.site = site
-        self.tree_root = tree_root
-        self.relpath = relpath
-        self.dest_subdir = dest_subdir
+            self, parent: Page, src: file.File, meta: Dict[str, Any]):
+        super().__init__(parent, src, os.path.join(meta["site_path"], "index.html"), meta)
         # Subdirectory of this directory
         self.subdirs: List["ContentDir"] = []
         # Files found in this directory
         self.files: Dict[str, file.File] = {}
-        self.meta: Dict[str, Any] = meta
         # Rules for assigning metadata to subdirectories
         self.dir_rules: List[Tuple[re.Pattern, Meta]] = []
         # Rules for assigning metadata to files
         self.file_rules: List[Tuple[re.Pattern, Meta]] = []
         # Computed metadata for files and subdirectories
         self.file_meta: Dict[str, Meta] = {}
+        # Set during methods when a dir_fd to this directory is present
+        self.dir_fd: Optional[int] = None
 
-    def scan(self, dir_fd: int):
-        # Scan directory contents
-        subdirs = []
-        with os.scandir(dir_fd) as entries:
-            for entry in entries:
-                # Note: is_dir, is_file, and stat, follow symlinks by default
-                if entry.is_dir():
-                    if entry.name.startswith("."):
-                        # Skip hidden directories
-                        continue
-                    # Take note of directories
-                    subdirs.append(entry.name)
-                elif entry.name.startswith(".") and entry.name != ".staticsite":
-                    # Skip hidden files
-                    continue
-                else:
-                    # Take note of files
-                    relpath = os.path.join(self.relpath, entry.name)
-                    self.files[entry.name] = file.File(
-                            relpath=relpath,
-                            root=self.tree_root,
-                            abspath=os.path.join(self.tree_root, relpath),
-                            stat=entry.stat())
+        # Pages loaded from this directory
+        self.pages = []
 
-        # Load dir metadata from .staticsite, if present
-        # TODO: move this to a feature implementing just load_dir_meta?
-        dircfg = self.files.pop(".staticsite", None)
-        if dircfg is not None:
-            config: Dict[str, Any] = {}
-
-            # Load .staticsite if found
-            def _file_opener(path, flags):
-                return os.open(path, flags, dir_fd=dir_fd)
-            with open(dircfg.abspath, "rt", opener=_file_opener) as fd:
-                lines = [line.rstrip() for line in fd]
-                fmt, config = front_matter.parse(lines)
-
-            self.add_dir_config(config)
-
-        # Lead features add to directory metadata
-        for feature in self.site.features.ordered():
-            feature.load_dir_meta(self)
-
-        # If site_name is not defined, use the content directory name
-        self.meta.setdefault("site_name", os.path.basename(self.tree_root))
-
-        # Store directory metadata
-        self.site.dir_meta[self.relpath] = self.meta
-
-        # Compute metadata for directories
-        for dname in subdirs:
-            res: Dict[str, Any] = dict(self.meta)
-            for pattern, meta in self.dir_rules:
-                if pattern.match(dname):
-                    res.update(meta)
-            self.file_meta[dname] = res
-
-        # Compute metadata for files
-        for fname in self.files.keys():
-            res: Dict[str, Any] = dict(self.meta)
-            for pattern, meta in self.file_rules:
-                if pattern.match(fname):
-                    res.update(meta)
-            self.file_meta[fname] = res
-
-        # Scan subdirectories
-        for subdir in subdirs:
-            subdir = ContentDir(
-                        self.site, self.tree_root, os.path.join(self.relpath, subdir),
-                        meta=self.file_meta[subdir], dest_subdir=self.dest_subdir)
-            with open_dir_fd(os.path.basename(subdir.relpath), dir_fd=dir_fd) as subdir_fd:
-                subdir.scan(subdir_fd)
-            self.subdirs.append(subdir)
+    @classmethod
+    def create(cls, parent: Page, src: file.File, meta: Dict[str, Any]):
+        # Check whether to load subdirectories as asset trees
+        if meta.get("asset"):
+            return AssetDir(parent, src, meta)
+        else:
+            return ContentDir(parent, src, meta)
 
     def add_dir_config(self, meta: Meta):
         """
@@ -142,6 +92,135 @@ class ContentDir:
         # TODO: deprecate, and just use self.file_meta[fname]
         return self.file_meta[fname]
 
+    def open(self, fname: str, src: file.File, *args, **kw):
+        if self.dir_fd:
+            def _file_opener(fname, flags):
+                return os.open(fname, flags, dir_fd=self.dir_fd)
+            return io.open(src.abspath, *args, opener=_file_opener, **kw)
+        else:
+            return io.open(src.abspath, *args, **kw)
+
+    @with_dir_fd
+    def scan(self, dir_fd: int):
+        # Scan directory contents
+        subdirs = {}
+        with os.scandir(self.dir_fd) as entries:
+            for entry in entries:
+                # Note: is_dir, is_file, and stat, follow symlinks by default
+                if entry.is_dir():
+                    if entry.name.startswith("."):
+                        # Skip hidden directories
+                        continue
+                    # Take note of directories
+                    subdirs[entry.name] = file.File(
+                            relpath=os.path.join(self.src.relpath, entry.name),
+                            abspath=os.path.join(self.src.abspath, entry.name),
+                            stat=entry.stat())
+                elif entry.name.startswith(".") and entry.name != ".staticsite":
+                    # Skip hidden files
+                    continue
+                else:
+                    # Take note of files
+                    self.files[entry.name] = file.File(
+                            relpath=os.path.join(self.src.relpath, entry.name),
+                            abspath=os.path.join(self.src.abspath, entry.name),
+                            stat=entry.stat())
+
+        # Load dir metadata from .staticsite, if present
+        # TODO: move this to a feature implementing just load_dir_meta?
+        dircfg: file.File = self.files.pop(".staticsite", None)
+        if dircfg is not None:
+            config: Dict[str, Any] = {}
+
+            # Load .staticsite if found
+            with self.open(".staticsite", dircfg, "rt") as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, config = front_matter.parse(lines)
+
+            self.add_dir_config(config)
+
+        # Lead features add to directory metadata
+        for feature in self.site.features.ordered():
+            feature.load_dir_meta(self)
+
+        # If site_name is not defined, use the content directory name
+        if "site_name" not in self.meta:
+            self.meta["site_name"] = os.path.basename(self.src.abspath)
+
+        # Store directory metadata
+        self.site.dir_meta[self.meta["site_path"]] = self.meta
+
+        # Compute metadata for directories
+        for dname in subdirs:
+            res: Meta = dict(self.meta)
+            res["site_path"] = os.path.join(res["site_path"], dname)
+            for pattern, meta in self.dir_rules:
+                if pattern.match(dname):
+                    res.update(meta)
+            self.file_meta[dname] = res
+
+        # Compute metadata for files
+        for fname in self.files.keys():
+            res: Meta = dict(self.meta)
+            for pattern, meta in self.file_rules:
+                if pattern.match(fname):
+                    res.update(meta)
+            self.file_meta[fname] = res
+
+        # Scan subdirectories
+        for name, f in subdirs.items():
+            subdir = Dir.create(self, f, meta=self.file_meta[name])
+            with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
+                subdir.scan(subdir_fd)
+            self.subdirs.append(subdir)
+
+    def finalize(self):
+        # Finalize from the bottom up
+        for subdir in self.subdirs:
+            subdir.finalize()
+
+        # TODO if self.src.relpath:
+        # TODO     self.meta["title"] = os.path.basename(self.src.relpath)
+        # TODO elif self.site.settings.SITE_NAME:
+        # TODO     # If src_relpath is empty, we are the toplevel directory index
+        # TODO     self.meta["title"] = self.site.settings.SITE_NAME
+        # TODO else:
+        # TODO     # If we have no site name and we need to generate the toplevel
+        # TODO     # directory index, pick a fallback title.
+        # TODO     self.meta["title"] = os.path.dirname(self.site.content_root)
+
+        self.meta["pages"] = self.pages
+        self.meta.setdefault("template", "dir.html")
+
+        self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
+
+        # Since finalize is called from the bottom up, subdirs have their date
+        # up to date
+        self.subdirs.sort(key=lambda p: p.meta["date"])
+        self.meta["pages"].sort(key=lambda p: p.meta["date"])
+
+        date_pages = []
+        if self.subdirs:
+            date_pages.append(self.subdirs[-1].meta["date"])
+        if self.meta["pages"]:
+            date_pages.append(self.meta["pages"][-1].meta["date"])
+
+        if date_pages:
+            self.meta["date"] = max(date_pages)
+        else:
+            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+
+        if self.meta["indexed"] and self.meta["site_path"] not in self.site.pages:
+            if not self.is_valid():
+                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", self)
+            self.site.add_page(self)
+
+
+class ContentDir(Dir):
+    """
+    Content path which uses features for content loading
+    """
+    @with_dir_fd
     def load(self, dir_fd: int):
         """
         Read static assets and pages from this directory and all its subdirectories
@@ -150,14 +229,17 @@ class ContentDir:
         """
         from .asset import Asset
 
-        log.debug("Loading pages from %s:%s", self.tree_root, self.relpath)
+        site_path = self.meta["site_path"]
+
+        log.debug("Loading pages from %s as %s", self.src.abspath, site_path)
 
         # Handle files marked as assets in their metadata
         taken = []
         for fname, f in self.files.items():
             meta = self.file_meta[fname]
             if meta and meta.get("asset"):
-                p = Asset(self.site, f, meta=meta)
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
+                p = Asset(self, f, meta=meta)
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
@@ -169,15 +251,21 @@ class ContentDir:
         for handler in self.site.features.ordered():
             for page in handler.load_dir(self):
                 self.site.add_page(page)
+                if page.meta["indexed"]:
+                    self.pages.append(page)
             if not self.files:
                 break
 
         # Use everything else as an asset
         # TODO: move into an asset feature?
+        site_path = self.meta["site_path"]
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                p = Asset(self.site, f, meta=self.file_meta[fname])
+                meta = self.file_meta[fname]
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
+                p = Asset(self, f,
+                          meta=self.file_meta[fname])
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
@@ -186,14 +274,16 @@ class ContentDir:
 
         # Load subdirectories
         for subdir in self.subdirs:
-            with open_dir_fd(os.path.basename(subdir.relpath), dir_fd=dir_fd) as subdir_fd:
-                # Check whether to load subdirectories as asset trees
-                if subdir.meta.get("asset"):
-                    subdir.load_assets(subdir_fd)
-                else:
-                    subdir.load(subdir_fd)
+            with open_dir_fd(os.path.basename(subdir.src.relpath), dir_fd=dir_fd) as subdir_fd:
+                subdir.load(subdir_fd)
 
-    def load_assets(self, dir_fd: int):
+
+class AssetDir(ContentDir):
+    """
+    Content path which loads everything as assets
+    """
+    @with_dir_fd
+    def load(self, dir_fd: int):
         """
         Read static assets from this directory and all its subdirectories
 
@@ -201,14 +291,18 @@ class ContentDir:
         """
         from .asset import Asset
 
-        log.debug("Loading pages from %s:%s", self.tree_root, self.relpath)
+        site_path = self.meta["site_path"]
+
+        log.debug("Loading pages from %s as %s", self.src.abspath, site_path)
 
         # Load every file as an asset
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                meta = self.file_meta.get(fname)
-                p = Asset(self.site, f, dest_subdir=self.dest_subdir, meta=meta)
+                meta = self.file_meta[fname]
+                meta["site_path"] = os.path.join(meta["site_path"], fname)
+                p = Asset(self, f,
+                          meta=meta)
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
@@ -216,5 +310,5 @@ class ContentDir:
         # Load subdirectories
         for subdir in self.subdirs:
             # TODO: prevent loops with a set of seen directory devs/inodes
-            with open_dir_fd(os.path.basename(subdir.relpath), dir_fd=dir_fd) as subdir_fd:
-                subdir.load_assets(subdir_fd)
+            with open_dir_fd(os.path.basename(subdir.src.relpath), dir_fd=dir_fd) as subdir_fd:
+                subdir.load(subdir_fd)

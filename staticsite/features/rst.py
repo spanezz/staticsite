@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import List, Optional
-from staticsite import Page, Feature, File
+from typing import List
+from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.contents import ContentDir
@@ -13,7 +13,6 @@ import os
 import io
 import datetime
 import dateutil.parser
-import tempfile
 import logging
 
 log = logging.getLogger("rst")
@@ -162,8 +161,12 @@ class RestructuredText(Feature):
             if not fname.endswith(".rst"):
                 continue
 
+            meta = sitedir.meta_file(fname)
+            if fname not in ("index.rst", "README.rst"):
+                meta["site_path"] = os.path.join(meta["site_path"], fname[:-4])
+
             try:
-                page = RstPage(self, f, meta=sitedir.meta_file(fname))
+                page = RstPage(self, sitedir, f, meta=sitedir.meta_file(fname))
             except Exception:
                 log.debug("%s: Failed to parse RestructuredText page: skipped", f, exc_info=True)
                 log.warn("%s: Failed to parse RestructuredText page: skipped", f)
@@ -184,16 +187,6 @@ class RestructuredText(Feature):
         if os.path.basename(relpath) != name + ".rst":
             return None
         return RestArchetype(archetypes, relpath, self)
-
-    def build_test_page(self, relpath: str, content: str = None, meta: Optional[Meta] = None) -> Page:
-        with tempfile.NamedTemporaryFile("wt", suffix=".rst") as tf:
-            tf.write(content)
-            tf.flush()
-            src = File(relpath=relpath,
-                       root=None,
-                       abspath=os.path.abspath(tf.name),
-                       stat=os.stat(tf.fileno()))
-            return RstPage(self, src, meta=meta)
 
 
 class RestArchetype(Archetype):
@@ -243,17 +236,11 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, feature, src, meta: Meta):
-        dirname, basename = os.path.split(src.relpath)
-        if basename in ("index.rst", "README.rst"):
-            linkpath = dirname
-        else:
-            linkpath = os.path.splitext(src.relpath)[0]
+    def __init__(self, feature, parent, src, meta: Meta):
         super().__init__(
-            site=feature.site,
+            parent=parent,
             src=src,
-            site_relpath=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Indexed by default

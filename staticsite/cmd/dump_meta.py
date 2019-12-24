@@ -40,6 +40,9 @@ make available to templates via the `page` variable.""")
                 if metadata.inherited:
                     print("*Inherited from directory indices.*")
                     print()
+                if metadata.template_for:
+                    print(f"*Template version of `{metadata.template_for}`.*")
+                    print()
                 print(metadata.doc)
         else:
             filters = [compile_page_match(f) for f in self.args.pages]

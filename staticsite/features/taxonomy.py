@@ -1,19 +1,16 @@
 from __future__ import annotations
-from typing import List, Dict, Iterable, Optional, Any
+from typing import List, Dict, Iterable, Optional
 from staticsite.page import Page
 from staticsite.feature import Feature
-from staticsite.file import File
 from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
+from staticsite.utils.typing import Meta
 from collections import defaultdict
 import functools
 import os
 import logging
 
 log = logging.getLogger("taxonomy")
-
-
-Meta = Dict[str, Any]
 
 
 class TaxonomyFeature(Feature):
@@ -63,7 +60,12 @@ element.
             if not fname.endswith(".taxonomy"):
                 continue
 
-            page = TaxonomyPage(self.site, src, meta=sitedir.meta_file(fname))
+            name = fname[:-9]
+
+            meta = sitedir.meta_file(fname)
+            meta["site_path"] = os.path.join(meta["site_path"], name)
+
+            page = TaxonomyPage(sitedir, src, name, meta=meta)
             if not page.is_valid():
                 continue
             self.taxonomies[page.name] = page
@@ -74,14 +76,6 @@ element.
             del sitedir.files[fname]
 
         return pages
-
-    def build_test_page(self, relpath: str, meta: Optional[Meta] = None) -> Page:
-        page = TestTaxonomyPage(
-                self.site,
-                File(relpath=relpath + ".taxonomy", root="/", abspath="/" + relpath + ".taxonomy"),
-                meta=meta)
-        self.taxonomies[page.name] = page
-        return page
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
         return self.taxonomies.values()
@@ -102,20 +96,17 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, site, src, meta=None):
-        linkpath = os.path.splitext(src.relpath)[0]
-
+    def __init__(self, parent, src, name, meta: Meta):
         super().__init__(
-            site=site,
+            parent=parent,
             src=src,
-            site_relpath=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         self.meta.setdefault("template", "taxonomy/taxonomy.html")
 
         # Taxonomy name (e.g. "tags")
-        self.name = os.path.basename(linkpath)
+        self.name = name
 
         # Map all possible values for this taxonomy to the pages that reference
         # them
@@ -129,17 +120,21 @@ class TaxonomyPage(Page):
         self.category_meta.setdefault("template", "taxonomy/category.html")
         self.category_meta.setdefault("template_title", "{{page.name}}")
         self.category_meta.setdefault("syndication", {})
+        self.site.theme.precompile_metadata_templates(self.category_meta)
 
         # Metadata for archive pages
         self.archive_meta = self.meta.get("archive", {})
         self.archive_meta.setdefault("template", "taxonomy/archive.html")
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
+        self.site.theme.precompile_metadata_templates(self.archive_meta)
 
         # Copy well known meta keys
-        for key in "site_root", "site_url", "author", "site_name":
-            val = self.meta.get(key)
-            self.category_meta.setdefault(key, val)
-            self.archive_meta.setdefault(key, val)
+        for name, metadata in self.site.metadata.items():
+            if not metadata.inherited:
+                continue
+            val = self.meta.get(name)
+            self.category_meta.setdefault(name, val)
+            self.archive_meta.setdefault(name, val)
 
     def to_dict(self):
         from staticsite.utils import dump_meta
@@ -190,6 +185,7 @@ class TaxonomyPage(Page):
             category_meta["taxonomy"] = self
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
+            category_meta["site_path"] = os.path.join(category_meta["site_path"], category)
             category_page = CategoryPage(self, category, meta=category_meta)
             if not category_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
@@ -202,7 +198,8 @@ class TaxonomyPage(Page):
             archive_meta["pages"] = pages
             archive_meta["category"] = category_page
             archive_meta["date"] = category_meta["date"]
-            archive_page = CategoryArchivePage(meta=archive_meta)
+            archive_meta["site_path"] = os.path.join(archive_meta["site_path"], category, "archive")
+            archive_page = CategoryArchivePage(self, meta=archive_meta)
             if not archive_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", archive_page)
             category_page.meta["archive"] = archive_page
@@ -229,18 +226,16 @@ class CategoryPage(Page):
     """
     TYPE = "category"
 
-    def __init__(self, taxonomy, name, meta):
-        relpath = os.path.join(taxonomy.site_relpath, name)
+    def __init__(self, parent: Page, name: str, meta: Meta):
         super().__init__(
-            site=taxonomy.site,
-            src=File(relpath=relpath),
-            site_relpath=relpath,
-            dst_relpath=os.path.join(relpath, "index.html"),
+            parent=parent,
+            src=None,
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
         # Category name
         self.name = name
         # Index of each page in the category sequence
-        self.page_index: Dict[Page, int] = {page.site_relpath: idx for idx, page in enumerate(self.meta["pages"])}
+        self.page_index: Dict[Page, int] = {page: idx for idx, page in enumerate(self.meta["pages"])}
 
     def to_dict(self):
         res = super().to_dict()
@@ -270,7 +265,7 @@ class CategoryPage(Page):
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
     def sequence(self, page):
-        idx = self.page_index.get(page.site_relpath)
+        idx = self.page_index.get(page)
         if idx is None:
             return None
 
@@ -306,14 +301,12 @@ class CategoryArchivePage(Page):
     """
     TYPE = "category_archive"
 
-    def __init__(self, meta):
+    def __init__(self, parent: Page, meta: Meta):
         category_page = meta["category"]
-        relpath = os.path.join(category_page.site_relpath, "archive")
         super().__init__(
-            site=category_page.site,
-            src=File(relpath=relpath),
-            site_relpath=relpath,
-            dst_relpath=os.path.join(relpath, "index.html"),
+            parent=parent,
+            src=None,
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Category name

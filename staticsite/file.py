@@ -11,8 +11,6 @@ class File(NamedTuple):
     """
     # Relative path to root
     relpath: str
-    # Root of the directory tree where the file was scanned
-    root: Optional[str] = None
     # Absolute path to the file
     abspath: Optional[str] = None
     # File stats if the file exists, else NOne
@@ -22,21 +20,20 @@ class File(NamedTuple):
         if self.abspath:
             return self.abspath
         else:
-            return f"{self.root} → {self.relpath}"
+            return self.relpath
 
     @classmethod
     def from_abspath(cls, tree_root: str, abspath: str):
         return cls(
                 relpath=os.path.relpath(abspath, tree_root),
-                root=tree_root,
                 abspath=abspath)
 
     @classmethod
-    def scan(cls, tree_root, follow_symlinks=False, ignore_hidden=False):
+    def scan(cls, abspath, follow_symlinks=False, ignore_hidden=False):
         """
         Scan tree_root, generating relative paths based on it
         """
-        for root, dnames, fnames, dirfd in os.fwalk(tree_root, follow_symlinks=follow_symlinks):
+        for root, dnames, fnames, dirfd in os.fwalk(abspath, follow_symlinks=follow_symlinks):
             if ignore_hidden:
                 # Ignore hidden directories
                 filtered = [d for d in dnames if not d.startswith(".")]
@@ -48,14 +45,13 @@ class File(NamedTuple):
                 if ignore_hidden and f.startswith("."):
                     continue
 
-                abspath = os.path.join(root, f)
                 try:
                     st = os.stat(f, dir_fd=dirfd)
                 except FileNotFoundError:
                     # Skip broken links
                     continue
+                relpath = os.path.join(root, f)
                 yield cls(
-                        relpath=os.path.relpath(abspath, tree_root),
-                        root=tree_root,
-                        abspath=abspath,
+                        relpath=relpath,
+                        abspath=os.path.join(abspath, relpath),
                         stat=st)

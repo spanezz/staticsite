@@ -27,6 +27,11 @@ ipython3
 You can use `devel/profile-view` to get some ready made statistics on profile
 data, and explore the profile results.
 
+You can also use [runsnakerun](http://www.vrplumber.com/programming/runsnakerun/)
+(in Debian, you currently need version 2.0.5 (not yet available in buster) to
+read python3 profile data).
+
+
 ## Linting
 
 Just run `flake8` in the project directory.

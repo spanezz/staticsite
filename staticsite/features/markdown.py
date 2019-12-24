@@ -9,7 +9,6 @@ import jinja2
 import os
 import io
 import markdown
-import tempfile
 import logging
 
 log = logging.getLogger("markdown")
@@ -153,8 +152,12 @@ class MarkdownPages(Feature):
             if not fname.endswith(".md"):
                 continue
 
+            meta = sitedir.meta_file(fname)
+            if fname not in ("index.md", "README.md"):
+                meta["site_path"] = os.path.join(meta["site_path"], fname[:-3])
+
             try:
-                page = MarkdownPage(self, f, meta=sitedir.meta_file(fname))
+                page = MarkdownPage(self, sitedir, f, meta=meta)
             except Exception as e:
                 log.warn("%s: Failed to parse markdown page: skipped", f)
                 log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=e)
@@ -195,17 +198,6 @@ class MarkdownPages(Feature):
         if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
-
-    def build_test_page(self, relpath: str, content: str = None, meta: Optional[Meta] = None) -> Page:
-        with tempfile.NamedTemporaryFile("wt", suffix=".md") as tf:
-            if content:
-                tf.write(content)
-            tf.flush()
-            src = File(relpath=relpath,
-                       root=None,
-                       abspath=os.path.abspath(tf.name),
-                       stat=os.stat(tf.fileno()))
-            return MarkdownPage(self, src, meta=meta)
 
 
 def parse_markdown_with_front_matter(fd):
@@ -282,17 +274,11 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, mdpages, src, meta: Meta):
-        dirname, basename = os.path.split(src.relpath)
-        if basename in ("index.md", "README.md"):
-            linkpath = dirname
-        else:
-            linkpath = os.path.splitext(src.relpath)[0]
+    def __init__(self, mdpages: MarkdownPages, parent: Optional[Page], src: Optional[File], meta: Meta):
         super().__init__(
-            site=mdpages.site,
+            parent=parent,
             src=src,
-            site_relpath=linkpath,
-            dst_relpath=os.path.join(linkpath, "index.html"),
+            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
         # Indexed by default

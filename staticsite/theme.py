@@ -9,7 +9,10 @@ import logging
 from pathlib import Path
 from .page import Page, PageNotFoundError
 from .utils import front_matter
+from .utils.typing import Meta
 from .page_filter import PageFilter, sort_args
+from .metadata import Metadata
+from .file import File
 
 log = logging.getLogger("theme")
 
@@ -83,6 +86,9 @@ class Theme:
         else:
             self.config = {}
 
+        # Cached list of metadata that are templates for other metadata
+        self.metadata_templates: Optional[List[Metadata]] = None
+
     def load_features(self):
         """
         Load feature modules from the features/ theme directory
@@ -92,13 +98,20 @@ class Theme:
             return
         self.site.features.load_feature_dir([features_dir.as_posix()])
 
-    def load_assets(self):
+    def scan_assets(self):
         """
         Load static assets
         """
+        meta = dict(self.site.content_roots[0].meta)
+        meta["asset"] = True
+        meta["site_path"] = os.path.join(meta["site_path"], "static")
+
         theme_static = self.root / "static"
         if theme_static.is_dir():
-            self.site.load_asset_tree(theme_static)
+            self.site.scan_tree(
+                src=File("", theme_static.resolve().as_posix(), theme_static.stat()),
+                meta=meta,
+            )
 
         # Load system assets from site settings and theme configuration
         system_assets = set(self.site.settings.SYSTEM_ASSETS)
@@ -108,7 +121,46 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            self.site.load_asset_tree("/usr/share/javascript", name)
+            meta = dict(meta)
+            meta["site_path"] = os.path.join("static", name)
+            # TODO: make this a child of the previously scanned static
+            self.site.scan_tree(
+                src=File(name, root, os.stat(root)),
+                meta=meta,
+            )
+
+    def precompile_metadata_templates(self, meta: Meta):
+        """
+        Precompile all the elements of the given metadata that are jinja2
+        template strings
+        """
+        if self.metadata_templates is None:
+            self.metadata_templates = [m for m in self.site.metadata.values() if m.template_for is not None]
+        for metadata in self.metadata_templates:
+            val = meta.get(metadata.name)
+            if val is None:
+                continue
+            if isinstance(val, str):
+                meta[metadata.name] = self.jinja2.from_string(val)
+
+    def render_metadata_templates(self, page: Page):
+        """
+        Render all the elements of the given metadata that are jinja2
+        template strings
+        """
+        if self.metadata_templates is None:
+            self.metadata_templates = [m for m in self.site.metadata.values() if m.template_for is not None]
+
+        for metadata in self.metadata_templates:
+            src = page.meta.get(metadata.name)
+            if src is None:
+                continue
+            if metadata.template_for in page.meta:
+                continue
+            if isinstance(src, str):
+                src = self.jinja2.from_string(src)
+                page.meta[metadata.name] = src
+            page.meta[metadata.template_for] = jinja2.Markup(page.render_template(src))
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)
@@ -178,30 +230,16 @@ class Theme:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
-        if isinstance(arg, str):
-            cur_page = context.get("page")
-            if cur_page is None:
-                log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
-                return ""
-            try:
-                page: Page = cur_page.resolve_path(arg)
-            except PageNotFoundError as e:
-                log.warn("%s+%s: url_for: %s", cur_page, context.name, e)
-                return ""
-        else:
-            page = arg
+        cur_page = context.get("page")
+        if cur_page is None:
+            log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
+            return ""
 
-        # Compute relative path
-        site_root = page.meta["site_root"]
-        if not site_root.startswith("/"):
-            site_root = "/" + site_root
-        path = os.path.join(site_root, page.site_relpath)
-
-        if absolute:
-            site_url = page.meta["site_url"].rstrip("/")
-            return site_url + path
-        else:
-            return path
+        try:
+            return cur_page.url_for(arg, absolute=absolute)
+        except PageNotFoundError as e:
+            log.warn("%s: %s", context.name, e)
+            return ""
 
     @jinja2.contextfunction
     def jinja2_site_pages(

@@ -7,8 +7,10 @@ from collections import defaultdict
 from .settings import Settings
 from .page import Page
 from .cache import Caches, DisabledCaches
-from .utils import lazy, open_dir_fd
+from .utils import lazy, open_dir_fd, timings
 from .metadata import Metadata
+from . import contents
+from .file import File
 import logging
 
 log = logging.getLogger("site")
@@ -40,7 +42,7 @@ class Site:
         # Repository of metadata descriptions
         self.metadata: Dict[str, Metadata] = {}
 
-        # Site pages indexed by site_relpath
+        # Site pages indexed by site_path
         self.pages: Dict[str, Page] = {}
 
         # Site pages indexed by src.relpath
@@ -96,6 +98,9 @@ class Site:
         # Content root for the website
         self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
 
+        # List of content roots scanned for this site
+        self.content_roots: List[contents.Dir] = []
+
         # Register well-known metadata
         self.register_metadata(Metadata("template", inherited=False, doc="""
 Template used to render the page. Defaults to `page.html`, although specific
@@ -129,7 +134,7 @@ If omitted:
    inherited.
  * if still no title can be found, the site name is used as a default.
 """))
-        self.register_metadata(Metadata("template_title", inherited=True, doc="""
+        self.register_metadata(Metadata("template_title", inherited=True, template_for="title", doc="""
 If set instead of title, it is a jinja2 template used to generate the title.
 The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
@@ -138,7 +143,7 @@ in it.
         self.register_metadata(Metadata("description", inherited=True, doc="""
 The page description. If omitted, the page will have no description.
 """))
-        self.register_metadata(Metadata("template_description", inherited=True, doc="""
+        self.register_metadata(Metadata("template_description", inherited=True, template_for="description", doc="""
 If set instead of description, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use
@@ -154,11 +159,14 @@ page. If missing, it defaults to the name of the content directory.
 Base URL for the site, used to generate an absolute URL to the page.
 """))
 
-        self.register_metadata(Metadata("site_root", inherited=True, doc="""
-Root directory of the site in URLs to the page.
+        self.register_metadata(Metadata("site_path", inherited=True, doc="""
+Where a content directory appears in the site.
+
+By default, is is the `site_path` of the parent directory, plus the directory
+name.
 
 If you are publishing the site at `/prefix` instead of the root of the domain,
-override this with `/prefix`.
+override this with `/prefix` in the content root.
 """))
 
         self.register_metadata(Metadata("asset", inherited=True, doc="""
@@ -249,73 +257,76 @@ It defaults to true at least for [Markdown](markdown.md),
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            meta["site_root"] = self.settings.SITE_ROOT
+            meta["site_path"] = self.settings.SITE_ROOT.lstrip("/")
+        else:
+            meta["site_path"] = ""
         if self.settings.SITE_NAME:
             meta["site_name"] = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
             meta["author"] = self.settings.SITE_AUTHOR
         return meta
 
-    def load_content(self, content_root=None):
+    def scan_content(self, content_root=None):
         """
-        Load site page and assets from the given directory.
-
-        Can be called multiple times.
+        Scan content root directories, building metadata for the directories in
+        the site tree
 
         :arg content_root: path to read contents from. If missing,
                            settings.CONTENT is used.
         """
-        from .contents import ContentDir
         if content_root is None:
             content_root = self.content_root
 
         if not self.stage_features_constructed:
-            log.warn("load_content called before site features have been loaded")
+            log.warn("scan_content called before site features have been loaded")
 
         if not os.path.exists(content_root):
             log.info("%s: content tree does not exist", content_root)
             return
-        else:
-            log.info("Loading pages from %s", content_root)
 
-        root = ContentDir(self, content_root, "", meta=self._settings_to_meta())
-        with open_dir_fd(content_root) as dir_fd:
+        src = File("", os.path.abspath(content_root), os.stat(content_root))
+        self.scan_tree(src, meta=self._settings_to_meta())
+        self.theme.scan_assets()
+        self.stage_content_directory_scanned = True
+
+    def scan_tree(self, src: File, meta: Meta):
+        """
+        Scan the contents of the given directory, mounting them under the given
+        site_path
+        """
+        # site_path: str = "", asset: bool = False):
+        # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
+        root = contents.Dir.create(None, src, meta=meta)
+        root.site = self
+        self.content_roots.append(root)
+        with open_dir_fd(src.abspath) as dir_fd:
             root.scan(dir_fd)
-            self.stage_content_directory_scanned = True
-            self.theme.load_assets()
-            root.load(dir_fd)
-            self.stage_content_directory_loaded = True
 
-    def load_asset_tree(self, tree_root, subdir=None):
+    def load_content(self):
         """
-        Read static assets from a directory and all its subdirectories
+        Load site page and assets from scanned content roots.
         """
-        from .contents import ContentDir
+        if not self.stage_content_directory_scanned:
+            log.warn("load_content called before site features have been loaded")
 
-        root_meta = self.dir_meta.get("")
-        if root_meta is None:
-            root_meta = self._settings_to_meta()
+        for root in self.content_roots:
+            with open_dir_fd(root.src.abspath) as dir_fd:
+                root.load(dir_fd)
 
-        if subdir:
-            log.info("Loading assets from %s / %s", tree_root, subdir)
-            with open_dir_fd(os.path.join(tree_root, subdir)) as dir_fd:
-                root = ContentDir(self, tree_root, subdir, dest_subdir="static", meta=root_meta)
-                root.scan(dir_fd)
-                root.load_assets(dir_fd)
-        else:
-            log.info("Loading assets from %s", tree_root)
-            with open_dir_fd(tree_root) as dir_fd:
-                root = ContentDir(self, tree_root, "", dest_subdir="static", meta=root_meta)
-                root.scan(dir_fd)
-                root.load_assets(dir_fd)
+        self.stage_content_directory_loaded = True
 
     def load(self, content_root=None):
         """
         Load all site components
         """
-        self.features.load_default_features()
-        self.load_theme()
-        self.load_content(content_root=content_root)
+        with timings("Loaded default features in %fs"):
+            self.features.load_default_features()
+        with timings("Loaded theme in %fs"):
+            self.load_theme()
+        with timings("Scanned contents in %fs"):
+            self.scan_content(content_root=content_root)
+        with timings("Loaded contents in %fs"):
+            self.load_content()
 
     def add_page(self, page: Page):
         """
@@ -325,42 +336,17 @@ It defaults to true at least for [Markdown](markdown.md),
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        old = self.pages.get(page.site_relpath)
+        site_path = page.meta["site_path"]
+        old = self.pages.get(site_path)
         if old is not None:
             log.warn("%s: replacing page %s", page, old)
-        self.pages[page.site_relpath] = page
-        self.pages_by_src_relpath[page.src.relpath] = page
+        self.pages[site_path] = page
+        if page.src is not None:
+            self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.tracked_metadata:
             self.pages_by_metadata[tracked].append(page)
-
-    def add_test_page(self, feature: str, relpath, *args, meta=None, **kw) -> Page:
-        """
-        Add a page instantiated using the given feature for the purpose of unit
-        testing.
-
-        :return: the Page added
-        """
-        if meta is None:
-            meta = {}
-        for k, v in self._settings_to_meta().items():
-            meta.setdefault(k, v)
-
-        # Populate directory metadata for all path components
-        path = relpath
-        while True:
-            path = os.path.dirname(path)
-            if path not in self.dir_meta:
-                self.dir_meta[path] = self._settings_to_meta()
-            if not path:
-                break
-
-        page = self.features[feature].build_test_page(relpath, *args, meta=meta, **kw)
-        if not page.is_valid():
-            raise RuntimeError("Tried to add an invalid test page")
-        self.add_page(page)
-        return page
 
     def analyze(self):
         """

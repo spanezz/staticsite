@@ -47,7 +47,7 @@ def sort_args(sort: Optional[str]) -> Tuple[Optional[str], bool, Optional[Callab
         sort = None
 
         def key(page):
-            return page.site_relpath
+            return page.meta["site_path"]
     else:
         def key(page):
             return page.meta.get(sort, None)
@@ -91,8 +91,11 @@ class PageFilter:
         for page in all_pages:
             if not page.meta["indexed"]:
                 continue
-            if self.re_path is not None and not self.re_path.match(page.src.relpath):
-                continue
+            if self.re_path is not None:
+                if page.src is None:
+                    continue
+                if not self.re_path.match(page.src.relpath):
+                    continue
             if self.sort_meta is not None and self.sort_meta not in page.meta:
                 continue
             fail_taxonomies = False
