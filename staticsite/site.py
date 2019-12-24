@@ -235,15 +235,7 @@ It defaults to true at least for [Markdown](markdown.md),
             candidate_themes = self.settings.THEME
             if isinstance(candidate_themes, str):
                 candidate_themes = (candidate_themes,)
-
-            for theme_root in candidate_themes:
-                theme_root = os.path.join(self.settings.PROJECT_ROOT, theme_root)
-                if os.path.isdir(theme_root):
-                    self.theme = Theme(self, Theme.load_config(theme_root, os.path.basename(theme_root)))
-                    break
-            else:
-                raise RuntimeError(
-                    f"No theme found for THEME_PATHS={self.settings.THEME_PATHS!r} and THEME={self.settings.THEME!r}")
+            self.theme = Theme.create_legacy(self, candidate_themes)
 
         self.theme.load()
 

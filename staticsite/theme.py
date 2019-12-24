@@ -52,10 +52,14 @@ class Loader:
         name = os.path.basename(path)
         config = self.load_config(path, name)
         self.configs[name] = config
+        self.deps[name]
 
         for parent in config["extends"]:
             self.load_configs(parent)
             self.deps[parent].add(name)
+
+        sorted_names = toposort.sort(self.deps)
+        return [self.configs[name] for name in sorted_names]
 
     def load_configs(self, name: str):
         """
@@ -114,9 +118,12 @@ class Loader:
 
 
 class Theme:
-    def __init__(self, site, configs: List[Meta]):
+    def __init__(self, site, name, configs: List[Meta]):
         # Site object
         self.site = site
+
+        # Template name
+        self.name = name
 
         # Configuration for this theme and all the dependencies, sorted from
         # the earliest dependency to the theme
@@ -128,15 +135,45 @@ class Theme:
         # Cached list of metadata that are templates for other metadata
         self.metadata_templates: Optional[List[Metadata]] = None
 
+        # Compute template lookup paths
+        self.template_lookup_paths: List[str] = [self.site.content_root]
+        for config in reversed(self.configs):
+            self.template_lookup_paths.append(config["root"])
+        log.info("%s: template lookup paths: %r", self.name, self.template_lookup_paths)
+
+        # Compute feature directories
+        self.feature_dirs = []
+        for config in self.configs:
+            features_dir = os.path.join(config["root"], "features")
+            if os.path.isdir(features_dir):
+                self.feature_dirs.append(features_dir)
+        log.info("%s: feature directories: %r", self.name, self.feature_dirs)
+
+        # Compute system asset names
+        self.system_assets = set(self.site.settings.SYSTEM_ASSETS)
+        for config in self.configs:
+            self.system_assets.update(config.get("system_assets", ()))
+        log.info("%s: system assets: %r", self.name, self.system_assets)
+
+        # Compute theme static asset dirs
+        self.theme_static_dirs = []
+        for config in self.configs:
+            theme_static = os.path.join(config["root"], "static")
+            if os.path.isdir(theme_static):
+                self.theme_static_dirs.append(theme_static)
+        log.info("%s: theme static directoreis: %r", self.name, self.theme_static_dirs)
+
     @classmethod
     def create(cls, site, name: str, search_paths: Sequence[str] = None) -> "Theme":
         """
         Create a Theme looking up its name in the theme search paths
         """
         if search_paths is None:
-            search_paths = site.settings.THEME_PATHS
+            search_paths = [
+                os.path.join(site.settings.PROJECT_ROOT, path) for path in site.settings.THEME_PATHS
+            ]
         loader = Loader(search_paths)
-        return cls(site, loader.load(name))
+        return cls(site, name, loader.load(name))
 
     @classmethod
     def create_legacy(cls, site, paths: Sequence[str]) -> "Theme":
@@ -148,15 +185,13 @@ class Theme:
         for root in paths:
             root = os.path.join(site.settings.PROJECT_ROOT, root)
             if os.path.isdir(root):
-                return cls(site, loader.load_legacy(root))
+                return cls(site, os.path.basename(root), loader.load_legacy(root))
 
         raise ThemeNotFoundError(f"Theme not found in {paths!r}")
 
     def load(self):
         # Load feature plugins from the theme directories
-        self.load_features()
-
-        # We are done adding features
+        self.site.features.load_feature_dir(self.feature_dirs)
         self.site.features.commit()
         self.site.stage_features_constructed = True
 
@@ -169,13 +204,8 @@ class Theme:
             from jinja2 import Environment
             env_cls = Environment
 
-        # Template lookup paths
-        lookup_paths = [self.site.content_root]
-        for config in reversed(self.configs):
-            lookup_paths.append(config["root"])
-
         self.jinja2 = env_cls(
-            loader=FileSystemLoader(lookup_paths),
+            loader=FileSystemLoader(self.template_lookup_paths),
             autoescape=True,
         )
 
@@ -208,17 +238,6 @@ class Theme:
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
-    def load_features(self):
-        """
-        Load feature modules from the features/ theme directory
-        """
-        dirs = []
-        for config in self.configs:
-            features_dir = os.path.join(config["root"], "features")
-            if not os.path.isdir(features_dir):
-                dirs.append(features_dir)
-        self.site.features.load_feature_dir(dirs)
-
     def scan_assets(self):
         """
         Load static assets
@@ -228,10 +247,7 @@ class Theme:
         meta["site_path"] = os.path.join(meta["site_path"], "static")
 
         # Load system assets from site settings and theme configurations
-        system_assets = set(self.site.settings.SYSTEM_ASSETS)
-        for config in self.configs:
-            system_assets.update(config.get("system_assets", ()))
-        for name in system_assets:
+        for name in self.system_assets:
             root = os.path.join("/usr/share/javascript", name)
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
@@ -245,13 +261,11 @@ class Theme:
             )
 
         # Load assets from theme directories
-        for config in self.configs:
-            theme_static = os.path.join(config["root"], "static")
-            if os.path.isdir(theme_static):
-                self.site.scan_tree(
-                    src=File("", os.path.abspath(theme_static), os.stat(theme_static)),
-                    meta=meta,
-                )
+        for path in self.theme_static_dirs:
+            self.site.scan_tree(
+                src=File("", os.path.abspath(path), os.stat(path)),
+                meta=meta,
+            )
 
     def precompile_metadata_templates(self, meta: Meta):
         """
