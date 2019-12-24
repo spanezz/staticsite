@@ -204,7 +204,7 @@ class Browser(cmd.Cmd):
                 if node.scope == "main":
                     nodes.append(node)
             if os.path.basename(node.fname) == "site.py":
-                if node.scope in ("load", "load_content", "load_theme", "analyze"):
+                if node.scope in ("load", "scan_content", "load_content", "load_theme", "analyze"):
                     nodes.append(node)
             if os.path.dirname(node.fname).endswith("staticsite/cmd"):
                 if node.scope == "run":
