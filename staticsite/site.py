@@ -239,7 +239,7 @@ It defaults to true at least for [Markdown](markdown.md),
             for theme_root in candidate_themes:
                 theme_root = os.path.join(self.settings.PROJECT_ROOT, theme_root)
                 if os.path.isdir(theme_root):
-                    self.theme = Theme(self, theme_root)
+                    self.theme = Theme(self, Theme.load_config(theme_root, os.path.basename(theme_root)))
                     break
             else:
                 raise RuntimeError(

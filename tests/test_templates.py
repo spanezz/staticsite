@@ -17,7 +17,7 @@ class MockPage:
 class TestTemplates(TestCase):
     def test_arrange(self):
         site = test_utils.Site()
-        theme = Theme(site, ".")
+        theme = Theme(site, {"root": ".", "name": "test"})
         theme.load()
 
         self.maxDiff = None

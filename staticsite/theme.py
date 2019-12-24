@@ -6,7 +6,6 @@ import re
 import datetime
 import heapq
 import logging
-from pathlib import Path
 from .page import Page, PageNotFoundError
 from .utils import front_matter
 from .utils.typing import Meta
@@ -22,26 +21,20 @@ class ThemeNotFoundError(Exception):
 
 
 class Theme:
-    def __init__(self, site, root):
+    def __init__(self, site, config: Meta):
         self.site = site
+        self.config = config
 
-        # Absolute path to the root of the theme directory
-        self.root = Path(os.path.abspath(root))
+        # Jinja2 Environment
+        self.jinja2 = None
 
         # Cached list of metadata that are templates for other metadata
         self.metadata_templates: Optional[List[Metadata]] = None
 
-        # Load theme configuration if present
-        config = self.root / "config"
-        if config.is_file():
-            with open(config, "rt") as fd:
-                lines = [line.rstrip() for line in fd]
-                fmt, self.config = front_matter.parse(lines)
-        else:
-            self.config = {}
+        # Root directories of parent themes, in topological order
+        self.parents = []
 
-        # Jinja2 Environment
-        self.jinja2 = None
+        # self.load_parents()
 
     @classmethod
     def create(cls, site, name: str, search_paths: Sequence[str] = None):
@@ -54,9 +47,34 @@ class Theme:
         for path in search_paths:
             root = os.path.join(path, name)
             if os.path.isdir(root):
-                return cls(site, root)
+                return cls(site, cls.load_config(root, name))
 
         raise ThemeNotFoundError(f"Theme {name!r} not found in {search_paths!r}")
+
+    @classmethod
+    def load_config(self, root: str, name: str):
+        pathname = os.path.join(root, "config")
+        if not os.path.isfile(pathname):
+            config = {}
+        else:
+            with open(pathname, "rt") as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, config = front_matter.parse(lines)
+
+        # Normalize 'extends' to a list of strings
+        extends = config.get("extends")
+        if extends is None:
+            config["extends"] = []
+        elif isinstance(extends, str):
+            config["extends"] = [extends]
+
+        # Theme name
+        config["name"] = name
+
+        # Absolute path to the root of the theme directory
+        config["root"] = os.path.abspath(root)
+
+        return config
 
     def load(self):
         # TODO: follow inheritance chain and build merged list of theme resources
@@ -80,7 +98,7 @@ class Theme:
         self.jinja2 = env_cls(
             loader=FileSystemLoader([
                 self.site.content_root,
-                self.root.as_posix(),
+                self.config["root"],
             ]),
             autoescape=True,
         )
@@ -118,10 +136,10 @@ class Theme:
         """
         Load feature modules from the features/ theme directory
         """
-        features_dir = self.root / "features"
-        if not features_dir.is_dir():
+        features_dir = os.path.join(self.config["root"], "features")
+        if not os.path.isdir(features_dir):
             return
-        self.site.features.load_feature_dir([features_dir.as_posix()])
+        self.site.features.load_feature_dir([features_dir])
 
     def scan_assets(self):
         """
@@ -131,10 +149,10 @@ class Theme:
         meta["asset"] = True
         meta["site_path"] = os.path.join(meta["site_path"], "static")
 
-        theme_static = self.root / "static"
-        if theme_static.is_dir():
+        theme_static = os.path.join(self.config["root"], "static")
+        if os.path.isdir(theme_static):
             self.site.scan_tree(
-                src=File("", theme_static.resolve().as_posix(), theme_static.stat()),
+                src=File("", os.path.abspath(theme_static), os.stat(theme_static)),
                 meta=meta,
             )
 
