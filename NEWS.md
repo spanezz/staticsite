@@ -30,6 +30,10 @@
 * `tags.html` is now `taxonomy/taxonomy.html`
 * `tag.html` is now `taxonomy/category.html`
 * `tag-archive.html` is now `taxonomy/archive.html`
+* `url_for` now always needs to access `page` from the current template
+  context. If you are importing template libraries like `lib/blog.html`, import
+  them [`with context`](https://jinja.palletsprojects.com/en/2.10.x/templates/#import-visibility)
+  so they can access `page`.
 
 
 # New in version 1.2
