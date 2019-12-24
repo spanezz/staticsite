@@ -22,6 +22,8 @@
   themes are looked up
 * `THEME`, if set to a string, it represent a name of a theme to be looked up
   under `THEME_PATHS`
+* Themes are now installed in `/usr/share/staticsite/themes`, making it
+  possible to make multiple themes available system-wide for use
 
 ## Upgrade notes
 
