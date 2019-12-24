@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 import os
 import logging
 import datetime
@@ -245,7 +245,7 @@ class Page:
 
             root = os.path.dirname(root)
 
-        raise PageNotFoundError(f"cannot resolve `{target}` relative to `{self}`")
+        raise PageNotFoundError(f"cannot resolve `{target!r}` relative to `{self!r}`")
 
     def resolve_url(self, url: str) -> str:
         """
@@ -268,15 +268,38 @@ class Page:
             return url
 
         try:
-            dest: "Page" = self.resolve_path(parsed.path)
+            dest = self.url_for(parsed.path)
         except PageNotFoundError as e:
             log.warn("%s", e)
             return url
 
+        dest = urlparse(dest)
+
         return urlunparse(
-            (parsed.scheme, parsed.netloc, "/" + dest.meta["site_path"],
+            (dest.scheme, dest.netloc, dest.path,
              parsed.params, parsed.query, parsed.fragment)
         )
+
+    def url_for(self, arg: Union[str, "Page"], absolute=False) -> str:
+        """
+        Generate a URL for a page, specified by path or with the page itself
+        """
+        page: "Page"
+
+        if isinstance(arg, str):
+            page = self.resolve_path(arg)
+        else:
+            page = arg
+
+        # If the destination has a different site_url, generate an absolute url
+        if self.meta["site_url"] != page.meta["site_url"]:
+            absolute = True
+
+        if absolute:
+            site_url = page.meta["site_url"].rstrip("/")
+            return f"{site_url}/{page.meta['site_path']}"
+        else:
+            return "/" + page.meta["site_path"]
 
     def check(self, checker):
         pass

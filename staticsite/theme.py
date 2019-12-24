@@ -192,24 +192,16 @@ class Theme:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
-        if isinstance(arg, str):
-            cur_page = context.get("page")
-            if cur_page is None:
-                log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
-                return ""
-            try:
-                page: Page = cur_page.resolve_path(arg)
-            except PageNotFoundError as e:
-                log.warn("%s+%s: url_for: %s", cur_page, context.name, e)
-                return ""
-        else:
-            page = arg
+        cur_page = context.get("page")
+        if cur_page is None:
+            log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
+            return ""
 
-        if absolute:
-            site_url = page.meta["site_url"].rstrip("/")
-            return f"{site_url}/{page.meta['site_path']}"
-        else:
-            return "/" + page.meta["site_path"]
+        try:
+            return cur_page.url_for(arg, absolute=absolute)
+        except PageNotFoundError as e:
+            log.warn("%s: %s", context.name, e)
+            return ""
 
     @jinja2.contextfunction
     def jinja2_site_pages(
