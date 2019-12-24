@@ -212,3 +212,87 @@ class TestSiteName(TestCase):
             self.assertEqual(site.pages[""].meta["site_name"], "Site Name title")
             self.assertEqual(site.pages["page"].meta["site_name"], "Site Name title")
             self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name title")
+
+
+class TestFields(TestCase):
+    def test_date(self):
+        self.maxDiff = None
+
+        files = {
+            "index.html": """
+{% block front_matter %}
+---
+title: Test1 title
+date: 2000-01-01 00:00:00
+{% endblock %}""",
+            "page.md": """---
+date: 2005-01-01 00:00:00
+---
+""",
+            "page1.yaml": """---
+type: test
+date: 2010-01-01 00:00:00
+""",
+        }
+
+        with test_utils.workdir(files) as root:
+            site = test_utils.Site(SITE_NAME=None, CONTENT=root)
+            site.load()
+            site.analyze()
+
+            j2page = site.pages[""]
+            mdpage = site.pages["page"]
+            datapage = site.pages["page1"]
+
+            self.assertEqual(j2page.to_dict(), {
+                "src": {
+                    "relpath": "index.html",
+                    "abspath": os.path.join(root, "index.html"),
+                },
+                "meta": {
+                    "date": '2000-01-01 00:00:00+01:00',
+                    'indexed': False,
+                    'site_name': 'Test1 title',
+                    'site_path': '',
+                    'site_url': 'https://www.example.org',
+                    'template': 'compiled:index.html',
+                    'title': 'Test1 title',
+                },
+                "dst_relpath": "index.html",
+            })
+
+            self.assertEqual(mdpage.to_dict(), {
+                "src": {
+                    "relpath": "page.md",
+                    "abspath": os.path.join(root, "page.md"),
+                },
+                "meta": {
+                    "date": '2005-01-01 00:00:00+01:00',
+                    'indexed': True,
+                    'site_name': 'Test1 title',
+                    'site_path': 'page',
+                    'site_url': 'https://www.example.org',
+                    'template': 'page.html',
+                    'title': 'Test1 title',
+                },
+                "dst_relpath": "page/index.html",
+            })
+
+            self.assertEqual(datapage.to_dict(), {
+                "src": {
+                    "relpath": "page1.yaml",
+                    "abspath": os.path.join(root, "page1.yaml"),
+                },
+                "meta": {
+                    "date": '2010-01-01 00:00:00+01:00',
+                    'indexed': True,
+                    'site_name': 'Test1 title',
+                    'site_path': 'page1',
+                    'site_url': 'https://www.example.org',
+                    'template': 'compiled:data.html',
+                    'title': 'Test1 title',
+                    'type': 'test',
+                },
+                'data': {'date': '2010-01-01 00:00:00', 'type': 'test'},
+                "dst_relpath": "page1/index.html",
+            })

@@ -302,7 +302,6 @@ class Page:
         res = {
             "src": {
                 "relpath": str(self.src.relpath),
-                "root": str(self.src.root),
                 "abspath": str(self.src.abspath),
             },
             "dst_relpath": str(self.dst_relpath),
