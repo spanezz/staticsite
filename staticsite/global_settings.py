@@ -34,8 +34,8 @@ CONTENT: Optional[str] = None
 
 # Directories where themes are looked for
 THEME_PATHS: Sequence[str] = [
+        os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "themes")),
         "/usr/share/staticsite/themes",
-        os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "themes"))
 ]
 
 # Theme used to render the site.
