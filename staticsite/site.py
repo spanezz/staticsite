@@ -215,15 +215,21 @@ It defaults to true at least for [Markdown](markdown.md),
         from .archetypes import Archetypes
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
 
-    def find_theme_root(self) -> str:
+    def load_theme(self):
         """
-        Choose a theme root from the ones listed in the configuration
+        Load a theme from the given directory.
+
+        This needs to be called once (and only once) before analyze() is
+        called.
         """
+        from .theme import Theme
+
+        if self.theme is not None:
+            raise RuntimeError(
+                    F"load_theme called while a theme was already loaded from {self.theme.root}")
+
         if isinstance(self.settings.THEME, str):
-            for path in self.settings.THEME_PATHS:
-                theme_root = os.path.join(path, self.settings.THEME)
-                if os.path.isdir(theme_root):
-                    return theme_root
+            self.theme = Theme.create(self, self.settings.THEME)
         else:
             # Pick the first valid theme directory
             candidate_themes = self.settings.THEME
@@ -233,26 +239,13 @@ It defaults to true at least for [Markdown](markdown.md),
             for theme_root in candidate_themes:
                 theme_root = os.path.join(self.settings.PROJECT_ROOT, theme_root)
                 if os.path.isdir(theme_root):
-                    return theme_root
+                    self.theme = Theme(self, theme_root)
+                    break
+            else:
+                raise RuntimeError(
+                    f"No theme found for THEME_PATHS={self.settings.THEME_PATHS!r} and THEME={self.settings.THEME!r}")
 
-        raise RuntimeError(
-                f"No theme found for THEME_PATHS={self.settings.THEME_PATHS!r} and THEME={self.settings.THEME!r}")
-
-    def load_theme(self):
-        """
-        Load a theme from the given directory.
-
-        This needs to be called once (and only once) before analyze() is
-        called.
-        """
-        if self.theme is not None:
-            raise RuntimeError(
-                    F"load_theme called while a theme was already loaded from {self.theme.root}")
-
-        theme_root = self.find_theme_root()
-
-        from .theme import Theme
-        self.theme = Theme(self, theme_root)
+        self.theme.load()
 
     def _settings_to_meta(self) -> Meta:
         """

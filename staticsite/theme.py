@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Sequence
 import jinja2
 import os
 import re
@@ -17,12 +17,49 @@ from .file import File
 log = logging.getLogger("theme")
 
 
+class ThemeNotFoundError(Exception):
+    pass
+
+
 class Theme:
     def __init__(self, site, root):
         self.site = site
 
         # Absolute path to the root of the theme directory
         self.root = Path(os.path.abspath(root))
+
+        # Cached list of metadata that are templates for other metadata
+        self.metadata_templates: Optional[List[Metadata]] = None
+
+        # Load theme configuration if present
+        config = self.root / "config"
+        if config.is_file():
+            with open(config, "rt") as fd:
+                lines = [line.rstrip() for line in fd]
+                fmt, self.config = front_matter.parse(lines)
+        else:
+            self.config = {}
+
+        # Jinja2 Environment
+        self.jinja2 = None
+
+    @classmethod
+    def create(cls, site, name: str, search_paths: Sequence[str] = None):
+        """
+        Create a Theme looking up its name in the theme search paths
+        """
+        if search_paths is None:
+            search_paths = site.settings.THEME_PATHS
+
+        for path in search_paths:
+            root = os.path.join(path, name)
+            if os.path.isdir(root):
+                return cls(site, root)
+
+        raise ThemeNotFoundError(f"Theme {name!r} not found in {search_paths!r}")
+
+    def load(self):
+        # TODO: follow inheritance chain and build merged list of theme resources
 
         # Load feature plugins from the theme directory
         self.load_features()
@@ -76,18 +113,6 @@ class Theme:
         for feature in self.site.features.ordered():
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
-
-        # Load theme configuration if present
-        config = self.root / "config"
-        if config.is_file():
-            with open(config, "rt") as fd:
-                lines = [line.rstrip() for line in fd]
-                fmt, self.config = front_matter.parse(lines)
-        else:
-            self.config = {}
-
-        # Cached list of metadata that are templates for other metadata
-        self.metadata_templates: Optional[List[Metadata]] = None
 
     def load_features(self):
         """

@@ -18,6 +18,7 @@ class TestTemplates(TestCase):
     def test_arrange(self):
         site = test_utils.Site()
         theme = Theme(site, ".")
+        theme.load()
 
         self.maxDiff = None
 
