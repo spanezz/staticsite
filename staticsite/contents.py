@@ -220,6 +220,7 @@ class ContentDir(Dir):
     """
     Content path which uses features for content loading
     """
+    @with_dir_fd
     def load(self, dir_fd: int):
         """
         Read static assets and pages from this directory and all its subdirectories
@@ -281,6 +282,7 @@ class AssetDir(ContentDir):
     """
     Content path which loads everything as assets
     """
+    @with_dir_fd
     def load(self, dir_fd: int):
         """
         Read static assets from this directory and all its subdirectories

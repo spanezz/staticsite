@@ -57,9 +57,14 @@ class DataPages(Feature):
             if not mo:
                 continue
 
-            data = load_data(src, mo.group(1))
-            if data is None:
-                continue
+            fmt = mo.group(1)
+
+            with sitedir.open(fname, src, "rt") as fd:
+                try:
+                    data = parse_data(fd, fmt)
+                except Exception:
+                    log.exception("%s: failed to parse %s content", src.relpath, fmt)
+                    continue
 
             try:
                 type = data.get("type", None)
@@ -109,15 +114,6 @@ class DataPages(Feature):
     def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
         return page_filter.filter(self.by_type.get(type, []))
-
-
-def load_data(src, fmt):
-    with open(src.abspath, "rt") as fd:
-        try:
-            return parse_data(fd, fmt)
-        except Exception:
-            log.exception("%s: failed to parse %s content", src.relpath, fmt)
-            return
 
 
 def parse_data(fd, fmt):
