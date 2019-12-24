@@ -225,7 +225,7 @@ class Browser(cmd.Cmd):
 
         def add_callees(n, depth=0):
             # Max tree depth
-            if depth > 6:
+            if depth > 3:
                 return
 
             # Add all callees to the menu
