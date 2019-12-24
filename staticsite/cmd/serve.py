@@ -131,6 +131,12 @@ class ServerMixin:
         gc.collect()
         return site
 
+    def get_source_dirs(self, site):
+        dirs = list(site.theme.feature_dirs) + list(site.theme.template_lookup_paths)
+        for name in site.theme.system_assets:
+            dirs.append(os.path.join("/usr/share/javascript", name))
+        return dirs
+
 
 class Serve(ServerMixin, SiteCommand):
     "Serve the site over HTTP, building it in memory on demand"
@@ -146,7 +152,7 @@ class Serve(ServerMixin, SiteCommand):
 
     def run(self):
         site = self.reload()
-        server = self.make_server([site.content_root, site.theme.root])
+        server = self.make_server(self.get_source_dirs(site))
         server.serve(port=self.args.port, host=self.args.host)
 
 
@@ -169,7 +175,7 @@ class Show(ServerMixin, Command):
 
     def run(self):
         site = self.reload()
-        server = self.make_server([site.content_root, site.theme.root])
+        server = self.make_server(self.get_source_dirs(site))
         arg_no_start = self.args.no_start
         arg_port = self.args.port
         arg_host = self.args.host

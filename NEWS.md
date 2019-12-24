@@ -18,6 +18,14 @@
   appears in the target site. This replaces
   [`settings.SITE_ROOT`](doc/settings.md), which now acts as a default
   `site_path` for the toplevel directory.
+* Added `THEME_PATHS` [settings](doc/settings.md), as a sequence of paths where
+  themes are looked up
+* `THEME`, if set to a string, it represent a name of a theme to be looked up
+  under `THEME_PATHS`
+* Themes are now installed in `/usr/share/staticsite/themes`, making it
+  possible to make multiple themes available system-wide for use
+* Themes can now inherit from other themes. See [theme documentation](doc/theme.md)
+  for details
 
 ## Upgrade notes
 

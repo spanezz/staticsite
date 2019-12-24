@@ -1,2 +1,0 @@
-{% from 'syndication.xml' import rss2_feed -%}
-{{rss2_feed(pages[:15], link=url_for_tag(tag), title=SITE_NAME + ": " + tag.name)}}

@@ -21,8 +21,13 @@ overridden by `settings.py` or `.staticsite.py`.
 
 * `CONTENT`: Directory with the source content of the site. Defaults to
   `PROJECT_ROOT`
-* `THEME`: Theme used to render the site. A sequence of strings is tried in
-  order. Defaults to `("/usr/share/doc/staticsite/example/theme/", "theme")`
+* `THEME_PATHS`: Sequence of directory names where themes are looked up.
+  It defaults to `/usr/share/staticsite/themes`, and a `themes` directory next
+  to the `ssite` executable.
+* `THEME`: Theme used to render the site, as a directory name to be looked up
+  in `THEME_PATHS`. For backwards compatibility, if it is a sequence of
+  strings, it is taken as a sequence of paths to theme directories to try in
+  order. Defaults to `default`.
 * `SYSTEM_ASSETS`: Names of static asset directories to add from
   `/usr/share/javascript`. Defaults to the empty list.
 

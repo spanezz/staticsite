@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Dict, Any
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
-from staticsite import Page, Site
+from staticsite import Page
 from staticsite.metadata import Metadata
 import os
 import logging

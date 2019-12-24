@@ -1,6 +1,5 @@
 from unittest import TestCase
 from staticsite.cmd.build import Build
-from staticsite.settings import Settings
 from staticsite import Site
 from . import utils as test_utils
 import os
@@ -10,7 +9,7 @@ class TestSite(TestCase):
     def test_meta(self):
         with test_utils.assert_no_logs():
             with test_utils.example_site() as root:
-                settings = Settings()
+                settings = test_utils.TestSettings()
                 settings.load(os.path.join(root, "settings.py"))
                 if settings.PROJECT_ROOT is None:
                     settings.PROJECT_ROOT = root
@@ -37,6 +36,7 @@ class TestBuild(TestCase):
             with test_utils.example_site() as root:
                 args = test_utils.Args(project=root)
                 build = Build(args)
+                build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))
                 build.run()
 
                 output = os.path.join(root, "web/.secret")
@@ -49,6 +49,7 @@ class TestBuild(TestCase):
             with test_utils.example_site() as root:
                 args = test_utils.Args(project=root)
                 build = Build(args)
+                build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))
                 build.run()
 
                 output = os.path.join(root, "web/pages/index.html")

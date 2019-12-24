@@ -11,7 +11,7 @@ CONTENT = "content"
 
 # Theme used to render the site. A sequence of strings is tried in order.
 # Default: the one installed in the system
-THEME = "theme"
+THEME = "default"
 
 # Directory with "archetypes" (templates used by ssite new)
 # ARCHETYPES = "archetypes"

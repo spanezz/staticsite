@@ -2,10 +2,11 @@
 
 srcname = staticsite
 version = $(shell sed -nre 's/.*version[ ]*=[ ]*"([^"]+)".*/\1/p' setup.py)
+themedir = /usr/share/staticsite/themes
 
 # See https://wiki.debian.org/Python/Pybuild
-export PYBUILD_BEFORE_TEST=cp -r {dir}/example {build_dir}
-export PYBUILD_AFTER_TEST=rm -rf {build_dir}/example
+export PYBUILD_BEFORE_TEST=cp -r {dir}/example {dir}/themes {build_dir}
+export PYBUILD_AFTER_TEST=rm -rf {build_dir}/example {build_dir}/themes
 
 
 %:
@@ -24,14 +25,14 @@ override_dh_compress:
 override_dh_installdocs:
 	dh_installdocs
 	# Remove vendored front end libraries
-	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/jquery
-	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/popper.js
-	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/bootstrap4
-	rm -r debian/staticsite/usr/share/doc/staticsite/example/theme/static/fork-awesome
+	rm -r debian/staticsite$(themedir)/default/static/jquery
+	rm -r debian/staticsite$(themedir)/default/static/popper.js
+	rm -r debian/staticsite$(themedir)/default/static/bootstrap4
+	rm -r debian/staticsite$(themedir)/default/static/fork-awesome
 	# Configure example site to use system versions instead
-	echo '---' > debian/staticsite/usr/share/doc/staticsite/example/theme/config
-	echo '# System-distributed assets in use' >> debian/staticsite/usr/share/doc/staticsite/example/theme/config
-	echo 'system_assets: [jquery, popper.js, bootstrap4, fork-awesome]' >> debian/staticsite/usr/share/doc/staticsite/example/theme/config
+	echo '---' > debian/staticsite$(themedir)/default/config
+	echo '# System-distributed assets in use' >> debian/staticsite$(themedir)/default/config
+	echo 'system_assets: [jquery, popper.js, bootstrap4, fork-awesome]' >> debian/staticsite$(themedir)/default/config
 
 
 debsrc:

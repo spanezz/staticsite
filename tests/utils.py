@@ -11,8 +11,9 @@ from staticsite.utils import front_matter
 
 class TestSettings(Settings):
     def __init__(self, **kw):
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         kw.setdefault("CACHE_REBUILDS", False)
-        kw.setdefault("THEME", datafile_abspath("theme"))
+        kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
         super().__init__()
         for k, v in kw.items():
             setattr(self, k, v)

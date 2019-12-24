@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Optional, Sequence, Dict, Any
+from typing import Optional, Sequence, Dict, Any, Union
+import sys
 import os
 
 # Default settings
@@ -31,9 +32,16 @@ ARCHETYPES: str = "archetypes"
 # Default if None: PROJECT_ROOT
 CONTENT: Optional[str] = None
 
-# Theme used to render the site. A sequence of strings is tried in order.
-# Default: the one installed in the system
-THEME: Sequence[str] = ("/usr/share/doc/staticsite/example/theme/", "theme")
+# Directories where themes are looked for
+THEME_PATHS: Sequence[str] = [
+        os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "themes")),
+        "/usr/share/staticsite/themes",
+]
+
+# Theme used to render the site.
+# For compatibility, if it is a sequence of strings, it is treated as a list of
+# full paths to theme directories to try in order
+THEME: Union[str, Sequence[str]] = "default"
 
 # Directory where the static site will be written by build
 # If None, require providing it explicitly to build

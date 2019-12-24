@@ -28,7 +28,7 @@ Example blog post in reStructuredText
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(THEME="example/theme")
+            site = test_utils.Site()
             site.load(content_root=root)
             site.analyze()
 
