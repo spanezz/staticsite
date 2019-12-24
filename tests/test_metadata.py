@@ -251,7 +251,7 @@ date: 2010-01-01 00:00:00
                 },
                 "meta": {
                     "date": '2000-01-01 00:00:00+01:00',
-                    'indexed': False,
+                    'indexed': True,
                     'site_name': 'Test1 title',
                     'site_path': '',
                     'site_url': 'https://www.example.org',

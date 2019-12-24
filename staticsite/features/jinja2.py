@@ -111,6 +111,9 @@ class J2Page(Page):
             dst_relpath=dst_relpath,
             meta=meta)
 
+        # Indexed by default
+        self.meta.setdefault("indexed", True)
+
         try:
             template = self.site.theme.jinja2.get_template(self.src.relpath)
         except Exception:

@@ -95,9 +95,11 @@ both syndication and page listing.
             if add_to:
                 f = PageFilter(self.site, **add_to)
                 for dest in f.filter(self.site.pages.values()):
+                    if dest == page:
+                        continue
                     old = dest.meta.get("syndication")
                     if old is not None:
-                        log.warn("%s: attempted to add meta.syndication from %s, but it already has it from %s",
+                        log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
                                  dest, page, old["index"])
                     dest.meta["syndication"] = syndication_meta
 
