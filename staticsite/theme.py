@@ -1,17 +1,19 @@
 from __future__ import annotations
-from typing import List, Optional, Union, Sequence
+from typing import List, Optional, Union, Sequence, Dict, Set
 import jinja2
 import os
 import re
 import datetime
 import heapq
 import logging
+from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter
 from .utils.typing import Meta
 from .page_filter import PageFilter, sort_args
 from .metadata import Metadata
 from .file import File
+from . import toposort
 
 log = logging.getLogger("theme")
 
@@ -20,39 +22,73 @@ class ThemeNotFoundError(Exception):
     pass
 
 
-class Theme:
-    def __init__(self, site, config: Meta):
-        self.site = site
-        self.config = config
+class Loader:
+    """
+    Theme loader, resolving theme dependency chains
+    """
+    def __init__(self, search_paths: Sequence[str]):
+        # Sequence of search paths to use to resolve theme names
+        self.search_paths = search_paths
+        # Configurations by name
+        self.configs: Dict[str, Meta] = {}
+        # Dependency graph of themes
+        self.deps: Dict[str, Set[str]] = defaultdict(set)
 
-        # Jinja2 Environment
-        self.jinja2 = None
-
-        # Cached list of metadata that are templates for other metadata
-        self.metadata_templates: Optional[List[Metadata]] = None
-
-        # Root directories of parent themes, in topological order
-        self.parents = []
-
-        # self.load_parents()
-
-    @classmethod
-    def create(cls, site, name: str, search_paths: Sequence[str] = None):
+    def load(self, name: str) -> List[Meta]:
         """
-        Create a Theme looking up its name in the theme search paths
-        """
-        if search_paths is None:
-            search_paths = site.settings.THEME_PATHS
+        Load the configuration of the given theme and all its dependencies.
 
-        for path in search_paths:
+        Return the list of all the resulting configurations in topological
+        order, with the bottom-most dependency first and the named theme last
+        """
+        self.load_configs(name)
+        sorted_names = toposort.sort(self.deps)
+        return [self.configs[name] for name in sorted_names]
+
+    def load_legacy(self, path: str) -> List[Meta]:
+        """
+        Same as load, but start with a path to an initial theme
+        """
+        name = os.path.basename(path)
+        config = self.load_config(path, name)
+        self.configs[name] = config
+
+        for parent in config["extends"]:
+            self.load_configs(parent)
+            self.deps[parent].add(name)
+
+    def load_configs(self, name: str):
+        """
+        Populate self.configs with the configuration of the named theme,
+        preceded by all its dependencies
+        """
+        if name in self.configs:
+            log.warn("%s: dependency loop found between themes: ignoring dependency", name)
+            return
+
+        config = self.load_config(self.find_root(name), name)
+        self.configs[name] = config
+        self.deps[name]
+
+        for parent in config["extends"]:
+            self.load_configs(parent)
+            self.deps[parent].add(name)
+
+    def find_root(self, name: str) -> str:
+        """
+        Lookup the root directory of a theme by name
+        """
+        for path in self.search_paths:
             root = os.path.join(path, name)
             if os.path.isdir(root):
-                return cls(site, cls.load_config(root, name))
+                return root
 
-        raise ThemeNotFoundError(f"Theme {name!r} not found in {search_paths!r}")
+        raise ThemeNotFoundError(f"Theme {name!r} not found in {self.search_paths!r}")
 
-    @classmethod
-    def load_config(self, root: str, name: str):
+    def load_config(self, root: str, name: str) -> Meta:
+        """
+        Load the configuration for the given named theme
+        """
         pathname = os.path.join(root, "config")
         if not os.path.isfile(pathname):
             config = {}
@@ -76,10 +112,48 @@ class Theme:
 
         return config
 
-    def load(self):
-        # TODO: follow inheritance chain and build merged list of theme resources
 
-        # Load feature plugins from the theme directory
+class Theme:
+    def __init__(self, site, configs: List[Meta]):
+        # Site object
+        self.site = site
+
+        # Configuration for this theme and all the dependencies, sorted from
+        # the earliest dependency to the theme
+        self.configs = configs
+
+        # Jinja2 Environment
+        self.jinja2 = None
+
+        # Cached list of metadata that are templates for other metadata
+        self.metadata_templates: Optional[List[Metadata]] = None
+
+    @classmethod
+    def create(cls, site, name: str, search_paths: Sequence[str] = None) -> "Theme":
+        """
+        Create a Theme looking up its name in the theme search paths
+        """
+        if search_paths is None:
+            search_paths = site.settings.THEME_PATHS
+        loader = Loader(search_paths)
+        return cls(site, loader.load(name))
+
+    @classmethod
+    def create_legacy(cls, site, paths: Sequence[str]) -> "Theme":
+        """
+        Create a theme from a list of possible theme paths
+        """
+        loader = Loader(site.settings.THEME_PATHS)
+
+        for root in paths:
+            root = os.path.join(site.settings.PROJECT_ROOT, root)
+            if os.path.isdir(root):
+                return cls(site, loader.load_legacy(root))
+
+        raise ThemeNotFoundError(f"Theme not found in {paths!r}")
+
+    def load(self):
+        # Load feature plugins from the theme directories
         self.load_features()
 
         # We are done adding features
@@ -95,11 +169,13 @@ class Theme:
             from jinja2 import Environment
             env_cls = Environment
 
+        # Template lookup paths
+        lookup_paths = [self.site.content_root]
+        for config in reversed(self.configs):
+            lookup_paths.append(config["root"])
+
         self.jinja2 = env_cls(
-            loader=FileSystemLoader([
-                self.site.content_root,
-                self.config["root"],
-            ]),
+            loader=FileSystemLoader(lookup_paths),
             autoescape=True,
         )
 
@@ -136,10 +212,12 @@ class Theme:
         """
         Load feature modules from the features/ theme directory
         """
-        features_dir = os.path.join(self.config["root"], "features")
-        if not os.path.isdir(features_dir):
-            return
-        self.site.features.load_feature_dir([features_dir])
+        dirs = []
+        for config in self.configs:
+            features_dir = os.path.join(config["root"], "features")
+            if not os.path.isdir(features_dir):
+                dirs.append(features_dir)
+        self.site.features.load_feature_dir(dirs)
 
     def scan_assets(self):
         """
@@ -149,16 +227,10 @@ class Theme:
         meta["asset"] = True
         meta["site_path"] = os.path.join(meta["site_path"], "static")
 
-        theme_static = os.path.join(self.config["root"], "static")
-        if os.path.isdir(theme_static):
-            self.site.scan_tree(
-                src=File("", os.path.abspath(theme_static), os.stat(theme_static)),
-                meta=meta,
-            )
-
-        # Load system assets from site settings and theme configuration
+        # Load system assets from site settings and theme configurations
         system_assets = set(self.site.settings.SYSTEM_ASSETS)
-        system_assets.update(self.config.get("system_assets", ()))
+        for config in self.configs:
+            system_assets.update(config.get("system_assets", ()))
         for name in system_assets:
             root = os.path.join("/usr/share/javascript", name)
             if not os.path.isdir(root):
@@ -171,6 +243,15 @@ class Theme:
                 src=File(name, root, os.stat(root)),
                 meta=meta,
             )
+
+        # Load assets from theme directories
+        for config in self.configs:
+            theme_static = os.path.join(config["root"], "static")
+            if os.path.isdir(theme_static):
+                self.site.scan_tree(
+                    src=File("", os.path.abspath(theme_static), os.stat(theme_static)),
+                    meta=meta,
+                )
 
     def precompile_metadata_templates(self, meta: Meta):
         """

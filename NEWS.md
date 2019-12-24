@@ -24,6 +24,8 @@
   under `THEME_PATHS`
 * Themes are now installed in `/usr/share/staticsite/themes`, making it
   possible to make multiple themes available system-wide for use
+* Themes can now inherit from other themes. See [theme documentation](doc/theme.md)
+  for details
 
 ## Upgrade notes
 

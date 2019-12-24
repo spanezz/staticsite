@@ -221,7 +221,6 @@ class Page:
             if res is not None:
                 return res
 
-            # print("RES", res)
             if not root:
                 break
 
