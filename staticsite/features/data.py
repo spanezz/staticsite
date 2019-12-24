@@ -46,16 +46,13 @@ class DataPages(Feature):
         self.page_class_by_type[type] = cls
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
-        # meta = sitedir.meta_features.get("md")
-        # if meta is None:
-        #     meta = {}
-
         taken = []
         pages = []
         for fname, src in sitedir.files.items():
             mo = re_ext.search(fname)
             if not mo:
                 continue
+            taken.append(fname)
 
             fmt = mo.group(1)
 
@@ -89,7 +86,6 @@ class DataPages(Feature):
             data_type = page.meta.get("type")
             self.by_type[data_type].append(page)
 
-            taken.append(fname)
             pages.append(page)
 
         for fname in taken:

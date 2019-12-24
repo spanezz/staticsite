@@ -151,6 +151,7 @@ class MarkdownPages(Feature):
         for fname, f in sitedir.files.items():
             if not fname.endswith(".md"):
                 continue
+            taken.append(fname)
 
             meta = sitedir.meta_file(fname)
             if fname not in ("index.md", "README.md"):
@@ -166,7 +167,6 @@ class MarkdownPages(Feature):
             if not page.is_valid():
                 continue
 
-            taken.append(fname)
             pages.append(page)
 
         for fname in taken:

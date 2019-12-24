@@ -59,6 +59,7 @@ element.
         for fname, src in sitedir.files.items():
             if not fname.endswith(".taxonomy"):
                 continue
+            taken.append(fname)
 
             name = fname[:-9]
 
@@ -69,7 +70,6 @@ element.
             if not page.is_valid():
                 continue
             self.taxonomies[page.name] = page
-            taken.append(fname)
             pages.append(page)
 
         for fname in taken:

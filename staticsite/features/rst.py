@@ -160,6 +160,7 @@ class RestructuredText(Feature):
         for fname, f in sitedir.files.items():
             if not fname.endswith(".rst"):
                 continue
+            taken.append(fname)
 
             meta = sitedir.meta_file(fname)
             if fname not in ("index.rst", "README.rst"):
@@ -175,7 +176,6 @@ class RestructuredText(Feature):
             if not page.is_valid():
                 continue
 
-            taken.append(fname)
             pages.append(page)
 
         for fname in taken:
