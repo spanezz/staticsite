@@ -9,7 +9,6 @@ from .utils.typing import Meta
 from .render import RenderedString
 import jinja2
 import dateutil.parser
-import staticsite
 
 log = logging.getLogger("page")
 

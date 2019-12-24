@@ -274,7 +274,7 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, mdpages, parent, src, meta: Meta):
+    def __init__(self, mdpages: MarkdownPages, parent: Optional[Page], src: Optional[File], meta: Meta):
         super().__init__(
             parent=parent,
             src=src,

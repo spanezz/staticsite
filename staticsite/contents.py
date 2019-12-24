@@ -1,16 +1,29 @@
 from __future__ import annotations
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 from .utils import front_matter, open_dir_fd
 from .utils.typing import Meta
 from .page_filter import compile_page_match
 from . import file
 from .page import Page
+import functools
 import stat
 import os
+import io
 import re
 import logging
 
 log = logging.getLogger("contents")
+
+
+def with_dir_fd(f):
+    @functools.wraps(f)
+    def wrapper(self, dir_fd: int):
+        self.dir_fd = dir_fd
+        try:
+            return f(self, dir_fd)
+        finally:
+            self.dir_fd = None
+    return wrapper
 
 
 class Dir(Page):
@@ -32,6 +45,8 @@ class Dir(Page):
         self.file_rules: List[Tuple[re.Pattern, Meta]] = []
         # Computed metadata for files and subdirectories
         self.file_meta: Dict[str, Meta] = {}
+        # Set during methods when a dir_fd to this directory is present
+        self.dir_fd: Optional[int] = None
 
         # Pages loaded from this directory
         self.pages = []
@@ -77,10 +92,19 @@ class Dir(Page):
         # TODO: deprecate, and just use self.file_meta[fname]
         return self.file_meta[fname]
 
+    def open(self, fname: str, src: file.File, *args, **kw):
+        if self.dir_fd:
+            def _file_opener(fname, flags):
+                return os.open(fname, flags, dir_fd=self.dir_fd)
+            return io.open(src.abspath, *args, opener=_file_opener, **kw)
+        else:
+            return io.open(src.abspath, *args, **kw)
+
+    @with_dir_fd
     def scan(self, dir_fd: int):
         # Scan directory contents
         subdirs = {}
-        with os.scandir(dir_fd) as entries:
+        with os.scandir(self.dir_fd) as entries:
             for entry in entries:
                 # Note: is_dir, is_file, and stat, follow symlinks by default
                 if entry.is_dir():
@@ -104,14 +128,12 @@ class Dir(Page):
 
         # Load dir metadata from .staticsite, if present
         # TODO: move this to a feature implementing just load_dir_meta?
-        dircfg = self.files.pop(".staticsite", None)
+        dircfg: file.File = self.files.pop(".staticsite", None)
         if dircfg is not None:
             config: Dict[str, Any] = {}
 
             # Load .staticsite if found
-            def _file_opener(path, flags):
-                return os.open(path, flags, dir_fd=dir_fd)
-            with open(dircfg.abspath, "rt", opener=_file_opener) as fd:
+            with self.open(".staticsite", dircfg, "rt") as fd:
                 lines = [line.rstrip() for line in fd]
                 fmt, config = front_matter.parse(lines)
 
