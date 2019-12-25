@@ -10,6 +10,19 @@ import logging
 log = logging.getLogger("syndication")
 
 
+class MetadataSyndicate(Metadata):
+    """
+    Make sure the syndicate exists
+    """
+    def on_load(self, page: Page):
+        val = page.meta.get(self.name)
+        if val is None:
+            # If not present, default to 'indexed'
+            page.meta[self.name] = page.meta["indexed"]
+        elif isinstance(val, str):
+            page.meta[self.name] = val.lower() in ("yes", "true", "1")
+
+
 class SyndicationFeature(Feature):
     """
     Build syndication feeds for groups of pages.
