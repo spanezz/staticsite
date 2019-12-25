@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set, Any, Union
+from typing import Optional, Dict, List, Set, Any, Union, Callable
 import os
 import datetime
 import pytz
@@ -9,7 +9,7 @@ from .settings import Settings
 from .page import Page
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd, timings
-from .metadata import Metadata
+from .metadata import Metadata, MetadataDate
 from . import contents
 from .file import File
 import logging
@@ -42,6 +42,13 @@ class Site:
 
         # Repository of metadata descriptions
         self.metadata: Dict[str, Metadata] = {}
+
+        # Functions called on a page to cleanup metadata on page load
+        self.metadata_on_load_functions: List[Callable[Page], None] = []
+
+        # Functions called on a page to cleanup metadata at the beginning of
+        # the analyze pass
+        self.metadata_on_analyze_functions: List[Callable[Page], None] = []
 
         # Site pages indexed by site_path
         self.pages: Dict[str, Page] = {}
@@ -110,7 +117,7 @@ pages of some features can default to other template names.
 Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 """))
 
-        self.register_metadata(Metadata("date", inherited=False, doc="""
+        self.register_metadata(MetadataDate("date", inherited=False, doc="""
 Publication date for the page.
 
 A python datetime object, timezone aware. If the date is in the future when
@@ -207,6 +214,14 @@ It defaults to true at least for [Markdown](markdown.md),
             log.warn("register_metadata called after content directory has been scanned")
         metadata.site = self
         self.metadata[metadata.name] = metadata
+
+        on_load = getattr(metadata, "on_load", None)
+        if not getattr(on_load, "skip", False):
+            self.metadata_on_load_functions.append(on_load)
+
+        on_analyze = getattr(metadata, "on_analyze", None)
+        if not getattr(on_analyze, "skip", False):
+            self.metadata_on_analyze_functions.append(on_analyze)
 
     @lazy
     def archetypes(self) -> "archetypes.Archetypes":

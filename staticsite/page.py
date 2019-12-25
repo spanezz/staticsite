@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Dict, Any, Optional, Union
 import os
 import logging
-import datetime
 from urllib.parse import urlparse, urlunparse
 from .utils import lazy
 from .utils.typing import Meta
@@ -55,21 +54,15 @@ class Page:
         :return: True if the page is valid and ready to be added to the site,
                  False if it should be discarded
         """
+        # Run metadata on load functions
+        for f in self.site.metadata_on_load_functions:
+            f(self)
+
         # indexed must exist and be a bool
         indexed = self.meta.get("indexed", False)
         if isinstance(indexed, str):
             indexed = indexed.lower() in ("yes", "true", "1")
         self.meta["indexed"] = indexed
-
-        # date must exist, and be a datetime
-        date = self.meta.get("date")
-        if date is None:
-            if self.src.stat is not None:
-                self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-            else:
-                self.meta["date"] = self.site.generation_time
-        else:
-            self.meta["date"] = self.site.clean_date(date)
 
         # template must exist, and defaults to page.html
         self.meta.setdefault("template", "page.html")

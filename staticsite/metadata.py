@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Optional
 import inspect
 from . import site
+from . import page
 
 
 class Metadata:
@@ -36,8 +37,35 @@ class Metadata:
         self.template_for: Optional[str] = template_for
         self.doc = inspect.cleandoc(doc)
 
-    def clean_value(self, val: Any) -> Any:
+    def on_load(self, page: "page.Page"):
         """
-        Return a validated and cleaned version of this metadata
+        Cleanup hook for the metadata on page load
         """
-        return val
+        pass
+
+    # Mark as a noop to avoid calling it for each page unless overridden
+    on_load.skip = True
+
+    def on_analyze(self, page: "page.Page"):
+        """
+        Cleanup hook for the metadata at the start of the analyze pass
+        """
+        pass
+
+    # Mark as a noop to avoid calling it for each page unless overridden
+    on_analyze.skip = True
+
+
+class MetadataDate(Metadata):
+    """
+    Make sure, on page load, that the element is a valid aware datetime object
+    """
+    def on_load(self, page: "page.Page"):
+        date = page.meta.get(self.name)
+        if date is None:
+            if page.src.stat is not None:
+                page.meta[self.name] = self.site.localized_timestamp(page.src.stat.st_mtime)
+            else:
+                page.meta[self.name] = self.site.generation_time
+        else:
+            page.meta[self.name] = self.site.clean_date(date)
