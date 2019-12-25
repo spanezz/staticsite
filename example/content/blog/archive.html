@@ -2,8 +2,7 @@
 
 {% block front_matter %}
 ---
-pages:
-  path: blog/*
+syndicate: no
 {% endblock %}
 
 {% import 'lib/blog.html' as blog with context %}
@@ -13,6 +12,6 @@ pages:
 
 <h2>Archive of all posts</h2>
 
-{{blog.archive(page)}}
+{{blog.archive(page_for("index.html"))}}
 
 {% endblock %}

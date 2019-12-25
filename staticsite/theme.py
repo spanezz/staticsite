@@ -4,11 +4,10 @@ import jinja2
 import os
 import re
 import datetime
-import heapq
 import logging
 from collections import defaultdict
 from .page import Page, PageNotFoundError
-from .utils import front_matter
+from .utils import front_matter, arrange
 from .utils.typing import Meta
 from .page_filter import PageFilter, sort_args
 from .metadata import Metadata
@@ -232,7 +231,7 @@ class Theme:
 
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
         self.jinja2.filters["basename"] = self.jinja2_basename
-        self.jinja2.filters["arrange"] = self.jinja2_arrange
+        self.jinja2.filters["arrange"] = arrange
 
         # Add feature-provided globals and filters
         for feature in self.site.features.ordered():
@@ -328,35 +327,9 @@ class Theme:
                      context.parent["page"].src.relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
-    def jinja2_arrange(self, pages: List[Page], sort: str, limit: Optional[int] = None) -> List[Page]:
-        """
-        Sort the pages by ``sort`` and take the first ``limit`` ones
-        """
-        sort_meta, reverse, key = sort_args(sort)
-        if key is None:
-            if limit is None:
-                return pages
-            else:
-                return pages[:limit]
-        else:
-            if limit is None:
-                return sorted(pages, key=key, reverse=reverse)
-            elif limit == 1:
-                if reverse:
-                    return [max(pages, key=key)]
-                else:
-                    return [min(pages, key=key)]
-            elif len(pages) > 10 and limit < len(pages) / 3:
-                if reverse:
-                    return heapq.nlargest(limit, pages, key=key)
-                else:
-                    return heapq.nsmallest(limit, pages, key=key)
-            else:
-                return sorted(pages, key=key, reverse=reverse)[:limit]
-
     @jinja2.contextfunction
     def jinja2_has_page(self, context, arg: str) -> bool:
-        cur_page = context.parent["page"]
+        cur_page = context.get("page")
         try:
             cur_page.resolve_path(arg)
         except PageNotFoundError:

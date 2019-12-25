@@ -58,6 +58,8 @@ class Page:
         for f in self.site.metadata_on_load_functions:
             f(self)
 
+        # TODO: move more of this to on_load functions
+
         # template must exist, and defaults to page.html
         self.meta.setdefault("template", "page.html")
 

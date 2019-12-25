@@ -18,26 +18,14 @@
 {%- endmacro %}
 
 {% macro pages(pages, limit=10) -%}
-  {% if not pages is defined %}
-  {% set pages=page.meta.pages %} {# requires importing with context #}
-  {% elif pages.meta %}
-  {% set pages=pages.meta.pages %} {# pass a page to use its meta.pages #}
-  {% endif %}
-
-  {% for page in pages|arrange("-date", limit) %}
+  {% for page in syndication_pages(pages, limit=limit) %}
   {{inline_page(page)}}
   {% endfor %}
 {%- endmacro %}
 
 {% macro archive(pages) -%}
-  {% if not pages is defined %}
-  {% set pages=page.meta.pages %} {# requires importing with context #}
-  {% elif pages.meta %}
-  {% set pages=pages.meta.pages %} {# pass a page to use its meta.pages #}
-  {% endif %}
-
 <ul class="list-group">
-  {% for page in pages|arrange("-date") %}
+  {% for page in syndication_pages(pages) %}
   <li class="list-group-item"><a href="{{url_for(page)}}">{{page.meta.date.strftime("%Y-%m-%d")}} - {{page.meta.title}}</a></li>
   {% endfor %}
 </ul>

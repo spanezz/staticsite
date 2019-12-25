@@ -17,9 +17,9 @@ metadata](contents.md)):
 ---
 files:
   index.html:
-    pages:
-      path: blog/*
     syndication:
+      pages:
+        path: blog/*
       add_to:
         path: blog/*
       title: "Example blog feed"
@@ -29,19 +29,19 @@ files:
 and contains various fields:
 
 * `add_to`: chooses which pages will include a link to the RSS/Atom feeds
-* `filter`: chooses which pages are shown in the RSS/Atom feeds
+* `pages`: chooses which pages are shown in the RSS/Atom feeds
 
 Any other metadata are used when generating pages for the RSS/Atom feeds, so
 you can use `title`, `template_title`, `description`, and so on, to personalize
 the feeds.
 
-`filter` and `add_to` are dictionaries that select pages in the site, similar
+`pages` and `add_to` are dictionaries that select pages in the site, similar
 to the `site_pages` function in [templates](templates.md). See
 [Selecting pages](page-filter.md) for details.
 
-`filter` is optional, and if missing, `page.meta.pages` is used. This way,
-[using the `pages` metadata](pages.md), you can define a single expression for
-both syndication and page listing.
+`pages` is optional, and if missing, `page.meta.pages` is used. Compared to
+using the `pages` filter, using `syndication.pages` takes the [`syndicate` page metadata](doc/metadata.md)
+into account.
 
 
 ## Syndication of taxonomies

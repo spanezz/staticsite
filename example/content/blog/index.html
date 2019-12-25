@@ -2,9 +2,10 @@
 
 {% block front_matter %}
 ---
-pages:
-  path: blog/*
+syndicate: no
 syndication:
+  pages:
+    path: blog/*
   add_to:
     path: blog/*
   title: "Example blog feed"
@@ -23,6 +24,6 @@ syndication:
 
 <p>This the example front page for the blog.</p>
 
-{{blog.pages(page, limit=10)}}
+{{blog.pages(limit=10)}}
 
 {% endblock %}

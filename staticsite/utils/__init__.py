@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Union, Any, List, Tuple, Set, Dict
+from typing import Union, Any, List, Tuple, Set, Dict, Optional
+from .. import page
+import heapq
 import contextlib
 import functools
 import time
@@ -116,3 +118,32 @@ def open_dir_fd(path, dir_fd=None):
         yield res
     finally:
         os.close(res)
+
+
+def arrange(pages: List[page.Page], sort: str, limit: Optional[int] = None) -> List[page.Page]:
+    """
+    Sort the pages by ``sort`` and take the first ``limit`` ones
+    """
+    from ..page_filter import sort_args
+
+    sort_meta, reverse, key = sort_args(sort)
+    if key is None:
+        if limit is None:
+            return pages
+        else:
+            return pages[:limit]
+    else:
+        if limit is None:
+            return sorted(pages, key=key, reverse=reverse)
+        elif limit == 1:
+            if reverse:
+                return [max(pages, key=key)]
+            else:
+                return [min(pages, key=key)]
+        elif len(pages) > 10 and limit < len(pages) / 3:
+            if reverse:
+                return heapq.nlargest(limit, pages, key=key)
+            else:
+                return heapq.nsmallest(limit, pages, key=key)
+        else:
+            return sorted(pages, key=key, reverse=reverse)[:limit]
