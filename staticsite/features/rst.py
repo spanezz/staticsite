@@ -11,8 +11,6 @@ import docutils.nodes
 import docutils.writers.html5_polyglot
 import os
 import io
-import datetime
-import dateutil.parser
 import logging
 
 log = logging.getLogger("rst")
@@ -112,17 +110,6 @@ class RestructuredText(Feature):
                     and doctree_scan.docinfo.children
                     and doctree_scan.docinfo.children[0] == doctree_scan.first_title):
                 doctree_scan.doctree.children.pop(0)
-
-        # Normalise well-known metadata elements
-        date = meta.get("date")
-        if date is not None and not isinstance(date, datetime.datetime):
-            date = dateutil.parser.parse(date)
-            if date.tzinfo is None:
-                if hasattr(self.site.timezone, "localize"):
-                    date = self.site.timezone.localize(date)
-                else:
-                    date = date.replace(tzinfo=self.site.timezone)
-            meta["date"] = date
 
         # If requested, parse some tag contents as yaml
         if self.yaml_tags:
