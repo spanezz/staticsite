@@ -12,9 +12,9 @@ import jinja2
 log = logging.getLogger("syndication")
 
 
-class MetadataSyndicate(Metadata):
+class MetadataSyndicated(Metadata):
     """
-    Make sure the syndicate exists
+    Make sure the syndicated exists
     """
     def on_load(self, page: Page):
         val = page.meta.get(self.name)
@@ -24,8 +24,21 @@ class MetadataSyndicate(Metadata):
         elif isinstance(val, str):
             page.meta[self.name] = val.lower() in ("yes", "true", "1")
 
-# class MetadataSyndicationDate(Metadata):
-#     def on_load(self, page: "page.Page"):
+
+class MetadataSyndicationDate(Metadata):
+    """
+    Parse to a date if provided.
+
+    If page.meta.syndicate is true, it is always present, and if not set it
+    defaults to page.meta.date.
+    """
+    def on_load(self, page: Page):
+        date = page.meta.get(self.name)
+        if date is None:
+            if page.meta["syndicated"]:
+                page.meta[self.name] = page.meta["date"]
+        else:
+            page.meta[self.name] = self.site.clean_date(date)
 
 
 class SyndicatedPageError(Exception):
@@ -87,23 +100,26 @@ to the `site_pages` function in [templates](templates.md). See
 [Selecting pages](page-filter.md) for details.
 
 `pages` is optional, and if missing, `page.meta.pages` is used. Compared to
-using the `pages` filter, using `syndication.pages` takes the [`syndicate` page metadata](doc/metadata.md)
-into account.
+using the `pages` filter, using `syndication.pages` takes the
+[`syndicated` and `syndication_date` page metadata](doc/metadata.md) into account.
 
 For compatibility, `filter` can be used instead of `pages`.
 
 Before rendering, `pages` is replaced with the list of syndicated pages, sorted
 with the most recent first.
 """))
-        self.site.register_metadata(Metadata("syndicate", inherited=False, doc=f"""
-Control syndication for this page.
-
-If set to false, it excludes the page from the syndication.
-"""))
-        self.site.register_metadata(MetadataSyndicate("syndicate", inherited=False, doc="""
+        self.site.register_metadata(MetadataSyndicated("syndicated", inherited=False, doc="""
 Set to true if the page can be included in a syndication, else to false.
 
 If not set, it defaults to the value of `indexed`.
+"""))
+        self.site.register_metadata(MetadataSyndicationDate("syndication_date", inherited=False, doc=f"""
+Syndication date for this page.
+
+This is the date that will appear in RSS and Atom feeds, and the page will not
+be syndicated before this date.
+
+If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
 """))
         self.syndications = []
 
@@ -146,18 +162,16 @@ If not set, it defaults to the value of `indexed`.
     def prepare_syndication_list(self, pages):
         """
         Given a list of pages to potentially syndicate, filter them by their
-        syndicate header, and make sure the remaining ones have a syndicate
-        header with the syndication date
+        syndicated header, and sort by syndication date.
         """
         res = []
         for page in pages:
-            if not page.meta["syndicate"]:
+            if not page.meta["syndicated"]:
                 continue
-            # if page.meta["syndication_date"] > self.site.generation_time:
-            #     continue
+            if page.meta["syndication_date"] > self.site.generation_time:
+                continue
             res.append(page)
-        # res.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
-        res.sort(key=lambda p: p.meta["date"], reverse=True)
+        res.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
         return res
 
     def finalize(self):

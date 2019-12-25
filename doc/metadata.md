@@ -139,19 +139,28 @@ to the `site_pages` function in [templates](templates.md). See
 [Selecting pages](page-filter.md) for details.
 
 `pages` is optional, and if missing, `page.meta.pages` is used. Compared to
-using the `pages` filter, using `syndication.pages` takes the [`syndicate` page metadata](doc/metadata.md)
-into account.
+using the `pages` filter, using `syndication.pages` takes the
+[`syndicated` and `syndication_date` page metadata](doc/metadata.md) into account.
 
 For compatibility, `filter` can be used instead of `pages`.
 
 Before rendering, `pages` is replaced with the list of syndicated pages, sorted
 with the most recent first.
 
-### syndicate
+### syndicated
 
 Set to true if the page can be included in a syndication, else to false.
 
 If not set, it defaults to the value of `indexed`.
+
+### syndication_date
+
+Syndication date for this page.
+
+This is the date that will appear in RSS and Atom feeds, and the page will not
+be syndicated before this date.
+
+If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
 
 ### series
 

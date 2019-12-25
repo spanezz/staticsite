@@ -40,8 +40,8 @@ to the `site_pages` function in [templates](templates.md). See
 [Selecting pages](page-filter.md) for details.
 
 `pages` is optional, and if missing, `page.meta.pages` is used. Compared to
-using the `pages` filter, using `syndication.pages` takes the [`syndicate` page metadata](doc/metadata.md)
-into account.
+using the `pages` filter, using `syndication.pages` takes the
+[`syndicated` and `syndication_date` page metadata](doc/metadata.md) into account.
 
 
 ## Syndication of taxonomies

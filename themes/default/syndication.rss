@@ -14,7 +14,7 @@
   {%- endif %}
   <generator>staticsite</generator>
   <pubDate>{{page.meta.date|datetime_format("rss2")}}</pubDate>
-  {% for page in page.meta.pages|arrange("-date", 15) -%}
+  {% for page in syndicated_pages(limit=15) -%}
   <item>
     <title>{{page.meta.title}}</title>
     <guid isPermaLink="false">{{url_for(page, absolute=True)}}</guid>
@@ -22,7 +22,7 @@
     {% for tag in page.meta.tags -%}
     <category>{{tag.name}}</category>
     {%- endfor %}
-    <pubDate>{{page.meta.date|datetime_format("rss2")}}</pubDate>
+    <pubDate>{{page.meta.syndication_date|datetime_format("rss2")}}</pubDate>
     <dcterms:modified>{{page.meta.date|datetime_format("w3cdtf")}}</dcterms:modified>
     <description>{{page.content}}</description>
   </item>

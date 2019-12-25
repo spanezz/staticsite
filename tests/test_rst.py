@@ -43,7 +43,8 @@ Example blog post in reStructuredText
                 },
                 "meta": {
                     "date": "2016-04-16 10:23:00+02:00",
-                    "syndicate": True,
+                    "syndicated": True,
+                    "syndication_date": "2016-04-16 10:23:00+02:00",
                     "foo": "line1\nline2\nline3",
                     "template": "page.html",
                     "title": "Example blog post in reStructuredText",
