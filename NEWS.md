@@ -35,6 +35,7 @@
   syndication.
 * Added [`syndication_date` metadata](doc/metadata.md) to allow to control when
   a page gets syndicated.
+* jinja2 pages are now [`indexed`](doc/metadata.md) by default.
 
 ## Upgrade notes
 
@@ -51,6 +52,14 @@
   context. If you are importing template libraries like `lib/blog.html`, import
   them [`with context`](https://jinja.palletsprojects.com/en/2.10.x/templates/#import-visibility)
   so they can access `page`.
+
+### Pages
+
+* Since jinja2 pages are now [`indexed`](doc/metadata.md) by default, they may
+  accidentally appear in blogs and syndication. You can use the `syndicated`
+  header to prevent them from being added. You can also apply `syndicated: no`
+  to multiple pages using the [`files:` matching patterns](doc/contents.md) in
+  a directory index page.
 
 
 # New in version 1.2
