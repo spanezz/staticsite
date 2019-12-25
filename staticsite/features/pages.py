@@ -38,7 +38,9 @@ See [Selecting pages](page-filter.md) for details.
 
             # Replace the dict with the expanded list of pages
             f = PageFilter(self.site, **pages)
-            page.meta["pages"] = f.filter(self.site.pages.values())
+            # Do not include self in the result list
+            pages = [p for p in f.filter(self.site.pages.values()) if p != page]
+            page.meta["pages"] = pages
 
 
 FEATURES = {
