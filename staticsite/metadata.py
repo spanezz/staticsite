@@ -77,3 +77,14 @@ class MetadataDate(Metadata):
                 page.meta[self.name] = self.site.generation_time
         else:
             page.meta[self.name] = self.site.clean_date(date)
+
+
+class MetadataIndexed(Metadata):
+    """
+    Make sure the field exists and is a bool, defaulting to False
+    """
+    def on_load(self, page: "page.Page"):
+        val = page.meta.get(self.name, False)
+        if isinstance(val, str):
+            val = val.lower() in ("yes", "true", "1")
+        page.meta[self.name] = val

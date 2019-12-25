@@ -9,7 +9,8 @@ from .settings import Settings
 from .page import Page
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd, timings
-from .metadata import Metadata, MetadataDate
+from . import metadata
+from .metadata import Metadata
 from . import contents
 from .file import File
 import logging
@@ -117,7 +118,7 @@ pages of some features can default to other template names.
 Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 """))
 
-        self.register_metadata(MetadataDate("date", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataDate("date", inherited=False, doc="""
 Publication date for the page.
 
 A python datetime object, timezone aware. If the date is in the future when
@@ -192,7 +193,7 @@ Relative paths in the destination directory where the page should also show up.
 existing links when moving a page to a different location.
 """))
 
-        self.register_metadata(Metadata("indexed", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataIndexed("indexed", inherited=False, doc="""
 If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).
 

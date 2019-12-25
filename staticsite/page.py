@@ -58,12 +58,6 @@ class Page:
         for f in self.site.metadata_on_load_functions:
             f(self)
 
-        # indexed must exist and be a bool
-        indexed = self.meta.get("indexed", False)
-        if isinstance(indexed, str):
-            indexed = indexed.lower() in ("yes", "true", "1")
-        self.meta["indexed"] = indexed
-
         # template must exist, and defaults to page.html
         self.meta.setdefault("template", "page.html")
 
