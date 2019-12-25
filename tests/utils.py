@@ -59,12 +59,12 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
 
 
 @contextmanager
-def example_site():
+def example_site(name="demo"):
     """
     Create a copy of the example site in a temporary directory
     """
     import shutil
-    src = os.path.join(os.getcwd(), "example")
+    src = os.path.join(os.getcwd(), "example", name)
     with tempfile.TemporaryDirectory() as root:
         dst = os.path.join(root, "site")
         shutil.copytree(src, dst)
