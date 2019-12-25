@@ -17,7 +17,7 @@
   {% for page in syndicated_pages(limit=15) -%}
   <item>
     <title>{{page.meta.title}}</title>
-    <guid isPermaLink="false">{{url_for(page, absolute=True)}}</guid>
+    <guid isPermaLink="true">{{url_for(page, absolute=True)}}</guid>
     <link>{{url_for(page, absolute=True)}}</link>
     {% for tag in page.meta.tags -%}
     <category>{{tag.name}}</category>
