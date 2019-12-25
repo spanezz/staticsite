@@ -31,6 +31,10 @@
   For backwards compatibility, `syndication.filter` still works as an alias for
   `syndication.pages`.
 * Added `syndicated_pages` function to templates. See [syndication documentation](doc/syndication.md).
+* Added [`syndicated` metadata](doc/metadata.md) to allow excluding pages from
+  syndication.
+* Added [`syndication_date` metadata](doc/metadata.md) to allow to control when
+  a page gets syndicated.
 
 ## Upgrade notes
 
