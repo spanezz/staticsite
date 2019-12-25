@@ -222,6 +222,7 @@ class Theme:
         self.jinja2.globals.update(
             has_page=self.jinja2_has_page,
             url_for=self.jinja2_url_for,
+            page_for=self.jinja2_page_for,
             site_pages=self.jinja2_site_pages,
             now=self.site.generation_time,
             next_month=(
@@ -362,6 +363,25 @@ class Theme:
             return False
         else:
             return True
+
+    @jinja2.contextfunction
+    def jinja2_page_for(self, context, arg: Union[str, Page]) -> Page:
+        """
+        Generate a URL for a page, specified by path or with the page itself
+        """
+        if isinstance(arg, Page):
+            return arg
+
+        cur_page = context.get("page")
+        if cur_page is None:
+            log.warn("%s+%s: page_for(%s): current page is not defined", cur_page, context.name, arg)
+            return ""
+
+        try:
+            return cur_page.resolve_path(arg)
+        except PageNotFoundError as e:
+            log.warn("%s: %s", context.name, e)
+            return ""
 
     @jinja2.contextfunction
     def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False) -> str:

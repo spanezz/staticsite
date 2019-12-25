@@ -26,6 +26,7 @@
   possible to make multiple themes available system-wide for use
 * Themes can now inherit from other themes. See [theme documentation](doc/theme.md)
   for details
+* Added `page_for()` function to [templates](doc/templates.md)
 
 ## Upgrade notes
 

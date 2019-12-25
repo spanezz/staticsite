@@ -38,6 +38,10 @@ for example:
   the given path. The path is resolved relative to the current page, and if
   not found, relative to the parent page, and so on until the top.
 * `url_for(page)`: returns the URL that links to the given page.
+* `page_for("path/page")`: returns the page with the given path. The path is
+  resolved relative to the current page, and if not found, relative to the
+  parent page, and so on until the top.
+* `page_for(page)`: returns the page itself.
 * `site_pages(path=None, limit=None, sort="-date", **kw)`: return a list of
   pages defined in the site that match the given arguments. See
   [Selecting pages](page-filter.md) for details.
