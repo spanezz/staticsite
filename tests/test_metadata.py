@@ -92,8 +92,8 @@ title: Test1 title
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site()
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
@@ -123,8 +123,8 @@ title: Test1 title
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site()
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
@@ -153,8 +153,8 @@ class TestSiteName(TestCase):
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(SITE_NAME=None)
-            site.load(content_root=root)
+            site = test_utils.Site(SITE_NAME=None, CONTENT=root)
+            site.load()
             site.analyze()
 
             expected = os.path.basename(root)
@@ -172,8 +172,8 @@ class TestSiteName(TestCase):
 
         with test_utils.workdir(files) as root:
             # Site name from settings
-            site = test_utils.Site(SITE_NAME="Site Name")
-            site.load(content_root=root)
+            site = test_utils.Site(SITE_NAME="Site Name", CONTENT=root)
+            site.load()
             site.analyze()
 
             self.assertEqual(site.pages[""].meta["site_name"], "Site Name")
@@ -189,8 +189,8 @@ class TestSiteName(TestCase):
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site()
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             self.assertEqual(site.pages[""].meta["site_name"], "Site Name dirmeta")
@@ -205,8 +205,8 @@ class TestSiteName(TestCase):
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(SITE_NAME=None)
-            site.load(content_root=root)
+            site = test_utils.Site(SITE_NAME=None, CONTENT=root)
+            site.load()
             site.analyze()
 
             self.assertEqual(site.pages[""].meta["site_name"], "Site Name title")

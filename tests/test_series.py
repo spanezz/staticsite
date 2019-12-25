@@ -24,8 +24,8 @@ class TestSeries(TestCase):
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site()
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             seriesa1 = site.pages["seriesa1"]

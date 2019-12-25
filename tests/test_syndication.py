@@ -28,8 +28,8 @@ Example blog post in reStructuredText
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site()
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             blog = site.pages["blog"]

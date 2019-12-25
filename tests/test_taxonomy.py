@@ -13,8 +13,8 @@ class TestTags(TestCase):
             "page1.md": {"date": str(datetime.datetime(2016, 1, 1)), "tags": ["a", "b"]},
         }
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(taxonomies=["tags"])
-            site.load(content_root=root)
+            site = test_utils.Site(taxonomies=["tags"], CONTENT=root)
+            site.load()
             site.analyze()
 
             tags = site.pages["taxonomies/tags"]
@@ -36,8 +36,8 @@ tags: [cat]
 """
         }
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(taxonomies=["tags"])
-            site.load(content_root=root)
+            site = test_utils.Site(taxonomies=["tags"], CONTENT=root)
+            site.load()
             site.analyze()
 
             tags = site.pages["taxonomies/tags"]

@@ -13,8 +13,8 @@ class TestDirs(TestCase):
             "dir1/dir2/dir3/page_sub3.md": {},
         }
         with test_utils.workdir(files) as root:
-            site = test_utils.Site()
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             # We have a root dir index and dir indices for all subdirs

@@ -273,25 +273,19 @@ It defaults to true at least for [Markdown](markdown.md),
             meta["author"] = self.settings.SITE_AUTHOR
         return meta
 
-    def scan_content(self, content_root=None):
+    def scan_content(self):
         """
         Scan content root directories, building metadata for the directories in
         the site tree
-
-        :arg content_root: path to read contents from. If missing,
-                           settings.CONTENT is used.
         """
-        if content_root is None:
-            content_root = self.content_root
-
         if not self.stage_features_constructed:
             log.warn("scan_content called before site features have been loaded")
 
-        if not os.path.exists(content_root):
-            log.info("%s: content tree does not exist", content_root)
+        if not os.path.exists(self.content_root):
+            log.info("%s: content tree does not exist", self.content_root)
             return
 
-        src = File("", os.path.abspath(content_root), os.stat(content_root))
+        src = File("", os.path.abspath(self.content_root), os.stat(self.content_root))
         self.scan_tree(src, meta=self._settings_to_meta())
         self.theme.scan_assets()
         self.stage_content_directory_scanned = True
@@ -322,7 +316,7 @@ It defaults to true at least for [Markdown](markdown.md),
 
         self.stage_content_directory_loaded = True
 
-    def load(self, content_root=None):
+    def load(self):
         """
         Load all site components
         """
@@ -331,7 +325,7 @@ It defaults to true at least for [Markdown](markdown.md),
         with timings("Loaded theme in %fs"):
             self.load_theme()
         with timings("Scanned contents in %fs"):
-            self.scan_content(content_root=content_root)
+            self.scan_content()
         with timings("Loaded contents in %fs"):
             self.load_content()
 

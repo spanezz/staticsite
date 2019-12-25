@@ -19,8 +19,8 @@ class TestPageFilter(TestCase):
             "blog/post2.md": {},
         }
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(TAXONOMIES=["tags"])
-            site.load(content_root=root)
+            site = test_utils.Site(CONTENT=root)
+            site.load()
             site.analyze()
 
             self.assertEqual(select(site, path="blog/*"), [
