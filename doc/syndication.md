@@ -59,6 +59,17 @@ titles and description in your categories feeds, like with any other page.
 See the example templates for working `syndication.rss` and `syndication.atom`
 templates, that are used by the generated RSS and Atom pages.
 
+### `syndicated_pages(page=None, limit=None)`
+
+Templates can use the `syndicated_pages` function to list syndicated pages for
+a page, sorted with the most recently syndicated first.
+
+`page` can be a page, a path to a page, or omitted, in which case the current
+page is used. `page` can also be a list of pages, which will be sorted by
+syndiaction date and sampled.
+
+`limit` is the number of pages to return, or, if omitted, all the pages are
+returned.
 
 ## Syndication pages
 

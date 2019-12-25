@@ -107,10 +107,10 @@ If not set, it defaults to the value of `indexed`.
 """))
         self.syndications = []
 
-        self.j2_globals["syndication_pages"] = self.jinja2_syndication_pages
+        self.j2_globals["syndicated_pages"] = self.jinja2_syndicated_pages
 
     @jinja2.contextfunction
-    def jinja2_syndication_pages(self, context, what: Union[str, Page, List[Page], None] = None, limit=None) -> bool:
+    def jinja2_syndicated_pages(self, context, what: Union[str, Page, List[Page], None] = None, limit=None) -> bool:
         """
         Get the list of pages to be syndicated
         """
@@ -119,13 +119,13 @@ If not set, it defaults to the value of `indexed`.
                 page = context.get("page")
                 if page is None:
                     raise SyndicatedPageError(
-                            "syndication_pages called without a page argument, but page is not set in context")
+                            "syndicated_pages called without a page argument, but page is not set in context")
                 return _get_syndicated_pages(page, limit=limit)
             elif isinstance(what, str):
                 src = context.get("page")
                 if src is None:
                     raise SyndicatedPageError(
-                            "syndication_pages called without a page argument, but page is not set in context")
+                            "syndicated_pages called without a page argument, but page is not set in context")
 
                 try:
                     page = src.resolve_path(what)

@@ -25,7 +25,7 @@ instead, depending on your needs.</p>
 <h2>Latest <a href="{{ url_for('/blog/index.html') }}">blog posts</a></h2>
 
 <ul>
-  {% for page in syndication_pages("blog", limit=10) %}
+  {% for page in syndicated_pages("blog", limit=10) %}
   <li><a href="{{ url_for(page) }}">{{page.meta.date}}: {{page.meta.title}}</a></li>
   {% endfor %}
 </ul>

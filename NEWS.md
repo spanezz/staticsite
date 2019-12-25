@@ -27,6 +27,10 @@
 * Themes can now inherit from other themes. See [theme documentation](doc/theme.md)
   for details
 * Added `page_for()` function to [templates](doc/templates.md)
+* Renamed `syndication.filter` to `syndication.pages` (see [syndication](doc/syndication.md).
+  For backwards compatibility, `syndication.filter` still works as an alias for
+  `syndication.pages`.
+* Added `syndicated_pages` function to templates. See [syndication documentation](doc/syndication.md).
 
 ## Upgrade notes
 
