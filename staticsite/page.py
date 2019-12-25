@@ -8,7 +8,6 @@ from .utils import lazy
 from .utils.typing import Meta
 from .render import RenderedString
 import jinja2
-import dateutil.parser
 
 log = logging.getLogger("page")
 
@@ -69,18 +68,11 @@ class Page:
                 self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
             else:
                 self.meta["date"] = self.site.generation_time
-        elif not isinstance(date, datetime.datetime):
-            self.meta["date"] = dateutil.parser.parse(date)
+        else:
+            self.meta["date"] = self.site.clean_date(date)
 
         # template must exist, and defaults to page.html
         self.meta.setdefault("template", "page.html")
-
-        # date must be an aware datetime
-        if self.meta["date"].tzinfo is None:
-            if hasattr(self.site.timezone, "localize"):
-                self.meta["date"] = self.site.timezone.localize(self.meta["date"])
-            else:
-                self.meta["date"] = self.meta["date"].replace(tzinfo=self.site.timezone)
 
         # Render the metadata entres generated that are templates for other
         # entries

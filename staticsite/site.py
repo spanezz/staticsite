@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set, Any
+from typing import Optional, Dict, List, Set, Any, Union
 import os
-import pytz
 import datetime
+import pytz
+import dateutil.parser
 from collections import defaultdict
 from .settings import Settings
 from .page import Page
@@ -373,3 +374,23 @@ It defaults to true at least for [Markdown](markdown.md),
         return pytz.utc.localize(
                         datetime.datetime.utcfromtimestamp(ts)
                     ).astimezone(self.timezone)
+
+    def clean_date(self, date: Union[str, datetime.datetime]) -> datetime.datetime:
+        """
+        Return an aware datetime from a potential date value.
+
+        Parse a date string, or make sure a datetime value is aware, or replace
+        None with the current generation time
+        """
+        # Make sure we have a datetime
+        if not isinstance(date, datetime.datetime):
+            date = dateutil.parser.parse(date)
+
+        # Make sure the datetime is aware
+        if date.tzinfo is None:
+            if hasattr(self.timezone, "localize"):
+                date = self.timezone.localize(date)
+            else:
+                date = date.replace(tzinfo=self.timezone)
+
+        return date
