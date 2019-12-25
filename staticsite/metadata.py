@@ -39,7 +39,11 @@ class Metadata:
 
     def on_load(self, page: "page.Page"):
         """
-        Cleanup hook for the metadata on page load
+        Cleanup hook for the metadata on page load.
+
+        Hooks are run in the order they have been registered, which follows
+        feature dependency order, meaning that hooks for one feature can
+        depends on hooks for previous features to have been run
         """
         pass
 
@@ -48,7 +52,11 @@ class Metadata:
 
     def on_analyze(self, page: "page.Page"):
         """
-        Cleanup hook for the metadata at the start of the analyze pass
+        Cleanup hook for the metadata at the start of the analyze pass.
+
+        Hooks are run in the order they have been registered, which follows
+        feature dependency order, meaning that hooks for one feature can
+        depends on hooks for previous features to have been run
         """
         pass
 
