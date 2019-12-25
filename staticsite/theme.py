@@ -9,7 +9,7 @@ from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
 from .utils.typing import Meta
-from .page_filter import PageFilter, sort_args
+from .page_filter import PageFilter
 from .metadata import Metadata
 from .file import File
 from . import toposort

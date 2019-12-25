@@ -278,6 +278,30 @@ class Page:
     def __repr__(self):
         return "{}:{}".format(self.TYPE, self.src.relpath)
 
+    @lazy
+    def content(self):
+        """
+        Return only the rendered content of the page, without headers, footers,
+        and navigation.
+        """
+        template = self.page_template
+        template_content = template.blocks.get("page_content")
+        block_name = "page_content"
+        if template_content is None:
+            template_content = template.blocks.get("content")
+            block_name = "content"
+            if template_content is None:
+                log.warn("%s: `page_content` and `content` not found in template %s", self, template.name)
+                return ""
+
+        try:
+            return jinja2.Markup("".join(template_content(template.new_context({"page": self}))))
+        except jinja2.TemplateError as e:
+            log.error("%s: failed to render %s.%s: %s", template.filename, self.src.relpath, block_name, e)
+            log.debug("%s: failed to render %s.%s: %s", template.filename, self.src.relpath, block_name, e, exc_info=True)
+            # TODO: return a "render error" page? But that risks silent errors
+            return ""
+
     def to_dict(self):
         from .utils import dump_meta
         res = {

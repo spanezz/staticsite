@@ -36,6 +36,9 @@
 * Added [`syndication_date` metadata](doc/metadata.md) to allow to control when
   a page gets syndicated.
 * jinja2 pages are now [`indexed`](doc/metadata.md) by default.
+* jinja2 and data pages can now render inline as part of a blog. By default,
+  their `page_content` block is rendered, or the `content` block if
+  `page_content` does not exist.
 
 ## Upgrade notes
 
