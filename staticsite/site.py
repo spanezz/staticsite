@@ -329,7 +329,8 @@ It defaults to true at least for [Markdown](markdown.md),
         site_path = page.meta["site_path"]
         old = self.pages.get(site_path)
         if old is not None:
-            log.warn("%s: replacing page %s", page, old)
+            if old.TYPE != "asset" or page.TYPE != "asset":
+                log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
         if page.src is not None:
             self.pages_by_src_relpath[page.src.relpath] = page
