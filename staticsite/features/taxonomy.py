@@ -66,6 +66,13 @@ element.
             meta = sitedir.meta_file(fname)
             meta["site_path"] = os.path.join(meta["site_path"], name)
 
+            try:
+                fm_meta = self.load_file_meta(sitedir, src, fname)
+            except Exception:
+                log.exception("%s: cannot parse taxonomy information", src.relpath)
+                continue
+            meta.update(fm_meta)
+
             page = TaxonomyPage(sitedir, src, name, meta=meta)
             if not page.is_valid():
                 continue
@@ -76,6 +83,16 @@ element.
             del sitedir.files[fname]
 
         return pages
+
+    def load_file_meta(self, sitedir, src, fname):
+        """
+        Parse the taxonomy file to read its description
+        """
+        from staticsite.utils import front_matter
+        with sitedir.open(fname, src, "rt") as fd:
+            lines = [x.rstrip() for x in fd]
+        style, meta = front_matter.parse(lines)
+        return meta
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
         return self.taxonomies.values()
@@ -112,9 +129,6 @@ class TaxonomyPage(Page):
         # them
         self.categories: Dict[str, CategoryPage] = {}
 
-        # Read taxonomy information
-        self._read_taxonomy_description()
-
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
         self.category_meta.setdefault("template", "taxonomy/category.html")
@@ -144,19 +158,6 @@ class TaxonomyPage(Page):
         res["category_meta"] = dump_meta(self.category_meta)
         res["archive_meta"] = dump_meta(self.archive_meta)
         return res
-
-    def _read_taxonomy_description(self):
-        """
-        Parse the taxonomy file to read its description
-        """
-        from staticsite.utils import front_matter
-        with open(self.src.abspath, "rt") as fd:
-            lines = [x.rstrip() for x in fd]
-        try:
-            style, meta = front_matter.parse(lines)
-            self.meta.update(**meta)
-        except Exception:
-            log.exception("%s: cannot parse taxonomy information", self.src.relpath)
 
     def __getitem__(self, name):
         return self.categories[name]
