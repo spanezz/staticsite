@@ -117,9 +117,9 @@ class TaxonomyPage(Page):
         super().__init__(
             parent=parent,
             src=src,
-            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
 
+        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         self.meta.setdefault("template", "taxonomy/taxonomy.html")
 
         # Taxonomy name (e.g. "tags")
@@ -231,8 +231,8 @@ class CategoryPage(Page):
         super().__init__(
             parent=parent,
             src=None,
-            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
+        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         # Category name
         self.name = name
         # Index of each page in the category sequence
@@ -307,8 +307,9 @@ class CategoryArchivePage(Page):
         super().__init__(
             parent=parent,
             src=None,
-            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
+
+        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
         # Category name
         self.name = category_page.name

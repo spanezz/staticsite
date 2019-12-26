@@ -34,7 +34,7 @@ class Dir(Page):
 
     def __init__(
             self, parent: Page, src: file.File, meta: Dict[str, Any]):
-        super().__init__(parent, src, os.path.join(meta["site_path"], "index.html"), meta)
+        super().__init__(parent, src, meta)
         # Subdirectory of this directory
         self.subdirs: List["ContentDir"] = []
         # Files found in this directory
@@ -191,6 +191,7 @@ class Dir(Page):
 
         self.meta["pages"] = self.pages
         self.meta.setdefault("template", "dir.html")
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
 

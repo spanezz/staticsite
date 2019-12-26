@@ -103,13 +103,13 @@ class J2Page(Page):
     def __init__(self, j2env, src: File, parent: Page, meta: Meta):
         dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")
-        dst_relpath = os.path.join(dirname, dst_basename)
 
         super().__init__(
             parent=parent,
             src=src,
-            dst_relpath=dst_relpath,
             meta=meta)
+
+        self.meta["build_path"] = os.path.join(dirname, dst_basename)
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

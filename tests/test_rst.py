@@ -52,6 +52,6 @@ Example blog post in reStructuredText
                     "site_name": "Test site",
                     "site_path": "",
                     "site_url": "https://www.example.org",
+                    "build_path": "index.html",
                 },
-                "dst_relpath": "index.html",
             })

@@ -35,7 +35,7 @@ You can use `ssite dump_meta` to see all the content and metadata that pages
 make available to templates via the `page` variable.""")
             for metadata in site.metadata.values():
                 print()
-                print(f"### {metadata.name}")
+                print(f"### `{metadata.name}`")
                 print()
                 if metadata.inherited:
                     print("*Inherited from directory indices.*")

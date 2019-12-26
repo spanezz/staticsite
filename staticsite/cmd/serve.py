@@ -20,13 +20,13 @@ class PageFS:
 
     def set_site(self, site):
         for page in site.pages.values():
-            for relpath in page.target_relpaths():
-                self.add_page(page, relpath)
+            for build_path in page.target_relpaths():
+                self.add_page(page, build_path)
 
-    def add_page(self, page, dst_relpath=None):
-        if dst_relpath is None:
-            dst_relpath = page.dst_relpath
-        self.paths[dst_relpath] = page
+    def add_page(self, page, build_path=None):
+        if build_path is None:
+            build_path = page.meta["build_path"]
+        self.paths[build_path] = page
 
     def get_page(self, relpath):
         if not relpath:
