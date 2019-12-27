@@ -4,6 +4,7 @@ import os
 import datetime
 import pytz
 import dateutil.parser
+import re
 from collections import defaultdict
 from .settings import Settings
 from .cache import Caches, DisabledCaches
@@ -401,6 +402,8 @@ It defaults to true at least for [Markdown](markdown.md),
                         datetime.datetime.utcfromtimestamp(ts)
                     ).astimezone(self.timezone)
 
+    re_isodate = re.compile(r"^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})(Z|\+\d{2}.*)$")
+
     def clean_date(self, date: Union[str, datetime.datetime]) -> datetime.datetime:
         """
         Return an aware datetime from a potential date value.
@@ -410,11 +413,18 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         # Make sure we have a datetime
         if not isinstance(date, datetime.datetime):
-            try:
-                date = dateutil.parser.parse(date)
-            except ValueError as e:
-                log.warn("cannot parse datetime %s: %s", date, e)
-                return self.generation_time
+            mo = self.re_isodate.match(date)
+            if mo:
+                if mo.group(2) == "Z":
+                    date = datetime.datetime.fromisoformat(mo.group(1)).replace(tzinfo=pytz.utc)
+                else:
+                    date = datetime.datetime.fromisoformat(date)
+            else:
+                try:
+                    date = dateutil.parser.parse(date)
+                except ValueError as e:
+                    log.warn("cannot parse datetime %s: %s", date, e)
+                    return self.generation_time
 
         # Make sure the datetime is aware
         if date.tzinfo is None:
