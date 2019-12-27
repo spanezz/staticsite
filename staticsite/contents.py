@@ -5,6 +5,7 @@ from .utils.typing import Meta
 from .page_filter import compile_page_match
 from . import file
 from .page import Page
+from .site import Site
 import functools
 import stat
 import os
@@ -33,8 +34,8 @@ class Dir(Page):
     TYPE = "dir"
 
     def __init__(
-            self, parent: Page, src: file.File, meta: Dict[str, Any]):
-        super().__init__(parent, src, meta)
+            self, site: Site, src: file.File, meta: Dict[str, Any]):
+        super().__init__(site, src, meta)
         # Subdirectory of this directory
         self.subdirs: List["ContentDir"] = []
         # Files found in this directory
@@ -52,12 +53,12 @@ class Dir(Page):
         self.pages = []
 
     @classmethod
-    def create(cls, parent: Page, src: file.File, meta: Dict[str, Any]):
+    def create(cls, site: Site, src: file.File, meta: Dict[str, Any]):
         # Check whether to load subdirectories as asset trees
         if meta.get("asset"):
-            return AssetDir(parent, src, meta)
+            return AssetDir(site, src, meta)
         else:
-            return ContentDir(parent, src, meta)
+            return ContentDir(site, src, meta)
 
     def add_dir_config(self, meta: Meta):
         """
@@ -169,7 +170,8 @@ class Dir(Page):
 
         # Scan subdirectories
         for name, f in subdirs.items():
-            subdir = Dir.create(self, f, meta=self.file_meta[name])
+            subdir = Dir.create(self.site, f, meta=self.file_meta[name])
+            subdir.dir = self
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
@@ -240,7 +242,7 @@ class ContentDir(Dir):
             meta = self.file_meta[fname]
             if meta and meta.get("asset"):
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self, f, meta=meta)
+                p = Asset(self.site, f, meta=meta, dir=self)
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
@@ -251,6 +253,7 @@ class ContentDir(Dir):
         # Let features pick their files
         for handler in self.site.features.ordered():
             for page in handler.load_dir(self):
+                page.dir = self
                 self.site.add_page(page)
                 if page.meta["indexed"]:
                     self.pages.append(page)
@@ -265,8 +268,7 @@ class ContentDir(Dir):
                 log.debug("Loading static file %s", f.relpath)
                 meta = self.file_meta[fname]
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self, f,
-                          meta=self.file_meta[fname])
+                p = Asset(self.site, f, meta=self.file_meta[fname], dir=self)
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)
@@ -302,8 +304,7 @@ class AssetDir(ContentDir):
                 log.debug("Loading static file %s", f.relpath)
                 meta = self.file_meta[fname]
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self, f,
-                          meta=meta)
+                p = Asset(self.site, f, meta=meta, dir=self)
                 if not p.is_valid():
                     continue
                 self.site.add_page(p)

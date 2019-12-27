@@ -164,7 +164,7 @@ class RestructuredText(Feature):
 
             meta.update(fm_meta)
 
-            page = RstPage(self, sitedir, src, meta=meta, doctree_scan=doctree_scan)
+            page = RstPage(self, src, meta=meta, doctree_scan=doctree_scan)
             if not page.is_valid():
                 continue
 
@@ -235,9 +235,9 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, feature, parent, src, meta: Meta, doctree_scan: DoctreeScan):
+    def __init__(self, feature: RestructuredText, src: File, meta: Meta, doctree_scan: DoctreeScan):
         super().__init__(
-            parent=parent,
+            site=feature.site,
             src=src,
             meta=meta)
 

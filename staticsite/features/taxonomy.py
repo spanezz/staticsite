@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import List, Dict, Iterable, Optional
-from staticsite.page import Page
+from staticsite import Page, Site, File
 from staticsite.feature import Feature
-from staticsite.contents import ContentDir
+from staticsite.contents import ContentDir, Dir
 from staticsite.metadata import Metadata
 from staticsite.utils.typing import Meta
 from collections import defaultdict
@@ -73,7 +73,7 @@ element.
                 continue
             meta.update(fm_meta)
 
-            page = TaxonomyPage(sitedir, src, name, meta=meta)
+            page = TaxonomyPage(self.site, src, meta=meta, name=name)
             if not page.is_valid():
                 continue
             self.taxonomies[page.name] = page
@@ -113,9 +113,9 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, parent, src, name, meta: Meta):
+    def __init__(self, site: Site, src: File, name: str, meta: Meta):
         super().__init__(
-            parent=parent,
+            site=site,
             src=src,
             meta=meta)
 
@@ -187,7 +187,8 @@ class TaxonomyPage(Page):
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
             category_meta["site_path"] = os.path.join(category_meta["site_path"], category)
-            category_page = CategoryPage(self, category, meta=category_meta)
+            # TODO: synthetise a directory?
+            category_page = CategoryPage(self.site, category, meta=category_meta, dir=self.dir)
             if not category_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
             self.categories[category] = category_page
@@ -200,7 +201,8 @@ class TaxonomyPage(Page):
             archive_meta["category"] = category_page
             archive_meta["date"] = category_meta["date"]
             archive_meta["site_path"] = os.path.join(archive_meta["site_path"], category, "archive")
-            archive_page = CategoryArchivePage(self, meta=archive_meta)
+            # TODO: synthetise a directory?
+            archive_page = CategoryArchivePage(self.site, meta=archive_meta, dir=self.dir)
             if not archive_page.is_valid():
                 log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", archive_page)
             category_page.meta["archive"] = archive_page
@@ -227,11 +229,8 @@ class CategoryPage(Page):
     """
     TYPE = "category"
 
-    def __init__(self, parent: Page, name: str, meta: Meta):
-        super().__init__(
-            parent=parent,
-            src=None,
-            meta=meta)
+    def __init__(self, site: Site, name: str, meta: Meta, dir: Dir):
+        super().__init__(site=site, src=None, meta=meta, dir=dir)
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         # Category name
         self.name = name
@@ -302,12 +301,9 @@ class CategoryArchivePage(Page):
     """
     TYPE = "category_archive"
 
-    def __init__(self, parent: Page, meta: Meta):
+    def __init__(self, site: Site, meta: Meta, dir: Dir):
         category_page = meta["category"]
-        super().__init__(
-            parent=parent,
-            src=None,
-            meta=meta)
+        super().__init__(site=site, src=None, meta=meta, dir=dir)
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 

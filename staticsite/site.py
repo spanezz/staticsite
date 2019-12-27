@@ -6,7 +6,7 @@ import pytz
 import dateutil.parser
 from collections import defaultdict
 from .settings import Settings
-from .page import Page
+from . import page
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd, timings
 from . import metadata
@@ -45,17 +45,17 @@ class Site:
         self.metadata: Dict[str, Metadata] = {}
 
         # Functions called on a page to cleanup metadata on page load
-        self.metadata_on_load_functions: List[Callable[Page], None] = []
+        self.metadata_on_load_functions: List[Callable[page.Page], None] = []
 
         # Functions called on a page to cleanup metadata at the beginning of
         # the analyze pass
-        self.metadata_on_analyze_functions: List[Callable[Page], None] = []
+        self.metadata_on_analyze_functions: List[Callable[page.Page], None] = []
 
         # Site pages indexed by site_path
-        self.pages: Dict[str, Page] = {}
+        self.pages: Dict[str, page.Page] = {}
 
         # Site pages indexed by src.relpath
-        self.pages_by_src_relpath: Dict[str, Page] = {}
+        self.pages_by_src_relpath: Dict[str, page.Page] = {}
 
         # Site directory metadata
         self.dir_meta: Dict[str, Meta] = {}
@@ -64,7 +64,7 @@ class Site:
         self.tracked_metadata: Set[str] = set()
 
         # Site pages that have the given metadata
-        self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)
+        self.pages_by_metadata: Dict[str, List[page.Page]] = defaultdict(list)
 
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
@@ -306,7 +306,7 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         # site_path: str = "", asset: bool = False):
         # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-        root = contents.Dir.create(None, src, meta=meta)
+        root = contents.Dir.create(self, src, meta=meta)
         root.site = self
         self.content_roots.append(root)
         with open_dir_fd(src.abspath) as dir_fd:
@@ -338,7 +338,7 @@ It defaults to true at least for [Markdown](markdown.md),
         with timings("Loaded contents in %fs"):
             self.load_content()
 
-    def add_page(self, page: Page):
+    def add_page(self, page: "page.Page"):
         """
         Add a Page object to the site.
 

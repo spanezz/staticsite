@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List
-from staticsite import Page, Feature
+from staticsite import Page, Feature, Site, File
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.utils.typing import Meta
@@ -89,7 +89,7 @@ This is used to group data of the same type together, and to choose a
             meta.update(fm_meta)
 
             cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(sitedir, src, meta=meta)
+            page = cls(self.site, src, meta=meta)
             if not page.is_valid():
                 continue
 
@@ -154,8 +154,8 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, parent, src, meta: Meta):
-        super().__init__(parent=parent, src=src, meta=meta)
+    def __init__(self, site: Site, src: File, meta: Meta):
+        super().__init__(site=site, src=src, meta=meta)
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 

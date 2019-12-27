@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional
+from typing import List
 from staticsite import Page, Feature, File
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
@@ -167,7 +167,7 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            page = MarkdownPage(self, sitedir, src, meta=meta, body=body)
+            page = MarkdownPage(self, src, meta=meta, body=body)
             if not page.is_valid():
                 continue
 
@@ -308,9 +308,9 @@ class MarkdownPage(Page):
     TYPE = "markdown"
 
     def __init__(
-            self, mdpages: MarkdownPages, parent: Optional[Page], src: Optional[File], meta: Meta, body: List[str]):
+            self, mdpages: MarkdownPages, src: File, meta: Meta, body: List[str]):
         super().__init__(
-            parent=parent,
+            site=mdpages.site,
             src=src,
             meta=meta)
 

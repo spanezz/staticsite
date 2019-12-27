@@ -2,10 +2,12 @@ from __future__ import annotations
 from typing import Dict, Any, Union, List, Optional
 import os
 import logging
+from staticsite import Site
 from staticsite.feature import Feature
 from staticsite.theme import PageFilter
 from staticsite.page import Page, PageNotFoundError
 from staticsite.metadata import Metadata
+from staticsite.contents import Dir
 from staticsite.utils import arrange
 import jinja2
 
@@ -210,14 +212,14 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             self.site.theme.precompile_metadata_templates(syndication_meta)
 
             # RSS feed
-            rss_page = RSSPage(page.parent, syndication_meta)
+            rss_page = RSSPage(self.site, syndication_meta, dir=page.dir)
             if rss_page.is_valid():
                 syndication_meta["rss_page"] = rss_page
                 self.site.add_page(rss_page)
                 log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
-            atom_page = AtomPage(page.parent, syndication_meta)
+            atom_page = AtomPage(self.site, syndication_meta, dir=page.dir)
             if atom_page.is_valid():
                 syndication_meta["atom_page"] = atom_page
                 self.site.add_page(atom_page)
@@ -244,15 +246,12 @@ class SyndicationPage(Page):
     # Default template to use for this type of page
     TEMPLATE: str
 
-    def __init__(self, parent: Page, meta: Dict[str, Any]):
+    def __init__(self, site: Site, meta: Dict[str, Any], dir=Dir):
         index = meta["index"]
         meta = dict(meta)
         meta["site_path"] = os.path.join(meta["site_path"], f"index.{self.TYPE}")
 
-        super().__init__(
-            parent=parent,
-            src=None,
-            meta=meta)
+        super().__init__(site=site, src=None, meta=meta, dir=dir)
         self.meta["build_path"] = meta["site_path"]
         self.meta.setdefault("template", self.TEMPLATE)
         if self.meta["pages"]:

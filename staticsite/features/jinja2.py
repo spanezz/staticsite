@@ -81,7 +81,7 @@ class J2Pages(Feature):
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
 
             try:
-                page = J2Page(self, f, sitedir, meta=meta)
+                page = J2Page(self, f, meta=meta)
             except IgnorePage:
                 continue
 
@@ -100,12 +100,12 @@ class J2Pages(Feature):
 class J2Page(Page):
     TYPE = "jinja2"
 
-    def __init__(self, j2env, src: File, parent: Page, meta: Meta):
+    def __init__(self, j2env, src: File, meta: Meta):
         dirname, basename = os.path.split(src.relpath)
         dst_basename = basename.replace(".j2", "")
 
         super().__init__(
-            parent=parent,
+            site=j2env.site,
             src=src,
             meta=meta)
 
