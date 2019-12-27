@@ -81,7 +81,7 @@ class MarkdownPages(Feature):
     """
     Render ``.md`` markdown pages, with front matter.
 
-    See doc/markdown.md for details.
+    See doc/reference/markdown.md for details.
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

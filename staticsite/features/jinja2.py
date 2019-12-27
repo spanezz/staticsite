@@ -45,7 +45,7 @@ class J2Pages(Feature):
     """
     Render jinja2 templates from the contents directory.
 
-    See doc/templates.md for details.
+    See doc/reference/templates.md for details.
     """
     def load_dir_meta(self, sitedir: ContentDir):
         # Load front matter from index.html

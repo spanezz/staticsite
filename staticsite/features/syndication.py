@@ -101,7 +101,7 @@ to the `site_pages` function in [templates](templates.md). See
 
 `pages` is optional, and if missing, `page.meta.pages` is used. Compared to
 using the `pages` filter, using `syndication.pages` takes the
-[`syndicated` and `syndication_date` page metadata](doc/metadata.md) into account.
+[`syndicated` and `syndication_date` page metadata](doc/reference/metadata.md) into account.
 
 For compatibility, `filter` can be used instead of `pages`.
 

@@ -66,7 +66,7 @@ class RestructuredText(Feature):
     """
     Render ``.rst`` reStructuredText pages, with front matter.
 
-    See doc/rst.rst for details.
+    See doc/reference/rst.rst for details.
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

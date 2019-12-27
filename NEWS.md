@@ -2,7 +2,7 @@
 
 # New in version 1.3
 
-* New [page metadata](doc/metadata.md): `author`, `site_name`, `site_url`, and
+* New [page metadata](doc/reference/metadata.md): `author`, `site_name`, `site_url`, and
   `site_root`.
 * The contents of a `.staticsite` file can also now be loaded from the
   `index.html`/`index.md`/`index.rst` file in the directory, if present. This
@@ -12,35 +12,36 @@
 * `site_name`, if not set, defaults to the title of the toplevel index page, if
   present
 * `.taxonomy` files do not need to be listed in [`TAXONOMIES`
-  settings](doc/settings.md) anymore: `TAXONOMIES` is now ignored in settings.
+  settings](doc/reference/settings.md) anymore: `TAXONOMIES` is now ignored in settings.
 * Restructured theme directory organization. See Upgrade notes for details.
 * Set `site_path` in a directory metadata to choose where that directory
   appears in the target site. This replaces
-  [`settings.SITE_ROOT`](doc/settings.md), which now acts as a default
+  [`settings.SITE_ROOT`](doc/reference/settings.md), which now acts as a default
   `site_path` for the toplevel directory.
-* Added `THEME_PATHS` [settings](doc/settings.md), as a sequence of paths where
+* Added `THEME_PATHS` [settings](doc/reference/settings.md), as a sequence of paths where
   themes are looked up
 * `THEME`, if set to a string, it represent a name of a theme to be looked up
   under `THEME_PATHS`
 * Themes are now installed in `/usr/share/staticsite/themes`, making it
   possible to make multiple themes available system-wide for use
-* Themes can now inherit from other themes. See [theme documentation](doc/theme.md)
+* Themes can now inherit from other themes. See [theme documentation](doc/reference/theme.md)
   for details
-* Added `page_for()` function to [templates](doc/templates.md)
-* Renamed `syndication.filter` to `syndication.pages` (see [syndication](doc/syndication.md).
+* Added `page_for()` function to [templates](doc/reference/templates.md)
+* Renamed `syndication.filter` to `syndication.pages` (see [syndication](doc/reference/syndication.md).
   For backwards compatibility, `syndication.filter` still works as an alias for
   `syndication.pages`.
-* Added `syndicated_pages` function to templates. See [syndication documentation](doc/syndication.md).
-* Added [`syndicated` metadata](doc/metadata.md) to allow excluding pages from
+* Added `syndicated_pages` function to templates. See [syndication documentation](doc/reference/syndication.md).
+* Added [`syndicated` metadata](doc/reference/metadata.md) to allow excluding pages from
   syndication.
-* Added [`syndication_date` metadata](doc/metadata.md) to allow to control when
+* Added [`syndication_date` metadata](doc/reference/metadata.md) to allow to control when
   a page gets syndicated.
-* jinja2 pages are now [`indexed`](doc/metadata.md) by default.
+* jinja2 pages are now [`indexed`](doc/reference/metadata.md) by default.
 * jinja2 and data pages can now render inline as part of a blog. By default,
   their `page_content` block is rendered, or the `content` block if
   `page_content` does not exist.
-* [data feature](doc/data): use `data_type` instead of `type`. Any page
+* [data feature](doc/reference/data): use `data_type` instead of `type`. Any page
   metadata with a `data_type` value will be tracked as data.
+* Moved [reference documentation](doc/reference/README.md) to `doc/reference`
 
 ## Upgrade notes
 
@@ -60,17 +61,17 @@
 
 ### Pages
 
-* Since jinja2 pages are now [`indexed`](doc/metadata.md) by default, they may
+* Since jinja2 pages are now [`indexed`](doc/reference/metadata.md) by default, they may
   accidentally appear in blogs and syndication. You can use the `syndicated`
   header to prevent them from being added. You can also apply `syndicated: no`
-  to multiple pages using the [`files:` matching patterns](doc/contents.md) in
+  to multiple pages using the [`files:` matching patterns](doc/reference/contents.md) in
   a directory index page.
-* In [data pages](doc/data.md), use `data_type` instead of `type`.
+* In [data pages](doc/reference/data.md), use `data_type` instead of `type`.
 
 
 # New in version 1.2
 
-* RestructuredText Feature, see <doc/rst.rst>, thanks to @valholl.
+* RestructuredText Feature, see <doc/reference/rst.rst>, thanks to @valholl.
 * Taxonomies:
     * Renamed `tags` feature to `taxonomy`
     * Taxonomies now need to be explicitly listed in settings as a `TAXONOMIES`
@@ -87,12 +88,12 @@
 * Page metadata:
     * `description` can now be used for page metadata.
     * `template_title` and `template_description`, if present while `title` and
-      `description` are not, are rendered with jinja2. See [doc/metadata.md] for
+      `description` are not, are rendered with jinja2. See [doc/reference/metadata.md] for
       details.
     * `template` metadata can be used to choose a custom template to render the
       page, similar to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
     * `indexed` (true or false) is used to tell if a page appears in a
-      directory index and in [page filter](doc/page-filter.md) results.
+      directory index and in [page filter](doc/reference/page-filter.md) results.
 * Themes:
     * Vendorized assets in `theme/static/` are now read by asset library name, as
       if `static/` were the same as `/usr/share/javascript/`. Now you need to refer
@@ -105,20 +106,20 @@
     * Turned `inline_pages.html` template into a `blog.html` macro library for
       blogs and category pages.
 * Jinja2 pages
-    * New setting [`JINJA2_PAGES`](doc/jinja2.md): now `*.html` pages are
+    * New setting [`JINJA2_PAGES`](doc/reference/jinja2.md): now `*.html` pages are
       considered jinja2 templates by default.
     * Renamed `j2` feature to `jinja2`
 * Content loading
     * A `.staticsite` file in a content directory is read as directory metadata,
       and can be used to provide metadata to `.j2.html` pages. See
-      <doc/contents.md> for details.
+      <doc/reference/contents.md> for details.
     * Static assets loaded by the theme have been moved to `static/` in the
       rendered site, to avoid cluttering the rest of the contents. Referring to
       them in `url_for` in templates has not changed.
-    * Set `asset` to true for a file in [`.staticsite` directory metadata](doc/contents.md),
+    * Set `asset` to true for a file in [`.staticsite` directory metadata](doc/reference/contents.md),
       to force loading it as a static asset.
     * Allow marking entire subdirectories as assets in
-      [directory metadata](doc/contents.md).
+      [directory metadata](doc/reference/contents.md).
     * Try harder to localize timestamps as the configured site TIMEZONE.
 * Added a `ssite show` command to open a directory in a browser without loading
   possibly unsafe settings.
@@ -129,32 +130,32 @@
   stacktrace.
 * Instantiate Feature classes in dependency order: this allows a feature
   constructor to register hooks with another one.
-* Added syndication feature (see <doc/syndication.md>) to simplify generation
+* Added syndication feature (see <doc/reference/syndication.md>) to simplify generation
   of RSS and Atom feeds
 * Added `ssite dump_meta` to page information as available to templates
 * One can now match pages by regexp and not just by glob. See
-  <doc/page-filter.md>.
+  <doc/reference/page-filter.md>.
 * Cleaned up reference documentation.
-* Allow selecting a language code for rendering. See `LANGUAGES` in [settings](doc/settings.md).
-* Added `BUILD_COMMAND` [setting](doc/settings.md).
+* Allow selecting a language code for rendering. See `LANGUAGES` in [settings](doc/reference/settings.md).
+* Added `BUILD_COMMAND` [setting](doc/reference/settings.md).
 * Removed compatibility `Feature.load_dir` method. The old `try_load_page`
   method is no longer supported. Now a feature that does not load files does
   not waste time during content loading.
-* [New `pages` feature](doc/pages.md) that allows defining a page filter in a
+* [New `pages` feature](doc/reference/pages.md) that allows defining a page filter in a
   `pages` metadata element, and then set `page.meta.pages` to a list of the
   matching pages. This can be used to simplify templates, so that with only one
   page filter one can control both the syndication and the page listing aspect
   of a blog page.
-* [New `arrange()` template filter](doc/templates.md) to do efficient sorted
+* [New `arrange()` template filter](doc/reference/templates.md) to do efficient sorted
   sampling from a list of pages.
 * `ssite edit`: when paginating results, an empty input goes to the next page
-* cleanup and documented [directory index](doc/dir.md) feature
+* cleanup and documented [directory index](doc/reference/dir.md) feature
 * `page.meta.alias` is honored for all page types
 * `page.meta.template` is honored for all page types
-* Started [developers documentation](doc/devel/README.md)
-* Started [usage HOWTO documentation](doc/howto/README.md)
+* Started [developers documentation](doc/reference/devel/README.md)
+* Started [usage HOWTO documentation](doc/reference/howto/README.md)
 * Switch to [jinja2 sandboxed environment](https://jinja.palletsprojects.com/en/2.10.x/sandbox/)
-  by default. Site [settings](doc/settings.md) can turn it off, which is ok
+  by default. Site [settings](doc/reference/settings.md) can turn it off, which is ok
   because `settings.py` is a point where arbitrary code can be injected. This
   means that you now only have to secure access to `settings.py`, and can be a
   bit more free with allowing others to participate in the site development.
@@ -177,7 +178,7 @@
 * The `series` feature is merged into `tags`: add a `series` taxonomy to keep using
   the `series` metadata in pages
 * You may need to update the series rendering part of your templates: see
-  [the series documentation](doc/series.md) and the `page.html` example template
+  [the series documentation](doc/reference/series.md) and the `page.html` example template
   for details and an example.
 * In templates, use `page.meta.pages` instead of `page.pages`
 
@@ -210,7 +211,7 @@
 
 * `.html` files are now parsed as jinja2 templates by default. If you have
   bundles of HTML in your site content that you'd like copied as-is, you can
-  mark them as 'asset' in [`.staticsite` directory metadata](doc/contents.md).
+  mark them as 'asset' in [`.staticsite` directory metadata](doc/reference/contents.md).
 
 ### Link stability
 
@@ -281,7 +282,7 @@
   This means you can potentially have a farm of .py site descriptions pointing
   at various other directories in the file system.
 * archetypes and output directory configurable in `settings.py`. See
-  [settings.md](doc/settings.md) for details.
+  [settings.md](doc/reference/settings.md) for details.
 * Added `--theme`, `--content`, `--archetypes` and `--output` to command line
   to override the corresponding settings.
 * Fixed a bug in taxonomy generation
@@ -289,7 +290,7 @@
 # New in version 0.2
 
 * Configurable site layout, using `CONTENT` and `THEME` in `settings.py`. See
-  [the settings reference](doc/settings.md) for details.
+  [the settings reference](doc/reference/settings.md) for details.
 * The example `settings.py` has been updated to use `content` for site
   contents, like [Hugo](https://gohugo.io) does.
 * Directory indices: if in your contents you have `dir/foo.md` without
@@ -297,6 +298,6 @@
   generated automatically, showing links to all site pages in that directory.
 * Documentation has been expanded and split into separate files under `doc/`
 * New template function `taxonomies()` that returns a list of taxonomies. See
-  [templates.md](doc/templates.md).
+  [templates.md](doc/reference/templates.md).
 * New template filter `|basename` that returns the basename of a path. See
-  [templates.md](doc/templates.md).
+  [templates.md](doc/reference/templates.md).
