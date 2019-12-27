@@ -176,8 +176,6 @@ class Show(ServerMixin, Command):
             self.settings.DRAFT_MODE = True
 
     def run(self):
-        site = self.reload()
-        server = self.make_server(self.get_source_dirs(site))
         arg_no_start = self.args.no_start
         arg_port = self.args.port
         arg_host = self.args.host
@@ -188,23 +186,28 @@ class Show(ServerMixin, Command):
         import tornado.ioloop
         import webbrowser
 
+        sockets = tornado.netutil.bind_sockets(arg_port, arg_host)
+        pairs = []
+        for s in sockets:
+            pairs.append(s.getsockname()[:2])
+        pairs.sort()
+        host, port = pairs[0]
+        if ":" in host:
+            host = f"[{host}]"
+        url = f"http://{host}:{port}"
+        log.info("Really serving on %s", url)
+
+        async def open_browser():
+            webbrowser.open_new_tab(url)
+
+        self.settings.SITE_URL = url
+        site = self.reload()
+        server = self.make_server(self.get_source_dirs(site))
+
         class Application(tornado.web.Application):
             def listen(self, *args, **kw):
-                sockets = tornado.netutil.bind_sockets(arg_port, arg_host)
                 server = tornado.httpserver.HTTPServer(self)
                 server.add_sockets(sockets)
-                pairs = []
-                for s in sockets:
-                    pairs.append(s.getsockname()[:2])
-                pairs.sort()
-                host, port = pairs[0]
-                if ":" in host:
-                    host = f"[{host}]"
-                url = f"http://{host}:{port}"
-                log.info("Actually serving on %s", url)
-
-                async def open_browser():
-                    webbrowser.open_new_tab(url)
 
                 if not arg_no_start:
                     tornado.ioloop.IOLoop.current().add_callback(open_browser)
