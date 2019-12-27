@@ -300,5 +300,4 @@ date: 2010-01-01 00:00:00
                     'title': 'Test1 title',
                     'data_type': 'test',
                 },
-                'data': {'date': '2010-01-01 00:00:00', 'data_type': 'test'},
             })

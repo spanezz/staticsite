@@ -5,12 +5,10 @@ with custom Jinja2 templates.
 
 The content of the data file is parsed, and merged into the page metadata.
 
-Data is extracted as the `data` element in the resulting metadata, and if there
-is no data element, the whole metadata is taken as data.
-
-Jinja2 templates can access the data as `page.data`.
-
 The jinja2 template can be chosen using the `data_type` metadata (see below).
+
+The metadata of any page with the `data_type` metadata will be also tracked as
+data. This allows to create normal pages that also add to a named dataset.
 
 ## Page metadata
 
@@ -23,10 +21,6 @@ type, so further features can efficiently access thematic datasets.
 
 The `page.meta.template` metadata for data pages, when not specified, defaults
 to `dir-[type].html`, or if that is missing, to `data.html`.
-
-### `page.data`
-
-The data found in this page.
 
 
 [Back to reference index](reference.md)

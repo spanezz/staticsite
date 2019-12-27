@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Any
+from typing import List
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
@@ -88,10 +88,8 @@ This is used to group data of the same type together, and to choose a
 
             meta.update(fm_meta)
 
-            data = meta.pop("data", fm_meta)
-
             cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(sitedir, src, meta=meta, data=data)
+            page = cls(sitedir, src, meta=meta)
             if not page.is_valid():
                 continue
 
@@ -156,10 +154,8 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, parent, src, meta: Meta, data: Dict[Any, Any]):
+    def __init__(self, parent, src, meta: Meta):
         super().__init__(parent=parent, src=src, meta=meta)
-
-        self.data = data
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
@@ -169,12 +165,6 @@ class DataPage(Page):
         if "template" not in self.meta:
             self.meta["template"] = self.site.theme.jinja2.select_template(
                     [f"data-{self.meta['data_type']}.html", "data.html"])
-
-    def to_dict(self):
-        from staticsite.utils import dump_meta
-        res = super().to_dict()
-        res["data"] = dump_meta(self.data)
-        return res
 
 
 class DataArchetype(Archetype):
