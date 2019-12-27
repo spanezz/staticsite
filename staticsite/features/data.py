@@ -1,17 +1,16 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Dict, Any
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.utils.typing import Meta
 from staticsite.contents import ContentDir
 from staticsite.page_filter import PageFilter
-import dateutil.parser
+from staticsite.metadata import Metadata
 import jinja2
 import re
 import os
 import io
-import datetime
 from collections import defaultdict
 import logging
 
@@ -41,6 +40,14 @@ class DataPages(Feature):
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
+        self.site.tracked_metadata.add("data_type")
+
+        self.site.register_metadata(Metadata("data_type", inherited=False, doc="""
+Type of data for this file.
+
+This is used to group data of the same type together, and to choose a
+`data-[data_type].html` rendering template.
+"""))
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
@@ -54,37 +61,39 @@ class DataPages(Feature):
                 continue
             taken.append(fname)
 
+            meta = sitedir.meta_file(fname)
+
             fmt = mo.group(1)
 
             with sitedir.open(fname, src, "rt") as fd:
                 try:
-                    data = parse_data(fd, fmt)
+                    fm_meta = parse_data(fd, fmt)
                 except Exception:
                     log.exception("%s: failed to parse %s content", src.relpath, fmt)
                     continue
 
             try:
-                type = data.get("type", None)
+                data_type = fm_meta.get("data_type", None)
             except AttributeError:
                 log.error("%s: data did not parse into a dict", src.relpath)
                 continue
 
-            if type is None:
-                log.error("%s: data type not found: ignoring page", src.relpath)
+            if data_type is None:
+                log.error("%s: data_type not found: ignoring page", src.relpath)
                 continue
 
-            meta = sitedir.meta_file(fname)
             page_name = fname[:-len(mo.group(0))]
             if page_name != "index":
                 meta["site_path"] = os.path.join(meta["site_path"], page_name)
 
-            cls = self.page_class_by_type.get(type, DataPage)
-            page = cls(sitedir, src, data, meta=sitedir.meta_file(fname))
+            meta.update(fm_meta)
+
+            data = meta.pop("data", fm_meta)
+
+            cls = self.page_class_by_type.get(data_type, DataPage)
+            page = cls(sitedir, src, meta=meta, data=data)
             if not page.is_valid():
                 continue
-
-            data_type = page.meta.get("type")
-            self.by_type[data_type].append(page)
 
             pages.append(page)
 
@@ -103,6 +112,12 @@ class DataPages(Feature):
         return DataArchetype(archetypes, relpath, self, fmt)
 
     def finalize(self):
+        # Dispatch pages by type
+        for page in self.site.pages_by_metadata["data_type"]:
+            data_type = page.meta.get("data_type")
+            self.by_type[data_type].append(page)
+
+        # Sort the pages of each type by date
         for pages in self.by_type.values():
             pages.sort(key=lambda x: x.meta["date"])
 
@@ -141,35 +156,19 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, parent, src, data, meta: Meta):
-        super().__init__(
-            parent=parent,
-            src=src,
-            meta=meta)
+    def __init__(self, parent, src, meta: Meta, data: Dict[Any, Any]):
+        super().__init__(parent=parent, src=src, meta=meta)
+
+        self.data = data
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)
 
-        # Read and parse the contents
-        if self.src is None or self.src.stat is None:
-            if self.meta.get("date", None) is None:
-                self.meta["date"] = self.site.generation_time
-        else:
-            if self.meta.get("date", None) is None:
-                self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-
-        self.meta.update(data)
-        self.data = data
-
-        date = self.meta.get("date", None)
-        if date is not None and not isinstance(date, datetime.datetime):
-            self.meta["date"] = dateutil.parser.parse(date)
-
         if "template" not in self.meta:
             self.meta["template"] = self.site.theme.jinja2.select_template(
-                    [f"data-{self.meta['type']}.html", "data.html"])
+                    [f"data-{self.meta['data_type']}.html", "data.html"])
 
     def to_dict(self):
         from staticsite.utils import dump_meta

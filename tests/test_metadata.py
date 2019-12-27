@@ -230,7 +230,7 @@ date: 2005-01-01 00:00:00
 ---
 """,
             "page1.yaml": """---
-type: test
+data_type: test
 date: 2010-01-01 00:00:00
 """,
         }
@@ -298,7 +298,7 @@ date: 2010-01-01 00:00:00
                     "build_path": "page1/index.html",
                     'template': 'compiled:data.html',
                     'title': 'Test1 title',
-                    'type': 'test',
+                    'data_type': 'test',
                 },
-                'data': {'date': '2010-01-01 00:00:00', 'type': 'test'},
+                'data': {'date': '2010-01-01 00:00:00', 'data_type': 'test'},
             })

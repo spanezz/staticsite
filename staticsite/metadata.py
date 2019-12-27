@@ -71,7 +71,7 @@ class MetadataDate(Metadata):
     def on_load(self, page: "page.Page"):
         date = page.meta.get(self.name)
         if date is None:
-            if page.src.stat is not None:
+            if page.src is not None and page.src.stat is not None:
                 page.meta[self.name] = self.site.localized_timestamp(page.src.stat.st_mtime)
             else:
                 page.meta[self.name] = self.site.generation_time

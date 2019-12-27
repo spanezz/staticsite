@@ -39,6 +39,9 @@
 * jinja2 and data pages can now render inline as part of a blog. By default,
   their `page_content` block is rendered, or the `content` block if
   `page_content` does not exist.
+* [data feature](doc/data): use `data_type` instead of `type`, and allow to
+  provide data in a `data` element that, if present, will be detached from
+  metadata
 
 ## Upgrade notes
 
@@ -63,6 +66,7 @@
   header to prevent them from being added. You can also apply `syndicated: no`
   to multiple pages using the [`files:` matching patterns](doc/contents.md) in
   a directory index page.
+* In [data pages](doc/data.md), use `data_type` instead of `type`.
 
 
 # New in version 1.2

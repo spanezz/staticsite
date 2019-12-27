@@ -64,7 +64,7 @@ class TestUrlFor(TestCase):
             },
             "page1.md": {},
             "page2.rst": {},
-            "page3.yaml": {"type": "page"},
+            "page3.yaml": {"data_type": "page"},
             "dir/page2.md": {},
             "dir/index.html": {},
         }
