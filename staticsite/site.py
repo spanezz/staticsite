@@ -1,12 +1,11 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set, Any, Union, Callable
+from typing import Optional, Dict, List, Set, Any, Union, Callable, TYPE_CHECKING
 import os
 import datetime
 import pytz
 import dateutil.parser
 from collections import defaultdict
 from .settings import Settings
-from . import page
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd, timings
 from . import metadata
@@ -14,6 +13,9 @@ from .metadata import Metadata
 from . import contents
 from .file import File
 import logging
+
+if TYPE_CHECKING:
+    from .page import Page
 
 log = logging.getLogger("site")
 
@@ -45,17 +47,17 @@ class Site:
         self.metadata: Dict[str, Metadata] = {}
 
         # Functions called on a page to cleanup metadata on page load
-        self.metadata_on_load_functions: List[Callable[page.Page], None] = []
+        self.metadata_on_load_functions: List[Callable[Page], None] = []
 
         # Functions called on a page to cleanup metadata at the beginning of
         # the analyze pass
-        self.metadata_on_analyze_functions: List[Callable[page.Page], None] = []
+        self.metadata_on_analyze_functions: List[Callable[Page], None] = []
 
         # Site pages indexed by site_path
-        self.pages: Dict[str, page.Page] = {}
+        self.pages: Dict[str, Page] = {}
 
         # Site pages indexed by src.relpath
-        self.pages_by_src_relpath: Dict[str, page.Page] = {}
+        self.pages_by_src_relpath: Dict[str, Page] = {}
 
         # Site directory metadata
         self.dir_meta: Dict[str, Meta] = {}
@@ -64,7 +66,7 @@ class Site:
         self.tracked_metadata: Set[str] = set()
 
         # Site pages that have the given metadata
-        self.pages_by_metadata: Dict[str, List[page.Page]] = defaultdict(list)
+        self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)
 
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
@@ -338,7 +340,7 @@ It defaults to true at least for [Markdown](markdown.md),
         with timings("Loaded contents in %fs"):
             self.load_content()
 
-    def add_page(self, page: "page.Page"):
+    def add_page(self, page: Page):
         """
         Add a Page object to the site.
 
@@ -368,6 +370,11 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         if not self.stage_content_directory_loaded:
             log.warn("analyze called before loading site contents")
+
+        # Run metadata on_analyze functions
+        for f in self.metadata_on_analyze_functions:
+            for page in self.pages.values():
+                f(page)
 
         # Add missing pages_by_metadata entries in case no matching page were
         # found for some of them
