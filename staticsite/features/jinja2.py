@@ -34,7 +34,11 @@ def load_front_matter(template: jinja2.Template) -> Meta:
     if "title" not in meta:
         title_block = template.blocks.get("title")
         if title_block:
-            title = "".join(title_block(template.new_context())).strip()
+            try:
+                title = "".join(title_block(template.new_context())).strip()
+            except jinja2.exceptions.TemplateError as e:
+                log.warn("%s: cannot extract title from {%% block title %%}: %s", template.name, e)
+                title = None
             if title:
                 meta["title"] = title
 
