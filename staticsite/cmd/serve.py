@@ -151,6 +151,8 @@ class Serve(ServerMixin, SiteCommand):
         return parser
 
     def run(self):
+        if self.settings.SITE_URL is None:
+            self.settings.SITE_URL = f"http://{self.args.host}:{self.args.port}"
         site = self.reload()
         server = self.make_server(self.get_source_dirs(site))
         server.serve(port=self.args.port, host=self.args.host)

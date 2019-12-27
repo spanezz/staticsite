@@ -73,7 +73,7 @@ element.
                 continue
             meta.update(fm_meta)
 
-            page = TaxonomyPage(self.site, src, meta=meta, name=name)
+            page = TaxonomyPage(self.site, src, meta=meta, name=name, dir=sitedir)
             if not page.is_valid():
                 continue
             self.taxonomies[page.name] = page
@@ -113,11 +113,8 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, site: Site, src: File, name: str, meta: Meta):
-        super().__init__(
-            site=site,
-            src=src,
-            meta=meta)
+    def __init__(self, site: Site, src: File, name: str, meta: Meta, dir: Dir):
+        super().__init__(site=site, src=src, meta=meta, dir=dir)
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         self.meta.setdefault("template", "taxonomy/taxonomy.html")

@@ -4,7 +4,7 @@ from staticsite import Page, Feature, Site, File
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.utils.typing import Meta
-from staticsite.contents import ContentDir
+from staticsite.contents import ContentDir, Dir
 from staticsite.page_filter import PageFilter
 from staticsite.metadata import Metadata
 import jinja2
@@ -89,7 +89,7 @@ This is used to group data of the same type together, and to choose a
             meta.update(fm_meta)
 
             cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(self.site, src, meta=meta)
+            page = cls(self.site, src, meta=meta, dir=sitedir)
             if not page.is_valid():
                 continue
 
@@ -154,8 +154,8 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, site: Site, src: File, meta: Meta):
-        super().__init__(site=site, src=src, meta=meta)
+    def __init__(self, site: Site, src: File, meta: Meta, dir: Dir):
+        super().__init__(site=site, src=src, meta=meta, dir=dir)
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 

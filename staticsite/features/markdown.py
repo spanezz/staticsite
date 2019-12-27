@@ -3,7 +3,7 @@ from typing import List
 from staticsite import Page, Feature, File
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
-from staticsite.contents import ContentDir
+from staticsite.contents import ContentDir, Dir
 from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
 import jinja2
@@ -167,7 +167,7 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            page = MarkdownPage(self, src, meta=meta, body=body)
+            page = MarkdownPage(self, src, meta=meta, dir=sitedir, body=body)
             if not page.is_valid():
                 continue
 
@@ -308,11 +308,8 @@ class MarkdownPage(Page):
     TYPE = "markdown"
 
     def __init__(
-            self, mdpages: MarkdownPages, src: File, meta: Meta, body: List[str]):
-        super().__init__(
-            site=mdpages.site,
-            src=src,
-            meta=meta)
+            self, mdpages: MarkdownPages, src: File, meta: Meta, dir: Dir, body: List[str]):
+        super().__init__(site=mdpages.site, src=src, meta=meta, dir=dir)
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 

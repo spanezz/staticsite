@@ -33,9 +33,8 @@ class Dir(Page):
     """
     TYPE = "dir"
 
-    def __init__(
-            self, site: Site, src: file.File, meta: Dict[str, Any]):
-        super().__init__(site, src, meta)
+    def __init__(self, site: Site, src: file.File, meta: Meta, dir: Optional["Dir"] = None):
+        super().__init__(site, src, meta, dir=dir)
         # Subdirectory of this directory
         self.subdirs: List["ContentDir"] = []
         # Files found in this directory
@@ -53,12 +52,12 @@ class Dir(Page):
         self.pages = []
 
     @classmethod
-    def create(cls, site: Site, src: file.File, meta: Dict[str, Any]):
+    def create(cls, site: Site, src: file.File, meta: Dict[str, Any], dir: Optional["Dir"] = None):
         # Check whether to load subdirectories as asset trees
         if meta.get("asset"):
-            return AssetDir(site, src, meta)
+            return AssetDir(site, src, meta, dir=dir)
         else:
-            return ContentDir(site, src, meta)
+            return ContentDir(site, src, meta, dir=dir)
 
     def add_dir_config(self, meta: Meta):
         """
@@ -170,8 +169,7 @@ class Dir(Page):
 
         # Scan subdirectories
         for name, f in subdirs.items():
-            subdir = Dir.create(self.site, f, meta=self.file_meta[name])
-            subdir.dir = self
+            subdir = Dir.create(self.site, f, meta=self.file_meta[name], dir=self)
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
@@ -253,7 +251,6 @@ class ContentDir(Dir):
         # Let features pick their files
         for handler in self.site.features.ordered():
             for page in handler.load_dir(self):
-                page.dir = self
                 self.site.add_page(page)
                 if page.meta["indexed"]:
                     self.pages.append(page)
