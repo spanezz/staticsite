@@ -4,6 +4,7 @@ from staticsite import Page, Feature, File
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
 from staticsite.contents import ContentDir
+from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
 import jinja2
 import os
@@ -148,7 +149,7 @@ class MarkdownPages(Feature):
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, f in sitedir.files.items():
+        for fname, src in sitedir.files.items():
             if not fname.endswith(".md"):
                 continue
             taken.append(fname)
@@ -158,12 +159,15 @@ class MarkdownPages(Feature):
                 meta["site_path"] = os.path.join(meta["site_path"], fname[:-3])
 
             try:
-                page = MarkdownPage(self, sitedir, f, meta=meta)
+                fm_meta, body = self.load_file_meta(sitedir, src, fname)
             except Exception as e:
-                log.warn("%s: Failed to parse markdown page: skipped", f)
-                log.debug("%s: Failed to parse markdown page: skipped", f, exc_info=e)
+                log.warn("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
+                log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
                 continue
 
+            meta.update(fm_meta)
+
+            page = MarkdownPage(self, sitedir, src, meta=meta, body=body)
             if not page.is_valid():
                 continue
 
@@ -193,6 +197,35 @@ class MarkdownPages(Feature):
             log.warn("%s: failed to parse front matter", index.relpath)
         else:
             sitedir.add_dir_config(meta)
+
+    def load_file_meta(self, sitedir, src, fname):
+        """
+        Load metadata for a file.
+
+        Returns the metadata and the markdown lines for the rest of the file
+        """
+        # Read the contents
+
+        # Parse separating front matter and markdown content
+        with sitedir.open(fname, src, "rt") as fd:
+            fmatter, body = parse_markdown_with_front_matter(fd)
+
+        style, meta = front_matter.parse(fmatter)
+
+        # Remove leading empty lines
+        while body and not body[0]:
+            body.pop(0)
+
+        # Read title from first # title if not specified in metadata
+        if not meta.get("title", ""):
+            if body and body[0].startswith("# "):
+                meta["title"] = body.pop(0)[2:].strip()
+
+                # Remove leading empty lines again
+                while body and not body[0]:
+                    body.pop(0)
+
+        return meta, body
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".md":
@@ -274,12 +307,14 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
-    def __init__(self, mdpages: MarkdownPages, parent: Optional[Page], src: Optional[File], meta: Meta):
+    def __init__(
+            self, mdpages: MarkdownPages, parent: Optional[Page], src: Optional[File], meta: Meta, body: List[str]):
         super().__init__(
             parent=parent,
             src=src,
-            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
+
+        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)
@@ -287,41 +322,8 @@ class MarkdownPage(Page):
         # Shared markdown environment
         self.mdpages = mdpages
 
-        # Sequence of lines found in the front matter
-        self.front_matter = []
-
         # Sequence of lines found in the body
-        self.body = []
-
-        # Markdown content of the page rendered into html
-        self.md_html = None
-
-        # Read the contents
-
-        # Parse separating front matter and markdown content
-        with open(self.src.abspath, "rt") as fd:
-            self.front_matter, self.body = parse_markdown_with_front_matter(fd)
-
-        try:
-            style, fm_meta = front_matter.parse(self.front_matter)
-        except Exception as e:
-            log.debug("%s: failed to parse front matter", self.src.relpath, exc_info=e)
-            log.warn("%s: failed to parse front matter", self.src.relpath)
-
-        # Remove leading empty lines
-        while self.body and not self.body[0]:
-            self.body.pop(0)
-
-        # Read title from first # title if not specified in metadata
-        if not fm_meta.get("title", ""):
-            if self.body and self.body[0].startswith("# "):
-                fm_meta["title"] = self.body.pop(0)[2:].strip()
-
-                # Remove leading empty lines again
-                while self.body and not self.body[0]:
-                    self.body.pop(0)
-
-        self.meta.update(**fm_meta)
+        self.body = body
 
     def get_content(self):
         return "\n".join(self.body)
@@ -329,11 +331,9 @@ class MarkdownPage(Page):
     def check(self, checker):
         self.mdpages.render_page(self)
 
-    @property
+    @lazy
     def content(self):
-        if self.md_html is None:
-            self.md_html = self.mdpages.render_page(self)
-        return self.md_html
+        return self.mdpages.render_page(self)
 
 
 FEATURES = {

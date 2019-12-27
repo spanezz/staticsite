@@ -145,8 +145,9 @@ class DataPage(Page):
         super().__init__(
             parent=parent,
             src=src,
-            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
+
+        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

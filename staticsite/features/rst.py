@@ -1,10 +1,12 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Tuple
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.contents import ContentDir
+from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
+from staticsite.file import File
 import docutils.io
 import docutils.core
 import docutils.nodes
@@ -144,7 +146,7 @@ class RestructuredText(Feature):
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, f in sitedir.files.items():
+        for fname, src in sitedir.files.items():
             if not fname.endswith(".rst"):
                 continue
             taken.append(fname)
@@ -154,12 +156,15 @@ class RestructuredText(Feature):
                 meta["site_path"] = os.path.join(meta["site_path"], fname[:-4])
 
             try:
-                page = RstPage(self, sitedir, f, meta=sitedir.meta_file(fname))
-            except Exception:
-                log.debug("%s: Failed to parse RestructuredText page: skipped", f, exc_info=True)
-                log.warn("%s: Failed to parse RestructuredText page: skipped", f)
+                fm_meta, doctree_scan = self.load_file_meta(sitedir, src, fname)
+            except Exception as e:
+                log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
+                log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
                 continue
 
+            meta.update(fm_meta)
+
+            page = RstPage(self, sitedir, src, meta=meta, doctree_scan=doctree_scan)
             if not page.is_valid():
                 continue
 
@@ -169,6 +174,13 @@ class RestructuredText(Feature):
             del sitedir.files[fname]
 
         return pages
+
+    def load_file_meta(self, sitedir: ContentDir, src: File, fname: str) -> Tuple[Meta, DoctreeScan]:
+        # Parse document into a doctree and extract docinfo metadata
+        with sitedir.open(fname, src, "rt") as fd:
+            meta, doctree_scan = self.parse_rest(fd)
+
+        return meta, doctree_scan
 
     def try_load_archetype(self, archetypes, relpath, name):
         if os.path.basename(relpath) != name + ".rst":
@@ -223,12 +235,13 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, feature, parent, src, meta: Meta):
+    def __init__(self, feature, parent, src, meta: Meta, doctree_scan: DoctreeScan):
         super().__init__(
             parent=parent,
             src=src,
-            dst_relpath=os.path.join(meta["site_path"], "index.html"),
             meta=meta)
+
+        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)
@@ -237,16 +250,6 @@ class RstPage(Page):
         self.rst = feature
 
         # Document doctree root node
-        self.doctree_scan = None
-
-        # Content of the page rendered into html
-        self.body_html = None
-
-        # Parse document into a doctree and extract docinfo metadata
-        with open(self.src.abspath, "rt") as fd:
-            fm_meta, doctree_scan = self.rst.parse_rest(fd)
-            self.meta.update(**fm_meta)
-
         self.doctree_scan = doctree_scan
 
     def check(self, checker):
@@ -296,11 +299,9 @@ class RstPage(Page):
         # })
         return parts["body"]
 
-    @property
+    @lazy
     def content(self):
-        if self.body_html is None:
-            self.body_html = self._render_page()
-        return self.body_html
+        return self._render_page()
 
 
 FEATURES = {

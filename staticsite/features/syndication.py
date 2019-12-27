@@ -253,8 +253,8 @@ class SyndicationPage(Page):
         super().__init__(
             parent=parent,
             src=None,
-            dst_relpath=meta["site_path"],
             meta=meta)
+        self.meta["build_path"] = meta["site_path"]
         self.meta.setdefault("template", self.TEMPLATE)
         if self.meta["pages"]:
             self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])

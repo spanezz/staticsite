@@ -257,10 +257,10 @@ date: 2010-01-01 00:00:00
                     'site_name': 'Test1 title',
                     'site_path': '',
                     'site_url': 'https://www.example.org',
+                    "build_path": "index.html",
                     'template': 'compiled:index.html',
                     'title': 'Test1 title',
                 },
-                "dst_relpath": "index.html",
             })
 
             self.assertEqual(mdpage.to_dict(), {
@@ -276,10 +276,10 @@ date: 2010-01-01 00:00:00
                     'site_name': 'Test1 title',
                     'site_path': 'page',
                     'site_url': 'https://www.example.org',
+                    "build_path": "page/index.html",
                     'template': 'page.html',
                     'title': 'Test1 title',
                 },
-                "dst_relpath": "page/index.html",
             })
 
             self.assertEqual(datapage.to_dict(), {
@@ -295,10 +295,10 @@ date: 2010-01-01 00:00:00
                     'site_name': 'Test1 title',
                     'site_path': 'page1',
                     'site_url': 'https://www.example.org',
+                    "build_path": "page1/index.html",
                     'template': 'compiled:data.html',
                     'title': 'Test1 title',
                     'type': 'test',
                 },
                 'data': {'date': '2010-01-01 00:00:00', 'type': 'test'},
-                "dst_relpath": "page1/index.html",
             })
