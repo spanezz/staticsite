@@ -161,13 +161,13 @@ class Page:
             if res is not None:
                 return res
 
-            # Try adding /static as a compatibility with old links
-            target_relpath = "static/" + target_relpath
+            # Try adding STATIC_PATH as a compatibility with old links
+            target_relpath = os.path.join(self.site.STATIC_PATH, target_relpath)
 
             # Try by source path
             res = self.site.pages_by_src_relpath.get(target_relpath)
             if res is not None:
-                log.warn("%s+%s: please use /static/%s instead of %s", self, target, target)
+                log.warn("%s: please use %s instead of %s", self, target_relpath, target)
                 return res
 
             raise PageNotFoundError(f"cannot resolve absolute path {target}")

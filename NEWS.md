@@ -42,6 +42,7 @@
 * [data feature](doc/reference/data): use `data_type` instead of `type`. Any page
   metadata with a `data_type` value will be tracked as data.
 * Moved [reference documentation](doc/reference/README.md) to `doc/reference`
+* Make build destination of theme static assets configurable via [`STATIC_PATH` setting](doc/reference/settings.md)
 
 ## Upgrade notes
 

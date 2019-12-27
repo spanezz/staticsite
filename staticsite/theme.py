@@ -160,7 +160,7 @@ class Theme:
             theme_static = os.path.join(config["root"], "static")
             if os.path.isdir(theme_static):
                 self.theme_static_dirs.append(theme_static)
-        log.info("%s: theme static directoreis: %r", self.name, self.theme_static_dirs)
+        log.info("%s: theme static directories: %r", self.name, self.theme_static_dirs)
 
     @classmethod
     def create(cls, site, name: str, search_paths: Sequence[str] = None) -> "Theme":
@@ -244,7 +244,7 @@ class Theme:
         """
         meta = dict(self.site.content_roots[0].meta)
         meta["asset"] = True
-        meta["site_path"] = os.path.join(meta["site_path"], "static")
+        meta["site_path"] = site_path = os.path.join(meta["site_path"], self.site.settings.STATIC_PATH)
 
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
@@ -252,12 +252,12 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            meta = dict(meta)
-            meta["site_path"] = os.path.join("static", name)
+            fmeta = dict(meta)
+            fmeta["site_path"] = os.path.join(site_path, name)
             # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
                 src=File(name, root, os.stat(root)),
-                meta=meta,
+                meta=fmeta,
             )
 
         # Load assets from theme directories

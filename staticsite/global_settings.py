@@ -98,3 +98,7 @@ LANGUAGES: Sequence[Dict[str, Any]] = [
         "locale": "C",
     },
 ]
+
+# Path where theme static assets will be placed in built site
+# Override with "" to merge when with the rest of the contents
+STATIC_PATH = "static"

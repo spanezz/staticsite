@@ -59,7 +59,8 @@ overridden by `settings.py` or `.staticsite.py`.
 * `JINJA2_SANDBOXED`: disable jinja2 sandboxing, making it noticeably faster,
   but allowing template designer to inject insecure code. Turn it on if you can
   trust the authors of templates.
-
+* `STATIC_PATH`: path where theme static assets will be placed in built site.
+  Override with "" to merge when with the rest of the contents.
 
 ## `ssite new` settings
 
