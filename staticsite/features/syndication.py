@@ -162,11 +162,12 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
         Given a list of pages to potentially syndicate, filter them by their
         syndicated header, and sort by syndication date.
         """
+        draft_mode = self.site.settings.DRAFT_MODE
         res = []
         for page in pages:
             if not page.meta["syndicated"]:
                 continue
-            if page.meta["syndication_date"] > self.site.generation_time:
+            if not draft_mode and page.meta["syndication_date"] > self.site.generation_time:
                 continue
             res.append(page)
         res.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
