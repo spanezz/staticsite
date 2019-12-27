@@ -63,8 +63,7 @@ def _get_syndicated_pages(page: Page, limit: Optional[int] = None) -> List[Page]
     if pages is None:
         raise SyndicatedPageError(f"page {page!r} has no `syndication.pages` or `pages` in metadata")
 
-    # TODO: arrange by syndication_date instead of date
-    return arrange(pages, "-date", limit=limit)
+    return arrange(pages, "-syndication_date", limit=limit)
 
 
 class SyndicationFeature(Feature):
@@ -153,8 +152,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             elif isinstance(what, Page):
                 return _get_syndicated_pages(what, limit=limit)
             else:
-                # TODO: arrange by syndication_date
-                return arrange(what, "-date", limit=limit)
+                return arrange(what, "-syndication_date", limit=limit)
         except SyndicatedPageError as e:
             log.warn("%s: %s", context.name, e)
             return []
