@@ -403,7 +403,11 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         # Make sure we have a datetime
         if not isinstance(date, datetime.datetime):
-            date = dateutil.parser.parse(date)
+            try:
+                date = dateutil.parser.parse(date)
+            except ValueError as e:
+                log.warn("cannot parse datetime %s: %s", date, e)
+                return self.generation_time
 
         # Make sure the datetime is aware
         if date.tzinfo is None:
