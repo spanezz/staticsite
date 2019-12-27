@@ -13,4 +13,4 @@ Directory pages have these extra properties:
 * `page.meta.pages` lists the pages in this directory
 * `page.meta.parent` parent page in the directory hierarcny
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

@@ -82,4 +82,4 @@ RSS and Atom pages have these extra properties:
 * `page.meta.pages` is a list of all the pages included in the syndication
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

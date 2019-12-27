@@ -16,4 +16,4 @@ Through it, templates and code can access:
 * `site_name`: configured site name
 * `archetypes`: site [archetypes](archetypes.md)
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

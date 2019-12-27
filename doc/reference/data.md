@@ -23,4 +23,4 @@ The `page.meta.template` metadata for data pages, when not specified, defaults
 to `dir-[type].html`, or if that is missing, to `data.html`.
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

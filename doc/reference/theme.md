@@ -82,4 +82,4 @@ the templates in the chain, removing duplicates.
 Then assets are loaded from all the `static/` directories in all the templates
 in the dependency chain, from the bottom-most dependency upwards.
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

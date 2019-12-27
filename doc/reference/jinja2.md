@@ -27,4 +27,4 @@ To prevent your front matter from ending up in the rendered HTML, place the
 `front_matter` block after the `{% extends %}` directive, or manage your front
 matter from [`.staticfile` directory metadata](content.md).
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

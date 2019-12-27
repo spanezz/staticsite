@@ -42,4 +42,4 @@ Templates need to choose which categories are relevant for use in generating
 series navigation links.
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

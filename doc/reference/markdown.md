@@ -92,4 +92,4 @@ Besides the usual `meta`, markdown pages have also these attributes:
   it with the [`|safe` filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#safe)
   to prevent double escaping
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

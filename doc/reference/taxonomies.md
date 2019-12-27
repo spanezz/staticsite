@@ -121,4 +121,4 @@ usual [meta](metadata.md), documented here.
 * `page.meta.category`: the category index page for this category
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

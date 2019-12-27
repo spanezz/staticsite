@@ -81,4 +81,4 @@ overridden by `settings.py` or `.staticsite.py`.
   see [markdown pages documentation](doc/markdown.md)
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

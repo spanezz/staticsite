@@ -35,4 +35,4 @@ List blog articles about Debian in a template:
 ```
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

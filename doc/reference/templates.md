@@ -66,4 +66,4 @@ for example:
    pages. `sort` takes the same values as in [page filters](page-filter.md).
 
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)

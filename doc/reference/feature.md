@@ -50,4 +50,4 @@ if `taxonomy` needs to run its `finalize` methods after all pages have been
 loaded from disk, a dependency is not needed, since the `load_dir` stage
 already happens before the `finalize` stage.
 
-[Back to reference index](reference.md)
+[Back to reference index](README.md)
