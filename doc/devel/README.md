@@ -46,6 +46,13 @@ mypy staticsite ssite
 ```
 
 
+## Codespell
+
+```
+codespell --write-changes --skip debian/copyright *.md debian doc example staticsite tests
+```
+
+
 ## Release checklist
 
 * Run tests
