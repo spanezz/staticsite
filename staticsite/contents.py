@@ -150,15 +150,6 @@ class Dir(Page):
         # Store directory metadata
         self.site.dir_meta[self.meta["site_path"]] = self.meta
 
-        # Compute metadata for directories
-        for dname in subdirs:
-            res: Meta = dict(self.meta)
-            res["site_path"] = os.path.join(res["site_path"], dname)
-            for pattern, meta in self.dir_rules:
-                if pattern.match(dname):
-                    res.update(meta)
-            self.file_meta[dname] = res
-
         # Compute metadata for files
         for fname in self.files.keys():
             res: Meta = dict(self.meta)
@@ -168,8 +159,16 @@ class Dir(Page):
             self.file_meta[fname] = res
 
         # Scan subdirectories
-        for name, f in subdirs.items():
-            subdir = Dir.create(self.site, f, meta=self.file_meta[name], dir=self)
+        for name, src in subdirs.items():
+            # Compute metadata for this directory
+            meta: Meta = dict(self.meta)
+            meta["site_path"] = os.path.join(meta["site_path"], name)
+            for pattern, dmeta in self.dir_rules:
+                if pattern.match(name):
+                    meta.update(dmeta)
+
+            # Recursively descend into the directory
+            subdir = Dir.create(self.site, src, meta=meta, dir=self)
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)

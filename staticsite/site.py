@@ -402,6 +402,7 @@ It defaults to true at least for [Markdown](markdown.md),
                         datetime.datetime.utcfromtimestamp(ts)
                     ).astimezone(self.timezone)
 
+    # TODO: support partial dates?
     re_isodate = re.compile(r"^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})(Z|\+\d{2}.*)$")
 
     def clean_date(self, date: Union[str, datetime.datetime]) -> datetime.datetime:
@@ -420,6 +421,7 @@ It defaults to true at least for [Markdown](markdown.md),
                 else:
                     date = datetime.datetime.fromisoformat(date)
             else:
+                # TODO: log a fallback on dateutil?
                 try:
                     date = dateutil.parser.parse(date)
                 except ValueError as e:
