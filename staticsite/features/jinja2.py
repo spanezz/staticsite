@@ -89,9 +89,6 @@ class J2Pages(Feature):
             except IgnorePage:
                 continue
 
-            if not page.is_valid():
-                continue
-
             taken.append(fname)
             pages.append(page)
 

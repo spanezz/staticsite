@@ -90,9 +90,6 @@ This is used to group data of the same type together, and to choose a
 
             cls = self.page_class_by_type.get(data_type, DataPage)
             page = cls(self.site, src, meta=meta, dir=sitedir)
-            if not page.is_valid():
-                continue
-
             pages.append(page)
 
         for fname in taken:

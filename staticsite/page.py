@@ -20,6 +20,22 @@ class PageNotFoundError(Exception):
     pass
 
 
+class PageValidationError(Exception):
+    def __init__(self, page: "Page", msg: str):
+        self.page = page
+        self.msg = msg
+
+
+class PageDraftError(PageValidationError):
+    def __init__(self, page: "Page"):
+        super().__init__(page, f"draft until {page.meta['date']}")
+
+
+class PageMissesFieldError(PageValidationError):
+    def __init__(self, page: "Page", field: str):
+        super().__init__(page, f"missing required field meta.{field}")
+
+
 class Page:
     """
     A source page in the site.
@@ -46,14 +62,14 @@ class Page:
         # about its contents.
         self.meta: Meta = meta
 
-    def is_valid(self) -> bool:
+    def validate(self):
         """
         Enforce common meta invariants.
 
         Performs validation and completion of metadata.
 
-        :return: True if the page is valid and ready to be added to the site,
-                 False if it should be discarded
+        Raises PageValidationError or one of its subclasses of the page should
+        not be added to the site.
         """
         # Run metadata on load functions
         for f in self.site.metadata_on_load_functions:
@@ -73,32 +89,34 @@ class Page:
             self.meta["title"] = self.meta["site_name"]
 
         # Check draft status
-        if self.site.settings.DRAFT_MODE:
-            return True
         if self.draft:
-            log.info("%s: still a draft", self.src.relpath)
-            return False
+            raise PageDraftError(self)
 
         # Check the existence of other mandatory fields
         if "site_url" not in self.meta:
-            log.warn("%s: missing meta.site_url", self)
-            return False
+            raise PageMissesFieldError(self, "site_url")
 
         # Make sure site_path exists and is relative
         site_path = self.meta.get("site_path")
         if site_path is None:
-            log.warn("%s: missing meta.site_path", self)
-            return False
+            raise PageMissesFieldError(self, "site_path")
         if site_path.startswith("/"):
             self.meta["site_path"] = site_path.lstrip("/")
 
-        return True
+        # Make sure build_path exists and is relative
+        build_path = self.meta.get("site_path")
+        if build_path is None:
+            raise PageMissesFieldError(self, "build_path")
+        if build_path.startswith("/"):
+            self.meta["build_path"] = build_path.lstrip("/")
 
-    @property
+    @lazy
     def draft(self):
         """
         Return True if this page is still a draft (i.e. its date is in the future)
         """
+        if self.site.settings.DRAFT_MODE:
+            return False
         ts = self.meta.get("date", None)
         if ts is None:
             return False

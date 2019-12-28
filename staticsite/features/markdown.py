@@ -168,9 +168,6 @@ class MarkdownPages(Feature):
             meta.update(fm_meta)
 
             page = MarkdownPage(self, src, meta=meta, dir=sitedir, body=body)
-            if not page.is_valid():
-                continue
-
             pages.append(page)
 
         for fname in taken:

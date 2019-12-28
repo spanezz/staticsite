@@ -349,6 +349,16 @@ It defaults to true at least for [Markdown](markdown.md),
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
+        from .page import PageValidationError, PageDraftError
+        try:
+            page.validate()
+        except PageDraftError as e:
+            log.info("%s: skipping page: %s", e.page, e.msg)
+            return
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            return
+
         site_path = page.meta["site_path"]
         old = self.pages.get(site_path)
         if old is not None:

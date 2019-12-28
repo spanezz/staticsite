@@ -165,9 +165,6 @@ class RestructuredText(Feature):
             meta.update(fm_meta)
 
             page = RstPage(self, src, meta=meta, dir=sitedir, doctree_scan=doctree_scan)
-            if not page.is_valid():
-                continue
-
             pages.append(page)
 
         for fname in taken:

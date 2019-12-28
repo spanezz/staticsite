@@ -74,8 +74,6 @@ element.
             meta.update(fm_meta)
 
             page = TaxonomyPage(self.site, src, meta=meta, name=name, dir=sitedir)
-            if not page.is_valid():
-                continue
             self.taxonomies[page.name] = page
             pages.append(page)
 
@@ -186,8 +184,6 @@ class TaxonomyPage(Page):
             category_meta["site_path"] = os.path.join(category_meta["site_path"], category)
             # TODO: synthetise a directory?
             category_page = CategoryPage(self.site, category, meta=category_meta, dir=self.dir)
-            if not category_page.is_valid():
-                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", category_page)
             self.categories[category] = category_page
             self.site.add_page(category_page)
 
@@ -200,8 +196,6 @@ class TaxonomyPage(Page):
             archive_meta["site_path"] = os.path.join(archive_meta["site_path"], category, "archive")
             # TODO: synthetise a directory?
             archive_page = CategoryArchivePage(self.site, meta=archive_meta, dir=self.dir)
-            if not archive_page.is_valid():
-                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", archive_page)
             category_page.meta["archive"] = archive_page
             self.site.add_page(archive_page)
 
