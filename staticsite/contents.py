@@ -81,13 +81,6 @@ class Dir(Page):
             if metadata.inherited:
                 self.meta[name] = meta[name]
 
-        # Default site name to the root page title, if site name has not been
-        # set yet
-        # TODO: template_title is not supported (yet)
-        title = meta.get("title")
-        if title is not None:
-            self.meta.setdefault("site_name", title)
-
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
         return self.file_meta[fname]
@@ -145,10 +138,14 @@ class Dir(Page):
 
         # If site_name is not defined, use the content directory name
         if "site_name" not in self.meta:
-            self.meta["site_name"] = os.path.basename(self.src.abspath)
-
-        # Store directory metadata
-        self.site.dir_meta[self.meta["site_path"]] = self.meta
+            # Default site name to the root page title, if site name has not been
+            # set yet
+            # TODO: template_title is not supported (yet?)
+            title = self.meta.get("title")
+            if title is not None:
+                self.meta["site_name"] = title
+            else:
+                self.meta["site_name"] = os.path.basename(self.src.abspath)
 
         # Compute metadata for files
         for fname in self.files.keys():

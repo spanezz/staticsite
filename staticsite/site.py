@@ -60,9 +60,6 @@ class Site:
         # Site pages indexed by src.relpath
         self.pages_by_src_relpath: Dict[str, Page] = {}
 
-        # Site directory metadata
-        self.dir_meta: Dict[str, Meta] = {}
-
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: Set[str] = set()
 
