@@ -4,7 +4,7 @@ from .utils import front_matter, open_dir_fd
 from .utils.typing import Meta
 from .page_filter import compile_page_match
 from . import file
-from .page import Page
+from .page import Page, PageValidationError
 from .site import Site
 import functools
 import stat
@@ -81,13 +81,6 @@ class Dir(Page):
             if metadata.inherited:
                 self.meta[name] = meta[name]
 
-        # Default site name to the root page title, if site name has not been
-        # set yet
-        # TODO: template_title is not supported (yet)
-        title = meta.get("title")
-        if title is not None:
-            self.meta.setdefault("site_name", title)
-
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
         return self.file_meta[fname]
@@ -133,9 +126,8 @@ class Dir(Page):
             config: Dict[str, Any] = {}
 
             # Load .staticsite if found
-            with self.open(".staticsite", dircfg, "rt") as fd:
-                lines = [line.rstrip() for line in fd]
-                fmt, config = front_matter.parse(lines)
+            with self.open(".staticsite", dircfg, "rb") as fd:
+                fmt, config = front_matter.read_partial(fd)
 
             self.add_dir_config(config)
 
@@ -143,21 +135,35 @@ class Dir(Page):
         for feature in self.site.features.ordered():
             feature.load_dir_meta(self)
 
-        # If site_name is not defined, use the content directory name
+        # If site_name is not defined, use the root page title or the content
+        # directory name
         if "site_name" not in self.meta:
-            self.meta["site_name"] = os.path.basename(self.src.abspath)
+            # Default site name to the root page title, if site name has not been
+            # set yet
+            # TODO: template_title is not supported (yet?)
+            title = self.meta.get("title")
+            if title is not None:
+                self.meta["site_name"] = title
+            else:
+                self.meta["site_name"] = os.path.basename(self.src.abspath)
 
-        # Store directory metadata
-        self.site.dir_meta[self.meta["site_path"]] = self.meta
+        # TODO: build a directory page here? Or at site load time?
+        # TODO: its contents can be added at analyze time
 
-        # Compute metadata for directories
-        for dname in subdirs:
-            res: Meta = dict(self.meta)
-            res["site_path"] = os.path.join(res["site_path"], dname)
-            for pattern, meta in self.dir_rules:
-                if pattern.match(dname):
-                    res.update(meta)
-            self.file_meta[dname] = res
+        # Scan subdirectories
+        for name, src in subdirs.items():
+            # Compute metadata for this directory
+            meta: Meta = dict(self.meta)
+            meta["site_path"] = os.path.join(meta["site_path"], name)
+            for pattern, dmeta in self.dir_rules:
+                if pattern.match(name):
+                    meta.update(dmeta)
+
+            # Recursively descend into the directory
+            subdir = Dir.create(self.site, src, meta=meta, dir=self)
+            with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
+                subdir.scan(subdir_fd)
+            self.subdirs.append(subdir)
 
         # Compute metadata for files
         for fname in self.files.keys():
@@ -167,12 +173,9 @@ class Dir(Page):
                     res.update(meta)
             self.file_meta[fname] = res
 
-        # Scan subdirectories
-        for name, f in subdirs.items():
-            subdir = Dir.create(self.site, f, meta=self.file_meta[name], dir=self)
-            with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
-                subdir.scan(subdir_fd)
-            self.subdirs.append(subdir)
+        # TODO: build (but not load) pages here?
+        #       or hook into features here to keep track of the pages they want
+        #       to load, and later just call the load method of each feature
 
     def finalize(self):
         # Finalize from the bottom up
@@ -189,11 +192,13 @@ class Dir(Page):
         # TODO     # directory index, pick a fallback title.
         # TODO     self.meta["title"] = os.path.dirname(self.site.content_root)
 
-        self.meta["pages"] = self.pages
+        self.meta["pages"] = [p for p in self.pages if not p.meta["draft"]]
         self.meta.setdefault("template", "dir.html")
         self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
+
+        # TODO: set draft if all subdirs and pages are drafts
 
         # Since finalize is called from the bottom up, subdirs have their date
         # up to date
@@ -212,9 +217,14 @@ class Dir(Page):
             self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
         if self.meta["indexed"] and self.meta["site_path"] not in self.site.pages:
-            if not self.is_valid():
-                log.error("%s: unexpectedly reported page not valid, but we have to add it anyway", self)
             self.site.add_page(self)
+
+    def validate(self):
+        try:
+            super().validate()
+        except PageValidationError as e:
+            log.error("%s: infrastructural page failed to validate: %s", e.page, e.msg)
+            raise
 
 
 class ContentDir(Dir):
@@ -241,8 +251,6 @@ class ContentDir(Dir):
             if meta and meta.get("asset"):
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
                 p = Asset(self.site, f, meta=meta, dir=self)
-                if not p.is_valid():
-                    continue
                 self.site.add_page(p)
                 taken.append(fname)
         for fname in taken:
@@ -266,8 +274,6 @@ class ContentDir(Dir):
                 meta = self.file_meta[fname]
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
                 p = Asset(self.site, f, meta=self.file_meta[fname], dir=self)
-                if not p.is_valid():
-                    continue
                 self.site.add_page(p)
 
         # TODO: warn of contents not loaded at this point?
@@ -302,8 +308,6 @@ class AssetDir(ContentDir):
                 meta = self.file_meta[fname]
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
                 p = Asset(self.site, f, meta=meta, dir=self)
-                if not p.is_valid():
-                    continue
                 self.site.add_page(p)
 
         # Load subdirectories

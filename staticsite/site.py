@@ -60,9 +60,6 @@ class Site:
         # Site pages indexed by src.relpath
         self.pages_by_src_relpath: Dict[str, Page] = {}
 
-        # Site directory metadata
-        self.dir_meta: Dict[str, Meta] = {}
-
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: Set[str] = set()
 
@@ -213,6 +210,13 @@ It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 """))
 
+        self.register_metadata(metadata.MetadataDraft("draft", inherited=False, doc="""
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `page.meta.date` is in the future.
+"""))
+
     def register_metadata(self, metadata: Metadata):
         """
         Add a well-known metadata description to the metadata registry.
@@ -349,6 +353,17 @@ It defaults to true at least for [Markdown](markdown.md),
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
+        from .page import PageValidationError
+        try:
+            page.validate()
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            return
+
+        if not self.settings.DRAFT_MODE and page.meta["draft"]:
+            log.info("%s: page is still a draft: skipping", page)
+            return
+
         site_path = page.meta["site_path"]
         old = self.pages.get(site_path)
         if old is not None:
@@ -402,6 +417,7 @@ It defaults to true at least for [Markdown](markdown.md),
                         datetime.datetime.utcfromtimestamp(ts)
                     ).astimezone(self.timezone)
 
+    # TODO: support partial dates?
     re_isodate = re.compile(r"^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})(Z|\+\d{2}.*)$")
 
     def clean_date(self, date: Union[str, datetime.datetime]) -> datetime.datetime:
@@ -420,6 +436,7 @@ It defaults to true at least for [Markdown](markdown.md),
                 else:
                     date = datetime.datetime.fromisoformat(date)
             else:
+                # TODO: log a fallback on dateutil?
                 try:
                     date = dateutil.parser.parse(date)
                 except ValueError as e:

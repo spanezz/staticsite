@@ -88,3 +88,17 @@ class MetadataIndexed(Metadata):
         if isinstance(val, str):
             val = val.lower() in ("yes", "true", "1")
         page.meta[self.name] = val
+
+
+class MetadataDraft(Metadata):
+    """
+    Make sure the draft exists and is a bool, computed according to the date
+    """
+    def on_load(self, page: "page.Page"):
+        draft = page.meta.get(self.name)
+        if draft is None:
+            page.meta["draft"] = page.meta["date"] > self.site.generation_time
+        elif isinstance(draft, bool):
+            pass
+        else:
+            page.meta["draft"] = bool(page.meta["draft"])

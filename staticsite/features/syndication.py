@@ -213,17 +213,15 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             # RSS feed
             rss_page = RSSPage(self.site, syndication_meta, dir=page.dir)
-            if rss_page.is_valid():
-                syndication_meta["rss_page"] = rss_page
-                self.site.add_page(rss_page)
-                log.debug("%s: adding syndication page for %s", rss_page, page)
+            syndication_meta["rss_page"] = rss_page
+            self.site.add_page(rss_page)
+            log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
             atom_page = AtomPage(self.site, syndication_meta, dir=page.dir)
-            if atom_page.is_valid():
-                syndication_meta["atom_page"] = atom_page
-                self.site.add_page(atom_page)
-                log.debug("%s: adding syndication page for %s", rss_page, page)
+            syndication_meta["atom_page"] = atom_page
+            self.site.add_page(atom_page)
+            log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Add a link to the syndication to the pages listed in add_to
             add_to = syndication_meta.get("add_to")

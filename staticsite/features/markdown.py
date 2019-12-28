@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Tuple
 from staticsite import Page, Feature, File
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
@@ -168,9 +168,6 @@ class MarkdownPages(Feature):
             meta.update(fm_meta)
 
             page = MarkdownPage(self, src, meta=meta, dir=sitedir, body=body)
-            if not page.is_valid():
-                continue
-
             pages.append(page)
 
         for fname in taken:
@@ -186,19 +183,16 @@ class MarkdownPages(Feature):
         if index is None:
             return
 
-        # Parse separating front matter and markdown content
-        # TODO: use a parser that stops reading at the front matter
-        with open(index.abspath, "rt") as fd:
-            fmatter, body = parse_markdown_with_front_matter(fd)
         try:
-            style, meta = front_matter.parse(fmatter)
+            with open(index.abspath, "rb") as fd:
+                fmt, meta = front_matter.read_partial(fd)
         except Exception as e:
             log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", index.relpath)
         else:
             sitedir.add_dir_config(meta)
 
-    def load_file_meta(self, sitedir, src, fname):
+    def load_file_meta(self, sitedir, src, fname) -> Tuple[Meta, List[str]]:
         """
         Load metadata for a file.
 
@@ -207,19 +201,21 @@ class MarkdownPages(Feature):
         # Read the contents
 
         # Parse separating front matter and markdown content
-        with sitedir.open(fname, src, "rt") as fd:
-            fmatter, body = parse_markdown_with_front_matter(fd)
+        with sitedir.open(fname, src, "rb") as fd:
+            fmt, meta = front_matter.read_partial(fd)
 
-        style, meta = front_matter.parse(fmatter)
+            body = []
+            for line in fd:
+                body.append(line.strip().decode())
 
-        # Remove leading empty lines
-        while body and not body[0]:
-            body.pop(0)
+            # Remove leading empty lines
+            while body and not body[0]:
+                body.pop(0)
 
-        # Read title from first # title if not specified in metadata
-        if not meta.get("title", ""):
-            if body and body[0].startswith("# "):
-                meta["title"] = body.pop(0)[2:].strip()
+            # Read title from first # title if not specified in metadata
+            if not meta.get("title", ""):
+                if body and body[0].startswith("# "):
+                    meta["title"] = body.pop(0)[2:].strip()
 
                 # Remove leading empty lines again
                 while body and not body[0]:
