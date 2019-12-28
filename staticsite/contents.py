@@ -136,7 +136,8 @@ class Dir(Page):
         for feature in self.site.features.ordered():
             feature.load_dir_meta(self)
 
-        # If site_name is not defined, use the content directory name
+        # If site_name is not defined, use the root page title or the content
+        # directory name
         if "site_name" not in self.meta:
             # Default site name to the root page title, if site name has not been
             # set yet
@@ -147,13 +148,8 @@ class Dir(Page):
             else:
                 self.meta["site_name"] = os.path.basename(self.src.abspath)
 
-        # Compute metadata for files
-        for fname in self.files.keys():
-            res: Meta = dict(self.meta)
-            for pattern, meta in self.file_rules:
-                if pattern.match(fname):
-                    res.update(meta)
-            self.file_meta[fname] = res
+        # TODO: build a directory page here? Or at site load time?
+        # TODO: its contents can be added at analyze time
 
         # Scan subdirectories
         for name, src in subdirs.items():
@@ -169,6 +165,18 @@ class Dir(Page):
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
+
+        # Compute metadata for files
+        for fname in self.files.keys():
+            res: Meta = dict(self.meta)
+            for pattern, meta in self.file_rules:
+                if pattern.match(fname):
+                    res.update(meta)
+            self.file_meta[fname] = res
+
+        # TODO: build (but not load) pages here?
+        #       or hook into features here to keep track of the pages they want
+        #       to load, and later just call the load method of each feature
 
     def finalize(self):
         # Finalize from the bottom up
