@@ -5,14 +5,14 @@ This is a list of metadata elements that have special meaning in this site.
 You can use `ssite dump_meta` to see all the content and metadata that pages
 make available to templates via the `page` variable.
 
-### template
+### `template`
 
 Template used to render the page. Defaults to `page.html`, although specific
 pages of some features can default to other template names.
 
 Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 
-### date
+### `date`
 
 Publication date for the page.
 
@@ -22,13 +22,13 @@ A python datetime object, timezone aware. If the date is in the future when
 
 If missing, the modification time of the file is used.
 
-### author
+### `author`
 
 *Inherited from directory indices.*
 
 A string with the name of the author for this page.
 
-### title
+### `title`
 
 *Inherited from directory indices.*
 
@@ -43,7 +43,7 @@ If omitted:
    inherited.
  * if still no title can be found, the site name is used as a default.
 
-### template_title
+### `template_title`
 
 *Inherited from directory indices.*
 
@@ -54,13 +54,13 @@ The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
 in it.
 
-### description
+### `description`
 
 *Inherited from directory indices.*
 
 The page description. If omitted, the page will have no description.
 
-### template_description
+### `template_description`
 
 *Inherited from directory indices.*
 
@@ -71,20 +71,20 @@ description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use
 HTML markup in it.
 
-### site_name
+### `site_name`
 
 *Inherited from directory indices.*
 
 Name of the site. If missing, it defaults to the title of the toplevel index
 page. If missing, it defaults to the name of the content directory.
 
-### site_url
+### `site_url`
 
 *Inherited from directory indices.*
 
 Base URL for the site, used to generate an absolute URL to the page.
 
-### site_path
+### `site_path`
 
 *Inherited from directory indices.*
 
@@ -96,7 +96,16 @@ name.
 If you are publishing the site at `/prefix` instead of the root of the domain,
 override this with `/prefix` in the content root.
 
-### asset
+### `build_path`
+
+Relative path in the build directory for the file that will be written
+when this page gets rendered. For example, `blog/2016/example.md`
+generates `blog/2016/example/index.html`.
+
+If found in pages front matter, it is ignored, and is always computed at page
+load time.
+
+### `asset`
 
 *Inherited from directory indices.*
 
@@ -107,13 +116,13 @@ would load it.
 If set to True in a directory index, the directory and all its subdirectories
 are loaded as static assets, without the interventions of features.
 
-### aliases
+### `aliases`
 
 Relative paths in the destination directory where the page should also show up.
 [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
 existing links when moving a page to a different location.
 
-### indexed
+### `indexed`
 
 If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).
@@ -121,7 +130,21 @@ If true, the page appears in [directory indices](dir.md) and in
 It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 
-### syndication
+### `draft`
+
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `page.meta.date` is in the future.
+
+### `data_type`
+
+Type of data for this file.
+
+This is used to group data of the same type together, and to choose a
+`data-[data_type].html` rendering template.
+
+### `syndication`
 
 Defines syndication for the contents of this page.
 
@@ -140,20 +163,20 @@ to the `site_pages` function in [templates](templates.md). See
 
 `pages` is optional, and if missing, `page.meta.pages` is used. Compared to
 using the `pages` filter, using `syndication.pages` takes the
-[`syndicated` and `syndication_date` page metadata](doc/metadata.md) into account.
+[`syndicated` and `syndication_date` page metadata](doc/reference/metadata.md) into account.
 
 For compatibility, `filter` can be used instead of `pages`.
 
 Before rendering, `pages` is replaced with the list of syndicated pages, sorted
 with the most recent first.
 
-### syndicated
+### `syndicated`
 
 Set to true if the page can be included in a syndication, else to false.
 
 If not set, it defaults to the value of `indexed`.
 
-### syndication_date
+### `syndication_date`
 
 Syndication date for this page.
 
@@ -162,14 +185,14 @@ be syndicated before this date.
 
 If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
 
-### series
+### `series`
 
 List of categories for the `series` taxonomy.
 
 Setting this as a simple string is the same as setting it as a list of one
 element.
 
-### tags
+### `tags`
 
 List of categories for the `tags` taxonomy.
 
