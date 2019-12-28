@@ -251,6 +251,7 @@ date: 2010-01-01 00:00:00
                 },
                 "meta": {
                     "date": '2000-01-01 00:00:00+01:00',
+                    "draft": False,
                     'indexed': True,
                     'syndicated': True,
                     "syndication_date": '2000-01-01 00:00:00+01:00',
@@ -270,6 +271,7 @@ date: 2010-01-01 00:00:00
                 },
                 "meta": {
                     "date": '2005-01-01 00:00:00+01:00',
+                    "draft": False,
                     'indexed': True,
                     'syndicated': True,
                     "syndication_date": '2005-01-01 00:00:00+01:00',
@@ -289,6 +291,7 @@ date: 2010-01-01 00:00:00
                 },
                 "meta": {
                     "date": '2010-01-01 00:00:00+01:00',
+                    "draft": False,
                     'indexed': True,
                     'syndicated': True,
                     "syndication_date": '2010-01-01 00:00:00+01:00',

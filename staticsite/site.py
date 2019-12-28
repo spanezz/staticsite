@@ -210,6 +210,13 @@ It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 """))
 
+        self.register_metadata(metadata.MetadataDraft("draft", inherited=False, doc="""
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `page.meta.date` is in the future.
+"""))
+
     def register_metadata(self, metadata: Metadata):
         """
         Add a well-known metadata description to the metadata registry.
@@ -346,14 +353,15 @@ It defaults to true at least for [Markdown](markdown.md),
         enough. This is exported as a public function mainly for the benefit of
         unit tests.
         """
-        from .page import PageValidationError, PageDraftError
+        from .page import PageValidationError
         try:
             page.validate()
-        except PageDraftError as e:
-            log.info("%s: skipping page: %s", e.page, e.msg)
-            return
         except PageValidationError as e:
             log.warn("%s: skipping page: %s", e.page, e.msg)
+            return
+
+        if not self.settings.DRAFT_MODE and page.meta["draft"]:
+            log.info("%s: page is still a draft: skipping", page)
             return
 
         site_path = page.meta["site_path"]

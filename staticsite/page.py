@@ -26,11 +26,6 @@ class PageValidationError(Exception):
         self.msg = msg
 
 
-class PageDraftError(PageValidationError):
-    def __init__(self, page: "Page"):
-        super().__init__(page, f"draft until {page.meta['date']}")
-
-
 class PageMissesFieldError(PageValidationError):
     def __init__(self, page: "Page", field: str):
         super().__init__(page, f"missing required field meta.{field}")
@@ -88,10 +83,6 @@ class Page:
         if "title" not in self.meta:
             self.meta["title"] = self.meta["site_name"]
 
-        # Check draft status
-        if self.draft:
-            raise PageDraftError(self)
-
         # Check the existence of other mandatory fields
         if "site_url" not in self.meta:
             raise PageMissesFieldError(self, "site_url")
@@ -109,20 +100,6 @@ class Page:
             raise PageMissesFieldError(self, "build_path")
         if build_path.startswith("/"):
             self.meta["build_path"] = build_path.lstrip("/")
-
-    @lazy
-    def draft(self):
-        """
-        Return True if this page is still a draft (i.e. its date is in the future)
-        """
-        if self.site.settings.DRAFT_MODE:
-            return False
-        ts = self.meta.get("date", None)
-        if ts is None:
-            return False
-        if ts <= self.site.generation_time:
-            return False
-        return True
 
     @lazy
     def page_template(self):

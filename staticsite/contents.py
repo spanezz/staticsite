@@ -193,7 +193,7 @@ class Dir(Page):
         # TODO     # directory index, pick a fallback title.
         # TODO     self.meta["title"] = os.path.dirname(self.site.content_root)
 
-        self.meta["pages"] = [p for p in self.pages if not p.draft]
+        self.meta["pages"] = [p for p in self.pages if not p.meta["draft"]]
         self.meta.setdefault("template", "dir.html")
         self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
