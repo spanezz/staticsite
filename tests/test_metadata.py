@@ -236,7 +236,7 @@ date: 2010-01-01 00:00:00
         }
 
         with test_utils.workdir(files) as root:
-            site = test_utils.Site(SITE_NAME=None, CONTENT=root)
+            site = test_utils.Site(SITE_NAME=None, CONTENT=root, TIMEZONE="UTC")
             site.load()
             site.analyze()
 
@@ -250,11 +250,11 @@ date: 2010-01-01 00:00:00
                     "abspath": os.path.join(root, "index.html"),
                 },
                 "meta": {
-                    "date": '2000-01-01 00:00:00+01:00',
+                    "date": '2000-01-01 00:00:00+00:00',
                     "draft": False,
                     'indexed': True,
                     'syndicated': True,
-                    "syndication_date": '2000-01-01 00:00:00+01:00',
+                    "syndication_date": '2000-01-01 00:00:00+00:00',
                     'site_name': 'Test1 title',
                     'site_path': '',
                     'site_url': 'https://www.example.org',
@@ -270,11 +270,11 @@ date: 2010-01-01 00:00:00
                     "abspath": os.path.join(root, "page.md"),
                 },
                 "meta": {
-                    "date": '2005-01-01 00:00:00+01:00',
+                    "date": '2005-01-01 00:00:00+00:00',
                     "draft": False,
                     'indexed': True,
                     'syndicated': True,
-                    "syndication_date": '2005-01-01 00:00:00+01:00',
+                    "syndication_date": '2005-01-01 00:00:00+00:00',
                     'site_name': 'Test1 title',
                     'site_path': 'page',
                     'site_url': 'https://www.example.org',
@@ -290,11 +290,11 @@ date: 2010-01-01 00:00:00
                     "abspath": os.path.join(root, "page1.yaml"),
                 },
                 "meta": {
-                    "date": '2010-01-01 00:00:00+01:00',
+                    "date": '2010-01-01 00:00:00+00:00',
                     "draft": False,
                     'indexed': True,
                     'syndicated': True,
-                    "syndication_date": '2010-01-01 00:00:00+01:00',
+                    "syndication_date": '2010-01-01 00:00:00+00:00',
                     'site_name': 'Test1 title',
                     'site_path': 'page1',
                     'site_url': 'https://www.example.org',
