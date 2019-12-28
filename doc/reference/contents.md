@@ -81,4 +81,30 @@ dirs:
       asset: true
 ```
 
+
+### Content loading
+
+Content loading happens in 3 stages:
+
+**scanning directories**: the content directory tree is scanned looking for
+`.staticsite` files, directory index files, and taxonomy files, and using them
+to build initial metadata for each file and directory in the site, and a list
+of known taxonomies.
+
+Other features could hook into this stage, like [`taxonomy`](taxonomies.md)
+does, to gather information that can affect page loading.
+
+For example, the list of taxonomies built at this stage informs which tags in
+[reSt](rst.rst) files are parsed as lists of strings, and directory indices can
+affect which files are loads as assets instead of as normal pages.
+
+**loading content**: every file is scanned or loaded to contribute to the site
+contents. Front matter metadata is loaded and validated.
+
+**analyzing**: once content is loaded, features can have a pass at analyzing
+the loaded data to generate, for example, tag pages, or syndication pages.
+
+At this point, the site is laid out and all pages are ready to be rendered.
+
+
 [Back to reference index](README.md)
