@@ -115,8 +115,8 @@ def read_partial(fd: BinaryIO) -> Tuple[str, Meta]:
             if not line:
                 raise ValueError("unterminated json front matter")
             buf += line
-            if line.strip() == b"}":
-                return "json", json.loads(buf)
+            if line.rstrip() == b"}":
+                return "json", json.loads(buf.decode())
     elif head == b"---":
         # YAML, end at ---
         buf += line

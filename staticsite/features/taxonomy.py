@@ -87,9 +87,10 @@ element.
         Parse the taxonomy file to read its description
         """
         from staticsite.utils import front_matter
-        with sitedir.open(fname, src, "rt") as fd:
-            lines = [x.rstrip() for x in fd]
-        style, meta = front_matter.parse(lines)
+        with sitedir.open(fname, src, "rb") as fd:
+            fmt, meta = front_matter.read_partial(fd)
+        if meta is None:
+            meta = {}
         return meta
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:

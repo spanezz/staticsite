@@ -126,9 +126,8 @@ class Dir(Page):
             config: Dict[str, Any] = {}
 
             # Load .staticsite if found
-            with self.open(".staticsite", dircfg, "rt") as fd:
-                lines = [line.rstrip() for line in fd]
-                fmt, config = front_matter.parse(lines)
+            with self.open(".staticsite", dircfg, "rb") as fd:
+                fmt, config = front_matter.read_partial(fd)
 
             self.add_dir_config(config)
 

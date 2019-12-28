@@ -96,9 +96,8 @@ class Loader:
         if not os.path.isfile(pathname):
             config = {}
         else:
-            with open(pathname, "rt") as fd:
-                lines = [line.rstrip() for line in fd]
-                fmt, config = front_matter.parse(lines)
+            with open(pathname, "rb") as fd:
+                fmt, config = front_matter.read_partial(fd)
 
         # Normalize 'extends' to a list of strings
         extends = config.get("extends")
