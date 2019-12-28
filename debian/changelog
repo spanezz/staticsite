@@ -1,8 +1,12 @@
-staticsite (1.3-1) UNRELEASED; urgency=medium
+staticsite (1.3-1) unstable; urgency=medium
 
   * New upstream version
+     - Consolidated existing features, see NEWS.md
+     - Themes can now extend existing themes
+     - Standard themes are now distributed in /usr/share/staticsite/themes,
+       and it's possible to add/package new ones
 
- -- Enrico Zini <enrico@debian.org>  Fri, 20 Dec 2019 09:15:16 +0100
+ -- Enrico Zini <enrico@debian.org>  Sat, 28 Dec 2019 22:35:19 +0100
 
 staticsite (1.2-1) unstable; urgency=medium
 
