@@ -22,6 +22,7 @@ yaml_sample_parsed = {
 class YamlTestMixin:
     def test_loads(self):
         self.assertEqual(self.loads(self.sample), self.sample_parsed)
+        self.assertEqual(self.loads(self.sample.encode()), self.sample_parsed)
 
     def test_load(self):
         with io.StringIO(self.sample) as fd:
