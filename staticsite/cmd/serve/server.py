@@ -48,7 +48,8 @@ class ChangeMonitor:
             self.watch_manager.rm_watch(watch)
 
         for path in set(dirs) - self.watches.keys():
-            self.watches[path] = self.watch_manager.add_watch(path, pyinotify.IN_CLOSE_WRITE | pyinotify.IN_DELETE)
+            self.watches[path] = self.watch_manager.add_watch(
+                    path, pyinotify.IN_CLOSE_WRITE | pyinotify.IN_DELETE, rec=True)
 
     def notify(self):
         self.pending = None
