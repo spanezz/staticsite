@@ -1,15 +1,17 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING, List, Dict, Set
 import os
 import gc
 import mimetypes
 import asyncio
 import logging
+import json
 import pyinotify
 import tornado.web
 from tornado.web import url
 import tornado.httpserver
 import tornado.netutil
+import tornado.websocket
 import tornado.ioloop
 from staticsite import Site
 from staticsite.utils import timings
@@ -64,6 +66,19 @@ class ChangeMonitor:
         self.pending = self.loop.call_later(0.1, self.notify)
 
 
+class NotificationHandler(tornado.websocket.WebSocketHandler):
+    def open(self):
+        log.debug("WebSocket connection opened")
+        self.application.add_notification_handler(self)
+
+    def on_message(self, message):
+        log.debug("WebSocket message received: %r", message)
+
+    def on_close(self):
+        log.debug("WebSocket connection closed")
+        self.application.remove_notification_handler(self)
+
+
 class ServePage(tornado.web.RequestHandler):
     def get(self):
         relpath, content = self.application.pages.render(self.request.path)
@@ -87,14 +102,24 @@ class Application(tornado.web.Application):
             xsrf_cookies=True,
         )
 
-        self.site_settings = settings
-        self.site = None
-        self.pages = None
+        self.site_settings: Settings = settings
+        self.site: Site = None
+        self.pages: PageFS = None
+        self.notification_handlers: Set[NotificationHandler] = set()
         self.change_monitor = ChangeMonitor(self)
+
+    def add_notification_handler(self, handler):
+        self.notification_handlers.add(handler)
+
+    def remove_notification_handler(self, handler):
+        self.notification_handlers.discard(handler)
 
     def trigger_reload(self):
         log.info("Content change detected: reloading site")
         self.reload()
+        payload = json.dumps({"event": "reload"})
+        for handler in self.notification_handlers:
+            handler.write_message(payload)
 
     def reload(self):
         # (re)instantiate site
