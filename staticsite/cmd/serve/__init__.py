@@ -77,12 +77,6 @@ class ServerMixin:
     def run(self):
         self.start_server()
 
-    def get_source_dirs(self, site):
-        dirs = list(site.theme.feature_dirs) + list(site.theme.template_lookup_paths)
-        for name in site.theme.system_assets:
-            dirs.append(os.path.join("/usr/share/javascript", name))
-        return dirs
-
 
 class Serve(ServerMixin, SiteCommand):
     "Serve the site over HTTP, building it in memory on demand"
