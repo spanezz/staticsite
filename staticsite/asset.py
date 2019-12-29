@@ -19,7 +19,7 @@ class Asset(Page):
         self.meta["title"] = os.path.basename(src.relpath)
         self.meta["build_path"] = meta["site_path"]
 
-    def render(self):
+    def render(self, **kw):
         return {
             self.meta["build_path"]: RenderedFile(self.src),
         }
