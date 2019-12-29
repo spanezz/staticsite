@@ -310,15 +310,15 @@ class Page:
         }
         return res
 
-    def render(self):
+    def render(self, **kw):
         res = {
-            self.meta["build_path"]: RenderedString(self.render_template(self.page_template)),
+            self.meta["build_path"]: RenderedString(self.render_template(self.page_template, template_args=kw)),
         }
 
         aliases = self.meta.get("aliases", ())
         if aliases:
             for relpath in aliases:
-                html = self.render_template(self.redirect_template)
+                html = self.render_template(self.redirect_template, template_args=kw)
                 res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res

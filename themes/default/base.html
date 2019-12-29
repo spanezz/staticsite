@@ -63,6 +63,11 @@
 
     <title>{% block title %}{{page.meta.title}}{% endblock %}</title>
 
+    {% if server %}
+    {% import "lib/server.html" as srv %}
+    {{srv.head(server, handler, page)}}
+    {% endif %}
+
     {% block head %}
     {% endblock %}
   </head>

@@ -1,0 +1,56 @@
+{% macro head(server, handler, page) %}
+<script type="text/javascript">
+(function($) {
+"use strict";
+
+window.staticsite = {};
+
+window.staticsite.config = {
+    page_socket: "{{handler.ws_url}}",
+    xsrf_token: "{{handler.xsrf_token}}",
+}
+
+/**
+ * Communicate with staticsite over the websocket interface
+ */
+class PageSocket
+{
+    constructor() {
+        this.socket = new WebSocket(window.staticsite.config.page_socket);
+        this.socket.onopen = () => { this.on_open() };
+        this.socket.onmessage = (evt) => { this.on_message(evt) };
+    }
+
+    on_open() {
+        console.debug("Websocket channel open");
+    }
+
+    on_message(evt) {
+        console.debug("Websocket message", evt);
+        let new_evt = new CustomEvent("staticsite.event", {
+            detail: JSON.parse(evt.data),
+        });
+        document.dispatchEvent(new_evt);
+    }
+}
+
+function main()
+{
+    window.staticsite.page_socket = new PageSocket();
+
+    document.addEventListener("staticsite.event", evt => {
+        if (evt.detail.event == "reload")
+        {
+            console.debug("Reloading page");
+            window.location.reload(true);
+        } else {
+            console.log("Unknown event received", evt.detail);
+        }
+    });
+}
+
+$(main);
+
+})(jQuery);
+</script>
+{% endmacro %}

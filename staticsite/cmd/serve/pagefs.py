@@ -47,7 +47,7 @@ class PageFS:
 
         return None, None
 
-    def render(self, path) -> Tuple[Optional[str], Optional[bytes]]:
+    def render(self, path, **kw) -> Tuple[Optional[str], Optional[bytes]]:
         """
         Find the page for the given path and return its rendered contents
         """
@@ -62,7 +62,7 @@ class PageFS:
         except locale.Error as e:
             log.warn("%s: cannot set locale to %s: %s", page, lname, e)
 
-        for relpath, rendered in page.render().items():
+        for relpath, rendered in page.render(**kw).items():
             if relpath == dst_relpath:
                 break
         else:

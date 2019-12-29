@@ -66,22 +66,29 @@ class ChangeMonitor:
         self.pending = self.loop.call_later(0.1, self.notify)
 
 
-class NotificationHandler(tornado.websocket.WebSocketHandler):
+class PageSocket(tornado.websocket.WebSocketHandler):
     def open(self):
         log.debug("WebSocket connection opened")
-        self.application.add_notification_handler(self)
+        self.application.add_page_socket(self)
 
     def on_message(self, message):
         log.debug("WebSocket message received: %r", message)
 
     def on_close(self):
         log.debug("WebSocket connection closed")
-        self.application.remove_notification_handler(self)
+        self.application.remove_page_socket(self)
 
 
 class ServePage(tornado.web.RequestHandler):
     def get(self):
-        relpath, content = self.application.pages.render(self.request.path)
+        if self.request.protocol == "http":
+            self.ws_url = "ws://" + self.request.host + \
+                          self.application.reverse_url("page_socket")
+        else:
+            self.ws_url = "wss://" + self.request.host + \
+                          self.application.reverse_url("page_socket")
+
+        relpath, content = self.application.pages.render(self.request.path, server=self.application, handler=self)
         if relpath is None:
             self.send_error(404)
         else:
@@ -94,6 +101,7 @@ class Application(tornado.web.Application):
         mimetypes.init()
 
         urls = [
+            url(r"/_server/websocket", PageSocket, name="page_socket"),
             url(r".*", ServePage, name="page"),
         ]
 
@@ -105,20 +113,20 @@ class Application(tornado.web.Application):
         self.site_settings: Settings = settings
         self.site: Site = None
         self.pages: PageFS = None
-        self.notification_handlers: Set[NotificationHandler] = set()
+        self.page_sockets: Set[PageSocket] = set()
         self.change_monitor = ChangeMonitor(self)
 
-    def add_notification_handler(self, handler):
-        self.notification_handlers.add(handler)
+    def add_page_socket(self, handler):
+        self.page_sockets.add(handler)
 
-    def remove_notification_handler(self, handler):
-        self.notification_handlers.discard(handler)
+    def remove_page_socket(self, handler):
+        self.page_sockets.discard(handler)
 
     def trigger_reload(self):
         log.info("Content change detected: reloading site")
         self.reload()
         payload = json.dumps({"event": "reload"})
-        for handler in self.notification_handlers:
+        for handler in self.page_sockets:
             handler.write_message(payload)
 
     def reload(self):
