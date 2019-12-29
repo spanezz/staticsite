@@ -302,13 +302,14 @@ class Page:
     def to_dict(self):
         from .utils import dump_meta
         res = {
-            "src": {
-                "relpath": str(self.src.relpath),
-                "abspath": str(self.src.abspath),
-            },
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
         }
+        if self.src:
+            res["src"] = {
+                "relpath": str(self.src.relpath),
+                "abspath": str(self.src.abspath),
+            }
         return res
 
     def render(self, **kw):
