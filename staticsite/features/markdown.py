@@ -31,10 +31,10 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             if new_url is not None:
                 a.attrib["href"] = new_url
 
-        for a in root.iter("img"):
-            new_url = self.resolve_url(a.attrib.get("src", None))
+        for img in root.iter("img"):
+            new_url = self.resolve_url(img.attrib.get("src", None))
             if new_url is not None:
-                a.attrib["src"] = new_url
+                img.attrib["src"] = new_url
 
     def resolve_url(self, url):
         """
