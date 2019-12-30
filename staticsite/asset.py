@@ -18,6 +18,7 @@ class Asset(Page):
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
         self.meta["title"] = os.path.basename(src.relpath)
         self.meta["build_path"] = meta["site_path"]
+        self.meta["asset"] = True
 
     def render(self, **kw):
         return {
