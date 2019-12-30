@@ -58,7 +58,6 @@ class Image(Page):
     def __init__(self, site: Site, src: File, meta: Meta, dir: Dir = None, mimetype: str = None):
         super().__init__(site=site, src=src, meta=meta, dir=dir)
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        self.meta["title"] = os.path.basename(src.relpath)
         self.meta["build_path"] = meta["site_path"]
 
     def render(self, **kw):

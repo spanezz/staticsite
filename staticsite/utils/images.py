@@ -57,6 +57,7 @@ class ImageScanner:
             meta = {
                 "width": img.width,
                 "height": img.height,
+                "title": "",
             }
 
             getexif = getattr(img, "_getexif", None)
