@@ -4,6 +4,7 @@ from staticsite import Page, Feature, File, Site
 from staticsite.contents import ContentDir, Dir
 from staticsite.render import RenderedFile
 from staticsite.utils.typing import Meta
+import piexif
 import os
 import mimetypes
 import logging
@@ -35,6 +36,19 @@ class Images(Feature):
 
             meta = sitedir.meta_file(fname)
             meta["site_path"] = os.path.join(meta["site_path"], fname)
+
+            if mimetype == "image/jpeg":
+                try:
+                    exif = piexif.load(src.abspath)
+                    for k in exif.keys():
+                        if k == "thumbnail":
+                            continue
+                        print(k, exif[k].keys())
+                except piexif.InvalidImageDataError:
+                    exif = {}
+            else:
+                exif = {}
+            print(src, mimetype, exif.keys())
 
             page = Image(self.site, src, meta=meta, dir=sitedir, mimetype=mimetype)
             pages.append(page)
