@@ -5,11 +5,20 @@ from staticsite.contents import ContentDir, Dir
 from staticsite.render import RenderedFile
 from staticsite.utils.typing import Meta
 from staticsite.utils.images import ImageScanner
+from staticsite.metadata import Metadata
 import os
 import mimetypes
 import logging
 
 log = logging.getLogger("images")
+
+
+class MetadataImage(Metadata):
+    def on_analyze(self, page: Page):
+        val = page.meta.get(self.name)
+        if isinstance(val, str):
+            val = page.resolve_path(val)
+            page.meta[self.name] = val
 
 
 class Images(Feature):
@@ -22,6 +31,13 @@ class Images(Feature):
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
+        self.site.register_metadata(MetadataImage("image", inherited=False, doc="""
+Image used for this post.
+
+It is set to a path to an image file relative to the current page.
+
+During the analyze phase, it is resolved to the corresponding [image page](images.md).
+"""))
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         taken: List[str] = []

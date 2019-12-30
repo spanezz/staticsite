@@ -66,7 +66,7 @@
 {% import "lib/images.html" as images with context %}
 
 {% if page.meta.image %}
-{{images.figure(page_for(page.meta.image), classes="float-right w-50 ml-3")}}
+{{images.figure(page.meta.image, classes="float-right w-50 ml-3")}}
 {% endif %}
 
 {% block page_content %}
