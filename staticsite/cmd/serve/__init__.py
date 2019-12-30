@@ -12,11 +12,6 @@ log = logging.getLogger("serve")
 
 
 class ServerMixin:
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        # Do not clutter previewed directories with .staticsite-cache directories
-        self.settings.CACHE_REBUILDS = False
-
     def start_server(self):
         from .server import Application
         app = Application(self.settings)
@@ -107,6 +102,9 @@ class Show(ServerMixin, Command):
             self.settings.THEME = (os.path.abspath(self.args.theme),)
         if self.args.draft:
             self.settings.DRAFT_MODE = True
+
+        # Do not clutter previewed directories with .staticsite-cache directories
+        self.settings.CACHE_REBUILDS = False
 
     @classmethod
     def make_subparser(cls, subparsers):
