@@ -40,10 +40,16 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             if page is not None:
                 width = page.meta.get("width")
                 if width is not None:
-                    img.attrib["width"] = str(width)
+                    if "width" not in img.attrib:
+                        img.attrib["width"] = str(width)
                 height = page.meta.get("height")
                 if height is not None:
-                    img.attrib["height"] = str(height)
+                    if "height" not in img.attrib:
+                        img.attrib["height"] = str(height)
+                title = page.meta.get("title")
+                if title is not None:
+                    if "title" not in img.attrib:
+                        img.attrib["title"] = title
 
     def resolve_page(self, url) -> Tuple[Page, Tuple]:
         from markdown.util import AMP_SUBSTITUTE
