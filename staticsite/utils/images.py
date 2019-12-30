@@ -40,10 +40,11 @@ class ImageScanner:
         self.cache = cache
 
     def scan(self, sitedir: ContentDir, src: File, mimetype: str) -> Meta:
-        meta = self.cache.get(src.abspath)
+        key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
+        meta = self.cache.get(key)
         if meta is None:
             meta = self.read_meta(sitedir, src, mimetype)
-            self.cache.put(src.abspath, meta)
+            self.cache.put(key, meta)
         return meta
 
     def read_meta(self, sitedir: ContentDir, src: File, mimetype: str) -> Meta:
