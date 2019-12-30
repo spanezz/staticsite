@@ -107,13 +107,13 @@
       </div>
     </nav>
 
-    <div class="container-fluid" role="main">
+    <div class="container-fluid clearfix" role="main">
     {% block content %}
     {% endblock %}
     </div>
 
     {% block footer %}
-    <div class="card hidden-print mt-3 clearfix">
+    <div class="card hidden-print mt-3">
       <div class="card-body">
       {% block footer_content %}
       <small>Generated with <a href="https://github.com/spanezz/staticsite">staticsite</a> on {{now}}.</small>
