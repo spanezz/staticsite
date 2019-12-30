@@ -71,6 +71,7 @@ class ImageScanner:
         return meta
 
     def read_meta_pil(self, exif: Dict[int, Any]) -> Meta:
+        # https://hhsprings.bitbucket.io/docs/programming/examples/python/PIL/ExifTags.html
         meta = {}
 
         # https://exiftool.org/TagNames/GPS.html
