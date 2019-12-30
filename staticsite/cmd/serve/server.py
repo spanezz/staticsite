@@ -48,10 +48,12 @@ class ChangeMonitor:
         for path in self.watches.keys() - dirs:
             watch = self.watches.pop(path)
             self.watch_manager.rm_watch(watch)
+            log.info("%s: removing watch", path)
 
         for path in set(dirs) - self.watches.keys():
             self.watches[path] = self.watch_manager.add_watch(
                     path, pyinotify.IN_CLOSE_WRITE | pyinotify.IN_DELETE, rec=True)
+            log.info("%s: adding watch", path)
 
     def notify(self):
         self.pending = None
@@ -71,6 +73,8 @@ class ChangeMonitor:
         # .staticsite-cache
         event_path = os.path.realpath(event.path)
         for path in self.watches.keys():
+            if event_path == path:
+                break
             if event_path.startswith(path):
                 relpath = os.path.relpath(event_path, path)
                 while relpath:
