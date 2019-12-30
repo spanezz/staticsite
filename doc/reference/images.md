@@ -21,4 +21,13 @@ These are the current metadata elements filled from image data, when available:
 * `page.meta.author`: content of the `Artist` EXIF tag
 * `page.meta.image_orientation`: content of the [`ImageOrientation` EXIF tag](https://www.impulseadventure.com/photo/exif-orientation.html)
 
+
+## Image associated to another page
+
+If you have an image sharing the file name with another page (for example, an
+image called `example.jpg` next to a page called `example.md`), then the page
+automatically gets a `page.meta.image` value pointing to the image.
+
+You can use this, for example, to easily provide an image for blog posts.
+
 [Back to reference index](README.md)
