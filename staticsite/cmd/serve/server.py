@@ -62,6 +62,9 @@ class ChangeMonitor:
         if event.name.startswith(".") and event.name != ".staticsite":
             return
 
+        if os.path.basename(event.path).startswith("."):
+            return
+
         log.debug("Received event %r", event)
 
         # Introduce a delay of 0.1s from the last event received, to notify
