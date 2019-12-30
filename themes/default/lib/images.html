@@ -1,0 +1,13 @@
+{% macro figure(img, classes) %}
+<figure class="figure {{classes}}">
+<img class="figure-img img-fluid rounded" src="{{url_for(img)}}"
+  {%- if img.meta.title %} alt="{{img.meta.title}}"{% endif -%}
+  {%- if img.meta.width %} width="{{img.meta.width}}"{% endif -%}
+  {%- if img.meta.height %} width="{{img.meta.height}}"{% endif -%}
+ >
+</img>
+{% if img.meta.title %}
+<figcaption class="figure-caption text-right">{{img.meta.title}}</figcaption>
+{% endif %}
+</figure>
+{% endmacro %}

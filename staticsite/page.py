@@ -157,7 +157,7 @@ class Page:
                 return res
 
             # Try adding STATIC_PATH as a compatibility with old links
-            target_relpath = os.path.join(self.site.STATIC_PATH, target_relpath)
+            target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath)
 
             # Try by source path
             res = self.site.pages_by_src_relpath.get(target_relpath)

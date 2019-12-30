@@ -22,11 +22,11 @@
     {%- endif %}
     {% if page.meta.image -%}
       <meta property="og:image" content="{{url_for(page.meta.image, absolute=True)}}" />
+      {% if page.meta.image.meta.title %}<meta property="og:image:alt" content="{{page.meta.image.meta.title}}" />{% endif %}
       <meta name="twitter:card" content="{{url_for(page.meta.image, absolute=True)}}" />
     {%- endif %}
     <meta property="og:url" content="{{url_for(page, absolute=True)}}" />
 
-    {% if page.meta.imagelabel %}<meta property="og:image:alt" content="{{page.meta.imagelabel}}" />{% endif %}
     <meta property="og:site_name" content="{{page.meta.site_name}}" />
     {% block meta_opengraph_article %}
     <meta property="og:type" content="article" />
@@ -113,7 +113,7 @@
     </div>
 
     {% block footer %}
-    <div class="card hidden-print mt-3">
+    <div class="card hidden-print mt-3 clearfix">
       <div class="card-body">
       {% block footer_content %}
       <small>Generated with <a href="https://github.com/spanezz/staticsite">staticsite</a> on {{now}}.</small>

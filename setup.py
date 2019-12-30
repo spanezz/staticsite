@@ -8,7 +8,7 @@ setup(
     install_requires=[
         'markdown', 'docutils',
         'toml', 'pyyaml', 'ruamel.yaml',
-        'jinja2',
+        'jinja2', 'PIL',
         'python_dateutil', 'python_slugify', 'pytz'],
 
     # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies

@@ -1,11 +1,13 @@
 from __future__ import annotations
 from typing import List, Tuple
 from staticsite import Page, Feature, File
+from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
 from staticsite.contents import ContentDir, Dir
 from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
+from urllib.parse import urlparse, urlunparse
 import jinja2
 import os
 import io
@@ -27,25 +29,29 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
 
     def run(self, root):
         for a in root.iter("a"):
-            new_url = self.resolve_url(a.attrib.get("href", None))
+            page, new_url = self.resolve_url(a.attrib.get("href", None))
             if new_url is not None:
                 a.attrib["href"] = new_url
 
-        for a in root.iter("img"):
-            new_url = self.resolve_url(a.attrib.get("src", None))
+        for img in root.iter("img"):
+            page, new_url = self.resolve_url(img.attrib.get("src", None))
             if new_url is not None:
-                a.attrib["src"] = new_url
+                img.attrib["src"] = new_url
+            if page is not None:
+                width = page.meta.get("width")
+                if width is not None:
+                    if "width" not in img.attrib:
+                        img.attrib["width"] = str(width)
+                height = page.meta.get("height")
+                if height is not None:
+                    if "height" not in img.attrib:
+                        img.attrib["height"] = str(height)
+                title = page.meta.get("title")
+                if title is not None:
+                    if "alt" not in img.attrib:
+                        img.attrib["alt"] = title
 
-    def resolve_url(self, url):
-        """
-        Resolve internal URLs.
-
-        Returns None if the URL does not need changing, else returns the new URL.
-        """
-        new_url = self.substituted.get(url)
-        if new_url is not None:
-            return new_url
-
+    def resolve_page(self, url) -> Tuple[Page, Tuple]:
         from markdown.util import AMP_SUBSTITUTE
         if url.startswith(AMP_SUBSTITUTE):
             # Possibly an overencoded mailto: link.
@@ -53,14 +59,55 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             #
             # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
             # we look for it here.
-            return None
+            return None, None
 
-        new_url = self.page.resolve_url(url)
-        if new_url is url:
-            return None
+        parsed = urlparse(url)
 
-        self.substituted[url] = new_url
-        return new_url
+        # If it's an absolute url, leave it unchanged
+        if parsed.scheme or parsed.netloc:
+            return None, parsed
+
+        # If it's an anchor inside the page, leave it unchanged
+        if not parsed.path:
+            return None, parsed
+
+        # Try with cache
+        site_path = self.substituted.get(parsed.path)
+        if site_path is not None:
+            try:
+                return self.page.site.pages[site_path], parsed
+            except KeyError:
+                log.warn("%s: url %s resolved via cache to %s which does not exist in the site. Cache out of date?",
+                         self.page, url, site_path)
+
+        # Resolve as a path
+        try:
+            page = self.page.resolve_path(parsed.path)
+        except PageNotFoundError:
+            return None, parsed
+
+        # Cache the page site_path
+        self.substituted[url] = page.meta["site_path"]
+
+        return page, parsed
+
+    def resolve_url(self, url) -> Tuple[Page, str]:
+        """
+        Resolve internal URLs.
+
+        Returns None if the URL does not need changing, else returns the new URL.
+        """
+        page, parsed = self.resolve_page(url)
+        if page is None:
+            return page, url
+
+        new_url = self.page.url_for(page)
+        dest = urlparse(new_url)
+
+        return page, urlunparse(
+            (dest.scheme, dest.netloc, dest.path,
+             parsed.params, parsed.query, parsed.fragment)
+        )
 
 
 class StaticSiteExtension(markdown.extensions.Extension):

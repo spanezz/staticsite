@@ -1,5 +1,9 @@
 # staticsite user-relevant changes
 
+# New in version 1.4
+
+* New [images support](doc/reference/images.md")
+
 # New in version 1.3
 
 * New [page metadata](doc/reference/metadata.md): `author`, `site_name`, `site_url`, and
