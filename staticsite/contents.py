@@ -113,6 +113,7 @@ class Dir(Page):
         self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
+        self.meta.setdefault("syndicated", False)
 
         # TODO: set draft if all subdirs and pages are drafts
 
