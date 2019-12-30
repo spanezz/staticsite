@@ -262,6 +262,7 @@ date: 2010-01-01 00:00:00
                     'template': 'compiled:index.html',
                     'title': 'Test1 title',
                 },
+                "type": "jinja2",
             })
 
             self.assertEqual(mdpage.to_dict(), {
@@ -282,6 +283,7 @@ date: 2010-01-01 00:00:00
                     'template': 'page.html',
                     'title': 'Test1 title',
                 },
+                "type": "markdown",
             })
 
             self.assertEqual(datapage.to_dict(), {
@@ -303,4 +305,5 @@ date: 2010-01-01 00:00:00
                     'title': 'Test1 title',
                     'data_type': 'test',
                 },
+                "type": "data",
             })

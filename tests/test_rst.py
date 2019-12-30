@@ -55,4 +55,5 @@ Example blog post in reStructuredText
                     "site_url": "https://www.example.org",
                     "build_path": "index.html",
                 },
+                "type": "rst",
             })

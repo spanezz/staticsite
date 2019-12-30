@@ -307,6 +307,7 @@ class Page:
                 "abspath": str(self.src.abspath),
             },
             "meta": dump_meta(self.meta),
+            "type": self.TYPE,
         }
         return res
 
