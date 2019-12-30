@@ -35,6 +35,8 @@ class Images(Feature):
             if not mimetype.startswith("image/"):
                 continue
 
+            taken.append(fname)
+
             meta = sitedir.meta_file(fname)
             meta["site_path"] = os.path.join(meta["site_path"], fname)
 
