@@ -59,6 +59,11 @@ class ChangeMonitor:
         """
         Handle incoming asyncio events
         """
+        if event.name.startswith(".") and event.name != ".staticsite":
+            return
+
+        log.debug("Received event %r", event)
+
         # Introduce a delay of 0.1s from the last event received, to notify
         # only once in case of a burst of events
         if self.pending is not None:
