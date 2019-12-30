@@ -48,8 +48,8 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
                         img.attrib["height"] = str(height)
                 title = page.meta.get("title")
                 if title is not None:
-                    if "title" not in img.attrib:
-                        img.attrib["title"] = title
+                    if "alt" not in img.attrib:
+                        img.attrib["alt"] = title
 
     def resolve_page(self, url) -> Tuple[Page, Tuple]:
         from markdown.util import AMP_SUBSTITUTE
