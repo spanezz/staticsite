@@ -37,6 +37,13 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             page, new_url = self.resolve_url(img.attrib.get("src", None))
             if new_url is not None:
                 img.attrib["src"] = new_url
+            if page is not None:
+                width = page.meta.get("width")
+                if width is not None:
+                    img.attrib["width"] = str(width)
+                height = page.meta.get("height")
+                if height is not None:
+                    img.attrib["height"] = str(height)
 
     def resolve_page(self, url) -> Tuple[Page, Tuple]:
         from markdown.util import AMP_SUBSTITUTE
