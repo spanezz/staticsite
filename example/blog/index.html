@@ -2,17 +2,14 @@
 
 {% block front_matter %}
 ---
-files:
-  "*.html":
-    syndicated: no
 syndication:
   pages:
     path: posts/*
   add_to:
     path: posts/*
   title: "My blog feed"
-title: My blog
 site_url: https://www.example.org
+title: My example blog
 {% endblock %}
 
 {% import 'lib/blog.html' as blog with context %}
@@ -21,7 +18,7 @@ site_url: https://www.example.org
 
 <h1 class="display-4">{{page.meta.title}}</h1>
 
-<p>This is my blog, here are the top 10 posts.</p>
+<p>Hello. These are the last 10 posts of my blog.</p>
 
 {{blog.pages(limit=10)}}
 
