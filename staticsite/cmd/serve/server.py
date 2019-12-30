@@ -43,6 +43,8 @@ class ChangeMonitor:
         self.pending = None
 
     def update_watch_dirs(self, dirs: List[str]):
+        dirs = [os.path.realpath(d) for d in dirs]
+
         for path in self.watches.keys() - dirs:
             watch = self.watches.pop(path)
             self.watch_manager.rm_watch(watch)
@@ -63,6 +65,22 @@ class ChangeMonitor:
             return
 
         if os.path.basename(event.path).startswith("."):
+            return
+
+        # Check that it's not an event from inside a hidden directory like
+        # .staticsite-cache
+        event_path = os.path.realpath(event.path)
+        for path in self.watches.keys():
+            if event_path.startswith(path):
+                relpath = os.path.relpath(event_path, path)
+                while relpath:
+                    dirname, basename = os.path.split(relpath)
+                    if basename.startswith("."):
+                        return
+                    relpath = dirname
+                break
+        else:
+            # Event not for a path that we watch
             return
 
         log.debug("Received event %r", event)
