@@ -70,14 +70,24 @@ class Page:
         for f in self.site.metadata_on_load_functions:
             f(self)
 
-        # TODO: move more of this to on_load functions
-
-        # template must exist, and defaults to page.html
-        self.meta.setdefault("template", "page.html")
-
         # Render the metadata entres generated that are templates for other
         # entries
+        # TODO: move to on_load functions of a MetadataTemplate class
         self.site.theme.render_metadata_templates(self)
+
+        # Fill missing inherited metadata
+        for name, metadata in self.site.metadata.items():
+            if not metadata.inherited:
+                continue
+            if name in self.meta:
+                continue
+            if self.dir is None:
+                continue
+            val = self.dir.meta.get(name)
+            if val is not None:
+                self.meta[name] = val
+
+        # TODO: move more of this to on_load functions?
 
         # title must exist
         if "title" not in self.meta:

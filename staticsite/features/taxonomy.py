@@ -138,14 +138,6 @@ class TaxonomyPage(Page):
         self.archive_meta.setdefault("template_title", "{{page.name}} archive")
         self.site.theme.precompile_metadata_templates(self.archive_meta)
 
-        # Copy well known meta keys
-        for name, metadata in self.site.metadata.items():
-            if not metadata.inherited:
-                continue
-            val = self.meta.get(name)
-            self.category_meta.setdefault(name, val)
-            self.archive_meta.setdefault(name, val)
-
     def to_dict(self):
         from staticsite.utils import dump_meta
         res = super().to_dict()
@@ -182,7 +174,7 @@ class TaxonomyPage(Page):
             category_meta["taxonomy"] = self
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
-            category_meta["site_path"] = os.path.join(category_meta["site_path"], category)
+            category_meta["site_path"] = os.path.join(self.meta["site_path"], category)
             # TODO: synthetise a directory?
             category_page = CategoryPage(self.site, category, meta=category_meta, dir=self.dir)
             self.categories[category] = category_page
@@ -194,7 +186,7 @@ class TaxonomyPage(Page):
             archive_meta["pages"] = pages
             archive_meta["category"] = category_page
             archive_meta["date"] = category_meta["date"]
-            archive_meta["site_path"] = os.path.join(archive_meta["site_path"], category, "archive")
+            archive_meta["site_path"] = os.path.join(self.meta["site_path"], category, "archive")
             # TODO: synthetise a directory?
             archive_page = CategoryArchivePage(self.site, meta=archive_meta, dir=self.dir)
             category_page.meta["archive"] = archive_page
