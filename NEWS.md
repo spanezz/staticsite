@@ -2,7 +2,7 @@
 
 # New in version 1.4
 
-* New [images support](doc/reference/images.md")
+* New [images support](doc/reference/images.md)
 * Use a horizontal rule with 3 or more *underscores* to introduce a
   introduction/rest of the post split in [markdown pages](doc/reference/markdown.md)
 
