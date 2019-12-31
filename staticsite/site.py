@@ -111,7 +111,7 @@ class Site:
         self.content_roots: List[contents.Dir] = []
 
         # Register well-known metadata
-        self.register_metadata(Metadata("template", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataDefault("template", default="page.html", inherited=False, doc="""
 Template used to render the page. Defaults to `page.html`, although specific
 pages of some features can default to other template names.
 

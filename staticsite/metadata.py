@@ -102,3 +102,15 @@ class MetadataDraft(Metadata):
             pass
         else:
             page.meta["draft"] = bool(page.meta["draft"])
+
+
+class MetadataDefault(Metadata):
+    """
+    Metadata with a default value when not set
+    """
+    def __init__(self, name, default, **kw):
+        super().__init__(name, **kw)
+        self.default = default
+
+    def on_load(self, page: "page.Page"):
+        page.meta.setdefault(self.name, self.default)
