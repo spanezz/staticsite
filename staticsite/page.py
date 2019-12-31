@@ -290,19 +290,7 @@ class Page:
         else:
             return f"{self.TYPE}:auto:{self.meta['site_path']}"
 
-    @lazy
-    def content_short(self):
-        """
-        Shorter version of the content to use, for example, in inline pages
-        """
-        return self.content
-
-    @lazy
-    def content(self):
-        """
-        Return only the rendered content of the page, without headers, footers,
-        and navigation.
-        """
+    def _render_page_content(self, **kw):
         template = self.page_template
         template_content = template.blocks.get("page_content")
         block_name = "page_content"
@@ -314,13 +302,28 @@ class Page:
                 return ""
 
         try:
-            return jinja2.Markup("".join(template_content(template.new_context({"page": self}))))
+            return jinja2.Markup("".join(template_content(template.new_context({"page": self, **kw}))))
         except jinja2.TemplateError as e:
             log.error("%s: failed to render %s.%s: %s", template.filename, self.src.relpath, block_name, e)
             log.debug("%s: failed to render %s.%s: %s",
                       template.filename, self.src.relpath, block_name, e, exc_info=True)
             # TODO: return a "render error" page? But that risks silent errors
             return ""
+
+    @lazy
+    def content_short(self):
+        """
+        Shorter version of the content to use, for example, in inline pages
+        """
+        return self._render_page_content(introduction=True)
+
+    @lazy
+    def content(self):
+        """
+        Return only the rendered content of the page, without headers, footers,
+        and navigation.
+        """
+        return self._render_page_content()
 
     def to_dict(self):
         from .utils import dump_meta

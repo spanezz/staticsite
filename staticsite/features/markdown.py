@@ -399,7 +399,11 @@ class MarkdownPage(Page):
         """
         Shorter version of the content to use, for example, in inline pages
         """
-        return self.mdpages.render_page(self, self.body_start, render_type="s")
+        if self.content_has_split:
+            body = self.body_start + ["", f"[(continue reading)](/{self.meta['site_path']})"]
+            return self.mdpages.render_page(self, body, render_type="s")
+        else:
+            return self.mdpages.render_page(self, self.body_start, render_type="f")
 
     @lazy
     def content(self):
@@ -407,7 +411,7 @@ class MarkdownPage(Page):
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
             return self.mdpages.render_page(self, body, render_type="c")
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="s")
+            return self.mdpages.render_page(self, self.body_start, render_type="f")
 
 
 FEATURES = {
