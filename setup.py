@@ -13,7 +13,7 @@ setup(
 
     # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
     extras_require={
-        'serve': ['livereload'],
+        'serve': ['tornado'],
         'fast_caching': ['lmdb'],
     },
     version="1.4",
