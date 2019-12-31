@@ -1,11 +1,6 @@
 from __future__ import annotations
-from ..command import Command, SiteCommand
-import tornado.httpserver
-import tornado.netutil
-from .pagefs import PageFS
+from ..command import Command, SiteCommand, Fail
 import os
-import asyncio
-import webbrowser
 import logging
 
 log = logging.getLogger("serve")
@@ -13,7 +8,15 @@ log = logging.getLogger("serve")
 
 class ServerMixin:
     def start_server(self):
+        try:
+            import tornado.httpserver
+            import tornado.netutil
+        except ModuleNotFoundError:
+            raise Fail("python3-tornado is not installed")
+        from .pagefs import PageFS
         from .server import Application
+        import asyncio
+        import webbrowser
         app = Application(self.settings)
         app.reload()
 
@@ -45,29 +48,6 @@ class ServerMixin:
 
         loop = asyncio.get_event_loop()
         loop.run_forever()
-
-#    def make_server(self, watch_paths=[]):
-#        try:
-#            import livereload
-#        except ImportError:
-#            raise Fail("Please install the python3 livereload module to use this function.")
-#
-#        class Server(livereload.Server):
-#            def _setup_logging(self):
-#                # Keep existing logging setup
-#                pass
-#
-#        server = Server(self.application)
-#
-#        # see https://github.com/lepture/python-livereload/issues/171
-#        def do_reload():
-#            self.reload()
-#
-#        for path in watch_paths:
-#            log.info("watching changes on %s", path)
-#            server.watch(path, do_reload)
-#
-#        return server
 
     def run(self):
         self.start_server()
