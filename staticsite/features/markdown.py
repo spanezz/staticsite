@@ -253,7 +253,7 @@ class MarkdownPages(Feature):
 
             body = []
             for line in fd:
-                body.append(line.strip().decode())
+                body.append(line.rstrip().decode())
 
             # Remove leading empty lines
             while body and not body[0]:
