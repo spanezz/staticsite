@@ -282,7 +282,10 @@ class Page:
         return self.meta["site_path"]
 
     def __repr__(self):
-        return "{}:{}".format(self.TYPE, self.src.relpath)
+        if self.src:
+            return f"{self.TYPE}:{self.src.relpath}"
+        else:
+            return f"{self.TYPE}:auto:{self.meta['site_path']}"
 
     @lazy
     def content(self):
