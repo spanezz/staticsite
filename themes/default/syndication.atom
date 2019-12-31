@@ -18,7 +18,14 @@
     {%- endfor %}
     <updated>{{page.meta.date|datetime_format("atom")}}</updated>
     <published>{{page.meta.syndication_date|datetime_format("atom")}}</published>
-    <content type="html">{{page.content}}</content>
+    <content type="html">
+      {% if page.content_has_split %}
+        {{page.content_short|safe}}
+        <a href="{{url_for(page, absolute=True)}}#sep">(continue reading)</a>
+      {% else %}
+        {{page.content|safe}}
+      {% endif %}
+    </content>
   </entry>
   {%- endfor %}
 </feed>

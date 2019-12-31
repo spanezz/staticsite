@@ -12,7 +12,12 @@
     </div>
   </div>
   <div class="card-body">
-  {{page.content|safe}}
+  {% if page.content_has_split %}
+    {{page.content_short|safe}}
+    <a href="{{url_for(page)}}#sep">(continue reading)</a>
+  {% else %}
+    {{page.content|safe}}
+  {% endif %}
   </div>
 </div>
 {%- endmacro %}

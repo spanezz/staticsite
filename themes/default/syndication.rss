@@ -24,7 +24,14 @@
     {%- endfor %}
     <pubDate>{{page.meta.syndication_date|datetime_format("rss2")}}</pubDate>
     <dcterms:modified>{{page.meta.date|datetime_format("w3cdtf")}}</dcterms:modified>
-    <description>{{page.content}}</description>
+    <description>
+      {% if page.content_has_split %}
+        {{page.content_short|safe}}
+        <a href="{{url_for(page, absolute=True)}}#sep">(continue reading)</a>
+      {% else %}
+        {{page.content|safe}}
+      {% endif %}
+    </description>
   </item>
   {%- endfor %}
   </channel>

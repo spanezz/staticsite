@@ -16,6 +16,14 @@ extensions, and is quite close to
 the page contents to adjust internal links to guarantee that they point where
 they should.
 
+Adding a horizontal rule *using underscores* (3 or more underscores), creates a
+page fold. When rendering the page inline, such as in a blog index page, or in
+RSS/Atom syndication, the content from the horizontal rule onwards will not be
+shown.
+
+If you wan to add a horizontal rule withotu introducing a page fold, use a
+sequence of three or more asterisks (`***`) or dashes (`---`) instead.
+
 
 ## Linking to other pages
 

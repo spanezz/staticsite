@@ -57,6 +57,9 @@ class Page:
         # about its contents.
         self.meta: Meta = meta
 
+        # True if this page can render a short version of itself
+        self.content_has_split = False
+
     def validate(self):
         """
         Enforce common meta invariants.
@@ -286,6 +289,13 @@ class Page:
             return f"{self.TYPE}:{self.src.relpath}"
         else:
             return f"{self.TYPE}:auto:{self.meta['site_path']}"
+
+    @lazy
+    def content_short(self):
+        """
+        Shorter version of the content to use, for example, in inline pages
+        """
+        return self.content
 
     @lazy
     def content(self):

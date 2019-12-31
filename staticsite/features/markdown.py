@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from staticsite import Page, Feature, File
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
@@ -9,6 +9,7 @@ from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
+import re
 import os
 import io
 import markdown
@@ -150,16 +151,23 @@ class MarkdownPages(Feature):
     def jinja2_markdown(self, context, mdtext):
         return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
 
-    def render_page(self, page):
+    def render_page(self, page, body, render_type):
         """
         Render markdown in the context of the given page.
         """
         self.link_resolver.set_page(page)
 
-        cached = self.render_cache.get(page.src.relpath)
+        cache_key = f"{render_type}:{page.src.relpath}"
+
+        # Try fetching rendered content from cache
+        cached = self.render_cache.get(cache_key)
         if cached and cached["mtime"] != page.src.stat.st_mtime:
+            # If the source has changed, drop the cached version
             cached = None
         if cached:
+            # If the destination of links has changed, drop the cached version.
+            # This will as a side effect prime the link resolver cache,
+            # avoiding links from being looked up again during rendering
             for src, dest in cached["paths"]:
                 if self.link_resolver.resolve_url(src) != dest:
                     cached = None
@@ -168,11 +176,10 @@ class MarkdownPages(Feature):
             # log.info("%s: markdown cache hit", page.src.relpath)
             return cached["rendered"]
 
-        content = page.get_content()
         self.markdown.reset()
-        rendered = self.markdown.convert(content)
+        rendered = self.markdown.convert("\n".join(body))
 
-        self.render_cache.put(page.src.relpath, {
+        self.render_cache.put(cache_key, {
             "mtime": page.src.stat.st_mtime,
             "rendered": rendered,
             "paths": list(self.link_resolver.substituted.items()),
@@ -350,6 +357,9 @@ class MarkdownArchetype(Archetype):
 class MarkdownPage(Page):
     TYPE = "markdown"
 
+    # Match a Markdown divider line
+    re_divider = re.compile(r"^____+$")
+
     def __init__(
             self, mdpages: MarkdownPages, src: File, meta: Meta, dir: Dir, body: List[str]):
         super().__init__(site=mdpages.site, src=src, meta=meta, dir=dir)
@@ -362,18 +372,42 @@ class MarkdownPage(Page):
         # Shared markdown environment
         self.mdpages = mdpages
 
-        # Sequence of lines found in the body
-        self.body = body
+        # Sequence of lines found in the body before the divider line, if any
+        self.body_start: List[str]
 
-    def get_content(self):
-        return "\n".join(self.body)
+        # Sequence of lines found in the body including and after the divider
+        # line, nor None if there is no divider line
+        self.body_rest: Optional[List[str]]
+
+        # Split lead and rest of the post, if a divider line is present
+        for idx, line in enumerate(body):
+            if self.re_divider.match(line):
+                self.content_has_split = True
+                self.body_start = body[:idx]
+                self.body_rest = body[idx:]
+                break
+        else:
+            self.content_has_split = False
+            self.body_start = body
+            self.body_rest = None
 
     def check(self, checker):
         self.mdpages.render_page(self)
 
     @lazy
+    def content_short(self):
+        """
+        Shorter version of the content to use, for example, in inline pages
+        """
+        return self.mdpages.render_page(self, self.body_start, render_type="s")
+
+    @lazy
     def content(self):
-        return self.mdpages.render_page(self)
+        if self.content_has_split:
+            body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
+            return self.mdpages.render_page(self, body, render_type="c")
+        else:
+            return self.mdpages.render_page(self, self.body_start, render_type="s")
 
 
 FEATURES = {
