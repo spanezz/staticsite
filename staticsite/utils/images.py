@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Dict, Any, List
 import PIL
 import PIL.Image
 import PIL.ExifTags
 import subprocess
 import json
+import shlex
 import os
 import logging
 
@@ -128,7 +129,7 @@ class ImageScanner:
 
         info = json.loads(res.stdout)[0]
 
-        description = info.get("Description")
+        description = info.get("ImageDescription")
         if description is not None:
             meta["title"] = description
 
@@ -161,3 +162,41 @@ class ImageScanner:
         # "GPSPosition": "44 deg 59' 20.64\" N, 9 deg 50' 35.16\" E",
 
         return meta
+
+    def edit_meta_exiftool(self, pathname: str, changed: Meta, removed: List[str]):
+        exif_args: List[str] = []
+
+        if "title" in changed:
+            exif_args.append(f"-ImageDescription={changed['title']}")
+
+        if "author" in changed:
+            exif_args.append(f"-Artist={changed['author']}")
+
+        if "image_orientation" in changed:
+            exif_args.append(f"-Orientation={changed['image_orientation']}")
+
+        # lat = info.get("GPSLatitude")
+        # if lat is not None:
+        #     print("EXIF LAT", lat)
+
+        # lon = info.get("GPSLongitude")
+        # if lon is not None:
+        #     print("EXIF LON", lon)
+
+        for name in removed:
+            if name == "title":
+                exif_args.append("-ImageDescription=")
+            elif name == "author":
+                exif_args.append("-Artist=")
+            elif name == "image_orientation":
+                exif_args.append("-Orientation=")
+
+        cmd = ["exiftool", "-c", "%f", "-overwrite_original", "-quiet", pathname] + exif_args
+        print(cmd)
+        res = subprocess.run(cmd)
+        if res.returncode != 0:
+            log.warn("%s: %s failed with code %d: %s",
+                     pathname, " ".join(shlex.quote(x) for x in cmd), res.returncode)
+            return False
+
+        return True

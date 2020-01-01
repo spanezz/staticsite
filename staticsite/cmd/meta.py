@@ -1,5 +1,5 @@
 import subprocess
-from .command import Command, Fail
+from .command import Command, Fail, Success
 from staticsite.utils import images
 from staticsite.cache import DisabledCache
 from staticsite.utils import yaml_codec as yaml
@@ -39,14 +39,25 @@ class Meta(Command):
                 new_meta = yaml.load(newfd)
 
         # TODO: set in file
+        changed = {}
+        removed = []
         for key, orig in meta.items():
             if key not in new_meta:
-                print("Deleted", key)
+                log.info("%s: removed %s", self.args.file, key)
+                removed.append(key)
             elif new_meta[key] != orig:
-                print("Changed", key, orig, new_meta[key])
+                log.info("%s: updated %s=%r", self.args.file, key, new_meta[key])
+                changed[key] = new_meta[key]
 
         for key in new_meta.keys() - meta.keys():
-            print("Added", key, new_meta[key])
+            log.info("%s: added %s=%r", self.args.file, key, new_meta[key])
+            changed[key] = new_meta[key]
+
+        if not changed and not removed:
+            raise Success()
+
+        if not scanner.edit_meta_exiftool(self.args.file, changed, removed):
+            raise Fail("Failed to store metadatä changes")
 
     @classmethod
     def make_subparser(cls, subparsers):
