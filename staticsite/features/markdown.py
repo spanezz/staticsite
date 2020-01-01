@@ -238,8 +238,8 @@ class MarkdownPages(Feature):
             return
 
         try:
-            with open(index.abspath, "rb") as fd:
-                fmt, meta = front_matter.read_partial(fd)
+            with sitedir.open("index.md", index, "rb") as fd:
+                fmt, meta, body = front_matter.read_partial(fd)
         except Exception as e:
             log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", index.relpath)
@@ -256,11 +256,9 @@ class MarkdownPages(Feature):
 
         # Parse separating front matter and markdown content
         with sitedir.open(fname, src, "rb") as fd:
-            fmt, meta = front_matter.read_partial(fd)
+            fmt, meta, body = front_matter.read_partial(fd)
 
-            body = []
-            for line in fd:
-                body.append(line.rstrip().decode())
+            body = list(body)
 
             # Remove leading empty lines
             while body and not body[0]:
