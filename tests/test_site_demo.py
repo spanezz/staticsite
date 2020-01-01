@@ -9,7 +9,7 @@ import os
 @contextmanager
 def example_site(name="demo"):
     with test_utils.assert_no_logs():
-        with test_utils.example_site(name) as root:
+        with test_utils.example_site_dir(name) as root:
             settings = test_utils.TestSettings()
             settings.load(os.path.join(root, "settings.py"))
             if settings.PROJECT_ROOT is None:

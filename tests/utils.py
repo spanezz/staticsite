@@ -59,7 +59,7 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
 
 
 @contextmanager
-def example_site(name="demo"):
+def example_site_dir(name="demo"):
     """
     Create a copy of the example site in a temporary directory
     """
