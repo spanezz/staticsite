@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Tuple, Optional, BinaryIO
+from typing import Dict, Any, Tuple, BinaryIO
 from .typing import Meta
 import logging
 import json
@@ -7,37 +7,6 @@ import re
 from . import yaml_codec
 
 log = logging.getLogger("utils")
-
-
-def parse(lines) -> Tuple[Optional[str], Dict[str, Any]]:
-    """
-    Parse lines of front matter
-    """
-    if not lines:
-        return "toml", {}
-
-    if lines[0] == "{":
-        # JSON
-        return "json", json.loads("\n".join(lines))
-
-    if lines[0] == "+++":
-        # TOML
-        import toml
-        return "toml", toml.loads("\n".join(lines[1:-1]))
-
-    if lines[0] == "---":
-        # YAML
-        if len(lines) == 1:
-            return "yaml", {}
-
-        # Optionally remove a trailing ---
-        if lines[-1] == "---":
-            lines = lines[:-1]
-
-        yaml_body = "\n".join(lines)
-        return "yaml", yaml_codec.loads(yaml_body)
-
-    return None, {}
 
 
 def write(meta: Dict[str, Any], style: str = "toml") -> str:

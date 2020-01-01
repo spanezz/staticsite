@@ -331,7 +331,7 @@ class MarkdownArchetype(Archetype):
             # Reparse it separating front matter and markdown content
             fmatter, body = parse_markdown_with_front_matter(fd)
         try:
-            style, meta = front_matter.parse(fmatter)
+            style, meta = front_matter.read_string(fmatter)
         except Exception as e:
             log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=e)
             log.warn("archetype %s: failed to parse front matter", self.relpath)
