@@ -171,6 +171,17 @@ Type of data for this file.
 This is used to group data of the same type together, and to choose a
 `data-[data_type].html` rendering template.
 
+### `image`
+
+Image used for this post.
+
+It is set to a path to an image file relative to the current page.
+
+During the analyze phase, it is resolved to the corresponding [image page](images.md).
+
+If not set, and an image exists with the same name as the page (besides the
+extension), that image is used.
+
 ### `syndication`
 
 Defines syndication for the contents of this page.
