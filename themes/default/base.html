@@ -85,10 +85,8 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
           {% block nav %}
-          {% for path in page.meta.nav %}
-            {% with nav_page = page_for(path) %}
-              <li class="nav-item"><a class="nav-link" href="{{url_for(nav_page)}}">{{nav_page.meta.title}}</a></li>
-            {% endwith %}
+          {% for nav_page in page.meta.nav %}
+            <li class="nav-item"><a class="nav-link" href="{{url_for(nav_page)}}">{{nav_page.meta.nav_title}}</a></li>
           {% endfor %}
           {% endblock %}
         </ul>

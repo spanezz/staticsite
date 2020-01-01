@@ -117,6 +117,7 @@ class TaxonomyPage(Page):
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         self.meta.setdefault("template", "taxonomy/taxonomy.html")
+        self.meta.setdefault("nav_title", name.capitalize())
 
         # Taxonomy name (e.g. "tags")
         self.name = name
