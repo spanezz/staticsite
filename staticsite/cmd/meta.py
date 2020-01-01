@@ -3,6 +3,7 @@ from .command import Command, Fail
 from staticsite.utils import images
 from staticsite.cache import DisabledCache
 from staticsite.utils import yaml_codec as yaml
+import shlex
 import tempfile
 import logging
 
@@ -13,6 +14,14 @@ class Meta(Command):
     """
     Edit metadata for a file
     """
+    def edit(self, fname):
+        settings_dict = self.settings.as_dict()
+        cmd = [x.format(name=fname, **settings_dict) for x in self.settings.EDIT_COMMAND]
+        try:
+            res = subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError as e:
+            log.warn("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
+        return res
 
     def run(self):
         # TODO: Build a Site if possible
@@ -23,8 +32,7 @@ class Meta(Command):
             fd.flush()
             # TODO: filter the keys that we don't need to edit, like width and height
             # TODO: setdefault the keys that are relevant and might not be there
-            # TODO: use settings.EDIT_COMMAND if available
-            subprocess.run(["nvim", fd.name])
+            self.edit(fd.name)
             with open(fd.name, "rt") as newfd:
                 new_meta = yaml.load(newfd)
 
