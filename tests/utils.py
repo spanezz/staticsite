@@ -77,7 +77,9 @@ def example_site(name="demo"):
         with example_site_dir(name) as root:
             src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
             settings = Settings()
-            settings.load(os.path.join(root, "settings.py"))
+            settings_path = os.path.join(root, "settings.py")
+            if os.path.exists(settings_path):
+                settings.load(settings_path)
             if settings.PROJECT_ROOT is None:
                 settings.PROJECT_ROOT = root
             settings.CACHE_REBUILDS = False

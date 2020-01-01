@@ -1,8 +1,5 @@
 from unittest import TestCase
-from staticsite.cmd.build import Build
-from staticsite import Site
 from . import utils as test_utils
-from contextlib import contextmanager
 
 
 class TestSite(TestCase):

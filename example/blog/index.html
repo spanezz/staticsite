@@ -10,6 +10,8 @@ syndication:
   title: "My blog feed"
 site_url: https://www.example.org
 title: My example blog
+nav: [/index.html, /about.md]
+template_copyright: "{% raw %}© {{page.meta.date.year}} {{page.meta.author}}{% endraw %}"
 {% endblock %}
 
 {% import 'lib/blog.html' as blog with context %}
