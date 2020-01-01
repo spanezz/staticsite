@@ -5,8 +5,7 @@
 * New [images support](doc/reference/images.md)
 * Use a horizontal rule with 3 or more *underscores* to introduce a
   introduction/rest of the post split in [markdown pages](doc/reference/markdown.md)
-* New command `ssite meta filename` to edit metadata of files. It is in a very
-  early stage, but it can already be used to set metadata in image EXIF data.
+* New `copyright` and `template_copyright` [metadata](doc/reference/metadata.md)
 
 # New in version 1.3
 

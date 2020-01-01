@@ -130,7 +130,26 @@ If missing, the modification time of the file is used.
 
         self.register_metadata(Metadata("author", inherited=True, doc="""
             A string with the name of the author for this page.
+
+            SITE_AUTHOR is used as a default if found in settings.
         """))
+        self.register_metadata(Metadata("copyright", inherited=True, doc="""
+            A string with the copyright information for this page.
+        """))
+        self.register_metadata(Metadata("template_copyright", inherited=True, template_for="copyright", doc="""
+If set instead of `copyright`, it is a jinja2 template used to generate the
+copyright information.
+
+The template context will have `page` available, with the current page. The
+result of the template will not be further escaped, so you can use HTML markup
+in it.
+
+A good default can be:
+
+```yaml
+template_copyright: "© {{page.meta.date.year}} {{page.meta.author}}"
+```
+"""))
         self.register_metadata(Metadata("title", inherited=True, doc="""
 The page title.
 
@@ -144,7 +163,7 @@ If omitted:
  * if still no title can be found, the site name is used as a default.
 """))
         self.register_metadata(Metadata("template_title", inherited=True, template_for="title", doc="""
-If set instead of title, it is a jinja2 template used to generate the title.
+If set instead of `title`, it is a jinja2 template used to generate the title.
 The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
 in it.
@@ -153,7 +172,7 @@ in it.
 The page description. If omitted, the page will have no description.
 """))
         self.register_metadata(Metadata("template_description", inherited=True, template_for="description", doc="""
-If set instead of description, it is a jinja2 template used to generate the
+If set instead of `description`, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use
 HTML markup in it.

@@ -27,4 +27,8 @@ To prevent your front matter from ending up in the rendered HTML, place the
 `front_matter` block after the `{% extends %}` directive, or manage your front
 matter from [`.staticfile` directory metadata](content.md).
 
+If you want to use `template_*` entries, you can wrap the front matter around
+`{% raw %}` to prevent jinja2 from rendering their contents as part of the rest
+of the template.
+
 [Back to reference index](README.md)

@@ -28,6 +28,33 @@ If missing, the modification time of the file is used.
 
 A string with the name of the author for this page.
 
+SITE_AUTHOR is used as a default if found in settings.
+
+### `copyright`
+
+*Inherited from directory indices.*
+
+A string with the copyright information for this page.
+
+### `template_copyright`
+
+*Inherited from directory indices.*
+
+*Template version of `copyright`.*
+
+If set instead of `copyright`, it is a jinja2 template used to generate the
+copyright information.
+
+The template context will have `page` available, with the current page. The
+result of the template will not be further escaped, so you can use HTML markup
+in it.
+
+A good default can be:
+
+```yaml
+template_copyright: "© {{page.meta.date.year}} {{page.meta.author}}"
+```
+
 ### `title`
 
 *Inherited from directory indices.*
@@ -49,7 +76,7 @@ If omitted:
 
 *Template version of `title`.*
 
-If set instead of title, it is a jinja2 template used to generate the title.
+If set instead of `title`, it is a jinja2 template used to generate the title.
 The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
 in it.
@@ -66,7 +93,7 @@ The page description. If omitted, the page will have no description.
 
 *Template version of `description`.*
 
-If set instead of description, it is a jinja2 template used to generate the
+If set instead of `description`, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use
 HTML markup in it.

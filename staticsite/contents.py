@@ -202,6 +202,8 @@ class ContentDir(Dir):
             else:
                 self.meta["site_name"] = os.path.basename(self.src.abspath)
 
+        self.site.theme.precompile_metadata_templates(self.meta)
+
         # TODO: build a directory page here? Or at site load time?
         # TODO: its contents can be added at analyze time
 
