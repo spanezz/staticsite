@@ -96,8 +96,8 @@ class Loader:
         if not os.path.isfile(pathname):
             config = {}
         else:
-            with open(pathname, "rb") as fd:
-                fmt, config = front_matter.read_partial(fd)
+            with open(pathname, "rt") as fd:
+                fmt, config = front_matter.read_whole(fd)
 
         # Normalize 'extends' to a list of strings
         extends = config.get("extends")
