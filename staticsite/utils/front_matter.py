@@ -7,51 +7,6 @@ from . import yaml_codec
 
 log = logging.getLogger("utils")
 
-# re_term_json = re.compile(r"^}\s*$")
-# re_term_yaml = re.compile(r"^---\s*$")
-# re_term_toml = re.compile(r"^\+\+\+\s*$")
-#
-#
-# def json_fenced_input(fd):
-#     yield "{\n"
-#     for line in fd:
-#         yield line
-#         if re_term_json.match(line):
-#             break
-#
-#
-# def yaml_fenced_input(fd):
-#     for line in fd:
-#         if re_term_yaml.match(line):
-#             break
-#         yield line
-#
-#
-# def toml_fenced_input(fd):
-#     for line in fd:
-#         if re_term_toml.match(line):
-#             break
-#         yield line
-#
-#
-# def parse_file_front_matter(fd):
-#     """
-#     Parse front matter from a file, leaving the file descriptor at the first
-#     line past the end of the front matter, or at the end of file
-#     """
-#     lead = fd.readline().strip()
-#     if lead == "{":
-#         return "json", json.load(json_fenced_input(fd))
-#
-#     if lead == "+++":
-#         import toml
-#         return "toml", toml.load(toml_fenced_input(fd))
-#
-#     if lead == "---":
-#         return "yaml", yaml_codec.load(yaml_fenced_input(fd))
-#
-#     return None, {}
-
 
 def parse(lines) -> Tuple[Optional[str], Dict[str, Any]]:
     """
@@ -136,3 +91,22 @@ def read_partial(fd: BinaryIO) -> Tuple[str, Meta]:
     else:
         # No front matter found
         return None, {}
+
+
+def read_whole(fd: BinaryIO) -> Tuple[str, Meta]:
+    """
+    Parse lines front matter from a file header.
+
+    Read the entire file
+
+    Returns the format of the front matter read, and the byte unparsed contents
+    of the front matter.
+    """
+    content = fd.read()
+    if content.startswith(b"{"):
+        return "json", json.loads(content.decode())
+    elif content.startswith(b"+"):
+        import toml
+        return "toml", toml.loads(content.decode())
+    else:
+        return "yaml", yaml_codec.loads(content.decode())

@@ -182,7 +182,7 @@ class ContentDir(Dir):
 
             # Load .staticsite if found
             with self.open(".staticsite", dircfg, "rb") as fd:
-                fmt, config = front_matter.read_partial(fd)
+                fmt, config = front_matter.read_whole(fd)
 
             self.add_dir_config(config)
 
