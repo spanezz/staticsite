@@ -20,11 +20,13 @@ class Meta(Command):
         try:
             res = subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError as e:
-            log.warn("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
+            raise Fail("Editor command {} exited with error {}".format(
+                " ".join(shlex.quote(x) for x in cmd), e.returncode))
         return res
 
     def run(self):
         # TODO: Build a Site if possible
+        # TODO: or load settings from a settings.py if one can be found in reasonable places
         scanner = images.ImageScanner(DisabledCache())
         meta = scanner.scan_file(self.args.file)
         with tempfile.NamedTemporaryFile(suffix=".yaml") as fd:
