@@ -19,6 +19,46 @@
 </div>
 {%- endmacro %}
 
+{% macro top_tags(limit=15) -%}
+{% with tags = taxonomy("tags") %}
+  {% if tags %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(tags)}}">Top {{limit}} tags</a>
+    </div>
+    <div class="card-body">
+      {% for category_page in tags.top_categories(15) %}
+      <a class="badge badge-pill badge-primary" href="{{url_for(category_page)}}">{{category_page.name}}
+        <span class="badge badge-light">{{category_page.meta.pages|length}}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+{% endwith %}
+{%- endmacro %}
+
+{% macro recent_series(limit=5) %}
+{% with series = taxonomy("series") %}
+  {% if series %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(series)}}">Recent series</a>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for category_page in series.most_recent(5) %}
+        {% with info = category_page.series_info() %}
+        <li class="list-group-item">
+          <a href="{{url_for(category_page)}}">{{info.title}}</a>
+        </li>
+        {% endwith %}
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+{% endwith %}
+{%- endmacro %}
+
 {% macro pages(pages, limit=10) -%}
   {% for page in syndicated_pages(pages, limit=limit) %}
   {{inline_page(page)}}
