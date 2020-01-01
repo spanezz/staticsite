@@ -71,6 +71,24 @@ def example_site_dir(name="demo"):
         yield dst
 
 
+@contextmanager
+def example_site(name="demo"):
+    with assert_no_logs():
+        with example_site_dir(name) as root:
+            src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            settings = Settings()
+            settings.load(os.path.join(root, "settings.py"))
+            if settings.PROJECT_ROOT is None:
+                settings.PROJECT_ROOT = root
+            settings.CACHE_REBUILDS = False
+            settings.THEME_PATH = [os.path.join(src_root, "themes")]
+
+            site = staticsite.Site(settings=settings)
+            site.load()
+            site.analyze()
+            yield site
+
+
 class TracebackHandler(logging.Handler):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
