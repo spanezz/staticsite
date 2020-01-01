@@ -1,10 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Dict, Any, List
 import PIL
 import PIL.Image
 import PIL.ExifTags
 import subprocess
 import json
+import shlex
+import os
 import logging
 
 if TYPE_CHECKING:
@@ -43,17 +45,26 @@ class ImageScanner:
         key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
         meta = self.cache.get(key)
         if meta is None:
-            meta = self.read_meta(sitedir, src, mimetype)
+            meta = self.read_meta(src.abspath, mimetype)
             self.cache.put(key, meta)
         return meta
 
-    def read_meta(self, sitedir: ContentDir, src: File, mimetype: str) -> Meta:
+    def scan_file(self, pathname: str) -> Meta:
+        import mimetypes
+        mimetypes.init()
+        base, ext = os.path.splitext(pathname)
+        mimetype = mimetypes.types_map.get(ext)
+        if mimetype is None:
+            return {}
+        return self.read_meta(pathname, mimetype)
+
+    def read_meta(self, pathname: str, mimetype: str) -> Meta:
         # We can take our time here, since results are cached
 
         if mimetype == "image/svg+xml":
             return {}
 
-        with PIL.Image.open(src.abspath) as img:
+        with PIL.Image.open(pathname) as img:
             meta = {
                 "width": img.width,
                 "height": img.height,
@@ -62,7 +73,7 @@ class ImageScanner:
 
             getexif = getattr(img, "_getexif", None)
             if getexif is None:
-                meta.update(self.read_meta_exiftool(src))
+                meta.update(self.read_meta_exiftool(pathname))
             else:
                 exif = getexif()
                 if exif is not None:
@@ -105,20 +116,20 @@ class ImageScanner:
 
         return meta
 
-    def read_meta_exiftool(self, src: File) -> Meta:
+    def read_meta_exiftool(self, pathname: str) -> Meta:
         meta = {}
 
         # It is important to use abspath here, as exiftool does not support the
         # usual -- convention to deal with files starting with a dash. With abspath
         # at least the file name will start with a /
-        res = subprocess.run(["exiftool", "-json", "-c", "%f", src.abspath], capture_output=True)
+        res = subprocess.run(["exiftool", "-json", "-c", "%f", pathname], capture_output=True)
         if res.returncode != 0:
-            log.warn("%s: exiftool failed with code %d: %s", src.relpath, res.returncode, res.stderr.strip())
+            log.warn("%s: exiftool failed with code %d: %s", pathname, res.returncode, res.stderr.strip())
             return meta
 
         info = json.loads(res.stdout)[0]
 
-        description = info.get("Description")
+        description = info.get("ImageDescription")
         if description is not None:
             meta["title"] = description
 
@@ -151,3 +162,41 @@ class ImageScanner:
         # "GPSPosition": "44 deg 59' 20.64\" N, 9 deg 50' 35.16\" E",
 
         return meta
+
+    def edit_meta_exiftool(self, pathname: str, changed: Meta, removed: List[str]):
+        exif_args: List[str] = []
+
+        if "title" in changed:
+            exif_args.append(f"-ImageDescription={changed['title']}")
+
+        if "author" in changed:
+            exif_args.append(f"-Artist={changed['author']}")
+
+        if "image_orientation" in changed:
+            exif_args.append(f"-Orientation={changed['image_orientation']}")
+
+        # lat = info.get("GPSLatitude")
+        # if lat is not None:
+        #     print("EXIF LAT", lat)
+
+        # lon = info.get("GPSLongitude")
+        # if lon is not None:
+        #     print("EXIF LON", lon)
+
+        for name in removed:
+            if name == "title":
+                exif_args.append("-ImageDescription=")
+            elif name == "author":
+                exif_args.append("-Artist=")
+            elif name == "image_orientation":
+                exif_args.append("-Orientation=")
+
+        cmd = ["exiftool", "-c", "%f", "-overwrite_original", "-quiet", pathname] + exif_args
+        print(cmd)
+        res = subprocess.run(cmd)
+        if res.returncode != 0:
+            log.warn("%s: %s failed with code %d: %s",
+                     pathname, " ".join(shlex.quote(x) for x in cmd), res.returncode)
+            return False
+
+        return True
