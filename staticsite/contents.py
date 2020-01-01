@@ -181,7 +181,7 @@ class ContentDir(Dir):
             config: Dict[str, Any] = {}
 
             # Load .staticsite if found
-            with self.open(".staticsite", dircfg, "rb") as fd:
+            with self.open(".staticsite", dircfg, "rt") as fd:
                 fmt, config = front_matter.read_whole(fd)
 
             self.add_dir_config(config)

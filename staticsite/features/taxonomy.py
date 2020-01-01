@@ -87,8 +87,8 @@ element.
         Parse the taxonomy file to read its description
         """
         from staticsite.utils import front_matter
-        with sitedir.open(fname, src, "rb") as fd:
-            fmt, meta = front_matter.read_partial(fd)
+        with sitedir.open(fname, src, "rt") as fd:
+            fmt, meta = front_matter.read_whole(fd)
         if meta is None:
             meta = {}
         return meta

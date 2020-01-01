@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Tuple, BinaryIO
+from typing import Dict, Any, Tuple, BinaryIO, TextIO
 from .typing import Meta
 import logging
 import json
@@ -65,7 +65,7 @@ def read_partial(fd: BinaryIO) -> Tuple[str, Meta]:
 re_toml = re.compile(r"^\+\+\+[ \t]*\n(.+?)\n\+\+\+[ \t]*\n$", re.DOTALL)
 
 
-def read_whole(fd: BinaryIO) -> Tuple[str, Meta]:
+def read_whole(fd: TextIO) -> Tuple[str, Meta]:
     """
     Parse lines front matter from a file header.
 
@@ -73,7 +73,7 @@ def read_whole(fd: BinaryIO) -> Tuple[str, Meta]:
 
     Returns the format of the front matter read, and parsed front matter
     """
-    content = fd.read().decode()
+    content = fd.read()
     if content.startswith("{"):
         return "json", json.loads(content)
 
