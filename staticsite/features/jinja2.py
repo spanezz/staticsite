@@ -25,8 +25,8 @@ def load_front_matter(template: jinja2.Template) -> Meta:
     # If the page has a front_matter block, render it to get the front matter
     front_matter_block = template.blocks.get("front_matter")
     if front_matter_block:
-        fm = "".join(front_matter_block(template.new_context())).strip().splitlines()
-        fmt, meta = front_matter.parse(fm)
+        fm = "".join(front_matter_block(template.new_context()))
+        fmt, meta = front_matter.read_string(fm)
     else:
         meta = {}
 

@@ -3,6 +3,7 @@ from typing import Dict, Any, Tuple, Optional, BinaryIO
 from .typing import Meta
 import logging
 import json
+import re
 from . import yaml_codec
 
 log = logging.getLogger("utils")
@@ -56,8 +57,7 @@ def read_partial(fd: BinaryIO) -> Tuple[str, Meta]:
 
     Stop reading at the end of the front matter.
 
-    Returns the format of the front matter read, and the byte unparsed contents
-    of the front matter.
+    Returns the format of the front matter read, and parsed front matter.
     """
     buf = bytearray()
     line = fd.readline()
@@ -93,20 +93,43 @@ def read_partial(fd: BinaryIO) -> Tuple[str, Meta]:
         return None, {}
 
 
+re_toml = re.compile(r"^\+\+\+[ \t]*\n(.+?)\n\+\+\+[ \t]*\n$", re.DOTALL)
+
+
 def read_whole(fd: BinaryIO) -> Tuple[str, Meta]:
     """
     Parse lines front matter from a file header.
 
     Read the entire file
 
-    Returns the format of the front matter read, and the byte unparsed contents
-    of the front matter.
+    Returns the format of the front matter read, and parsed front matter
     """
-    content = fd.read()
-    if content.startswith(b"{"):
-        return "json", json.loads(content.decode())
-    elif content.startswith(b"+"):
+    content = fd.read().decode()
+    if content.startswith("{"):
+        return "json", json.loads(content)
+
+    mo = re_toml.match(content)
+    if mo:
         import toml
-        return "toml", toml.loads(content.decode())
-    else:
-        return "yaml", yaml_codec.loads(content.decode())
+        return "toml", toml.loads(mo.group(1))
+
+    return "yaml", yaml_codec.loads(content)
+
+
+def read_string(content: str) -> Tuple[str, Meta]:
+    """
+    Parse lines front matter from a file header.
+
+    Read data from a string.
+
+    Returns the format of the front matter read, and parsed front matter
+    """
+    if content.startswith("{"):
+        return "json", json.loads(content)
+
+    mo = re_toml.match(content)
+    if mo:
+        import toml
+        return "toml", toml.loads(mo.group(1))
+
+    return "yaml", yaml_codec.loads(content)

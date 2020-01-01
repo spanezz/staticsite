@@ -21,7 +21,7 @@ bool = True
 class TestToml(TestCase):
     def test_valid(self):
         self.maxDiff = None
-        fmt, data = front_matter.parse(toml_valid.splitlines())
+        fmt, data = front_matter.read_string(toml_valid)
         self.assertEqual(fmt, "toml")
         self.assertEqual(data, {
             "date": "Tue, 24 Aug 2010 13:13:38 +0000",
@@ -31,4 +31,4 @@ class TestToml(TestCase):
 
     def test_invalid_bool(self):
         with self.assertRaises(toml.decoder.TomlDecodeError):
-            fmt, data = front_matter.parse(toml_invalid_bool.splitlines())
+            fmt, data = front_matter.read_string(toml_invalid_bool)
