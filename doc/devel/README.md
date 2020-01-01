@@ -1,5 +1,10 @@
 # Developer documentation
 
+## Playing with the internals
+
+You can run `ssite shell` on an existing site, to get a python shell with the
+`site` variable set to the fully built `staticsite.Site` object for the site.
+
 ## Running tests
 
 staticsite uses pretty standard unittest-based tests. You can run them normally

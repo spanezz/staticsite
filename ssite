@@ -35,6 +35,9 @@ def main():
     from staticsite.cmd.meta import Meta
     Meta.make_subparser(subparsers)
 
+    from staticsite.cmd.shell import Shell
+    Shell.make_subparser(subparsers)
+
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
