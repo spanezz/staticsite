@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any, List
+from typing import TYPE_CHECKING, List
 import PIL
 import PIL.Image
-import PIL.ExifTags
 import subprocess
 import json
 import shlex
@@ -16,14 +15,6 @@ if TYPE_CHECKING:
     from .typing import Meta
 
 log = logging.getLogger("utils.images")
-
-PIL_EXIF_TAGS = {v: k for k, v in PIL.ExifTags.TAGS.items()}
-PIL_EXIF_GPSTAGS = {v: k for k, v in PIL.ExifTags.GPSTAGS.items()}
-
-PIL_EXIF_GPSINFO = PIL_EXIF_TAGS["GPSInfo"]
-PIL_EXIF_IMAGEDESCRIPTION = PIL_EXIF_TAGS["ImageDescription"]
-PIL_EXIF_ORIENTATION = PIL_EXIF_TAGS["Orientation"]
-PIL_EXIF_ARTIST = PIL_EXIF_TAGS["Artist"]
 
 
 def parse_coord(ref, vals):
@@ -71,48 +62,7 @@ class ImageScanner:
                 "title": "",
             }
 
-            getexif = getattr(img, "_getexif", None)
-            if getexif is None:
-                meta.update(self.read_meta_exiftool(pathname))
-            else:
-                exif = getexif()
-                if exif is not None:
-                    meta.update(self.read_meta_pil(exif))
-
-        return meta
-
-    def read_meta_pil(self, exif: Dict[int, Any]) -> Meta:
-        # https://hhsprings.bitbucket.io/docs/programming/examples/python/PIL/ExifTags.html
-        meta = {}
-
-        # https://exiftool.org/TagNames/GPS.html
-        gpsinfo = exif.get(PIL_EXIF_GPSINFO)
-        if gpsinfo is not None:
-            # https://gis.stackexchange.com/questions/136925/how-to-parse-exif-gps-information-to-lat-lng-decimal-numbers
-            # https://stackoverflow.com/questions/2526304/php-extract-gps-exif-data
-
-            latref = gpsinfo.get(PIL_EXIF_GPSTAGS["GPSLatitudeRef"], "N")
-            lat = gpsinfo.get(PIL_EXIF_GPSTAGS["GPSLatitude"])
-            if lat:
-                meta["lat"] = parse_coord(latref, lat)
-
-            lonref = gpsinfo.get(PIL_EXIF_GPSTAGS["GPSLongitudeRef"], "E")
-            lon = gpsinfo.get(PIL_EXIF_GPSTAGS["GPSLongitude"])
-            if lon:
-                meta["lon"] = parse_coord(lonref, lon)
-
-        description = exif.get(PIL_EXIF_IMAGEDESCRIPTION)
-        if description is not None:
-            meta["title"] = description
-
-        artist = exif.get(PIL_EXIF_ARTIST)
-        if artist is not None:
-            meta["author"] = artist
-
-        orientation = exif.get(PIL_EXIF_ORIENTATION)
-        if orientation is not None:
-            # https://www.impulseadventure.com/photo/exif-orientation.html
-            meta["image_orientation"] = int(orientation)
+            meta.update(self.read_meta_exiftool(pathname))
 
         return meta
 
@@ -122,7 +72,7 @@ class ImageScanner:
         # It is important to use abspath here, as exiftool does not support the
         # usual -- convention to deal with files starting with a dash. With abspath
         # at least the file name will start with a /
-        res = subprocess.run(["exiftool", "-json", "-c", "%f", pathname], capture_output=True)
+        res = subprocess.run(["exiftool", "-json", "-n", "-c", "%f", pathname], capture_output=True)
         if res.returncode != 0:
             log.warn("%s: exiftool failed with code %d: %s", pathname, res.returncode, res.stderr.strip())
             return meta
@@ -142,13 +92,17 @@ class ImageScanner:
             # https://www.impulseadventure.com/photo/exif-orientation.html
             meta["image_orientation"] = int(orientation)
 
+        copyright = info.get("CopyrightNotice")
+        if copyright is not None:
+            meta["copyright"] = copyright
+
         lat = info.get("GPSLatitude")
         if lat is not None:
-            print("EXIF LAT", lat)
+            meta["lat"] = float(lat)
 
         lon = info.get("GPSLongitude")
         if lon is not None:
-            print("EXIF LON", lon)
+            meta["lon"] = float(lon)
 
         # "DateTime": "2017:05:09 21:27:42",
         # "GPSLatitudeRef": "North",
@@ -156,10 +110,6 @@ class ImageScanner:
         # "GPSTimeStamp": "19:27:43",
         # "GPSDateStamp": "2017:05:09",
         # "GPSDateTime": "2017:05:09 19:27:43Z",
-        # "GPSLatitude": "44 deg 59' 20.64\" N",
-        # "GPSLongitude": "9 deg 50' 35.16\" E",
-        # "GPSLongitudeRef": "East",
-        # "GPSPosition": "44 deg 59' 20.64\" N, 9 deg 50' 35.16\" E",
 
         return meta
 
@@ -174,6 +124,11 @@ class ImageScanner:
 
         if "image_orientation" in changed:
             exif_args.append(f"-Orientation={changed['image_orientation']}")
+
+        if "copyright" in changed:
+            # See https://libre-software.net/edit-metadata-exiftool/
+            exif_args.append(f"-rights={changed['copyright']}")
+            exif_args.append(f"-CopyrightNotice={changed['copyright']}")
 
         # lat = info.get("GPSLatitude")
         # if lat is not None:
@@ -190,9 +145,11 @@ class ImageScanner:
                 exif_args.append("-Artist=")
             elif name == "image_orientation":
                 exif_args.append("-Orientation=")
+            elif name == "copyright":
+                exif_args.append("-rights=")
+                exif_args.append("-CopyrightNotice=")
 
         cmd = ["exiftool", "-c", "%f", "-overwrite_original", "-quiet", pathname] + exif_args
-        print(cmd)
         res = subprocess.run(cmd)
         if res.returncode != 0:
             log.warn("%s: %s failed with code %d: %s",

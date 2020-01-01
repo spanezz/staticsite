@@ -81,6 +81,7 @@ class Meta(Command):
         # Set the keys that are relevant and might not be there to default values
         meta.setdefault("title", "")
         meta.setdefault("author", "")
+        meta.setdefault("copyright", "")
 
         # Edit the metadata
         new_meta = self.edit_meta(meta)
