@@ -8,7 +8,7 @@ import os
 class TestSite(TestCase):
     def test_meta(self):
         with test_utils.assert_no_logs():
-            with test_utils.example_site() as root:
+            with test_utils.example_site_dir() as root:
                 settings = test_utils.TestSettings()
                 settings.load(os.path.join(root, "settings.py"))
                 if settings.PROJECT_ROOT is None:
@@ -33,7 +33,7 @@ class TestSite(TestCase):
 class TestBuild(TestCase):
     def test_dots(self):
         with test_utils.assert_no_logs():
-            with test_utils.example_site() as root:
+            with test_utils.example_site_dir() as root:
                 args = test_utils.Args(project=root)
                 build = Build(args)
                 build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))
@@ -46,7 +46,7 @@ class TestBuild(TestCase):
 
     def test_different_links(self):
         with test_utils.assert_no_logs():
-            with test_utils.example_site() as root:
+            with test_utils.example_site_dir() as root:
                 args = test_utils.Args(project=root)
                 build = Build(args)
                 build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))

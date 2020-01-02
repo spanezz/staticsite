@@ -75,7 +75,7 @@ class Dir(Page):
             file_meta = {}
         self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
-        # Merge in metadata
+        # Merge in metadata, limited to inherited flags
         for name in self.site.metadata.keys() & meta.keys():
             metadata = self.site.metadata[name]
             if metadata.inherited:
@@ -181,8 +181,8 @@ class ContentDir(Dir):
             config: Dict[str, Any] = {}
 
             # Load .staticsite if found
-            with self.open(".staticsite", dircfg, "rb") as fd:
-                fmt, config = front_matter.read_partial(fd)
+            with self.open(".staticsite", dircfg, "rt") as fd:
+                fmt, config = front_matter.read_whole(fd)
 
             self.add_dir_config(config)
 

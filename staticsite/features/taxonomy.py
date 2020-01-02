@@ -6,6 +6,7 @@ from staticsite.contents import ContentDir, Dir
 from staticsite.metadata import Metadata
 from staticsite.utils.typing import Meta
 from collections import defaultdict
+import heapq
 import functools
 import os
 import logging
@@ -87,8 +88,8 @@ element.
         Parse the taxonomy file to read its description
         """
         from staticsite.utils import front_matter
-        with sitedir.open(fname, src, "rb") as fd:
-            fmt, meta = front_matter.read_partial(fd)
+        with sitedir.open(fname, src, "rt") as fd:
+            fmt, meta = front_matter.read_whole(fd)
         if meta is None:
             meta = {}
         return meta
@@ -117,6 +118,7 @@ class TaxonomyPage(Page):
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         self.meta.setdefault("template", "taxonomy/taxonomy.html")
+        self.meta.setdefault("nav_title", name.capitalize())
 
         # Taxonomy name (e.g. "tags")
         self.name = name
@@ -149,6 +151,18 @@ class TaxonomyPage(Page):
 
     def __getitem__(self, name):
         return self.categories[name]
+
+    def top_categories(self, count=10):
+        """
+        Return the ``count`` categories with the most pages
+        """
+        return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.meta["pages"]))
+
+    def most_recent(self, count=10):
+        """
+        Return the ``count`` categories with the most recent date
+        """
+        return heapq.nlargest(count, self.categories.values(), key=lambda c: c.meta["date"])
 
     def finalize(self):
         # Group pages by category
@@ -247,6 +261,24 @@ class CategoryPage(Page):
             return NotImplemented
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
+
+    def series_info(self):
+        """
+        Return a dict describing this category as a series
+        """
+        # Compute a series title for this page.
+        # Look for the last defined series title, defaulting to the title of
+        # the first page in the series.
+        pages = self.meta["pages"]
+        series_title = pages[0].meta["title"]
+        return {
+            # Array with all the pages in the series
+            "pages": pages,
+            "length": len(pages),
+            "first": pages[0],
+            "last": pages[-1],
+            "title": series_title,
+        }
 
     def sequence(self, page):
         idx = self.page_index.get(page)

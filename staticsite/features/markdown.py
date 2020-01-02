@@ -84,7 +84,8 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         # Resolve as a path
         try:
             page = self.page.resolve_path(parsed.path)
-        except PageNotFoundError:
+        except PageNotFoundError as e:
+            log.warn("%s: %s", self.page, e)
             return None, parsed
 
         # Cache the page site_path
@@ -238,8 +239,8 @@ class MarkdownPages(Feature):
             return
 
         try:
-            with open(index.abspath, "rb") as fd:
-                fmt, meta = front_matter.read_partial(fd)
+            with sitedir.open("index.md", index, "rb") as fd:
+                fmt, meta, body = front_matter.read_partial(fd)
         except Exception as e:
             log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", index.relpath)
@@ -256,11 +257,9 @@ class MarkdownPages(Feature):
 
         # Parse separating front matter and markdown content
         with sitedir.open(fname, src, "rb") as fd:
-            fmt, meta = front_matter.read_partial(fd)
+            fmt, meta, body = front_matter.read_partial(fd)
 
-            body = []
-            for line in fd:
-                body.append(line.rstrip().decode())
+            body = list(body)
 
             # Remove leading empty lines
             while body and not body[0]:
@@ -331,7 +330,7 @@ class MarkdownArchetype(Archetype):
             # Reparse it separating front matter and markdown content
             fmatter, body = parse_markdown_with_front_matter(fd)
         try:
-            style, meta = front_matter.parse(fmatter)
+            style, meta = front_matter.read_string(fmatter)
         except Exception as e:
             log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=e)
             log.warn("archetype %s: failed to parse front matter", self.relpath)

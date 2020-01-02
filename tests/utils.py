@@ -59,7 +59,7 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
 
 
 @contextmanager
-def example_site(name="demo"):
+def example_site_dir(name="demo"):
     """
     Create a copy of the example site in a temporary directory
     """
@@ -69,6 +69,26 @@ def example_site(name="demo"):
         dst = os.path.join(root, "site")
         shutil.copytree(src, dst)
         yield dst
+
+
+@contextmanager
+def example_site(name="demo"):
+    with assert_no_logs():
+        with example_site_dir(name) as root:
+            src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            settings = Settings()
+            settings_path = os.path.join(root, "settings.py")
+            if os.path.exists(settings_path):
+                settings.load(settings_path)
+            if settings.PROJECT_ROOT is None:
+                settings.PROJECT_ROOT = root
+            settings.CACHE_REBUILDS = False
+            settings.THEME_PATH = [os.path.join(src_root, "themes")]
+
+            site = staticsite.Site(settings=settings)
+            site.load()
+            site.analyze()
+            yield site
 
 
 class TracebackHandler(logging.Handler):

@@ -85,11 +85,8 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
           {% block nav %}
-          {% if has_page('/blog') %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('/blog') }}">Blog</a></li>
-          {% endif %}
-          {% for taxonomy in taxonomies() %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for(taxonomy) }}">{{taxonomy.name.capitalize()}}</a></li>
+          {% for nav_page in page.meta.nav %}
+            <li class="nav-item"><a class="nav-link" href="{{url_for(nav_page)}}">{{nav_page.meta.nav_title}}</a></li>
           {% endfor %}
           {% endblock %}
         </ul>

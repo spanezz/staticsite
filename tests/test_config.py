@@ -73,7 +73,7 @@ class TestBuildSettings(TestCase):
 
 class TestExampleProject(TestCase):
     def test_settings(self):
-        with test_utils.example_site() as root:
+        with test_utils.example_site_dir() as root:
             args = test_utils.Args(project=root)
             cmd = SiteCommand(args)
             settings = cmd.settings
@@ -107,17 +107,17 @@ class TestExampleProject(TestCase):
         self.assertIn(title, content)
 
     def test_default_name(self):
-        with test_utils.example_site() as root:
+        with test_utils.example_site_dir() as root:
             self._test_project(root)
 
     def test_alt_name(self):
-        with test_utils.example_site() as root:
+        with test_utils.example_site_dir() as root:
             os.rename(os.path.join(root, 'settings.py'),
                       os.path.join(root, '.staticsite.py'))
             self._test_project(root)
 
     def test_custom_name(self):
-        with test_utils.example_site() as root:
+        with test_utils.example_site_dir() as root:
             os.rename(os.path.join(root, 'settings.py'),
                       os.path.join(root, 'otherconfig.py'))
             self._test_project(root, cfg='/otherconfig.py')

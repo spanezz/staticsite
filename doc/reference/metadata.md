@@ -223,16 +223,16 @@ be syndicated before this date.
 
 If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
 
-### `series`
+### `nav`
 
-List of categories for the `series` taxonomy.
+*Inherited from directory indices.*
 
-Setting this as a simple string is the same as setting it as a list of one
-element.
+List of page paths that are used for the navbar.
 
-### `tags`
+### `nav_title`
 
-List of categories for the `tags` taxonomy.
+Title to use when this paged is linked in a navbar.
 
-Setting this as a simple string is the same as setting it as a list of one
-element.
+It defaults to `page.meta.title`, or to the series name for series pages.
+
+`nav_title` is only guaranteed to exist for pages that are used in `nav`.

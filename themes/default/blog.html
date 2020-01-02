@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% import 'lib/blog.html' as blog with context %}
+
+<h1 class="display-4">{{page.meta.title}}</h1>
+
+{% block page_content %}
+{{page.content|safe}}
+{% endblock %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-9">
+    {{blog.pages(limit=10)}}
+    </div>
+    <div class="col-sm-3">
+      {% if page.meta.archive %}
+      <div class="card mb-2">
+        <div class="card-header">
+          <a href="{{url_for(page.meta.archive)}}">Archive</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {{blog.top_tags(limit=15)}}
+
+      {{blog.recent_series(limit=5)}}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
