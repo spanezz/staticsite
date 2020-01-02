@@ -33,8 +33,10 @@ class Dir(Page):
     """
     TYPE = "dir"
 
-    def __init__(self, site: Site, src: file.File, meta: Meta, dir: Optional["Dir"] = None):
+    def __init__(self, site: Site, src: file.File, meta: Meta, dir: Optional["Dir"] = None, name: Optional[str] = None):
         super().__init__(site, src, meta, dir=dir)
+        # Directory name
+        self.name: Optional[str] = name
         # Subdirectory of this directory
         self.subdirs: List["ContentDir"] = []
         # Files found in this directory
@@ -52,12 +54,18 @@ class Dir(Page):
         self.pages = []
 
     @classmethod
-    def create(cls, site: Site, src: file.File, meta: Dict[str, Any], dir: Optional["Dir"] = None):
+    def create(
+            cls,
+            site: Site,
+            src: file.File,
+            meta: Dict[str, Any],
+            dir: Optional["Dir"] = None,
+            name: Optional[str] = None):
         # Check whether to load subdirectories as asset trees
         if meta.get("asset"):
-            return AssetDir(site, src, meta, dir=dir)
+            return AssetDir(site, src, meta, dir=dir, name=name)
         else:
-            return ContentDir(site, src, meta, dir=dir)
+            return ContentDir(site, src, meta, dir=dir, name=name)
 
     def add_dir_config(self, meta: Meta):
         """
@@ -220,7 +228,7 @@ class ContentDir(Dir):
                     meta.update(dmeta)
 
             # Recursively descend into the directory
-            subdir = Dir.create(self.site, src, meta=meta, dir=self)
+            subdir = Dir.create(self.site, src, meta=meta, dir=self, name=name)
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
@@ -328,7 +336,7 @@ class AssetDir(ContentDir):
             meta["site_path"] = os.path.join(meta["site_path"], name)
 
             # Recursively descend into the directory
-            subdir = Dir.create(self.site, src, meta=meta, dir=self)
+            subdir = Dir.create(self.site, src, meta=meta, dir=self, name=name)
             with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
                 subdir.scan(subdir_fd)
             self.subdirs.append(subdir)
