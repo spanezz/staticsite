@@ -23,12 +23,20 @@
   absolute. The site path for the root page is now `/` instead of the empty
   string, and all page site paths now begin with `/`. `build_path` is still
   without leading slashes.
+* Page lookup by `url_for()`, `page_for()`, `site_pages()` in themes, and front
+  matter headers like `pages` or `syndication.add_to`, is now relative to the
+  current page, unless an absolute path is used.
 
 ## Upgrade notes
 
 * Use `pages` instead of `syndication.pages` or `syndication.filter`
 * If you looked up pages by site path, they are now absolute paths, instead of
   paths relative to `/`
+* If you looked up pages relative to pages up the parent chain of the current
+  page, that does not work anymore. Use paths to source files instead, which
+  don't change according to how the site is laid out.
+* If you looked up pages by relative paths assuming they were anchored on the
+  site root, that does not work anymore: use absolute paths instead.
 
 # New in version 1.3
 
