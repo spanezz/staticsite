@@ -7,6 +7,7 @@
   introduction/rest of the post split in [markdown pages](doc/reference/markdown.md)
 * New `copyright` and `template_copyright` [metadata](doc/reference/metadata.md)
 * Added `ssite shell` to play with the built `Site` object for a site
+* Added [nav metadata](doc/reference/metadata.md) to add pages to the top navbar
 
 # New in version 1.3
 
