@@ -236,16 +236,15 @@ class MarkdownPages(Feature):
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        index = sitedir.files.get("index.md")
-        if index is None:
+        src = sitedir.files.get("index.md")
+        if src is None:
             return
 
         try:
-            with sitedir.open("index.md", index, "rb") as fd:
-                fmt, meta, body = front_matter.read_markdown_partial(fd)
+            meta, body = self.load_file_meta(sitedir, src, "index.md")
         except Exception as e:
-            log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
-            log.warn("%s: failed to parse front matter", index.relpath)
+            log.debug("%s: failed to parse front matter", src.relpath, exc_info=e)
+            log.warn("%s: failed to parse front matter", src.relpath)
         else:
             sitedir.add_dir_config(meta)
 

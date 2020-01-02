@@ -370,7 +370,11 @@ It defaults to false, or true if `page.meta.date` is in the future.
         site_path = page.meta["site_path"]
         old = self.pages.get(site_path)
         if old is not None:
-            if old.TYPE != "asset" or page.TYPE != "asset":
+            if old.TYPE == "asset" and page.TYPE == "asset":
+                pass
+            # elif old.TYPE == "dir" and page.TYPE not in ("dir", "asset"):
+            #     pass
+            else:
                 log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
         if page.src is not None:

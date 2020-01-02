@@ -227,9 +227,11 @@ class MetadataTemplateInherited(Metadata):
             return
 
         if isinstance(src, str):
-            src = self.site.theme.jinja2.from_string(src)
-            page.meta[self.name] = src
-        page.meta[self.template_for] = jinja2.Markup(page.render_template(src))
+            compiled = self.site.theme.jinja2.from_string(src)
+            page.meta[self.name] = compiled
+        else:
+            compiled = src
+        page.meta[self.template_for] = jinja2.Markup(page.render_template(compiled))
 
     def on_dir_meta(self, page: Page, meta: Meta):
         """

@@ -2,8 +2,8 @@
 pages: "posts/*"
 syndication: yes
 site_url: https://www.example.org
-nav: [/index.md, /about.md]
-template_copyright: "{% raw %}© {{page.meta.date.year}} {{page.meta.author}}{% endraw %}"
+nav: [index.md, about.md]
+template_copyright: "© {{page.meta.date.year}} {{page.meta.author}}"
 template: blog.html
 ```
 
