@@ -199,39 +199,31 @@ class MetadataTemplateInherited(Metadata):
         yield "Inherited from directory indices."
         yield f"Template for {self.template_for}"
 
-    def _inherit(self, page: Page):
-        if self.name in page.meta:
-            return
-
-        parent = page.dir
-        if parent is None:
-            return
-
-        val = parent.meta.get(self.name)
-        if val is None:
-            return
-        page.meta[self.name] = val
-
     def on_load(self, page: Page):
         """
         Hook for inheriting metadata entries from a parent page
         """
         import jinja2
-        self._inherit(page)
 
-        src = page.meta.get(self.name)
-        if src is None:
-            return
-
+        # If template_for exists, no need to render anything
         if self.template_for in page.meta:
             return
 
+        # Find template in page or in parent dir
+        src = page.meta.get(self.name)
+        if src is None:
+            parent = page.dir
+            if parent is None:
+                return
+
+            src = parent.meta.get(self.name)
+            if src is None:
+                return
+
         if isinstance(src, str):
-            compiled = self.site.theme.jinja2.from_string(src)
-            page.meta[self.name] = compiled
-        else:
-            compiled = src
-        page.meta[self.template_for] = jinja2.Markup(page.render_template(compiled))
+            src = self.site.theme.jinja2.from_string(src)
+
+        page.meta[self.template_for] = jinja2.Markup(page.render_template(src))
 
     def on_dir_meta(self, page: Page, meta: Meta):
         """

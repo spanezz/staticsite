@@ -36,7 +36,6 @@ class TestSite(TestCase):
                     'site_url': 'https://www.example.org',
                     "build_path": "about/index.html",
                     'template': 'page.html',
-                    'template_copyright': 'compiled:None',
                     'title': 'About',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
                     'nav_title': 'About',
