@@ -14,6 +14,12 @@
 * `syndication.add_to`, if omitted, defaults to adding syndication links to all
   the pages in the syndication. It can be `false` to disable adding syndication
   links to syndicated pages.
+* `syndication.pages` and `syndicaton.filter` are now removed: use `pages` to
+  select which pages are syndicated
+
+## Upgrade notes
+
+* Use `pages` instead of `syndication.pages` or `syndication.filter`
 
 # New in version 1.3
 
