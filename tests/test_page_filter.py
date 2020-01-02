@@ -51,4 +51,4 @@ class TestPageFilter(TestCase):
             page4 = site.pages["/dir/dir/page4"]
 
             self.assertCountEqual(page.meta["pages"], [page1, page2, page3, page4, dir2])
-            self.assertCountEqual(page1.meta["pages"], [page3, page4, dir2])
+            self.assertCountEqual(page1.meta["pages"], [page3, page4])

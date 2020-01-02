@@ -152,7 +152,10 @@ class Page:
             sort: Optional[str] = None,
             **kw):
         from staticsite.theme import PageFilter
-        f = PageFilter(self.site, path, limit, sort)
+        if self.dir is None or not self.dir.src.relpath:
+            f = PageFilter(self.site, path, limit, sort)
+        else:
+            f = PageFilter(self.site, path, limit, sort, root=self.dir.src.relpath)
         return f.filter(self.site.pages.values())
 
     def resolve_path(self, target: str) -> "Page":
