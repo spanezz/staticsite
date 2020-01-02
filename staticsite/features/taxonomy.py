@@ -65,7 +65,7 @@ element.
             name = fname[:-9]
 
             meta = sitedir.meta_file(fname)
-            meta["site_path"] = os.path.join(meta["site_path"], name)
+            meta["site_path"] = os.path.join(sitedir.meta["site_path"], name)
 
             try:
                 fm_meta = self.load_file_meta(sitedir, src, fname)

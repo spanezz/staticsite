@@ -84,7 +84,9 @@ This is used to group data of the same type together, and to choose a
 
             page_name = fname[:-len(mo.group(0))]
             if page_name != "index":
-                meta["site_path"] = os.path.join(meta["site_path"], page_name)
+                meta["site_path"] = os.path.join(sitedir.meta["site_path"], page_name)
+            else:
+                meta["site_path"] = sitedir.meta["site_path"]
 
             meta.update(fm_meta)
 

@@ -211,7 +211,9 @@ class MarkdownPages(Feature):
 
             meta = sitedir.meta_file(fname)
             if fname not in ("index.md", "README.md"):
-                meta["site_path"] = os.path.join(meta["site_path"], fname[:-3])
+                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname[:-3])
+            else:
+                meta["site_path"] = sitedir.meta["site_path"]
 
             try:
                 fm_meta, body = self.load_file_meta(sitedir, src, fname)

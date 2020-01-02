@@ -153,7 +153,9 @@ class RestructuredText(Feature):
 
             meta = sitedir.meta_file(fname)
             if fname not in ("index.rst", "README.rst"):
-                meta["site_path"] = os.path.join(meta["site_path"], fname[:-4])
+                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname[:-4])
+            else:
+                meta["site_path"] = sitedir.meta["site_path"]
 
             try:
                 fm_meta, doctree_scan = self.load_file_meta(sitedir, src, fname)

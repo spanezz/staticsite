@@ -68,8 +68,8 @@ extension), that image is used.
             taken.append(fname)
 
             meta = sitedir.meta_file(fname)
-            related_site_path = os.path.join(meta["site_path"], base)
-            meta["site_path"] = os.path.join(meta["site_path"], fname)
+            related_site_path = os.path.join(sitedir.meta["site_path"], base)
+            meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname)
 
             img_meta = self.scanner.scan(sitedir, src, mimetype)
             meta.update(img_meta)

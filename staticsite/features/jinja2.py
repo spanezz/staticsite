@@ -82,7 +82,9 @@ class J2Pages(Feature):
 
             meta = sitedir.meta_file(fname)
             if fname != "index.html":
-                meta["site_path"] = os.path.join(meta["site_path"], fname)
+                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname)
+            else:
+                meta["site_path"] = sitedir.meta["site_path"]
 
             try:
                 page = J2Page(self, f, meta=meta, dir=sitedir)
