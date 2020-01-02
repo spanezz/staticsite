@@ -21,7 +21,7 @@ page fold. When rendering the page inline, such as in a blog index page, or in
 RSS/Atom syndication, the content from the horizontal rule onwards will not be
 shown.
 
-If you wan to add a horizontal rule withotu introducing a page fold, use a
+If you wan to add a horizontal rule without introducing a page fold, use a
 sequence of three or more asterisks (`***`) or dashes (`---`) instead.
 
 
@@ -57,6 +57,23 @@ The front matter of the post can be written in
 [YAML](https://en.wikipedia.org/wiki/YAML) or
 [JSON](https://en.wikipedia.org/wiki/JSON), just like in
 [Hugo](https://gohugo.io/content/front-matter/).
+
+Use `---` delimiters to mark YAML front matter. Use `+++` delimiters to mark
+TOML front matter. Use `{`…`}` delimiters to mark JSON front matter.
+
+You can also usea [triple-backticks code blocks](https://python-markdown.github.io/extensions/fenced_code_blocks/)
+first thing in the file to mark front matter, optionally specifying `yaml`,
+`toml`, or `json` as the format (yaml is used as a default):
+
+~~~~{.markdown}
+```yaml
+date: 2020-01-02 12:00
+```
+# My page
+~~~~
+
+If you want to start your markdown content with a code block, add an empty line
+at the top: front matter detection only happens on the first line of the file.
 
 See [page metadata](metadata.md) for a list of commonly used metadata.
 

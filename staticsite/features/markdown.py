@@ -240,7 +240,7 @@ class MarkdownPages(Feature):
 
         try:
             with sitedir.open("index.md", index, "rb") as fd:
-                fmt, meta, body = front_matter.read_partial(fd)
+                fmt, meta, body = front_matter.read_markdown_partial(fd)
         except Exception as e:
             log.debug("%s: failed to parse front matter", index.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", index.relpath)
@@ -257,7 +257,7 @@ class MarkdownPages(Feature):
 
         # Parse separating front matter and markdown content
         with sitedir.open(fname, src, "rb") as fd:
-            fmt, meta, body = front_matter.read_partial(fd)
+            fmt, meta, body = front_matter.read_markdown_partial(fd)
 
             body = list(body)
 

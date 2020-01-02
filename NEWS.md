@@ -16,6 +16,9 @@
   links to syndicated pages.
 * `syndication.pages` and `syndicaton.filter` are now removed: use `pages` to
   select which pages are syndicated
+* [markdown pages](doc/reference/markdown.md) can now use markdown code blocks
+  as front matter delimiters, making markdown pages with front matter valid
+  markdown pages.
 
 ## Upgrade notes
 

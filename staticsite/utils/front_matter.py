@@ -20,9 +20,9 @@ def write(meta: Dict[str, Any], style: str = "toml") -> str:
     return ""
 
 
-def read_partial(fd: BinaryIO) -> Tuple[str, Meta, Iterable[str]]:
+def read_markdown_partial(fd: BinaryIO) -> Tuple[str, Meta, Iterable[str]]:
     """
-    Parse lines front matter from a file header.
+    Parse lines front matter from a markdown file header.
 
     Stop reading at the end of the front matter.
 
@@ -46,17 +46,33 @@ def read_partial(fd: BinaryIO) -> Tuple[str, Meta, Iterable[str]]:
         buf += line
         while True:
             line = fd.readline()
-            if not line or line.strip() == b"---":
+            if not line or line.rstrip() == b"---":
                 return "yaml", yaml_codec.loads(buf.decode()), (x.rstrip().decode() for x in fd)
             buf += line
     elif head == b"+++":
         # TOML, end at +++
         while True:
             line = fd.readline()
-            if not line or line.strip() == b"+++":
+            if not line or line.rstrip() == b"+++":
                 import toml
                 return "toml", toml.loads(buf.decode()), (x.rstrip().decode() for x in fd)
             buf += line
+    elif head.startswith(b"```"):
+        # Markdown verbatim block, end at ```, format follows head
+        while True:
+            line = fd.readline()
+            if not line or line.rstrip() == b"```":
+                break
+            buf += line
+        if head[3:] == "yaml":
+            return "yaml", yaml_codec.loads(buf.decode()), (x.rstrip().decode() for x in fd)
+        elif head[3:] == "toml":
+            import toml
+            return "toml", toml.loads(buf.decode()), (x.rstrip().decode() for x in fd)
+        elif head[3:] == "json":
+            return "json", json.loads(buf.decode()), (x.rstrip().decode() for x in fd)
+        else:
+            return "yaml", yaml_codec.loads(buf.decode()), (x.rstrip().decode() for x in fd)
     else:
         # No front matter found
         def iter_body():
