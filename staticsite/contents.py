@@ -232,7 +232,7 @@ class ContentDir(Dir):
 
         # Compute metadata for files
         for fname in self.files.keys():
-            res: Meta = dict(self.meta)
+            res: Meta = {}
             for pattern, meta in self.file_rules:
                 if pattern.match(fname):
                     res.update(meta)
@@ -260,8 +260,7 @@ class ContentDir(Dir):
         for fname, f in self.files.items():
             meta = self.file_meta[fname]
             if meta and meta.get("asset"):
-                meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self.site, f, meta=meta, dir=self)
+                p = Asset(self.site, f, meta=meta, dir=self, name=fname)
                 self.site.add_page(p)
                 taken.append(fname)
         for fname in taken:
@@ -284,7 +283,7 @@ class ContentDir(Dir):
                 log.debug("Loading static file %s", f.relpath)
                 meta = self.file_meta[fname]
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self.site, f, meta=self.file_meta[fname], dir=self)
+                p = Asset(self.site, f, meta=self.file_meta[fname], dir=self, name=fname)
                 self.site.add_page(p)
 
         # TODO: warn of contents not loaded at this point?
@@ -361,7 +360,7 @@ class AssetDir(ContentDir):
                 log.debug("Loading static file %s", f.relpath)
                 meta = dict(self.meta)
                 meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self.site, f, meta=meta, dir=self)
+                p = Asset(self.site, f, meta=meta, dir=self, name=fname)
                 self.site.add_page(p)
 
         # Load subdirectories

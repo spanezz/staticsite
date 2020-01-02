@@ -2,6 +2,7 @@ from unittest import TestCase
 from . import utils as test_utils
 from staticsite.asset import Asset
 from staticsite.file import File
+from staticsite.contents import Dir
 from contextlib import contextmanager
 import os
 import time
@@ -37,12 +38,13 @@ class TestAsset(TestCase):
     @test_utils.assert_no_logs()
     def test_timestamps(self):
         site = test_utils.Site()
+        dir = Dir(site, None, {"site_path": "/"}, None, None)
 
         with override_tz("Pacific/Samoa"):
             with tempfile.NamedTemporaryFile() as f:
                 # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
                 os.utime(f.name, (1477958400, 1477958400))
                 src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
-                page = Asset(site, src, meta={"site_path": src.relpath})
+                page = Asset(site, src, meta={"site_path": src.relpath}, dir=dir, name=f.name)
 
                 self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
