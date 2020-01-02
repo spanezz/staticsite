@@ -1,9 +1,9 @@
 ```yaml
-pages: "posts/*"
-syndication: yes
 site_url: https://www.example.org
-nav: [index.md, about.md]
 template: blog.html
+nav: [index.md, about.md]
+syndication: yes
+pages: "posts/*"
 ```
 
 # My example blog
