@@ -134,7 +134,7 @@ class RestructuredText(Feature):
         with open(index.abspath, "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd, remove_docinfo=False)
 
-        sitedir.add_dir_config(meta)
+        return meta
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # Update the list of yaml tags with information from site.metadata

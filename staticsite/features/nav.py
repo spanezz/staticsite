@@ -19,11 +19,30 @@ class MetadataNav(metadata.MetadataInherited):
         Inherited metadata are copied from directory indices into directory
         metadata
         """
-        if self.name not in meta:
+        val = meta.get(self.name)
+        if val is not None:
+            page.meta[self.name] = val
             return
-        page.meta[self.name] = meta[self.name]
 
-    def _inherit(self, page: Page):
+        if page.dir is None:
+            return
+
+        val = page.dir.meta.get(self.name)
+        if val is None:
+            return
+
+        res = []
+        for path in val:
+            if isinstance(path, str):
+                try:
+                    path = page.dir.resolve_path(path)
+                except PageNotFoundError:
+                    path = os.path.join("..", path)
+            res.append(path)
+
+        page.meta[self.name] = res
+
+    def on_load(self, page: Page):
         if self.name in page.meta:
             return
 
@@ -41,8 +60,10 @@ class MetadataNav(metadata.MetadataInherited):
                 try:
                     path = parent.resolve_path(path)
                 except PageNotFoundError:
-                    path = os.path.join("..", path)
+                    pass
             res.append(path)
+
+        # print("INHERIT", self.name, "FOR", page, "FROM", parent, "AS", val, "->", res)
 
         page.meta[self.name] = res
 
@@ -76,12 +97,17 @@ It defaults to `page.meta.title`, or to the series name for series pages.
                 continue
 
             # Resolve everything
-            nav = [page.resolve_path(path) for path in nav]
+            this_nav = []
+            for path in nav:
+                try:
+                    this_nav.append(page.resolve_path(path))
+                except PageNotFoundError as e:
+                    log.warn("%s: %s", page, e)
 
             # Build list of target pages
-            nav_pages.update(nav)
+            nav_pages.update(this_nav)
 
-            page.meta["nav"] = nav
+            page.meta["nav"] = this_nav
 
         # Make sure nav_title is filled
         for page in nav_pages:

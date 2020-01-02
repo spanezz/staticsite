@@ -246,7 +246,7 @@ class MarkdownPages(Feature):
             log.debug("%s: failed to parse front matter", src.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", src.relpath)
         else:
-            sitedir.add_dir_config(meta)
+            return meta
 
     def load_file_meta(self, sitedir, src, fname) -> Tuple[Meta, List[str]]:
         """

@@ -64,7 +64,7 @@ class J2Pages(Feature):
         else:
             meta = load_front_matter(template)
             if meta:
-                sitedir.add_dir_config(meta)
+                return meta
 
     def load_dir(self, sitedir: ContentDir) -> List[Page]:
         # Precompile JINJA2_PAGES patterns

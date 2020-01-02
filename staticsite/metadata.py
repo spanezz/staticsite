@@ -174,9 +174,18 @@ class MetadataInherited(Metadata):
         Inherited metadata are copied from directory indices into directory
         metadata
         """
-        if self.name not in meta:
+        if self.name in meta:
+            page.meta[self.name] = meta[self.name]
             return
-        page.meta[self.name] = meta[self.name]
+
+        if page.dir is None:
+            return
+
+        val = page.dir.meta.get(self.name)
+        if val is None:
+            return
+
+        page.meta[self.name] = val
 
 
 class MetadataTemplateInherited(Metadata):
@@ -230,9 +239,18 @@ class MetadataTemplateInherited(Metadata):
         Inherited metadata are copied from directory indices into directory
         metadata
         """
-        if self.name not in meta:
+        if self.name in meta:
+            page.meta[self.name] = meta[self.name]
             return
-        page.meta[self.name] = meta[self.name]
+
+        if page.dir is None:
+            return
+
+        val = page.dir.meta.get(self.name)
+        if val is None:
+            return
+
+        page.meta[self.name] = val
 
 
 class MetadataSitePath(Metadata):

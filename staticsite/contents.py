@@ -67,9 +67,9 @@ class Dir(Page):
         else:
             return ContentDir(site, src, meta, dir=dir, name=name)
 
-    def add_dir_config(self, meta: Meta):
+    def take_dir_rules(self, meta: Meta):
         """
-        Acquire directory configuration from a page metadata
+        Acquire dir and file rules from meta, removing them from it
         """
         # Compile directory matching rules
         dir_meta = meta.pop("dirs", None)
@@ -82,12 +82,6 @@ class Dir(Page):
         if file_meta is None:
             file_meta = {}
         self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
-
-        # Merge in metadata, limited to inherited flags
-        self.site.metadata.on_dir_meta(self, meta)
-
-        # Make sure site_path is absolute
-        self.meta["site_path"] = os.path.join("/", self.meta["site_path"])
 
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
@@ -184,6 +178,8 @@ class ContentDir(Dir):
 
         # Load dir metadata from .staticsite, if present
         # TODO: move this to a feature implementing just load_dir_meta?
+        dir_meta = {}
+
         dircfg: file.File = self.files.pop(".staticsite", None)
         if dircfg is not None:
             config: Dict[str, Any] = {}
@@ -192,11 +188,21 @@ class ContentDir(Dir):
             with self.open(".staticsite", dircfg, "rt") as fd:
                 fmt, config = front_matter.read_whole(fd)
 
-            self.add_dir_config(config)
+            self.take_dir_rules(config)
+            dir_meta.update(config)
 
         # Lead features add to directory metadata
         for feature in self.site.features.ordered():
-            feature.load_dir_meta(self)
+            m = feature.load_dir_meta(self)
+            if m is not None:
+                self.take_dir_rules(m)
+                dir_meta.update(m)
+
+        # Merge in metadata, limited to inherited flags
+        self.site.metadata.on_dir_meta(self, dir_meta)
+
+        # Make sure site_path is absolute
+        self.meta["site_path"] = os.path.join("/", self.meta["site_path"])
 
         # If site_name is not defined, use the root page title or the content
         # directory name
@@ -282,7 +288,6 @@ class ContentDir(Dir):
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
                 meta = self.file_meta[fname]
-                meta["site_path"] = os.path.join(meta["site_path"], fname)
                 p = Asset(self.site, f, meta=self.file_meta[fname], dir=self, name=fname)
                 self.site.add_page(p)
 
