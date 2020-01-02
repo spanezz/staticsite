@@ -60,17 +60,6 @@ class Page:
         # True if this page can render a short version of itself
         self.content_has_split = False
 
-    def inherit_meta(self, meta):
-        # Fill missing inherited metadata
-        for name, metadata in self.site.metadata.items():
-            if not metadata.inherited:
-                continue
-            if name in self.meta:
-                continue
-            val = meta.get(name)
-            if val is not None:
-                self.meta[name] = val
-
     def validate(self):
         """
         Enforce common meta invariants.
@@ -81,8 +70,7 @@ class Page:
         not be added to the site.
         """
         # Run metadata on load functions
-        for f in self.site.metadata_on_load_functions:
-            f(self)
+        self.site.metadata.on_load(self)
 
         # Render the metadata entres generated that are templates for other
         # entries
@@ -90,8 +78,8 @@ class Page:
         self.site.theme.render_metadata_templates(self)
 
         # Fill missing inherited metadata
-        if self.dir is not None:
-            self.inherit_meta(self.dir.meta)
+        if self.dir:
+            self.site.metadata.on_inherit(self, self.dir)
 
         # TODO: move more of this to on_load functions?
 

@@ -17,7 +17,7 @@ class Nav(Feature):
         self.site.register_metadata(Metadata("nav", inherited=True, structure=True, doc=f"""
 List of page paths that are used for the navbar.
 """))
-        self.site.register_metadata(Metadata("nav_title", inherited=False, doc=f"""
+        self.site.register_metadata(Metadata("nav_title", doc=f"""
 Title to use when this paged is linked in a navbar.
 
 It defaults to `page.meta.title`, or to the series name for series pages.

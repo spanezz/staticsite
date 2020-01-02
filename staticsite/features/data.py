@@ -42,7 +42,7 @@ class DataPages(Feature):
         self.page_class_by_type = {}
         self.site.tracked_metadata.add("data_type")
 
-        self.site.register_metadata(Metadata("data_type", inherited=False, doc="""
+        self.site.register_metadata(Metadata("data_type", doc="""
 Type of data for this file.
 
 This is used to group data of the same type together, and to choose a

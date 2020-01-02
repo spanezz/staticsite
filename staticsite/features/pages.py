@@ -13,7 +13,7 @@ class PagesFeature(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("pages")
-        self.site.register_metadata(Metadata("syndication", inherited=False, structure=True, doc=f"""
+        self.site.register_metadata(Metadata("syndication", structure=True, doc=f"""
 If using the [pages](pages.md) feature, or for taxonomy or syndication pages,
 this is a list of pages selected by the current page.
 

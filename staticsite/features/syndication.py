@@ -83,7 +83,7 @@ class SyndicationFeature(Feature):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("syndication")
         self.site.features["rst"].yaml_tags.add("syndication")
-        self.site.register_metadata(Metadata("syndication", inherited=False, structure=True, doc="""
+        self.site.register_metadata(Metadata("syndication", structure=True, doc="""
 Defines syndication for the contents of this page.
 
 It is a structure which can contain normal metadata, plus:
@@ -105,12 +105,12 @@ The pages that go in the feed are those listed in
 When rendering RSS/Atom feed pages, `page.meta.pages` is replaced with the list
 of syndicated pages, sorted with the most recent first.
 """))
-        self.site.register_metadata(MetadataSyndicated("syndicated", inherited=False, doc="""
+        self.site.register_metadata(MetadataSyndicated("syndicated", doc="""
 Set to true if the page can be included in a syndication, else to false.
 
 If not set, it defaults to the value of `indexed`.
 """))
-        self.site.register_metadata(MetadataSyndicationDate("syndication_date", inherited=False, doc=f"""
+        self.site.register_metadata(MetadataSyndicationDate("syndication_date", doc=f"""
 Syndication date for this page.
 
 This is the date that will appear in RSS and Atom feeds, and the page will not

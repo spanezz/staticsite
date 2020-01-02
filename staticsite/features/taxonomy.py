@@ -41,7 +41,7 @@ class TaxonomyFeature(Feature):
         # them.
         # Instead of making tags inheritable from normal metadata, we can offer
         # them to be added by 'files' or 'dirs' directives.
-        self.site.register_metadata(Metadata(name, inherited=False, structure=True, doc=f"""
+        self.site.register_metadata(Metadata(name, structure=True, doc=f"""
 List of categories for the `{name}` taxonomy.
 
 Setting this as a simple string is the same as setting it as a list of one

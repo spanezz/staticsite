@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set, Any, Union, Callable, TYPE_CHECKING
+from typing import Optional, Dict, List, Set, Any, Union, TYPE_CHECKING
 import os
 import datetime
 import pytz
@@ -45,14 +45,7 @@ class Site:
             self.settings.CONTENT = "."
 
         # Repository of metadata descriptions
-        self.metadata: Dict[str, Metadata] = {}
-
-        # Functions called on a page to cleanup metadata on page load
-        self.metadata_on_load_functions: List[Callable[Page], None] = []
-
-        # Functions called on a page to cleanup metadata at the beginning of
-        # the analyze pass
-        self.metadata_on_analyze_functions: List[Callable[Page], None] = []
+        self.metadata = metadata.Registry(self)
 
         # Site pages indexed by site_path
         self.pages: Dict[str, Page] = {}
@@ -111,14 +104,14 @@ class Site:
         self.content_roots: List[contents.Dir] = []
 
         # Register well-known metadata
-        self.register_metadata(metadata.MetadataDefault("template", default="page.html", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataDefault("template", default="page.html", doc="""
 Template used to render the page. Defaults to `page.html`, although specific
 pages of some features can default to other template names.
 
 Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 """))
 
-        self.register_metadata(metadata.MetadataDate("date", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataDate("date", doc="""
 Publication date for the page.
 
 A python datetime object, timezone aware. If the date is in the future when
@@ -197,7 +190,7 @@ If you are publishing the site at `/prefix` instead of the root of the domain,
 override this with `/prefix` in the content root.
 """))
 
-        self.register_metadata(Metadata("build_path", inherited=False, doc="""
+        self.register_metadata(Metadata("build_path", doc="""
 Relative path in the build directory for the file that will be written
 when this page gets rendered. For example, `blog/2016/example.md`
 generates `blog/2016/example/index.html`.
@@ -215,13 +208,13 @@ If set to True in a directory index, the directory and all its subdirectories
 are loaded as static assets, without the interventions of features.
 """))
 
-        self.register_metadata(Metadata("aliases", inherited=False, structure=True, doc="""
+        self.register_metadata(Metadata("aliases", structure=True, doc="""
 Relative paths in the destination directory where the page should also show up.
 [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
 existing links when moving a page to a different location.
 """))
 
-        self.register_metadata(metadata.MetadataIndexed("indexed", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataIndexed("indexed", doc="""
 If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).
 
@@ -229,7 +222,7 @@ It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 """))
 
-        self.register_metadata(metadata.MetadataDraft("draft", inherited=False, doc="""
+        self.register_metadata(metadata.MetadataDraft("draft", doc="""
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
 
@@ -248,16 +241,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
         """
         if self.stage_content_directory_scanned:
             log.warn("register_metadata called after content directory has been scanned")
-        metadata.site = self
-        self.metadata[metadata.name] = metadata
-
-        on_load = getattr(metadata, "on_load", None)
-        if not getattr(on_load, "skip", False):
-            self.metadata_on_load_functions.append(on_load)
-
-        on_analyze = getattr(metadata, "on_analyze", None)
-        if not getattr(on_analyze, "skip", False):
-            self.metadata_on_analyze_functions.append(on_analyze)
+        self.metadata.add(metadata)
 
     @lazy
     def archetypes(self) -> "archetypes.Archetypes":
@@ -407,9 +391,8 @@ It defaults to false, or true if `page.meta.date` is in the future.
             log.warn("analyze called before loading site contents")
 
         # Run metadata on_analyze functions
-        for f in self.metadata_on_analyze_functions:
-            for page in self.pages.values():
-                f(page)
+        for page in self.pages.values():
+            self.metadata.on_analyze(page)
 
         # Add missing pages_by_metadata entries in case no matching page were
         # found for some of them

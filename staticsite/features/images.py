@@ -40,7 +40,7 @@ class Images(Feature):
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
-        self.site.register_metadata(MetadataImage(self, "image", inherited=False, doc="""
+        self.site.register_metadata(MetadataImage(self, "image", doc="""
 Image used for this post.
 
 It is set to a path to an image file relative to the current page.

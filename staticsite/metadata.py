@@ -1,8 +1,79 @@
 from __future__ import annotations
-from typing import Optional
+from typing import TYPE_CHECKING, Optional, Dict, List, Callable
 import inspect
-from . import site
-from . import page
+
+if TYPE_CHECKING:
+    from .page import Page
+    from .site import Site
+
+
+class Registry:
+    """
+    Metadata registry for a site
+    """
+
+    def __init__(self, site: Site):
+        self.site = site
+
+        self.registry: Dict[str, "Metadata"] = {}
+
+        # Functions called on a page to cleanup metadata on page load
+        self.on_load_functions: List[Callable[Page], None] = []
+
+        # Functions called on a page to cleanup metadata at the beginning of
+        # the analyze pass
+        self.on_analyze_functions: List[Callable[Page], None] = []
+
+        # Function used to inherit metadata, for inheritable metadata
+        self.on_inherit_functions: List[Callable[Page, Page], None] = []
+
+    def add(self, metadata: "Metadata"):
+        metadata.site = self.site
+        self.registry[metadata.name] = metadata
+
+        on_load = getattr(metadata, "on_load", None)
+        if not getattr(on_load, "skip", False):
+            self.on_load_functions.append(on_load)
+
+        on_analyze = getattr(metadata, "on_analyze", None)
+        if not getattr(on_analyze, "skip", False):
+            self.on_analyze_functions.append(on_analyze)
+
+        if metadata.inherited:
+            self.on_inherit_functions.append(metadata.on_inherit)
+
+    def on_load(self, page: Page):
+        """
+        Run on_load functions on the page
+        """
+        for f in self.on_load_functions:
+            f(page)
+
+    def on_analyze(self, page: Page):
+        """
+        Run on_analyze functions on the page
+        """
+        for f in self.on_analyze_functions:
+            f(page)
+
+    def on_inherit(self, page: Page, parent: Page):
+        """
+        Run inherit functions on the page
+        """
+        for f in self.on_inherit_functions:
+            f(page, parent)
+
+    def __getitem__(self, key: str) -> "Metadata":
+        return self.registry[key]
+
+    def items(self):
+        return self.registry.items()
+
+    def keys(self):
+        return self.registry.keys()
+
+    def values(self):
+        return self.registry.values()
 
 
 class Metadata:
@@ -30,14 +101,14 @@ class Metadata:
                            metadata
         :arg doc: documentation for this metadata element
         """
-        self.site: "site.Site" = None
+        self.site: Site = None
         self.name: str = name
         self.inherited: bool = inherited
         self.structure: bool = structure
         self.template_for: Optional[str] = template_for
         self.doc = inspect.cleandoc(doc)
 
-    def on_load(self, page: "page.Page"):
+    def on_load(self, page: Page):
         """
         Cleanup hook for the metadata on page load.
 
@@ -50,7 +121,7 @@ class Metadata:
     # Mark as a noop to avoid calling it for each page unless overridden
     on_load.skip = True
 
-    def on_analyze(self, page: "page.Page"):
+    def on_analyze(self, page: Page):
         """
         Cleanup hook for the metadata at the start of the analyze pass.
 
@@ -63,12 +134,23 @@ class Metadata:
     # Mark as a noop to avoid calling it for each page unless overridden
     on_analyze.skip = True
 
+    def on_inherit(self, page: Page, parent: Page):
+        """
+        Hook for inheriting metadata entries from a parent page
+        """
+        if self.name in page.meta:
+            return
+        val = parent.meta.get(self.name)
+        if val is None:
+            return
+        page.meta[self.name] = val
+
 
 class MetadataDate(Metadata):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def on_load(self, page: "page.Page"):
+    def on_load(self, page: Page):
         date = page.meta.get(self.name)
         if date is None:
             if page.src is not None and page.src.stat is not None:
@@ -83,7 +165,7 @@ class MetadataIndexed(Metadata):
     """
     Make sure the field exists and is a bool, defaulting to False
     """
-    def on_load(self, page: "page.Page"):
+    def on_load(self, page: Page):
         val = page.meta.get(self.name, False)
         if isinstance(val, str):
             val = val.lower() in ("yes", "true", "1")
@@ -94,7 +176,7 @@ class MetadataDraft(Metadata):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def on_load(self, page: "page.Page"):
+    def on_load(self, page: Page):
         draft = page.meta.get(self.name)
         if draft is None:
             page.meta["draft"] = page.meta["date"] > self.site.generation_time
@@ -112,5 +194,5 @@ class MetadataDefault(Metadata):
         super().__init__(name, **kw)
         self.default = default
 
-    def on_load(self, page: "page.Page"):
+    def on_load(self, page: Page):
         page.meta.setdefault(self.name, self.default)
