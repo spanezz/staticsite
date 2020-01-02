@@ -142,7 +142,7 @@ class Page:
         f = PageFilter(self.site, path, limit, sort, root=root)
         return f.filter(self.site.pages.values())
 
-    def resolve_path(self, target: str) -> "Page":
+    def resolve_path(self, target: Union[str, "Page"]) -> "Page":
         """
         Return a Page from the site, given a source or site path relative to
         this page.
@@ -150,6 +150,9 @@ class Page:
         The path is resolved relative to this page, and if not found, relative
         to the parent page, and so on until the top.
         """
+        if isinstance(target, Page):
+            return target
+
         # Absolute URLs are resolved as is
         if target.startswith("/"):
             target_relpath = os.path.normpath(target)
