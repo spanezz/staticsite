@@ -9,21 +9,16 @@ from staticsite.settings import Settings
 from staticsite.utils import front_matter
 
 
-class TestSettings(Settings):
-    def __init__(self, **kw):
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        kw.setdefault("CACHE_REBUILDS", False)
-        kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
-        super().__init__()
-        for k, v in kw.items():
-            setattr(self, k, v)
-
-
 class Site(staticsite.Site):
     def __init__(self, taxonomies=(), **kw):
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         kw.setdefault("SITE_NAME", "Test site")
         kw.setdefault("SITE_URL", "https://www.example.org")
-        settings = TestSettings(**kw)
+        kw.setdefault("CACHE_REBUILDS", False)
+        kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
+        settings = Settings()
+        for k, v in kw.items():
+            setattr(settings, k, v)
         super().__init__(settings=settings)
         self._taxonomies = taxonomies
 
@@ -56,6 +51,18 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
             else:
                 raise TypeError("content should be a str or bytes")
         yield root
+
+
+@contextmanager
+def testsite(files: Dict[str, Union[str, bytes, Dict]] = None, **kw):
+    """
+    Take a dict representing directory contents and build a Site for it
+    """
+    with workdir(files) as root:
+        site = Site(CONTENT=root, **kw)
+        site.load()
+        site.analyze()
+        yield site
 
 
 @contextmanager

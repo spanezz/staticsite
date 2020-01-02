@@ -8,15 +8,7 @@ import os
 class TestSite(TestCase):
     def test_meta(self):
         with test_utils.assert_no_logs():
-            with test_utils.example_site_dir() as root:
-                settings = test_utils.TestSettings()
-                settings.load(os.path.join(root, "settings.py"))
-                if settings.PROJECT_ROOT is None:
-                    settings.PROJECT_ROOT = root
-                site = Site(settings=settings)
-                site.load()
-                site.analyze()
-
+            with test_utils.example_site() as site:
                 page = site.pages[""]
                 self.assertEqual(page.meta["site_name"], "Example web site")
                 self.assertEqual(page.meta["site_url"], "https://www.example.org")
