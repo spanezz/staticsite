@@ -1,7 +1,7 @@
 from unittest import TestCase
 import re
 from . import utils as test_utils
-from staticsite.theme import PageFilter
+from staticsite.page_filter import PageFilter
 
 
 def select(site, *args, **kw):

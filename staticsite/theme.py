@@ -9,7 +9,6 @@ from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
 from .utils.typing import Meta
-from .page_filter import PageFilter
 from .metadata import Metadata
 from .file import File
 from . import toposort
@@ -372,7 +371,10 @@ class Theme:
             return ""
 
     @jinja2.contextfunction
-    def jinja2_site_pages(
-            self, context, path: str = None, limit: Optional[int] = None, sort: str = "-date", **kw) -> List[Page]:
-        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
-        return page_filter.filter(self.site.pages.values())
+    def jinja2_site_pages(self, context, **kw) -> List[Page]:
+        cur_page = context.get("page")
+        if cur_page is None:
+            log.warn("%s+%s: site_pages: current page is not defined", cur_page, context.name)
+            return []
+
+        return cur_page.find_pages(**kw)

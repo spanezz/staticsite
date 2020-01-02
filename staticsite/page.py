@@ -150,12 +150,17 @@ class Page:
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
+            root: Optional[str] = None,
             **kw):
-        from staticsite.theme import PageFilter
-        if self.dir is None or not self.dir.src.relpath:
-            f = PageFilter(self.site, path, limit, sort)
-        else:
-            f = PageFilter(self.site, path, limit, sort, root=self.dir.src.relpath)
+        """
+        If not set, default root to the path of the containing directory for
+        this page
+        """
+        if root is None and self.dir is not None and self.dir.src.relpath:
+            root = self.dir.src.relpath
+
+        from .page_filter import PageFilter
+        f = PageFilter(self.site, path, limit, sort, root=root)
         return f.filter(self.site.pages.values())
 
     def resolve_path(self, target: str) -> "Page":
