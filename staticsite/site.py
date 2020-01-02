@@ -98,7 +98,7 @@ class Site:
             self.caches = DisabledCaches()
 
         # Content root for the website
-        self.content_root = os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
+        self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
 
         # List of content roots scanned for this site
         self.content_roots: List[contents.Dir] = []
