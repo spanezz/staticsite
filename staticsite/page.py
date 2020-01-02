@@ -147,6 +147,16 @@ class Page:
             tz_str = 'Z'
         return ts.strftime("%Y-%m-%d %H:%M:%S") + tz_str
 
+    def find_pages(
+            self,
+            path: Optional[str] = None,
+            limit: Optional[int] = None,
+            sort: Optional[str] = None,
+            **kw):
+        from staticsite.theme import PageFilter
+        f = PageFilter(self.site, path, limit, sort)
+        return f.filter(self.site.pages.values())
+
     def resolve_path(self, target: str) -> "Page":
         """
         Return a Page from the site, given a source or site path relative to

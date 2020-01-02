@@ -1,6 +1,5 @@
 from __future__ import annotations
 from staticsite.feature import Feature
-from staticsite.theme import PageFilter
 from staticsite.metadata import Metadata
 import logging
 
@@ -39,9 +38,8 @@ See [Selecting pages](page-filter.md) for details.
                 continue
 
             # Replace the dict with the expanded list of pages
-            f = PageFilter(self.site, **pages)
             # Do not include self in the result list
-            pages = [p for p in f.filter(self.site.pages.values()) if p != page]
+            pages = [p for p in page.find_pages(**pages) if p != page]
             page.meta["pages"] = pages
             if pages:
                 max_date = max(p.meta["date"] for p in pages)
