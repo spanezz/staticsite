@@ -29,6 +29,8 @@
 * Implemented `Page.find_pages`, so in templates you can use `page.find_pages`
   instead of `site_pages`
 * `site_pages()` does not sort by reverse date by defaut anymore.
+* `template_copyright` defaults to `"© {{page.meta.date.year}} {{page.meta.author}}"`
+* `author` defaults to the current user's name
 
 ## Upgrade notes
 

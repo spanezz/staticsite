@@ -125,6 +125,8 @@ If missing, the modification time of the file is used.
             A string with the name of the author for this page.
 
             SITE_AUTHOR is used as a default if found in settings.
+
+            If not found, it defaults to the current user's name.
         """))
         self.register_metadata(metadata.MetadataTemplateInherited("template_copyright", template_for="copyright", doc="""
 If set instead of `copyright`, it is a jinja2 template used to generate the
@@ -134,11 +136,7 @@ The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
 in it.
 
-A good default can be:
-
-```yaml
-template_copyright: "© {{page.meta.date.year}} {{page.meta.author}}"
-```
+If missing, defaults to `"© {{page.meta.date.year}} {{page.meta.author}}"`
 """))
         self.register_metadata(metadata.MetadataInherited("copyright", doc="""
             A string with the copyright information for this page.
