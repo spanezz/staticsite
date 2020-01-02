@@ -250,6 +250,8 @@ date: 2010-01-01 00:00:00
                     "abspath": os.path.join(root, "index.html"),
                 },
                 "meta": {
+                    "author": "Test User",
+                    "copyright": '© 2000 Test User',
                     "date": '2000-01-01 00:00:00+00:00',
                     "draft": False,
                     'indexed': True,
@@ -271,6 +273,8 @@ date: 2010-01-01 00:00:00
                     "abspath": os.path.join(root, "page.md"),
                 },
                 "meta": {
+                    "author": "Test User",
+                    "copyright": '© 2005 Test User',
                     "date": '2005-01-01 00:00:00+00:00',
                     "draft": False,
                     'indexed': True,
@@ -292,6 +296,8 @@ date: 2010-01-01 00:00:00
                     "abspath": os.path.join(root, "page1.yaml"),
                 },
                 "meta": {
+                    "author": "Test User",
+                    "copyright": '© 2010 Test User',
                     "date": '2010-01-01 00:00:00+00:00',
                     "draft": False,
                     'indexed': True,

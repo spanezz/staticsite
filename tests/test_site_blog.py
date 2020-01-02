@@ -8,7 +8,7 @@ class TestSite(TestCase):
     def test_meta(self):
         self.maxDiff = None
 
-        with test_utils.example_site("blog") as site:
+        with test_utils.example_site("blog", SITE_AUTHOR="Test User") as site:
             test_time = datetime.datetime(2020, 1, 2, 12, 00, tzinfo=site.timezone)
             for page in site.pages.values():
                 page.meta["date"] = test_time
@@ -26,7 +26,8 @@ class TestSite(TestCase):
                 "meta": {
                     "date": '2020-01-02 12:00:00+01:00',
                     "draft": False,
-                    'copyright': '© 2020 ',
+                    'author': "Test User",
+                    'copyright': '© 2020 Test User',
                     'indexed': True,
                     'syndicated': True,
                     "syndication_date": '2020-01-02 12:00:00+01:00',

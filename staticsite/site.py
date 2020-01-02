@@ -279,7 +279,9 @@ It defaults to false, or true if `page.meta.date` is in the future.
         """
         Build directory metadata based on site settings
         """
-        meta = {}
+        meta = {
+            "template_copyright": "© {{page.meta.date.year}} {{page.meta.author}}",
+        }
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:

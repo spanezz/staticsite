@@ -38,6 +38,8 @@ Example blog post in reStructuredText
                     "relpath": "index.rst",
                 },
                 "meta": {
+                    "author": "Test User",
+                    "copyright": '© 2016 Test User',
                     "date": "2016-04-16 10:23:00+02:00",
                     "draft": False,
                     "syndicated": True,

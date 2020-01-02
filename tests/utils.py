@@ -14,6 +14,7 @@ class Site(staticsite.Site):
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         kw.setdefault("SITE_NAME", "Test site")
         kw.setdefault("SITE_URL", "https://www.example.org")
+        kw.setdefault("SITE_AUTHOR", "Test User")
         kw.setdefault("CACHE_REBUILDS", False)
         kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
         settings = Settings()
@@ -79,7 +80,7 @@ def example_site_dir(name="demo"):
 
 
 @contextmanager
-def example_site(name="demo"):
+def example_site(name="demo", **kw):
     with assert_no_logs():
         with example_site_dir(name) as root:
             src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -91,6 +92,8 @@ def example_site(name="demo"):
                 settings.PROJECT_ROOT = root
             settings.CACHE_REBUILDS = False
             settings.THEME_PATH = [os.path.join(src_root, "themes")]
+            for k, v in kw.items():
+                setattr(settings, k, v)
 
             site = staticsite.Site(settings=settings)
             site.load()
