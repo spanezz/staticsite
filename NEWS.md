@@ -19,10 +19,16 @@
 * [markdown pages](doc/reference/markdown.md) can now use markdown code blocks
   as front matter delimiters, making markdown pages with front matter valid
   markdown pages.
+* [`site_path` metadata](doc/reference/metadata.md) is now normalized to be
+  absolute. The site path for the root page is now `/` instead of the empty
+  string, and all page site paths now begin with `/`. `build_path` is still
+  without leading slashes.
 
 ## Upgrade notes
 
 * Use `pages` instead of `syndication.pages` or `syndication.filter`
+* If you looked up pages by site path, they are now absolute paths, instead of
+  paths relative to `/`
 
 # New in version 1.3
 

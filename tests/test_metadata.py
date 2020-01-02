@@ -33,13 +33,13 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
-                "", "test.html", "test1.html"
+            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("/static/")], [
+                "/", "/test.html", "/test1.html"
             ])
 
-            index = site.pages[""]
-            test = site.pages["test.html"]
-            test1 = site.pages["test1.html"]
+            index = site.pages["/"]
+            test = site.pages["/test.html"]
+            test1 = site.pages["/test1.html"]
 
             self.assertEqual(index.TYPE, "jinja2")
             self.assertEqual(test.TYPE, "jinja2")
@@ -68,13 +68,13 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertEqual(site.pages[""].meta["site_name"], "Root site")
-            self.assertEqual(site.pages["page"].meta["site_name"], "Root site")
-            self.assertEqual(site.pages["page1"].meta["site_name"], "Page 1 site")
-            self.assertEqual(site.pages["dir1"].meta["site_name"], "Root site")
-            self.assertEqual(site.pages["dir1/page"].meta["site_name"], "Root site")
-            self.assertEqual(site.pages["dir1/dir2"].meta["site_name"], "dir2 site")
-            self.assertEqual(site.pages["dir1/dir2/page"].meta["site_name"], "dir2 site")
+            self.assertEqual(site.pages["/"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["/page"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["/page1"].meta["site_name"], "Page 1 site")
+            self.assertEqual(site.pages["/dir1"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["/dir1/page"].meta["site_name"], "Root site")
+            self.assertEqual(site.pages["/dir1/dir2"].meta["site_name"], "dir2 site")
+            self.assertEqual(site.pages["/dir1/dir2/page"].meta["site_name"], "dir2 site")
 
     def test_asset(self):
         self.maxDiff = None
@@ -96,13 +96,13 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
-                "", "test.md", "test1",
+            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("/static/")], [
+                "/", "/test.md", "/test1",
             ])
 
-            index = site.pages[""]
-            test = site.pages["test.md"]
-            test1 = site.pages["test1"]
+            index = site.pages["/"]
+            test = site.pages["/test.md"]
+            test1 = site.pages["/test1"]
 
             self.assertEqual(index.TYPE, "dir")
             self.assertEqual(test.TYPE, "asset")
@@ -127,16 +127,16 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
-                "", "test",
-                "examples/test1.md",
-                "examples/subdir/test2.md",
+            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("/static/")], [
+                "/", "/test",
+                "/examples/test1.md",
+                "/examples/subdir/test2.md",
             ])
 
-            index = site.pages[""]
-            test = site.pages["test"]
-            test1 = site.pages["examples/test1.md"]
-            test2 = site.pages["examples/subdir/test2.md"]
+            index = site.pages["/"]
+            test = site.pages["/test"]
+            test1 = site.pages["/examples/test1.md"]
+            test2 = site.pages["/examples/subdir/test2.md"]
 
             self.assertEqual(index.TYPE, "dir")
             self.assertEqual(test.TYPE, "markdown")
@@ -159,9 +159,9 @@ class TestSiteName(TestCase):
 
             expected = os.path.basename(root)
 
-            self.assertEqual(site.pages[""].meta["site_name"], expected)
-            self.assertEqual(site.pages["page"].meta["site_name"], expected)
-            self.assertEqual(site.pages["dir/page"].meta["site_name"], expected)
+            self.assertEqual(site.pages["/"].meta["site_name"], expected)
+            self.assertEqual(site.pages["/page"].meta["site_name"], expected)
+            self.assertEqual(site.pages["/dir/page"].meta["site_name"], expected)
 
     def test_from_settings(self):
         files = {
@@ -176,9 +176,9 @@ class TestSiteName(TestCase):
             site.load()
             site.analyze()
 
-            self.assertEqual(site.pages[""].meta["site_name"], "Site Name")
-            self.assertEqual(site.pages["page"].meta["site_name"], "Site Name")
-            self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name")
+            self.assertEqual(site.pages["/"].meta["site_name"], "Site Name")
+            self.assertEqual(site.pages["/page"].meta["site_name"], "Site Name")
+            self.assertEqual(site.pages["/dir/page"].meta["site_name"], "Site Name")
 
     def test_from_dir_meta(self):
         files = {
@@ -193,9 +193,9 @@ class TestSiteName(TestCase):
             site.load()
             site.analyze()
 
-            self.assertEqual(site.pages[""].meta["site_name"], "Site Name dirmeta")
-            self.assertEqual(site.pages["page"].meta["site_name"], "Site Name dirmeta")
-            self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(site.pages["/"].meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(site.pages["/page"].meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(site.pages["/dir/page"].meta["site_name"], "Site Name dirmeta")
 
     def test_from_root_title(self):
         files = {
@@ -209,9 +209,9 @@ class TestSiteName(TestCase):
             site.load()
             site.analyze()
 
-            self.assertEqual(site.pages[""].meta["site_name"], "Site Name title")
-            self.assertEqual(site.pages["page"].meta["site_name"], "Site Name title")
-            self.assertEqual(site.pages["dir/page"].meta["site_name"], "Site Name title")
+            self.assertEqual(site.pages["/"].meta["site_name"], "Site Name title")
+            self.assertEqual(site.pages["/page"].meta["site_name"], "Site Name title")
+            self.assertEqual(site.pages["/dir/page"].meta["site_name"], "Site Name title")
 
 
 class TestFields(TestCase):
@@ -240,9 +240,9 @@ date: 2010-01-01 00:00:00
             site.load()
             site.analyze()
 
-            j2page = site.pages[""]
-            mdpage = site.pages["page"]
-            datapage = site.pages["page1"]
+            j2page = site.pages["/"]
+            mdpage = site.pages["/page"]
+            datapage = site.pages["/page1"]
 
             self.assertEqual(j2page.to_dict(), {
                 "src": {
@@ -256,7 +256,7 @@ date: 2010-01-01 00:00:00
                     'syndicated': True,
                     "syndication_date": '2000-01-01 00:00:00+00:00',
                     'site_name': 'Test1 title',
-                    'site_path': '',
+                    'site_path': '/',
                     'site_url': 'https://www.example.org',
                     "build_path": "index.html",
                     'template': 'compiled:index.html',
@@ -277,7 +277,7 @@ date: 2010-01-01 00:00:00
                     'syndicated': True,
                     "syndication_date": '2005-01-01 00:00:00+00:00',
                     'site_name': 'Test1 title',
-                    'site_path': 'page',
+                    'site_path': '/page',
                     'site_url': 'https://www.example.org',
                     "build_path": "page/index.html",
                     'template': 'page.html',
@@ -298,7 +298,7 @@ date: 2010-01-01 00:00:00
                     'syndicated': True,
                     "syndication_date": '2010-01-01 00:00:00+00:00',
                     'site_name': 'Test1 title',
-                    'site_path': 'page1',
+                    'site_path': '/page1',
                     'site_url': 'https://www.example.org',
                     "build_path": "page1/index.html",
                     'template': 'compiled:data.html',

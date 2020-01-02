@@ -107,11 +107,9 @@ class Page:
         site_path = self.meta.get("site_path")
         if site_path is None:
             raise PageMissesFieldError(self, "site_path")
-        if site_path.startswith("/"):
-            self.meta["site_path"] = site_path.lstrip("/")
 
         # Make sure build_path exists and is relative
-        build_path = self.meta.get("site_path")
+        build_path = self.meta.get("build_path")
         if build_path is None:
             raise PageMissesFieldError(self, "build_path")
         if build_path.startswith("/"):
@@ -167,13 +165,11 @@ class Page:
         """
         # Absolute URLs are resolved as is
         if target.startswith("/"):
-            if target == "/":
-                target_relpath = ""
-            else:
-                target_relpath = os.path.normpath(target.lstrip("/"))
+            target_relpath = os.path.normpath(target)
 
             # Try by source path
-            res = self.site.pages_by_src_relpath.get(target_relpath)
+            # src.relpath is indexed without leading / in site
+            res = self.site.pages_by_src_relpath.get(target_relpath.lstrip("/"))
             if res is not None:
                 return res
 
@@ -183,7 +179,7 @@ class Page:
                 return res
 
             # Try adding STATIC_PATH as a compatibility with old links
-            target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath)
+            target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath.lstrip("/"))
 
             # Try by source path
             res = self.site.pages_by_src_relpath.get(target_relpath)
@@ -199,36 +195,25 @@ class Page:
 
         # First using the source paths
         if self.src is not None:
-            root = os.path.dirname(self.src.relpath)
-            while True:
-                target_relpath = os.path.normpath(os.path.join(root, target))
-                if target_relpath == ".":
-                    target_relpath = ""
+            if self.dir is None:
+                root = "/"
+            else:
+                root = os.path.join("/", self.dir.src.relpath)
 
-                res = self.site.pages_by_src_relpath.get(target_relpath)
-                if res is not None:
-                    return res
-
-                if not root:
-                    break
-
-                root = os.path.dirname(root)
-
-        # The using the site paths
-        root = self.meta["site_path"]
-        while True:
             target_relpath = os.path.normpath(os.path.join(root, target))
-            if target_relpath == ".":
-                target_relpath = ""
-
-            res = self.site.pages.get(target_relpath)
+            res = self.site.pages_by_src_relpath.get(target_relpath.lstrip("/"))
             if res is not None:
                 return res
 
-            if not root:
-                break
-
-            root = os.path.dirname(root)
+        # Finally, using the site paths
+        if self.dir is None:
+            root = self.meta["site_path"]
+        else:
+            root = self.dir.meta["site_path"]
+        target_relpath = os.path.normpath(os.path.join(root, target))
+        res = self.site.pages.get(target_relpath)
+        if res is not None:
+            return res
 
         raise PageNotFoundError(f"cannot resolve `{target!r}` relative to `{self!r}`")
 
@@ -282,9 +267,9 @@ class Page:
 
         if absolute:
             site_url = page.meta["site_url"].rstrip("/")
-            return f"{site_url}/{page.meta['site_path']}"
+            return f"{site_url}{page.meta['site_path']}"
         else:
-            return "/" + page.meta["site_path"]
+            return page.meta["site_path"]
 
     def check(self, checker):
         pass
