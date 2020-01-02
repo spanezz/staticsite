@@ -352,7 +352,7 @@ class Theme:
         try:
             return cur_page.resolve_path(arg)
         except PageNotFoundError as e:
-            log.warn("%s: %s", context.name, e)
+            log.warn("%s:%s: %s", cur_page, context.name, e)
             return ""
 
     @jinja2.contextfunction
@@ -368,7 +368,7 @@ class Theme:
         try:
             return cur_page.url_for(arg, absolute=absolute)
         except PageNotFoundError as e:
-            log.warn("%s: %s", context.name, e)
+            log.warn("%s:%s: %s", cur_page, context.name, e)
             return ""
 
     @jinja2.contextfunction

@@ -84,7 +84,8 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         # Resolve as a path
         try:
             page = self.page.resolve_path(parsed.path)
-        except PageNotFoundError:
+        except PageNotFoundError as e:
+            log.warn("%s: %s", self.page, e)
             return None, parsed
 
         # Cache the page site_path

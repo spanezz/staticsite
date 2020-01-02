@@ -181,6 +181,7 @@ class Page:
                 log.warn("%s: please use %s instead of %s", self, target_relpath, target)
                 return res
 
+            log.warn("%s: cannot resolve path %s", self, target)
             raise PageNotFoundError(f"cannot resolve absolute path {target}")
 
         # Relative urls are tried based on all path components of this page,
@@ -244,7 +245,7 @@ class Page:
         try:
             dest = self.url_for(parsed.path)
         except PageNotFoundError as e:
-            log.warn("%s", e)
+            log.warn("%s: %s", self, e)
             return url
 
         dest = urlparse(dest)
