@@ -84,10 +84,7 @@ class Dir(Page):
         self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
         # Merge in metadata, limited to inherited flags
-        for name in self.site.metadata.keys() & meta.keys():
-            metadata = self.site.metadata[name]
-            if metadata.inherited:
-                self.meta[name] = meta[name]
+        self.site.metadata.on_dir_meta(self, meta)
 
         # Make sure site_path is absolute
         self.meta["site_path"] = os.path.join("/", self.meta["site_path"])

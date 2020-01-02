@@ -121,15 +121,12 @@ A python datetime object, timezone aware. If the date is in the future when
 If missing, the modification time of the file is used.
 """))
 
-        self.register_metadata(Metadata("author", inherited=True, doc="""
+        self.register_metadata(metadata.MetadataInherited("author", doc="""
             A string with the name of the author for this page.
 
             SITE_AUTHOR is used as a default if found in settings.
         """))
-        self.register_metadata(Metadata("copyright", inherited=True, doc="""
-            A string with the copyright information for this page.
-        """))
-        self.register_metadata(Metadata("template_copyright", inherited=True, template_for="copyright", doc="""
+        self.register_metadata(metadata.MetadataTemplateInherited("template_copyright", template_for="copyright", doc="""
 If set instead of `copyright`, it is a jinja2 template used to generate the
 copyright information.
 
@@ -143,7 +140,16 @@ A good default can be:
 template_copyright: "© {{page.meta.date.year}} {{page.meta.author}}"
 ```
 """))
-        self.register_metadata(Metadata("title", inherited=True, doc="""
+        self.register_metadata(metadata.MetadataInherited("copyright", doc="""
+            A string with the copyright information for this page.
+        """))
+        self.register_metadata(metadata.MetadataTemplateInherited("template_title", template_for="title", doc="""
+If set instead of `title`, it is a jinja2 template used to generate the title.
+The template context will have `page` available, with the current page. The
+result of the template will not be further escaped, so you can use HTML markup
+in it.
+"""))
+        self.register_metadata(metadata.MetadataInherited("title", doc="""
 The page title.
 
 If omitted:
@@ -155,32 +161,26 @@ If omitted:
    inherited.
  * if still no title can be found, the site name is used as a default.
 """))
-        self.register_metadata(Metadata("template_title", inherited=True, template_for="title", doc="""
-If set instead of `title`, it is a jinja2 template used to generate the title.
-The template context will have `page` available, with the current page. The
-result of the template will not be further escaped, so you can use HTML markup
-in it.
-"""))
-        self.register_metadata(Metadata("description", inherited=True, doc="""
-The page description. If omitted, the page will have no description.
-"""))
-        self.register_metadata(Metadata("template_description", inherited=True, template_for="description", doc="""
+        self.register_metadata(metadata.MetadataTemplateInherited("template_description", template_for="description", doc="""
 If set instead of `description`, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use
 HTML markup in it.
 """))
+        self.register_metadata(metadata.MetadataInherited("description", doc="""
+The page description. If omitted, the page will have no description.
+"""))
 
-        self.register_metadata(Metadata("site_name", inherited=True, doc="""
+        self.register_metadata(metadata.MetadataInherited("site_name", doc="""
 Name of the site. If missing, it defaults to the title of the toplevel index
 page. If missing, it defaults to the name of the content directory.
 """))
 
-        self.register_metadata(Metadata("site_url", inherited=True, doc="""
+        self.register_metadata(metadata.MetadataInherited("site_url", doc="""
 Base URL for the site, used to generate an absolute URL to the page.
 """))
 
-        self.register_metadata(Metadata("site_path", inherited=True, doc="""
+        self.register_metadata(metadata.MetadataSitePath("site_path", doc="""
 Where a content directory appears in the site.
 
 By default, is is the `site_path` of the parent directory, plus the directory
@@ -199,7 +199,7 @@ If found in pages front matter, it is ignored, and is always computed at page
 load time.
 """))
 
-        self.register_metadata(Metadata("asset", inherited=True, doc="""
+        self.register_metadata(metadata.MetadataInherited("asset", doc="""
 If set to True for a file (for example, by a `file:` pattern in a directory
 index), the file is loaded as a static asset, regardless of whether a feature
 would load it.
@@ -208,7 +208,7 @@ If set to True in a directory index, the directory and all its subdirectories
 are loaded as static assets, without the interventions of features.
 """))
 
-        self.register_metadata(Metadata("aliases", structure=True, doc="""
+        self.register_metadata(metadata.MetadataInherited("aliases", doc="""
 Relative paths in the destination directory where the page should also show up.
 [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
 existing links when moving a page to a different location.

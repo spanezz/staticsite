@@ -5,6 +5,7 @@ import inspect
 if TYPE_CHECKING:
     from .page import Page
     from .site import Site
+    from .utils.typing import Meta
 
 
 class Registry:
@@ -24,8 +25,8 @@ class Registry:
         # the analyze pass
         self.on_analyze_functions: List[Callable[Page], None] = []
 
-        # Function used to inherit metadata, for inheritable metadata
-        self.on_inherit_functions: List[Callable[Page, Page], None] = []
+        # Functions called when loading directory metadata
+        self.on_dir_meta_functions: List[Callable[Page, Meta], None] = []
 
     def add(self, metadata: "Metadata"):
         metadata.site = self.site
@@ -39,8 +40,9 @@ class Registry:
         if not getattr(on_analyze, "skip", False):
             self.on_analyze_functions.append(on_analyze)
 
-        if metadata.inherited:
-            self.on_inherit_functions.append(metadata.on_inherit)
+        on_dir_meta = getattr(metadata, "on_dir_meta", None)
+        if not getattr(on_dir_meta, "skip", False):
+            self.on_dir_meta_functions.append(on_dir_meta)
 
     def on_load(self, page: Page):
         """
@@ -56,12 +58,12 @@ class Registry:
         for f in self.on_analyze_functions:
             f(page)
 
-    def on_inherit(self, page: Page, parent: Page):
+    def on_dir_meta(self, page: Page, meta: Meta):
         """
-        Run inherit functions on the page
+        Run on_dir_meta functions on the page
         """
-        for f in self.on_inherit_functions:
-            f(page, parent)
+        for f in self.on_dir_meta_functions:
+            f(page, meta)
 
     def __getitem__(self, key: str) -> "Metadata":
         return self.registry[key]
@@ -83,36 +85,24 @@ class Metadata:
 
     def __init__(
             self, name,
-            inherited: bool = False,
             structure: bool = False,
-            template_for: Optional[str] = None,
             doc: str = ""):
         """
         :arg name: name of this metadata element
-        :arg inherited: set to True if this metadata, when present in a
-                        directory index, should be inherited by other files in
-                        directories and subdirectories. False if it stays local
-                        to the file.
         :arg structure: set to True if this element is a structured value. Set
                         to false if it is a simple value like an integer or
                         string
-        :arg template_for: set to the name of another field, it documents that
-                           this metadata is a template version of another
-                           metadata
         :arg doc: documentation for this metadata element
         """
         self.site: Site = None
         self.name: str = name
-        self.inherited: bool = inherited
+        # Type of this value
+        self.type: str = "TODO"
         self.structure: bool = structure
-        self.template_for: Optional[str] = template_for
         self.doc = inspect.cleandoc(doc)
 
     def get_notes(self):
-        if self.inherited:
-            yield "Inherited from directory indices."
-        if self.template_for:
-            yield f"Template version of `{self.template_for}`."
+        return ()
 
     def on_load(self, page: Page):
         """
@@ -140,16 +130,126 @@ class Metadata:
     # Mark as a noop to avoid calling it for each page unless overridden
     on_analyze.skip = True
 
-    def on_inherit(self, page: Page, parent: Page):
+    def on_dir_meta(self, page: Page, meta: Meta):
         """
-        Hook for inheriting metadata entries from a parent page
+        Hook to potentially transfer metadata from what is found in a directory
+        index page to the directory metadata
         """
+        pass
+
+    on_dir_meta.skip = True
+
+
+class MetadataInherited(Metadata):
+    """
+    This metadata, when present in a directory index, should be inherited by
+    other files in directories and subdirectories.
+    """
+
+    def get_notes(self):
+        yield from super().get_notes()
+        yield "Inherited from directory indices."
+
+    def _inherit(self, page: Page):
         if self.name in page.meta:
             return
+
+        parent = page.dir
+        if parent is None:
+            return
+
         val = parent.meta.get(self.name)
         if val is None:
             return
         page.meta[self.name] = val
+
+    def on_load(self, page: Page):
+        """
+        Hook for inheriting metadata entries from a parent page
+        """
+        self._inherit(page)
+
+    def on_dir_meta(self, page: Page, meta: Meta):
+        """
+        Inherited metadata are copied from directory indices into directory
+        metadata
+        """
+        if self.name not in meta:
+            return
+        page.meta[self.name] = meta[self.name]
+
+
+class MetadataTemplateInherited(Metadata):
+    """
+    This metadata, when present in a directory index, should be inherited by
+    other files in directories and subdirectories.
+    """
+    def __init__(self, *args, template_for: Optional[str] = None, **kw):
+        """
+        :arg template_for: set to the name of another field, it documents that
+                           this metadata is a template version of another
+                           metadata
+        """
+        super().__init__(*args, **kw)
+        self.template_for: Optional[str] = template_for
+        self.type = "jinja2"
+
+    def get_notes(self):
+        yield from super().get_notes()
+        yield "Inherited from directory indices."
+        yield f"Template for {self.template_for}"
+
+    def _inherit(self, page: Page):
+        if self.name in page.meta:
+            return
+
+        parent = page.dir
+        if parent is None:
+            return
+
+        val = parent.meta.get(self.name)
+        if val is None:
+            return
+        page.meta[self.name] = val
+
+    def on_load(self, page: Page):
+        """
+        Hook for inheriting metadata entries from a parent page
+        """
+        import jinja2
+        self._inherit(page)
+
+        src = page.meta.get(self.name)
+        if src is None:
+            return
+
+        if self.template_for in page.meta:
+            return
+
+        if isinstance(src, str):
+            src = self.site.theme.jinja2.from_string(src)
+            page.meta[self.name] = src
+        page.meta[self.template_for] = jinja2.Markup(page.render_template(src))
+
+    def on_dir_meta(self, page: Page, meta: Meta):
+        """
+        Inherited metadata are copied from directory indices into directory
+        metadata
+        """
+        if self.name not in meta:
+            return
+        page.meta[self.name] = meta[self.name]
+
+
+class MetadataSitePath(Metadata):
+    def on_dir_meta(self, page: Page, meta: Meta):
+        """
+        Inherited metadata are copied from directory indices into directory
+        metadata
+        """
+        if self.name not in meta:
+            return
+        page.meta[self.name] = meta[self.name]
 
 
 class MetadataDate(Metadata):

@@ -1,9 +1,50 @@
 from __future__ import annotations
+# from typing import TYPE_CHECKING
+from staticsite.page import Page, PageNotFoundError
 from staticsite.feature import Feature
-from staticsite.metadata import Metadata
+from staticsite import metadata
+import os
 import logging
 
 log = logging.getLogger("nav")
+
+
+class MetadataNav(metadata.MetadataInherited):
+    def __init__(self, *args, **kw):
+        kw.setdefault("structure", True)
+        super().__init__(*args, **kw)
+
+    def on_dir_meta(self, page: Page, meta):
+        """
+        Inherited metadata are copied from directory indices into directory
+        metadata
+        """
+        if self.name not in meta:
+            return
+        page.meta[self.name] = meta[self.name]
+
+    def _inherit(self, page: Page):
+        if self.name in page.meta:
+            return
+
+        parent = page.dir
+        if parent is None:
+            return
+
+        val = parent.meta.get(self.name)
+        if val is None:
+            return
+
+        res = []
+        for path in val:
+            if isinstance(path, str):
+                try:
+                    path = parent.resolve_path(path)
+                except PageNotFoundError:
+                    path = os.path.join("..", path)
+            res.append(path)
+
+        page.meta[self.name] = res
 
 
 class Nav(Feature):
@@ -14,10 +55,10 @@ class Nav(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.register_metadata(Metadata("nav", inherited=True, structure=True, doc=f"""
+        self.site.register_metadata(MetadataNav("nav", doc=f"""
 List of page paths that are used for the navbar.
 """))
-        self.site.register_metadata(Metadata("nav_title", doc=f"""
+        self.site.register_metadata(metadata.Metadata("nav_title", doc=f"""
 Title to use when this paged is linked in a navbar.
 
 It defaults to `page.meta.title`, or to the series name for series pages.

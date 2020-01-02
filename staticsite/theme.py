@@ -271,32 +271,13 @@ class Theme:
         template strings
         """
         if self.metadata_templates is None:
-            self.metadata_templates = [m for m in self.site.metadata.values() if m.template_for is not None]
+            self.metadata_templates = [m for m in self.site.metadata.values() if m.type == "jinja2"]
         for metadata in self.metadata_templates:
             val = meta.get(metadata.name)
             if val is None:
                 continue
             if isinstance(val, str):
                 meta[metadata.name] = self.jinja2.from_string(val)
-
-    def render_metadata_templates(self, page: Page):
-        """
-        Render all the elements of the given metadata that are jinja2
-        template strings
-        """
-        if self.metadata_templates is None:
-            self.metadata_templates = [m for m in self.site.metadata.values() if m.template_for is not None]
-
-        for metadata in self.metadata_templates:
-            src = page.meta.get(metadata.name)
-            if src is None:
-                continue
-            if metadata.template_for in page.meta:
-                continue
-            if isinstance(src, str):
-                src = self.jinja2.from_string(src)
-                page.meta[metadata.name] = src
-            page.meta[metadata.template_for] = jinja2.Markup(page.render_template(src))
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)

@@ -72,15 +72,6 @@ class Page:
         # Run metadata on load functions
         self.site.metadata.on_load(self)
 
-        # Render the metadata entries generated that are templates for other
-        # entries
-        # TODO: move to on_load functions of a MetadataTemplate class
-        self.site.theme.render_metadata_templates(self)
-
-        # Fill missing inherited metadata
-        if self.dir:
-            self.site.metadata.on_inherit(self, self.dir)
-
         # TODO: move more of this to on_load functions?
 
         # title must exist
