@@ -26,6 +26,9 @@
 * Page lookup by `url_for()`, `page_for()`, `site_pages()` in themes, and front
   matter headers like `pages` or `syndication.add_to`, is now relative to the
   current page, unless an absolute path is used.
+* Implemented `Page.find_pages`, so in templates you can use `page.find_pages`
+  instead of `site_pages`
+* `site_pages()` does not sort by reverse date by defaut anymore.
 
 ## Upgrade notes
 
@@ -37,6 +40,8 @@
   don't change according to how the site is laid out.
 * If you looked up pages by relative paths assuming they were anchored on the
   site root, that does not work anymore: use absolute paths instead.
+* If you relied on `site_pages` default sorting order, add a `sort="-date"` to
+  your `site_pages` invocations
 
 # New in version 1.3
 
