@@ -72,7 +72,7 @@ class Page:
         # Run metadata on load functions
         self.site.metadata.on_load(self)
 
-        # Render the metadata entres generated that are templates for other
+        # Render the metadata entries generated that are templates for other
         # entries
         # TODO: move to on_load functions of a MetadataTemplate class
         self.site.theme.render_metadata_templates(self)

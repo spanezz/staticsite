@@ -108,6 +108,12 @@ class Metadata:
         self.template_for: Optional[str] = template_for
         self.doc = inspect.cleandoc(doc)
 
+    def get_notes(self):
+        if self.inherited:
+            yield "Inherited from directory indices."
+        if self.template_for:
+            yield f"Template version of `{self.template_for}`."
+
     def on_load(self, page: Page):
         """
         Cleanup hook for the metadata on page load.
