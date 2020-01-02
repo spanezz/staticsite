@@ -292,6 +292,13 @@ It defaults to false, or true if `page.meta.date` is in the future.
             meta["site_name"] = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
             meta["author"] = self.settings.SITE_AUTHOR
+        else:
+            import getpass
+            import pwd
+            user = getpass.getuser()
+            pw = pwd.getpwnam(user)
+            meta["author"] = pw.pw_gecos.split(",")[0]
+
         return meta
 
     def scan_content(self):
