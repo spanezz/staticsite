@@ -3,55 +3,111 @@ from unittest import TestCase
 from . import utils as test_utils
 
 
-class TestSyndication(TestCase):
-    def test_simple(self):
-        files = {
-            "blog.md": """---
-date: 2016-04-16 10:23:00+02:00
-syndication:
-  filter:
-    path: blog/*
-  add_to:
-    path: blog/*
----
-
-# Title
-
-text
-""",
-            "blog/post.rst": """
+BASE_FILES = {
+    "blog/post1.rst": """
 :date: 2016-04-16 10:23:00+02:00
 
 Example blog post in reStructuredText
 =====================================
 """,
-        }
+    "blog/post2.md": """---
+date: 2016-04-17 10:00
+---
+# Post 2
+""",
+    "blog/widget.md": {"syndicated": False},
+}
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(CONTENT=root)
-            site.load()
-            site.analyze()
 
+class TestSyndication(TestCase):
+    def test_simple(self):
+        files = dict(BASE_FILES)
+        files["blog.md"] = """---
+date: 2016-04-16 10:23:00+02:00
+pages: blog/*
+syndication: yes
+---
+
+# Title
+
+text
+"""
+
+        with test_utils.testsite(files) as site:
             blog = site.pages["blog"]
-            self.assertIn("syndication", blog.meta)
-            post = site.pages["blog/post"]
-            self.assertIn("syndication", post.meta)
+            post1 = site.pages["blog/post1"]
+            post2 = site.pages["blog/post2"]
+            widget = site.pages["blog/widget"]
+            rss = site.pages["blog/index.rss"]
+            atom = site.pages["blog/index.atom"]
 
-            # See what the site would generate
-            rendered_pages = {}
-            for page in site.pages.values():
-                contents = page.render()
-                for relpath, rendered in contents.items():
-                    # Ignore static assets
-                    if relpath.startswith("static/"):
-                        continue
-                    rendered_pages[relpath] = [page, rendered]
+            synd = blog.meta["syndication"]
+            self.assertEqual(synd["pages"], [post2, post1])
 
-            self.maxDiff = None
-            self.assertCountEqual(rendered_pages.keys(), [
-                "index.html",
-                "blog/index.html",
-                "blog/index.rss",
-                "blog/index.atom",
-                "blog/post/index.html",
-            ])
+            self.assertEqual(post1.meta["syndication"], synd)
+            self.assertEqual(post2.meta["syndication"], synd)
+            self.assertEqual(rss.meta["pages"], synd["pages"])
+            self.assertEqual(atom.meta["pages"], synd["pages"])
+            self.assertNotIn("syndication", widget.meta)
+
+    def test_add_to_false(self):
+        files = dict(BASE_FILES)
+        files["blog.md"] = """---
+date: 2016-04-16 10:23:00+02:00
+pages: blog/*
+syndication:
+  add_to: no
+---
+
+# Title
+
+text
+"""
+        with test_utils.testsite(files) as site:
+            blog = site.pages["blog"]
+            post1 = site.pages["blog/post1"]
+            post2 = site.pages["blog/post2"]
+            widget = site.pages["blog/widget"]
+            rss = site.pages["blog/index.rss"]
+            atom = site.pages["blog/index.atom"]
+
+            synd = blog.meta["syndication"]
+            self.assertEqual(synd["pages"], [post2, post1])
+
+            self.assertNotIn("syndication", post1.meta)
+            self.assertNotIn("syndication", post2.meta)
+            self.assertNotIn("syndication", widget.meta)
+            self.assertEqual(rss.meta["pages"], synd["pages"])
+            self.assertEqual(atom.meta["pages"], synd["pages"])
+
+    def test_complex(self):
+        files = dict(BASE_FILES)
+        files["blog.md"] = """---
+date: 2016-04-16 10:23:00+02:00
+pages: blog/*2.*
+syndication:
+  add_to:
+    path: blog/*1.*
+---
+
+# Title
+
+text
+"""
+
+        with test_utils.testsite(files) as site:
+            blog = site.pages["blog"]
+            post1 = site.pages["blog/post1"]
+            post2 = site.pages["blog/post2"]
+            widget = site.pages["blog/widget"]
+            rss = site.pages["blog/index.rss"]
+            atom = site.pages["blog/index.atom"]
+
+            synd = blog.meta["syndication"]
+            self.assertEqual(synd["pages"], [post2])
+
+            self.assertEqual(post1.meta["syndication"], synd)
+            self.assertNotIn("syndication", post2.meta)
+            self.assertNotIn("syndication", widget.meta)
+            self.assertEqual(rss.meta["pages"], synd["pages"])
+            self.assertEqual(atom.meta["pages"], synd["pages"])

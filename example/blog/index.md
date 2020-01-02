@@ -1,9 +1,6 @@
 ---
+pages: "posts/*"
 syndication:
-  pages:
-    path: posts/*
-  add_to:
-    path: posts/*
   title: "My blog feed"
 site_url: https://www.example.org
 nav: [/index.md, /about.md]

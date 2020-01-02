@@ -10,45 +10,32 @@ selected in the `syndication` metadata.
 
 ## Syndication metadata
 
-Example `.staticsite` file alongside a blog index page (see [directory
-metadata](contents.md)):
+Example front page for a blog page:
 
 ```yaml
 ---
-files:
-  index.html:
-    syndication:
-      pages:
-        path: blog/*
-      add_to:
-        path: blog/*
-      title: "Example blog feed"
+pages: blog/*
+syndication: yes
+template: blog.html
+---
+# My blog
 ```
 
-`syndication` is placed alongside the usual [metadata](metadata.md),
-and contains various fields:
-
-* `add_to`: chooses which pages will include a link to the RSS/Atom feeds
-* `pages`: chooses which pages are shown in the RSS/Atom feeds
-
-Any other metadata are used when generating pages for the RSS/Atom feeds, so
-you can use `title`, `template_title`, `description`, and so on, to personalize
-the feeds.
-
-`pages` and `add_to` are dictionaries that select pages in the site, similar
-to the `site_pages` function in [templates](templates.md). See
-[Selecting pages](page-filter.md) for details.
-
-`pages` is optional, and if missing, `page.meta.pages` is used. Compared to
-using the `pages` filter, using `syndication.pages` takes the
-[`syndicated` and `syndication_date` page metadata](doc/metadata.md) into account.
-
+See [metadata documentation](metadata.md) for a reference on the `syndication`
+field.
 
 ## Syndication of taxonomies
 
 Each category page in each taxonomy automatically defines a syndication
-metadata, and therefore automatically generates RSS and Atom feeds with all
-pages in that category.
+metadata equivalent to this:
+
+```yaml
+syndication:
+  add_to: no
+```
+
+This would automatically generates RSS and Atom feeds with all pages in that
+category, but those feed links will only be added to the category page itself.
 
 You can use the `syndication` metadata in your taxonomy categories to customize
 titles and description in your categories feeds, like with any other page.

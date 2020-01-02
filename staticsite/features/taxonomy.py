@@ -131,7 +131,13 @@ class TaxonomyPage(Page):
         self.category_meta = self.meta.get("category", {})
         self.category_meta.setdefault("template", "taxonomy/category.html")
         self.category_meta.setdefault("template_title", "{{page.name}}")
-        self.category_meta.setdefault("syndication", {})
+        synd = self.category_meta.get("syndication")
+        if synd is None or synd is True:
+            self.category_meta["syndication"] = {"add_to": False}
+        elif synd is False:
+            pass
+        else:
+            self.category_meta["syndication"].setdefault("add_to", False)
         self.site.theme.precompile_metadata_templates(self.category_meta)
 
         # Metadata for archive pages

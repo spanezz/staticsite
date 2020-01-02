@@ -46,8 +46,8 @@ See [Selecting pages](page-filter.md) for details.
             if pages:
                 max_date = max(p.meta["date"] for p in pages)
 
-            # Update the page date to the max of the pages dates
-            page.meta["date"] = max(max_date, page.meta["date"])
+                # Update the page date to the max of the pages dates
+                page.meta["date"] = max(max_date, page.meta["date"])
 
 
 FEATURES = {

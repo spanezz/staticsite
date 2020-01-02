@@ -87,27 +87,24 @@ class SyndicationFeature(Feature):
         self.site.register_metadata(Metadata("syndication", inherited=False, structure=True, doc="""
 Defines syndication for the contents of this page.
 
-It is a structure which can contain various fields:
+It is a structure which can contain normal metadata, plus:
 
-* `add_to`: chooses which pages will include a link to the RSS/Atom feeds
-* `pages`: chooses which pages are shown in the RSS/Atom feeds
+* `add_to`: chooses which pages will include a link to the RSS/Atom feeds.
+  By default, the link is added to all syndicated pages. If this is `False`,
+  then no feed is added to pages. If it is a dictionary, it selects pages in
+  the site, similar to the `site_pages` function in [templates](templates.md).
+  See [Selecting pages](page-filter.md) for details.
 
 Any other metadata found in the structure are used when generating pages for
 the RSS/Atom feeds, so you can use `title`, `template_title`, `description`,
 and so on, to personalize the feeds.
 
-`pages` and `add_to` are dictionaries that select pages in the site, similar
-to the `site_pages` function in [templates](templates.md). See
-[Selecting pages](page-filter.md) for details.
+The pages that go in the feed are those listed in
+[`page.meta.pages`](doc/reference/pages.md), keeping into account the
+[`syndicated` and `syndication_date` page metadata](doc/reference/metadata.md).
 
-`pages` is optional, and if missing, `page.meta.pages` is used. Compared to
-using the `pages` filter, using `syndication.pages` takes the
-[`syndicated` and `syndication_date` page metadata](doc/reference/metadata.md) into account.
-
-For compatibility, `filter` can be used instead of `pages`.
-
-Before rendering, `pages` is replaced with the list of syndicated pages, sorted
-with the most recent first.
+When rendering RSS/Atom feed pages, `page.meta.pages` is replaced with the list
+of syndicated pages, sorted with the most recent first.
 """))
         self.site.register_metadata(MetadataSyndicated("syndicated", inherited=False, doc="""
 Set to true if the page can be included in a syndication, else to false.
@@ -178,54 +175,60 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
     def finalize(self):
         # Build syndications from pages with a 'syndication' metadata
         for page in self.site.pages_by_metadata["syndication"]:
-            syndication_meta = page.meta.get("syndication")
-            if syndication_meta is None:
+            # The syndication header is the base for the feed pages's metadata,
+            # and is added as 'syndication' to all the pages that get the feed
+            # links
+            meta = page.meta.get("syndication")
+            if meta is None:
                 continue
 
-            # Make a shallow copy to prevent undesired side effects if multiple
-            # pages share the same syndication dict, as may be the case with
-            # taxonomies
-            syndication_meta = dict(syndication_meta)
-            syndication_meta["site_path"] = page.meta["site_path"]
-            page.meta["syndication"] = syndication_meta
+            if meta is True:
+                meta = {}
+            else:
+                # Make a shallow copy to prevent undesired side effects if multiple
+                # pages share the same syndication dict, as may be the case with
+                # taxonomies
+                meta = dict(meta)
+
+            # Add the syndication link to the index page
+            page.meta["syndication"] = meta
+
+            # Base site path from the original page
+            meta["site_path"] = page.meta["site_path"]
 
             # Index page for the syndication
-            syndication_meta["index"] = page
+            meta["index"] = page
 
-            # Pages in the syndication
-            select = syndication_meta.get("pages")
-            if select is None:
-                # TODO: raise DeprecationWarning suggesting pages?
-                select = syndication_meta.get("filter")
-            if select:
-                f = PageFilter(self.site, **select)
-                pages = f.filter(self.site.pages.values())
-            else:
-                pages = page.meta.get("pages", [])
+            # Pages involved in the syndication
+            pages = page.meta.get("pages", [])
+            meta["pages"] = self.prepare_syndication_list(pages)
 
-            syndication_meta["pages"] = self.prepare_syndication_list(pages)
-
-            # Set page.meta.pages if not present
-            if "pages" not in page.meta:
-                page.meta["pages"] = syndication_meta["pages"]
-
-            self.site.theme.precompile_metadata_templates(syndication_meta)
+            self.site.theme.precompile_metadata_templates(meta)
 
             # RSS feed
-            rss_page = RSSPage(self.site, syndication_meta, dir=page.dir)
-            syndication_meta["rss_page"] = rss_page
+            rss_page = RSSPage(self.site, meta, dir=page.dir)
+            meta["rss_page"] = rss_page
             self.site.add_page(rss_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
-            atom_page = AtomPage(self.site, syndication_meta, dir=page.dir)
-            syndication_meta["atom_page"] = atom_page
+            atom_page = AtomPage(self.site, meta, dir=page.dir)
+            meta["atom_page"] = atom_page
             self.site.add_page(atom_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Add a link to the syndication to the pages listed in add_to
-            add_to = syndication_meta.get("add_to")
-            if add_to:
+            add_to = meta.get("add_to", True)
+            if add_to is False:
+                pass
+            elif add_to is True:
+                for dest in meta["pages"]:
+                    old = dest.meta.get("syndication")
+                    if old is not None:
+                        log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
+                                 dest, page, old["index"])
+                    dest.meta["syndication"] = meta
+            else:
                 f = PageFilter(self.site, **add_to)
                 for dest in f.filter(self.site.pages.values()):
                     if dest == page:
@@ -234,7 +237,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                     if old is not None:
                         log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
                                  dest, page, old["index"])
-                    dest.meta["syndication"] = syndication_meta
+                    dest.meta["syndication"] = meta
 
 
 class SyndicationPage(Page):

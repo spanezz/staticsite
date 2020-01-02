@@ -10,6 +10,10 @@
 * Added [nav metadata](doc/reference/metadata.md) to add pages to the top navbar
 * [`pages` header](doc/reference/pages.md) can now be just a string, defaulting
   to filtering by `path`.
+* `syndication` can be `true` to turn on syndication with default settings
+* `syndication.add_to`, if omitted, defaults to adding syndication links to all
+  the pages in the syndication. It can be `false` to disable adding syndication
+  links to syndicated pages.
 
 # New in version 1.3
 
