@@ -358,9 +358,7 @@ class AssetDir(ContentDir):
         for fname, f in self.files.items():
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                meta = dict(self.meta)
-                meta["site_path"] = os.path.join(meta["site_path"], fname)
-                p = Asset(self.site, f, meta=meta, dir=self, name=fname)
+                p = Asset(self.site, f, meta={}, dir=self, name=fname)
                 self.site.add_page(p)
 
         # Load subdirectories

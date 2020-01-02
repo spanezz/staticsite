@@ -19,9 +19,17 @@ class Asset(Page):
         self.name = name
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
         self.meta["title"] = name
+        self.meta["site_url"] = dir.meta["site_url"]
         self.meta["site_path"] = os.path.join(dir.meta["site_path"], name)
-        self.meta["build_path"] = self.meta["site_path"]
+        self.meta["build_path"] = self.meta["site_path"].lstrip("/")
         self.meta["asset"] = True
+        self.meta["draft"] = False
+        self.meta["indexed"] = False
+
+    def validate(self):
+        # Disable the default page validation: the constructor does all that is
+        # needed
+        pass
 
     def render(self, **kw):
         return {
