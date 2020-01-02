@@ -8,6 +8,8 @@
 * New `copyright` and `template_copyright` [metadata](doc/reference/metadata.md)
 * Added `ssite shell` to play with the built `Site` object for a site
 * Added [nav metadata](doc/reference/metadata.md) to add pages to the top navbar
+* [`pages` header](doc/reference/pages.md) can now be just a string, defaulting
+  to filtering by `path`.
 
 # New in version 1.3
 

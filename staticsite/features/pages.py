@@ -22,8 +22,8 @@ The `pages` feature allows defining a [page filter](page-filter.md) in the
 `pages` metadata element, which will be replaced with a list of matching pages.
 
 To select pages, the `pages` metadata is set to a dictionary that select pages
-in the site, similar to the `site_pages` function in [templates](templates.md),
-and to [`filter` in syndication](syndication.md).
+in the site, with the `path`, and taxonomy names arguments similar to the
+`site_pages` function in [templates](templates.md).
 
 See [Selecting pages](page-filter.md) for details.
 """))
@@ -32,8 +32,10 @@ See [Selecting pages](page-filter.md) for details.
         # Expand pages expressions
         for page in self.site.pages_by_metadata["pages"]:
             pages = page.meta["pages"]
-            # Skip pages that already have a populated pages list
-            if not isinstance(pages, dict):
+            if isinstance(pages, str):
+                pages = {"path": pages}
+            elif not isinstance(pages, dict):
+                # Skip pages that already have a populated pages list
                 continue
 
             # Replace the dict with the expanded list of pages
