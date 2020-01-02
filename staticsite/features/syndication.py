@@ -4,7 +4,6 @@ import os
 import logging
 from staticsite import Site
 from staticsite.feature import Feature
-from staticsite.theme import PageFilter
 from staticsite.page import Page, PageNotFoundError
 from staticsite.metadata import Metadata
 from staticsite.contents import Dir
@@ -229,8 +228,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                                  dest, page, old["index"])
                     dest.meta["syndication"] = meta
             else:
-                f = PageFilter(self.site, **add_to)
-                for dest in f.filter(self.site.pages.values()):
+                for dest in page.find_pages(**add_to):
                     if dest == page:
                         continue
                     old = dest.meta.get("syndication")

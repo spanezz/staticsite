@@ -15,6 +15,10 @@ These parameters can be used to choose pages:
    the page in the website.
    
  * `limit` is the maximum number of pages to return.
+
+ * `root` is a path limiting matching pages to those under it. You can use
+   `"/"` to match from the site root. By default it is the path of the
+   directory containing the page from which the search is made.
    
 Any taxonomy defined in the site becomes a possible parameter for filtering,
 and is a list of categories of that taxonomy: pages must have all those

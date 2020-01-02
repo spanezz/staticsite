@@ -35,16 +35,18 @@ for example:
 ### Functions
 
 * `url_for("path/page")`: returns the URL that links to the page or asset with
-  the given path. The path is resolved relative to the current page, and if
-  not found, relative to the parent page, and so on until the top.
+  the given path.
+  The path is resolved relative to the current page, or to the root of the site
+  or content directory if it is an absolute path.
 * `url_for(page)`: returns the URL that links to the given page.
-* `page_for("path/page")`: returns the page with the given path. The path is
-  resolved relative to the current page, and if not found, relative to the
-  parent page, and so on until the top.
+* `page_for("path/page")`: returns the page with the given path.
+  The path is resolved relative to the current page, or to the root of the site
+  or content directory if it is an absolute path.
 * `page_for(page)`: returns the page itself.
-* `site_pages(path=None, limit=None, sort="-date", **kw)`: return a list of
-  pages defined in the site that match the given arguments. See
+* `site_pages(path=None, limit=None, sort=None, root=None, **kw)`: return a
+  list of pages defined in the site that match the given arguments. See
   [Selecting pages](page-filter.md) for details.
+  This is an alias to `page.find_pages()`
 * `now`: the current date and time, alias to `site.generation_time`.
 * `next_month`: midnight of the first day of next month. Useful in archetypes
   front matter to collect content into monthly pages.

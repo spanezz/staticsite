@@ -81,6 +81,9 @@ class Dir(Page):
             if metadata.inherited:
                 self.meta[name] = meta[name]
 
+        # Make sure site_path is absolute
+        self.meta["site_path"] = os.path.join("/", self.meta["site_path"])
+
     def meta_file(self, fname: str):
         # TODO: deprecate, and just use self.file_meta[fname]
         return self.file_meta[fname]
@@ -110,7 +113,7 @@ class Dir(Page):
 
         self.meta["pages"] = [p for p in self.pages if not p.meta["draft"]]
         self.meta.setdefault("template", "dir.html")
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html").lstrip("/")
 
         self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
         self.meta.setdefault("syndicated", False)

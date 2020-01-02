@@ -23,22 +23,18 @@ Example blog post in reStructuredText
 """,
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(PROJECT_ROOT=root)
-            site.load()
-            site.analyze()
-
-            tags = site.pages["taxonomies/tags"]
+        with test_utils.testsite(files) as site:
+            tags = site.pages["/taxonomies/tags"]
             tag_example = tags.categories["example"]
             tag_another = tags.categories["another tag"]
 
             # We have a root dir index and dir indices for all subdirs
-            page = site.pages[""]
+            page = site.pages["/"]
             self.assertEqual(page.TYPE, "rst")
             self.assertCountEqual(page.meta.pop("tags"), [tag_example, tag_another])
             self.assertEqual(page.to_dict(), {
                 "src": {
-                    "abspath": os.path.join(root, "index.rst"),
+                    "abspath": os.path.join(site.content_root, "index.rst"),
                     "relpath": "index.rst",
                 },
                 "meta": {
@@ -51,7 +47,7 @@ Example blog post in reStructuredText
                     "title": "Example blog post in reStructuredText",
                     "indexed": True,
                     "site_name": "Test site",
-                    "site_path": "",
+                    "site_path": "/",
                     "site_url": "https://www.example.org",
                     "build_path": "index.html",
                 },

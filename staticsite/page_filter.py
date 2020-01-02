@@ -66,8 +66,10 @@ class PageFilter:
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
+            root: Optional[str] = None,
             **kw):
         self.site = site
+        self.root = root + "/" if root is not None else None
 
         if path is not None:
             self.re_path = compile_page_match(path)
@@ -94,7 +96,12 @@ class PageFilter:
             if self.re_path is not None:
                 if page.src is None:
                     continue
-                if not self.re_path.match(page.src.relpath):
+                page_path = page.src.relpath
+                if self.root is not None:
+                    if not page_path.startswith(self.root):
+                        continue
+                    page_path = page_path[len(self.root):]
+                if not self.re_path.match(page_path):
                     continue
             if self.sort_meta is not None and self.sort_meta not in page.meta:
                 continue

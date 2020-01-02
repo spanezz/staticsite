@@ -299,9 +299,9 @@ It defaults to false, or true if `page.meta.date` is in the future.
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            meta["site_path"] = self.settings.SITE_ROOT.lstrip("/")
+            meta["site_path"] = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
         else:
-            meta["site_path"] = ""
+            meta["site_path"] = "/"
         if self.settings.SITE_NAME:
             meta["site_name"] = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
