@@ -24,8 +24,10 @@ A browser will open with a preview of your blog.
 
 ## Step 3: add posts
 
-Create files ending in `.md` or `.rst`: as soon as you save
-them, they'll automatically appear in your blog.
+Create `new_post.md` and type something into it: as soon as you save it,
+it will automatically appear in your blog.
+
+Throw in a `new_post.jpg` to add an image to your new blog post.
 
 
 ## Step 4: publish your site
