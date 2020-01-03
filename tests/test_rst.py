@@ -52,6 +52,7 @@ Example blog post in reStructuredText
                     "site_path": "/",
                     "site_url": "https://www.example.org",
                     "build_path": "index.html",
+                    'related': {},
                 },
                 "type": "rst",
             })

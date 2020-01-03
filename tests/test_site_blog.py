@@ -32,6 +32,7 @@ class TestSite(TestCase):
                     'title': 'About',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
                     'nav_title': 'About',
+                    'related': {},
                 },
                 "type": "markdown",
             })
@@ -87,6 +88,7 @@ class TestSite(TestCase):
                     'template': 'archive.html',
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'related': {},
                 },
                 "type": "archive",
             })
@@ -112,6 +114,7 @@ class TestSite(TestCase):
                     'template': 'syndication.rss',
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'related': {},
                 },
                 "type": "rss",
             })

@@ -45,6 +45,7 @@ class TestNav(TestCase):
                     "build_path": "dir1/dir2/dir3/page/index.html",
                     'template': 'page.html',
                     'title': 'Test site',
+                    'related': {},
                 },
                 "type": "markdown",
             })

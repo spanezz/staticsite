@@ -325,10 +325,12 @@ class MetadataRelated(Metadata):
         kw.setdefault("structure", True)
         super().__init__(*args, **kw)
 
+    def on_load(self, page: Page):
+        if self.name not in page.meta:
+            page.meta[self.name] = {}
+
     def on_analyze(self, page: Page):
         related = page.meta.get("related")
-        if related is None:
-            return
         # TODO: if this fails, we can introduce a LazyPage(page, path),
         # resolved at usage time to the actual page
         for k, v in related.items():

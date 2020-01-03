@@ -232,6 +232,9 @@ Dict of pages related to this page.
 
 Dict values will be resolved as pages.
 
+If there are no related pages, `page.meta.related` will be guaranteed to exist
+as an empty dictionary.
+
 Features can add to this. For example, [syndication](syndication.md) can add
 `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
 """))
@@ -416,6 +419,8 @@ Features can add to this. For example, [syndication](syndication.md) can add
 
         # Run metadata on_analyze functions
         for page in self.pages.values():
+            if page.meta.get("asset", False):
+                continue
             self.metadata.on_analyze(page)
 
         # Add missing pages_by_metadata entries in case no matching page were

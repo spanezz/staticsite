@@ -35,6 +35,7 @@ class TestSite(TestCase):
                     "build_path": "blog/index.rss",
                     'template': 'syndication.rss',
                     'title': 'Example blog feed',
+                    'related': {},
                 },
                 "type": "rss",
             })
