@@ -318,6 +318,8 @@ class ArchivePage(Page):
         else:
             self.meta["date"] = self.site.generation_time
 
+        self.created_from.add_related("archive", self)
+
 
 FEATURES = {
     "syndication": SyndicationFeature,

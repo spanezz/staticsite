@@ -62,6 +62,7 @@ class TestSite(TestCase):
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
                     'nav_title': 'My example blog',
+                    'related': {'archive': 'ArchivePage(/archive)'},
                 },
                 "type": "markdown",
             })
