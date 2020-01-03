@@ -23,10 +23,21 @@ class File(NamedTuple):
             return self.relpath
 
     @classmethod
-    def from_abspath(cls, tree_root: str, abspath: str):
+    def from_abspath(cls, tree_root: str, abspath: str) -> "File":
         return cls(
                 relpath=os.path.relpath(abspath, tree_root),
                 abspath=abspath)
+
+    @classmethod
+    def from_dir_entry(cls, dir: "File", entry: os.DirEntry) -> "File":
+        return cls(
+                relpath=os.path.join(dir.relpath, entry.name),
+                abspath=os.path.join(dir.abspath, entry.name),
+                stat=entry.stat())
+
+    @classmethod
+    def with_stat(cls, relpath: str, abspath: str):
+        return cls(relpath, abspath, os.stat(abspath))
 
     @classmethod
     def scan(cls, abspath, follow_symlinks=False, ignore_hidden=False):

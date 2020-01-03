@@ -1,12 +1,46 @@
 from __future__ import annotations
-from typing import Dict, Union
+from typing import Dict, Union, Any
 import os
+import stat
 import tempfile
 import logging
+import datetime
+import pytz
 from contextlib import contextmanager
 import staticsite
 from staticsite.settings import Settings
 from staticsite.utils import front_matter
+from unittest import mock
+
+
+@contextmanager
+def mock_file_stat(overrides: Dict[int, Any]):
+    """
+    Override File.stat contents.
+
+    Overrides is a dict like: `{"st_mtime": 12345}`
+    """
+    real_stat = os.stat
+    real_file_from_dir_entry = staticsite.File.from_dir_entry
+
+    # See https://www.peterbe.com/plog/mocking-os.stat-in-python
+    def mock_stat(*args, **kw):
+        res = list(real_stat(*args, **kw))
+        for k, v in overrides.items():
+            res[getattr(stat, k.upper())] = v
+        return os.stat_result(res)
+
+    def mock_file_from_dir_entry(dir, entry):
+        res = real_file_from_dir_entry(dir, entry)
+        st = list(res.stat)
+        for k, v in overrides.items():
+            st[getattr(stat, k.upper())] = v
+        res = staticsite.File(res.relpath, res.abspath, os.stat_result(st))
+        return res
+
+    with mock.patch("staticsite.file.os.stat", new=mock_stat):
+        with mock.patch("staticsite.file.File.from_dir_entry", new=mock_file_from_dir_entry):
+            yield
 
 
 class Site(staticsite.Site):
@@ -80,7 +114,20 @@ def example_site_dir(name="demo"):
 
 
 @contextmanager
-def example_site(name="demo", **kw):
+def example_site(name="demo", stat_override=None, generation_time=None, **kw):
+    if stat_override is None:
+        stat_override = {
+            # date +%s --date="2019-06-01 12:30"
+            "st_mtime": 1559385000,
+        }
+    elif stat_override is False:
+        stat_override = None
+
+    if generation_time is None:
+        generation_time = datetime.datetime(2020, 2, 1, 16, 0, tzinfo=pytz.utc)
+    elif generation_time is False:
+        generation_time = None
+
     with assert_no_logs():
         with example_site_dir(name) as root:
             src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -95,9 +142,12 @@ def example_site(name="demo", **kw):
             for k, v in kw.items():
                 setattr(settings, k, v)
 
-            site = staticsite.Site(settings=settings)
-            site.load()
-            site.analyze()
+            with mock_file_stat(stat_override):
+                site = staticsite.Site(settings=settings)
+                if generation_time is not None:
+                    site.generation_time = generation_time
+                site.load()
+                site.analyze()
             yield site
 
 

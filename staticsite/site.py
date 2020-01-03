@@ -311,7 +311,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
             log.info("%s: content tree does not exist", self.content_root)
             return
 
-        src = File("", os.path.abspath(self.content_root), os.stat(self.content_root))
+        src = File.with_stat("", os.path.abspath(self.content_root))
         self.scan_tree(src, meta=self._settings_to_meta())
         self.theme.scan_assets()
         self.stage_content_directory_scanned = True
@@ -426,9 +426,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
         return slugify(text)
 
     def localized_timestamp(self, ts):
-        return pytz.utc.localize(
-                        datetime.datetime.utcfromtimestamp(ts)
-                    ).astimezone(self.timezone)
+        return datetime.datetime.fromtimestamp(ts, tz=pytz.utc).astimezone(self.timezone)
 
     # TODO: support partial dates?
     re_isodate = re.compile(r"^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})(Z|\+\d{2}.*)$")
