@@ -116,7 +116,7 @@ class TaxonomyPage(Page):
         super().__init__(*args, **kw)
 
         self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
-        self.meta.setdefault("template", "taxonomy/taxonomy.html")
+        self.meta.setdefault("template", "taxonomy.html")
         self.meta.setdefault("nav_title", name.capitalize())
 
         # Taxonomy name (e.g. "tags")
@@ -128,7 +128,7 @@ class TaxonomyPage(Page):
 
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
-        self.category_meta.setdefault("template", "taxonomy/category.html")
+        self.category_meta.setdefault("template", "blog.html")
         self.category_meta.setdefault("template_title", "{{page.name}}")
 
         synd = self.category_meta.get("syndication")
@@ -260,6 +260,9 @@ class CategoryPage(Page):
             return NotImplemented
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
+
+    def _render_page_content(self, **kw):
+        return ""
 
     def series_info(self):
         """

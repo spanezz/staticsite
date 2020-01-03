@@ -35,6 +35,7 @@
 * New [`page.meta.related` metadata](doc/reference/metadata.md)
 * Feed links are now created based on `page.meta.related.rss_feed` and
   `page.meta.related.atom_feed`
+* Taxonomy now reuses blog and archive templates by default
 
 ## Upgrade notes
 
@@ -54,6 +55,12 @@
   `page.meta.related.atom_feed`: you may need to update your templates if they
   still looked for `page.meta.syndication.rss_page` and
   `page.meta.syndication.atom_page`
+* The default template for taxonomy pages is now `taxonomy.html` instead of
+  `taxonomy/taxonomy.html`
+* The default template for taxonomy categories is now `blog.html` instead of
+  `taxonomy/category.html`
+* The default template for taxonomy category archives is now `archive.html`
+  instead of `taxonomy/archive.html`
 
 # New in version 1.3
 

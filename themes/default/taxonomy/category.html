@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% import 'lib/blog.html' as blog with context %}
-
-{% block content %}
-<h1 class="display-4">{{page.meta.title}}</h1>
-
-{{blog.pages(page, limit=10)}}
-
-{% endblock %}
