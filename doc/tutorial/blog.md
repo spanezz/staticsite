@@ -1,6 +1,6 @@
-# Build a blog
+# A new blog in under one minute
 
-Build a new blog in few simple steps:
+Create a new blog in few simple steps:
 
 ## Step 1: create `index.md`:
 

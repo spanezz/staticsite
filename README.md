@@ -17,7 +17,7 @@ Freely organise your contents, and turn any directory into a website.
 
 ## Get started
 
-* [Build a blog in under one minute!](doc/tutorial/blog.md)
+* [A new blog in under one minute!](doc/tutorial/blog.md)
 * [See more quickstart guides](doc/tutorial/README.md)
 
 
