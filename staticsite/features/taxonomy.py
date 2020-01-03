@@ -158,7 +158,6 @@ class TaxonomyPage(Page):
         res["name"] = self.name
         res["categories"] = dump_meta(self.categories)
         res["category_meta"] = dump_meta(self.category_meta)
-        res["archive_meta"] = dump_meta(self.archive_meta)
         return res
 
     def __getitem__(self, name):
