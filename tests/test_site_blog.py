@@ -36,6 +36,36 @@ class TestSite(TestCase):
                 "type": "markdown",
             })
 
+            self.assertEqual(site.pages["/"].to_dict(), {
+                "src": {
+                    "relpath": "index.md",
+                    "abspath": os.path.join(site.content_root, "index.md"),
+                },
+                "meta": {
+                    "date": '2019-12-30 17:30:00+01:00',
+                    "draft": False,
+                    'author': "Test User",
+                    'copyright': '© 2019 Test User',
+                    'indexed': True,
+                    'syndicated': True,
+                    'syndication': {'atom_page': 'AtomPage(/index.atom)',
+                                    'index': 'MarkdownPage(/)',
+                                    'pages': ['MarkdownPage(/posts/example)'],
+                                    'rss_page': 'RSSPage(/index.rss)'},
+                    'syndication_date': '2019-06-01 12:30:00+02:00',
+                    'pages': ['MarkdownPage(/posts/example)'],
+                    'site_name': 'My example blog',
+                    'site_path': '/',
+                    'site_url': 'https://www.example.org',
+                    "build_path": "index.html",
+                    'template': 'blog.html',
+                    'title': 'My example blog',
+                    'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'nav_title': 'My example blog',
+                },
+                "type": "markdown",
+            })
+
             self.assertEqual(site.pages["/index.rss"].to_dict(), {
                 "src": {
                     "relpath": "index.md",
@@ -57,7 +87,6 @@ class TestSite(TestCase):
                     'template': 'syndication.rss',
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
-                    'nav_title': 'My example blog',
                 },
                 "type": "rss",
             })

@@ -374,6 +374,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
             log.info("%s: page is still a draft: skipping", page)
             return
 
+        # Mount page by site path
         site_path = page.meta["site_path"]
         old = self.pages.get(site_path)
         if old is not None:
@@ -384,7 +385,10 @@ It defaults to false, or true if `page.meta.date` is in the future.
             else:
                 log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
-        if page.src is not None:
+
+        # Mount page by src.relpath
+        # Skip pages derived from other pages, or they would overwrite them
+        if page.src is not None and not page.created_from:
             self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
