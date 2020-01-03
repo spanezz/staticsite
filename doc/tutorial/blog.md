@@ -42,4 +42,5 @@ The contents of `built_site` are ready to be published by any web server.
 * [See more tutorials](README.md)
 * [Add an about page](../howto/about-page.md)
 * [Group blog posts in a directory](../howto/blog-posts-in-a-directory.md)
+* [Tag site pages](../howto/tag-pages.md)
 * [Back to main documentation](../../README.md)

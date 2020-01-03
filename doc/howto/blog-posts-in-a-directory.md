@@ -52,5 +52,6 @@ Welcome to my new blog.
 
 ## Next steps
 
+* [Tag site pages](tag-pages.md)
 * [More HOWTOs](README.md)
 * [Back to main documentation](../../README.md)
