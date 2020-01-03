@@ -195,9 +195,6 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             # Add the syndication link to the index page
             page.meta["syndication"] = meta
 
-            # Base site path from the original page
-            meta["site_path"] = page.meta["site_path"]
-
             # Index page for the syndication
             meta["index"] = page
 
@@ -208,13 +205,13 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             self.site.theme.precompile_metadata_templates(meta)
 
             # RSS feed
-            rss_page = RSSPage(self.site, page.src, meta, dir=page.dir)
+            rss_page = RSSPage.create_from(page, dict(meta))
             meta["rss_page"] = rss_page
             self.site.add_page(rss_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
-            atom_page = AtomPage(self.site, page.src, meta, dir=page.dir)
+            atom_page = AtomPage.create_from(page, dict(meta))
             meta["atom_page"] = atom_page
             self.site.add_page(atom_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
@@ -248,22 +245,21 @@ class SyndicationPage(Page):
     # Default template to use for this type of page
     TEMPLATE: str
 
-    def __init__(self, site: Site, src: File, meta: Dict[str, Any], dir=Dir):
-        index = meta["index"]
-        meta = dict(meta)
-        meta["site_path"] = os.path.join(meta["site_path"], f"index.{self.TYPE}")
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
 
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
-        self.meta["build_path"] = meta["site_path"]
+        build_path = self.created_from.meta["build_path"]
+        root, ext = os.path.splitext(build_path)
+        build_path = f"{root}.{self.TYPE}"
+
+        self.meta["build_path"] = build_path
+        self.meta["site_path"] = "/" + build_path
+
         self.meta.setdefault("template", self.TEMPLATE)
         if self.meta["pages"]:
             self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
         else:
             self.meta["date"] = self.site.generation_time
-
-        # Copy well known keys from index page
-        for key in "site_root", "site_url", "author", "site_name":
-            self.meta.setdefault(key, index.meta.get(key))
 
 
 class RSSPage(SyndicationPage):
