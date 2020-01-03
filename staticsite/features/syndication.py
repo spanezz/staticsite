@@ -1,17 +1,14 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any, Union, List, Optional
+from typing import Dict, Any, Union, List, Optional
 import os
 import logging
 from staticsite import Site
 from staticsite.feature import Feature
 from staticsite.page import Page, PageNotFoundError
 from staticsite.metadata import Metadata
-from staticsite.contents import Dir
 from staticsite.utils import arrange
 import jinja2
 
-if TYPE_CHECKING:
-    from staticsite import File
 
 log = logging.getLogger("syndication")
 
@@ -96,6 +93,9 @@ It is a structure which can contain normal metadata, plus:
   then no feed is added to pages. If it is a dictionary, it selects pages in
   the site, similar to the `site_pages` function in [templates](templates.md).
   See [Selecting pages](page-filter.md) for details.
+* `archive`: if not false, an archive link will be generated next to the
+  page. It can be set of a dictionary of metadata to be used as defaults for
+  the generated archive page. It defaults to True.
 
 Any other metadata found in the structure are used when generating pages for
 the RSS/Atom feeds, so you can use `title`, `template_title`, `description`,
@@ -107,6 +107,16 @@ The pages that go in the feed are those listed in
 
 When rendering RSS/Atom feed pages, `page.meta.pages` is replaced with the list
 of syndicated pages, sorted with the most recent first.
+
+Setting `syndication` to true turns on syndication with all defaults,
+equivalent to:
+
+```yaml
+syndication:
+  add_to: yes
+  archive:
+    template: archive.html
+```
 """))
         self.site.register_metadata(MetadataSyndicated("syndicated", doc="""
 Set to true if the page can be included in a syndication, else to false.
@@ -204,6 +214,18 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             self.site.theme.precompile_metadata_templates(meta)
 
+            archive_meta = meta.get("archive")
+            if archive_meta is None or archive_meta is True:
+                archive_meta = {}
+            elif archive_meta is False:
+                archive_meta = None
+            else:
+                archive_meta = dict(archive_meta)
+
+            if archive_meta is not None:
+                archive_page = ArchivePage.create_from(page, archive_meta)
+                self.site.add_page(archive_page)
+
             # RSS feed
             rss_page = RSSPage.create_from(page, dict(meta))
             meta["rss_page"] = rss_page
@@ -276,6 +298,26 @@ class AtomPage(SyndicationPage):
     """
     TYPE = "atom"
     TEMPLATE = "syndication.atom"
+
+
+class ArchivePage(Page):
+    TYPE = "archive"
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+
+        if "site_path" not in self.meta:
+            site_path = os.path.join(self.created_from.meta["site_path"], "archive")
+            self.meta["site_path"] = site_path
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html").lstrip("/")
+
+        self.meta.setdefault("template", "archive.html")
+        self.meta["pages"] = self.created_from.meta["pages"]
+
+        if self.meta["pages"]:
+            self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
+        else:
+            self.meta["date"] = self.site.generation_time
 
 
 FEATURES = {

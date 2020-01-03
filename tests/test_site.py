@@ -27,7 +27,7 @@ class TestBuild(TestCase):
             with test_utils.example_site_dir() as root:
                 args = test_utils.Args(project=root)
                 build = Build(args)
-                build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))
+                build.settings.THEME_PATHS.insert(0, os.path.join(os.getcwd(), "themes"))
                 build.run()
 
                 output = os.path.join(root, "web/.secret")
@@ -40,16 +40,16 @@ class TestBuild(TestCase):
             with test_utils.example_site_dir() as root:
                 args = test_utils.Args(project=root)
                 build = Build(args)
-                build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))
+                build.settings.THEME_PATHS.insert(0, os.path.join(os.getcwd(), "themes"))
                 build.run()
 
                 output = os.path.join(root, "web/pages/index.html")
-                with open(output, "rt") as fd:
+                with open(output, "rt", encoding="utf8") as fd:
                     content = fd.read()
                 self.assertIn('<a href="/pages/doc/sub">Docs</a>', content)
                 self.assertIn('<a href="/">Back home</a>', content)
 
                 output = os.path.join(root, "web/pages/doc/sub/index.html")
-                with open(output, "rt") as fd:
+                with open(output, "rt", encoding="utf8") as fd:
                     content = fd.read()
                 self.assertIn('<a href="/pages">Back to README</a>', content)

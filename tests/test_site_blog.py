@@ -66,6 +66,30 @@ class TestSite(TestCase):
                 "type": "markdown",
             })
 
+            self.assertEqual(site.pages["/archive"].to_dict(), {
+                "src": {
+                    "relpath": "index.md",
+                    "abspath": os.path.join(site.content_root, "index.md"),
+                },
+                "meta": {
+                    "date": '2019-12-30 17:30:00+01:00',
+                    "draft": False,
+                    'author': "Test User",
+                    'copyright': '© 2019 Test User',
+                    'indexed': False,
+                    'syndicated': False,
+                    'pages': ['MarkdownPage(/posts/example)'],
+                    'site_name': 'My example blog',
+                    'site_path': '/archive',
+                    'site_url': 'https://www.example.org',
+                    "build_path": "archive/index.html",
+                    'template': 'archive.html',
+                    'title': 'My example blog',
+                    'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                },
+                "type": "archive",
+            })
+
             self.assertEqual(site.pages["/index.rss"].to_dict(), {
                 "src": {
                     "relpath": "index.md",

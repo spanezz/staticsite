@@ -64,11 +64,11 @@ class Page:
         self.content_has_split = False
 
     @classmethod
-    def create_from(cls, page: "Page", meta: Meta):
+    def create_from(cls, page: "Page", meta: Meta, **kw):
         """
         Generate this page derived from an existing one
         """
-        return cls(page.site, page.src, meta, dir=page.dir, created_from=page)
+        return cls(page.site, page.src, meta, dir=page.dir, created_from=page, **kw)
 
     def validate(self):
         """

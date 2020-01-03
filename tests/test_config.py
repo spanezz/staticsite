@@ -93,13 +93,13 @@ class TestExampleProject(TestCase):
     def _test_project(self, root, title='Example web site', cfg='', **kw):
         args = test_utils.Args(project=root + cfg, **kw)
         build = Build(args)
-        build.settings.THEME_PATHS.append(os.path.join(os.getcwd(), "themes"))
+        build.settings.THEME_PATHS.insert(0, os.path.join(os.getcwd(), "themes"))
         build.run()
 
         output = os.path.join(root, "web/index.html")
         self.assertTrue(os.path.exists(output))
 
-        with open(output, "rt") as fd:
+        with open(output, "rt", encoding="utf8") as fd:
             content = fd.read()
 
         # FIXME: this does not make sense anymore, since title is not defined
