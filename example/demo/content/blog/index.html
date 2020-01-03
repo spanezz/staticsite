@@ -2,20 +2,12 @@
 
 {% block front_matter %}
 ---
-files:
-  "*.html":
-    syndicated: no
-pages: "^blog/\\d+/"
+pages: "^\\d+/"
 syndication:
   title: "Example blog feed"
 {% endblock %}
 
 {% import 'lib/blog.html' as blog with context %}
-
-{% block nav %}
-{{super()}}
-<li class="nav-item"><a class="nav-link" href="{{ url_for('/blog/archive.html') }}">Archive</a></li>
-{% endblock %}
 
 {% block content %}
 

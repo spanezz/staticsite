@@ -19,6 +19,26 @@
 </div>
 {%- endmacro %}
 
+{% macro main_link() -%}
+  {% if page.created_from %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(page.created_from)}}">{{page.created_from.meta.title}}</a>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro archive_link() -%}
+  {% if page.meta.related.archive %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(page.meta.related.archive)}}">Archive</a>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+
 {% macro top_tags(limit=15) -%}
 {% with tags = taxonomy("tags") %}
   {% if tags %}

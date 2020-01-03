@@ -162,19 +162,13 @@ class ContentDir(Dir):
                         # Skip hidden directories
                         continue
                     # Take note of directories
-                    subdirs[entry.name] = file.File(
-                            relpath=os.path.join(self.src.relpath, entry.name),
-                            abspath=os.path.join(self.src.abspath, entry.name),
-                            stat=entry.stat())
+                    subdirs[entry.name] = file.File.from_dir_entry(self.src, entry)
                 elif entry.name.startswith(".") and entry.name != ".staticsite":
                     # Skip hidden files
                     continue
                 else:
                     # Take note of files
-                    self.files[entry.name] = file.File(
-                            relpath=os.path.join(self.src.relpath, entry.name),
-                            abspath=os.path.join(self.src.abspath, entry.name),
-                            stat=entry.stat())
+                    self.files[entry.name] = file.File.from_dir_entry(self.src, entry)
 
         # Load dir metadata from .staticsite, if present
         # TODO: move this to a feature implementing just load_dir_meta?
@@ -316,16 +310,10 @@ class AssetDir(ContentDir):
                 # Note: is_dir, is_file, and stat, follow symlinks by default
                 if entry.is_dir():
                     # Take note of directories
-                    subdirs[entry.name] = file.File(
-                            relpath=os.path.join(self.src.relpath, entry.name),
-                            abspath=os.path.join(self.src.abspath, entry.name),
-                            stat=entry.stat())
+                    subdirs[entry.name] = file.File.from_dir_entry(self.src, entry)
                 else:
                     # Take note of files
-                    self.files[entry.name] = file.File(
-                            relpath=os.path.join(self.src.relpath, entry.name),
-                            abspath=os.path.join(self.src.abspath, entry.name),
-                            stat=entry.stat())
+                    self.files[entry.name] = file.File.from_dir_entry(self.src, entry)
 
         # TODO: build a directory page here? Or at site load time?
         # TODO: its contents can be added at analyze time

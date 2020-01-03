@@ -1,10 +1,9 @@
 from __future__ import annotations
 from typing import List, Dict, Iterable, Optional
-from staticsite import Page, Site, File
+from staticsite import Page
 from staticsite.feature import Feature
-from staticsite.contents import ContentDir, Dir
+from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
-from staticsite.utils.typing import Meta
 from collections import defaultdict
 import heapq
 import functools
@@ -113,11 +112,11 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, site: Site, src: File, name: str, meta: Meta, dir: Dir):
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
+    def __init__(self, *args, name: str, **kw):
+        super().__init__(*args, **kw)
 
-        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
-        self.meta.setdefault("template", "taxonomy/taxonomy.html")
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
+        self.meta.setdefault("template", "taxonomy.html")
         self.meta.setdefault("nav_title", name.capitalize())
 
         # Taxonomy name (e.g. "tags")
@@ -129,22 +128,29 @@ class TaxonomyPage(Page):
 
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
-        self.category_meta.setdefault("template", "taxonomy/category.html")
+        self.category_meta.setdefault("template", "blog.html")
         self.category_meta.setdefault("template_title", "{{page.name}}")
+
         synd = self.category_meta.get("syndication")
         if synd is None or synd is True:
-            self.category_meta["syndication"] = {"add_to": False}
+            self.category_meta["syndication"] = synd = {}
         elif synd is False:
-            pass
-        else:
-            self.category_meta["syndication"].setdefault("add_to", False)
-        self.site.theme.precompile_metadata_templates(self.category_meta)
+            synd = None
 
-        # Metadata for archive pages
-        self.archive_meta = self.meta.get("archive", {})
-        self.archive_meta.setdefault("template", "taxonomy/archive.html")
-        self.archive_meta.setdefault("template_title", "{{page.name}} archive")
-        self.site.theme.precompile_metadata_templates(self.archive_meta)
+        if synd is not None:
+            synd.setdefault("add_to", False)
+
+            archive = synd.get("archive")
+            if archive is None or archive is True:
+                synd["archive"] = archive = {}
+            elif archive is False:
+                archive = None
+
+            if archive is not None:
+                archive.setdefault("template_title", "{{page.created_from.name}} archive")
+                self.site.theme.precompile_metadata_templates(archive)
+
+        self.site.theme.precompile_metadata_templates(self.category_meta)
 
     def to_dict(self):
         from staticsite.utils import dump_meta
@@ -152,7 +158,6 @@ class TaxonomyPage(Page):
         res["name"] = self.name
         res["categories"] = dump_meta(self.categories)
         res["category_meta"] = dump_meta(self.category_meta)
-        res["archive_meta"] = dump_meta(self.archive_meta)
         return res
 
     def __getitem__(self, name):
@@ -195,22 +200,10 @@ class TaxonomyPage(Page):
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
             category_meta["site_path"] = os.path.join(self.meta["site_path"], category)
-            # TODO: synthetise a directory?
-            category_page = CategoryPage(self.site, self.src, category, meta=category_meta, dir=self.dir)
+
+            category_page = CategoryPage.create_from(self, meta=category_meta, name=category)
             self.categories[category] = category_page
             self.site.add_page(category_page)
-
-            # Create archive page
-            archive_meta = dict(self.archive_meta)
-            archive_meta["taxonomy"] = self
-            archive_meta["pages"] = pages
-            archive_meta["category"] = category_page
-            archive_meta["date"] = category_meta["date"]
-            archive_meta["site_path"] = os.path.join(self.meta["site_path"], category, "archive")
-            # TODO: synthetise a directory?
-            archive_page = CategoryArchivePage(self.site, self.src, meta=archive_meta, dir=self.dir)
-            category_page.meta["archive"] = archive_page
-            self.site.add_page(archive_page)
 
         # Replace category names with category pages in each categorized page
         for page in self.site.pages_by_metadata[self.name]:
@@ -233,9 +226,9 @@ class CategoryPage(Page):
     """
     TYPE = "category"
 
-    def __init__(self, site: Site, src: File, name: str, meta: Meta, dir: Dir):
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
-        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
+    def __init__(self, *args, name: str = None, **kw):
+        super().__init__(*args, **kw)
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
         # Category name
         self.name = name
         # Index of each page in the category sequence
@@ -267,6 +260,9 @@ class CategoryPage(Page):
             return NotImplemented
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
+
+    def _render_page_content(self, **kw):
+        return ""
 
     def series_info(self):
         """
@@ -315,27 +311,6 @@ class CategoryPage(Page):
             "next": pages[idx + 1] if idx < len(pages) - 1 else None,
             "title": series_title,
         }
-
-
-class CategoryArchivePage(Page):
-    """
-    Index page showing the archive page for a CategoryPage
-    """
-    TYPE = "category_archive"
-
-    def __init__(self, site: Site, src: File, meta: Meta, dir: Dir):
-        category_page = meta["category"]
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
-
-        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
-
-        # Category name
-        self.name = category_page.name
-
-    def to_dict(self):
-        res = super().to_dict()
-        res["name"] = self.name
-        return res
 
 
 class TestTaxonomyPage(TaxonomyPage):

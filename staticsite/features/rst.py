@@ -3,7 +3,7 @@ from typing import List, Tuple
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
-from staticsite.contents import ContentDir, Dir
+from staticsite.contents import ContentDir
 from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
 from staticsite.file import File
@@ -166,7 +166,7 @@ class RestructuredText(Feature):
 
             meta.update(fm_meta)
 
-            page = RstPage(self, src, meta=meta, dir=sitedir, doctree_scan=doctree_scan)
+            page = RstPage(self.site, src, meta=meta, dir=sitedir, feature=self, doctree_scan=doctree_scan)
             pages.append(page)
 
         for fname in taken:
@@ -234,10 +234,10 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, feature: RestructuredText, src: File, meta: Meta, dir: Dir, doctree_scan: DoctreeScan):
-        super().__init__(site=feature.site, src=src, meta=meta, dir=dir)
+    def __init__(self, *args, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
+        super().__init__(*args, **kw)
 
-        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

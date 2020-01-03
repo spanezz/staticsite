@@ -56,23 +56,24 @@ Example:
 
 # Template for rendering the taxonomy index. Here, it's the page that shows the
 # list of tags
-template: taxonomy/taxonomy.html
+template: taxonomy.html
 
 category:
    # Template for rendering the page for one tag. Here, it's the page that shows
    # the latest pages tagged with the tag
-   template: taxonomy/category.html
+   template: blog.html
    # Title used in category pages
    template_title: "Latest posts for tag <strong>{{page.name}}</strong>"
    # Description used in category pages
    template_description: "Most recent posts with tag <strong>{{page.name}}</strong>"
 
-archive:
-   # Template for rendering the archive page for one tag. Here, it's the page that
-   # links to all the pages tagged with the tag
-   template = "taxonomy/archive.html"
-   template_title: "Archive of posts for tag <strong>{{page.name}}</strong>"
-   template_description: "Archive of all posts with tag <strong>{{page.name}}</strong>"
+   syndication:
+     add_to: no
+     archive:
+       # Template for rendering the archive page for one tag. Here, it's the page that
+       # links to all the pages tagged with the tag
+       template_title: "Archive of posts for tag <strong>{{page.name}}</strong>"
+       template_description: "Archive of all posts with tag <strong>{{page.name}}</strong>"
 ```
 
 

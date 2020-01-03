@@ -1,17 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any, Union, List, Optional
+from typing import Union, List, Optional
 import os
 import logging
-from staticsite import Site
 from staticsite.feature import Feature
 from staticsite.page import Page, PageNotFoundError
 from staticsite.metadata import Metadata
-from staticsite.contents import Dir
 from staticsite.utils import arrange
 import jinja2
 
-if TYPE_CHECKING:
-    from staticsite import File
 
 log = logging.getLogger("syndication")
 
@@ -96,6 +92,9 @@ It is a structure which can contain normal metadata, plus:
   then no feed is added to pages. If it is a dictionary, it selects pages in
   the site, similar to the `site_pages` function in [templates](templates.md).
   See [Selecting pages](page-filter.md) for details.
+* `archive`: if not false, an archive link will be generated next to the
+  page. It can be set of a dictionary of metadata to be used as defaults for
+  the generated archive page. It defaults to True.
 
 Any other metadata found in the structure are used when generating pages for
 the RSS/Atom feeds, so you can use `title`, `template_title`, `description`,
@@ -107,6 +106,16 @@ The pages that go in the feed are those listed in
 
 When rendering RSS/Atom feed pages, `page.meta.pages` is replaced with the list
 of syndicated pages, sorted with the most recent first.
+
+Setting `syndication` to true turns on syndication with all defaults,
+equivalent to:
+
+```yaml
+syndication:
+  add_to: yes
+  archive:
+    template: archive.html
+```
 """))
         self.site.register_metadata(MetadataSyndicated("syndicated", doc="""
 Set to true if the page can be included in a syndication, else to false.
@@ -195,9 +204,6 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             # Add the syndication link to the index page
             page.meta["syndication"] = meta
 
-            # Base site path from the original page
-            meta["site_path"] = page.meta["site_path"]
-
             # Index page for the syndication
             meta["index"] = page
 
@@ -208,16 +214,36 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             self.site.theme.precompile_metadata_templates(meta)
 
             # RSS feed
-            rss_page = RSSPage(self.site, page.src, meta, dir=page.dir)
+            rss_page = RSSPage.create_from(page, dict(meta))
             meta["rss_page"] = rss_page
             self.site.add_page(rss_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
-            atom_page = AtomPage(self.site, page.src, meta, dir=page.dir)
+            atom_page = AtomPage.create_from(page, dict(meta))
             meta["atom_page"] = atom_page
             self.site.add_page(atom_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
+
+            # Archive page
+            archive_meta = meta.get("archive")
+            if archive_meta is None or archive_meta is True:
+                archive_meta = {}
+            elif archive_meta is False:
+                archive_meta = None
+            else:
+                archive_meta = dict(archive_meta)
+
+            if archive_meta is not None:
+                archive_page = ArchivePage.create_from(page, archive_meta)
+                self.site.add_page(archive_page)
+                archive_page.add_related("rss_feed", rss_page)
+                archive_page.add_related("atom_feed", atom_page)
+            else:
+                archive_page = None
+
+            page.add_related("rss_feed", rss_page)
+            page.add_related("atom_feed", atom_page)
 
             # Add a link to the syndication to the pages listed in add_to
             add_to = meta.get("add_to", True)
@@ -225,20 +251,12 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                 pass
             elif add_to is True:
                 for dest in meta["pages"]:
-                    old = dest.meta.get("syndication")
-                    if old is not None:
-                        log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
-                                 dest, page, old["index"])
-                    dest.meta["syndication"] = meta
+                    dest.add_related("rss_feed", rss_page)
+                    dest.add_related("atom_feed", atom_page)
             else:
                 for dest in page.find_pages(**add_to):
-                    if dest == page:
-                        continue
-                    old = dest.meta.get("syndication")
-                    if old is not None:
-                        log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
-                                 dest, page, old["index"])
-                    dest.meta["syndication"] = meta
+                    dest.add_related("rss_feed", rss_page)
+                    dest.add_related("atom_feed", atom_page)
 
 
 class SyndicationPage(Page):
@@ -248,22 +266,21 @@ class SyndicationPage(Page):
     # Default template to use for this type of page
     TEMPLATE: str
 
-    def __init__(self, site: Site, src: File, meta: Dict[str, Any], dir=Dir):
-        index = meta["index"]
-        meta = dict(meta)
-        meta["site_path"] = os.path.join(meta["site_path"], f"index.{self.TYPE}")
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
 
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
-        self.meta["build_path"] = meta["site_path"]
+        build_path = self.created_from.meta["build_path"]
+        root, ext = os.path.splitext(build_path)
+        build_path = f"{root}.{self.TYPE}"
+
+        self.meta["build_path"] = build_path
+        self.meta["site_path"] = "/" + build_path
+
         self.meta.setdefault("template", self.TEMPLATE)
         if self.meta["pages"]:
             self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
         else:
             self.meta["date"] = self.site.generation_time
-
-        # Copy well known keys from index page
-        for key in "site_root", "site_url", "author", "site_name":
-            self.meta.setdefault(key, index.meta.get(key))
 
 
 class RSSPage(SyndicationPage):
@@ -280,6 +297,28 @@ class AtomPage(SyndicationPage):
     """
     TYPE = "atom"
     TEMPLATE = "syndication.atom"
+
+
+class ArchivePage(Page):
+    TYPE = "archive"
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+
+        if "site_path" not in self.meta:
+            site_path = os.path.join(self.created_from.meta["site_path"], "archive")
+            self.meta["site_path"] = site_path
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html").lstrip("/")
+
+        self.meta.setdefault("template", "archive.html")
+        self.meta["pages"] = self.created_from.meta["pages"]
+
+        if self.meta["pages"]:
+            self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
+        else:
+            self.meta["date"] = self.site.generation_time
+
+        self.created_from.add_related("archive", self)
 
 
 FEATURES = {

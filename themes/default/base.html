@@ -42,9 +42,11 @@
     {% endblock %}
 
     {% block head_syndication %}
-    {% if page.meta.syndication %}
-    <link href="{{ url_for(page.meta.syndication.rss_page) }}" rel="alternate" type="application/rss+xml" title="{{page.meta.syndication.rss_page.meta.title}}"/>
-    <link href="{{ url_for(page.meta.syndication.atom_page) }}" rel="alternate" type="application/atom+xml" title="{{page.meta.syndication.atom_page.meta.title}}"/>
+    {% if page.meta.related.rss_feed -%}
+      <link href="{{ url_for(page.meta.related.rss_feed) }}" rel="alternate" type="application/rss+xml" title="{{page.meta.related.rss_feed.meta.title}}"/>
+    {%- endif %}
+    {% if page.meta.related.atom_feed -%}
+      <link href="{{ url_for(page.meta.related.atom_feed) }}" rel="alternate" type="application/atom+xml" title="{{page.meta.related.atom_feed.meta.title}}"/>
     {% endif %}
     {% endblock %}
 
@@ -91,10 +93,10 @@
           {% endblock %}
         </ul>
         {% block nav_extra %}
-        {% if page.meta.syndication %}
+        {% if page.meta.related.rss_feed %}
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for(page.meta.syndication.rss_page) }}" alt="{{page.meta.syndication.rss_page.meta.title}}" title="{{page.meta.syndication.rss_page.meta.title}}">
+            <a class="nav-link" href="{{url_for(page.meta.related.rss_feed) }}" alt="{{page.meta.related.rss_feed.meta.title}}" title="{{page.meta.related.rss_feed.meta.title}}">
             <img src="{{ url_for('/images/feed-icon-16x16.png') }}">
           </a>
           </li>

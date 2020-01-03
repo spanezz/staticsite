@@ -263,6 +263,7 @@ date: 2010-01-01 00:00:00
                     "build_path": "index.html",
                     'template': 'compiled:index.html',
                     'title': 'Test1 title',
+                    'related': {},
                 },
                 "type": "jinja2",
             })
@@ -286,6 +287,7 @@ date: 2010-01-01 00:00:00
                     "build_path": "page/index.html",
                     'template': 'page.html',
                     'title': 'Test1 title',
+                    'related': {},
                 },
                 "type": "markdown",
             })
@@ -310,6 +312,7 @@ date: 2010-01-01 00:00:00
                     'template': 'compiled:data.html',
                     'title': 'Test1 title',
                     'data_type': 'test',
+                    'related': {},
                 },
                 "type": "data",
             })

@@ -44,8 +44,16 @@ text
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
 
-            self.assertEqual(post1.meta["syndication"], synd)
-            self.assertEqual(post2.meta["syndication"], synd)
+            self.assertNotIn("syndication", post1.meta)
+            self.assertEqual(post1.meta["related"], {
+                "rss_feed": rss,
+                "atom_feed": atom,
+            })
+            self.assertNotIn("syndication", post2.meta)
+            self.assertEqual(post2.meta["related"], {
+                "rss_feed": rss,
+                "atom_feed": atom,
+            })
             self.assertEqual(rss.meta["pages"], synd["pages"])
             self.assertEqual(atom.meta["pages"], synd["pages"])
             self.assertNotIn("syndication", widget.meta)
@@ -106,7 +114,11 @@ text
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2])
 
-            self.assertEqual(post1.meta["syndication"], synd)
+            self.assertNotIn("syndication", post1.meta)
+            self.assertEqual(post1.meta["related"], {
+                "rss_feed": rss,
+                "atom_feed": atom,
+            })
             self.assertNotIn("syndication", post2.meta)
             self.assertNotIn("syndication", widget.meta)
             self.assertEqual(rss.meta["pages"], synd["pages"])

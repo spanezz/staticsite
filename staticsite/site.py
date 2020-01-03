@@ -227,6 +227,18 @@ unless draft mode is enabled.
 It defaults to false, or true if `page.meta.date` is in the future.
 """))
 
+        self.register_metadata(metadata.MetadataRelated("related", doc="""
+Dict of pages related to this page.
+
+Dict values will be resolved as pages.
+
+If there are no related pages, `page.meta.related` will be guaranteed to exist
+as an empty dictionary.
+
+Features can add to this. For example, [syndication](syndication.md) can add
+`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
+"""))
+
     def register_metadata(self, metadata: Metadata):
         """
         Add a well-known metadata description to the metadata registry.
@@ -311,7 +323,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
             log.info("%s: content tree does not exist", self.content_root)
             return
 
-        src = File("", os.path.abspath(self.content_root), os.stat(self.content_root))
+        src = File.with_stat("", os.path.abspath(self.content_root))
         self.scan_tree(src, meta=self._settings_to_meta())
         self.theme.scan_assets()
         self.stage_content_directory_scanned = True
@@ -374,6 +386,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
             log.info("%s: page is still a draft: skipping", page)
             return
 
+        # Mount page by site path
         site_path = page.meta["site_path"]
         old = self.pages.get(site_path)
         if old is not None:
@@ -384,7 +397,10 @@ It defaults to false, or true if `page.meta.date` is in the future.
             else:
                 log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
-        if page.src is not None:
+
+        # Mount page by src.relpath
+        # Skip pages derived from other pages, or they would overwrite them
+        if page.src is not None and not page.created_from:
             self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
@@ -403,6 +419,8 @@ It defaults to false, or true if `page.meta.date` is in the future.
 
         # Run metadata on_analyze functions
         for page in self.pages.values():
+            if page.meta.get("asset", False):
+                continue
             self.metadata.on_analyze(page)
 
         # Add missing pages_by_metadata entries in case no matching page were
@@ -426,9 +444,7 @@ It defaults to false, or true if `page.meta.date` is in the future.
         return slugify(text)
 
     def localized_timestamp(self, ts):
-        return pytz.utc.localize(
-                        datetime.datetime.utcfromtimestamp(ts)
-                    ).astimezone(self.timezone)
+        return datetime.datetime.fromtimestamp(ts, tz=pytz.utc).astimezone(self.timezone)
 
     # TODO: support partial dates?
     re_isodate = re.compile(r"^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})(Z|\+\d{2}.*)$")

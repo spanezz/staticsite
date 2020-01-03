@@ -1,10 +1,8 @@
 from __future__ import annotations
-from typing import List
-from staticsite import Page, Feature, Site, File
+from typing import TYPE_CHECKING, List
+from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
-from staticsite.utils.typing import Meta
-from staticsite.contents import ContentDir, Dir
 from staticsite.page_filter import PageFilter
 from staticsite.metadata import Metadata
 import jinja2
@@ -13,6 +11,9 @@ import os
 import io
 from collections import defaultdict
 import logging
+
+if TYPE_CHECKING:
+    from staticsite.contents import ContentDir
 
 log = logging.getLogger("data")
 
@@ -153,10 +154,10 @@ def write_data(fd, data, fmt):
 class DataPage(Page):
     TYPE = "data"
 
-    def __init__(self, site: Site, src: File, meta: Meta, dir: Dir):
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
 
-        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

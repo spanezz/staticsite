@@ -6,7 +6,6 @@ from staticsite.contents import ContentDir
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
 from staticsite.utils.typing import Meta
-from staticsite.file import File
 import jinja2
 import os
 import logging
@@ -72,7 +71,7 @@ class J2Pages(Feature):
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, f in sitedir.files.items():
+        for fname, src in sitedir.files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:
                 if pattern.match(fname):
@@ -87,7 +86,7 @@ class J2Pages(Feature):
                 meta["site_path"] = sitedir.meta["site_path"]
 
             try:
-                page = J2Page(self, f, meta=meta, dir=sitedir)
+                page = J2Page(self.site, src, meta=meta, dir=sitedir, feature=self)
             except IgnorePage:
                 continue
 
@@ -103,15 +102,11 @@ class J2Pages(Feature):
 class J2Page(Page):
     TYPE = "jinja2"
 
-    def __init__(self, j2env, src: File, meta: Meta, dir: ContentDir):
-        dirname, basename = os.path.split(src.relpath)
-        dst_basename = basename.replace(".j2", "")
+    def __init__(self, *args, feature: J2Pages, **kw):
+        super().__init__(*args, **kw)
 
-        super().__init__(
-            site=j2env.site,
-            src=src,
-            meta=meta,
-            dir=dir)
+        dirname, basename = os.path.split(self.src.relpath)
+        dst_basename = basename.replace(".j2", "")
 
         self.meta["build_path"] = os.path.join(dirname, dst_basename)
 

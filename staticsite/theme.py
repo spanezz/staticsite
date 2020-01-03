@@ -254,14 +254,14 @@ class Theme:
             fmeta["site_path"] = os.path.join(site_path, name)
             # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
-                src=File(name, root, os.stat(root)),
+                src=File.with_stat(name, root),
                 meta=fmeta,
             )
 
         # Load assets from theme directories
         for path in self.theme_static_dirs:
             self.site.scan_tree(
-                src=File("", os.path.abspath(path), os.stat(path)),
+                src=File.with_stat("", os.path.abspath(path)),
                 meta=meta,
             )
 

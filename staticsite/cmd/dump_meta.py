@@ -45,8 +45,8 @@ make available to templates via the `page` variable.""")
             filters = [compile_page_match(f) for f in self.args.pages]
             res = {}
             # show_repr = self.args.repr
-            for relpath, page in sorted(site.pages.items()):
-                if filters and not any(f.match(relpath) for f in filters):
+            for site_path, page in sorted(site.pages.items()):
+                if filters and not any(f.match(site_path) for f in filters):
                     continue
-                res[f"/{relpath}"] = page.to_dict()
+                res[f"{site_path}"] = page.to_dict()
             sys.stdout.write(front_matter.write(res, self.args.format))
