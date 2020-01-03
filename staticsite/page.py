@@ -150,7 +150,7 @@ class Page:
             root = self.dir.src.relpath
 
         from .page_filter import PageFilter
-        f = PageFilter(self.site, path, limit, sort, root=root)
+        f = PageFilter(self.site, path, limit, sort, root=root, **kw)
         return f.filter(self.site.pages.values())
 
     def resolve_path(self, target: Union[str, "Page"]) -> "Page":
