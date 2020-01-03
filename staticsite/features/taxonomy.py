@@ -1,10 +1,9 @@
 from __future__ import annotations
 from typing import List, Dict, Iterable, Optional
-from staticsite import Page, Site, File
+from staticsite import Page
 from staticsite.feature import Feature
-from staticsite.contents import ContentDir, Dir
+from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
-from staticsite.utils.typing import Meta
 from collections import defaultdict
 import heapq
 import functools
@@ -113,10 +112,10 @@ class TaxonomyPage(Page):
     """
     TYPE = "taxonomy"
 
-    def __init__(self, site: Site, src: File, name: str, meta: Meta, dir: Dir):
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
+    def __init__(self, *args, name: str, **kw):
+        super().__init__(*args, **kw)
 
-        self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
+        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
         self.meta.setdefault("template", "taxonomy/taxonomy.html")
         self.meta.setdefault("nav_title", name.capitalize())
 

@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import Dict, Any, Union, List, Optional
+from typing import Union, List, Optional
 import os
 import logging
-from staticsite import Site
 from staticsite.feature import Feature
 from staticsite.page import Page, PageNotFoundError
 from staticsite.metadata import Metadata
