@@ -150,24 +150,23 @@ class MetadataInherited(Metadata):
         yield from super().get_notes()
         yield "Inherited from directory indices."
 
-    def _inherit(self, page: Page):
+    def on_load(self, page: Page):
+        """
+        Hook for inheriting metadata entries from a parent page
+        """
         if self.name in page.meta:
             return
 
-        parent = page.dir
+        parent = page.created_from
         if parent is None:
-            return
+            parent = page.dir
+            if parent is None:
+                return
 
         val = parent.meta.get(self.name)
         if val is None:
             return
         page.meta[self.name] = val
-
-    def on_load(self, page: Page):
-        """
-        Hook for inheriting metadata entries from a parent page
-        """
-        self._inherit(page)
 
     def on_dir_meta(self, page: Page, meta: Meta):
         """
@@ -221,9 +220,11 @@ class MetadataTemplateInherited(Metadata):
         # Find template in page or in parent dir
         src = page.meta.get(self.name)
         if src is None:
-            parent = page.dir
+            parent = page.created_from
             if parent is None:
-                return
+                parent = page.dir
+                if parent is None:
+                    return
 
             src = parent.meta.get(self.name)
             if src is None:

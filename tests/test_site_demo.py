@@ -21,7 +21,7 @@ class TestSite(TestCase):
                     "draft": False,
                     'index': 'J2Page(/blog)',
                     'author': "Example author",
-                    'copyright': '© 2016 Example author',
+                    'copyright': '© 2019 Example author',
                     'indexed': False,
                     'syndicated': False,
                     'pages': ['RstPage(/blog/2016/rst_example)',
