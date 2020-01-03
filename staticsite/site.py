@@ -227,18 +227,6 @@ unless draft mode is enabled.
 It defaults to false, or true if `page.meta.date` is in the future.
 """))
 
-        self.register_metadata(metadata.MetadataRelated("related", doc="""
-Dict of pages related to this page.
-
-Dict values will be resolved as pages.
-
-If there are no related pages, `page.meta.related` will be guaranteed to exist
-as an empty dictionary.
-
-Features can add to this. For example, [syndication](syndication.md) can add
-`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
-"""))
-
     def register_metadata(self, metadata: Metadata):
         """
         Add a well-known metadata description to the metadata registry.

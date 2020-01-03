@@ -315,24 +315,3 @@ class MetadataDefault(Metadata):
 
     def on_load(self, page: Page):
         page.meta.setdefault(self.name, self.default)
-
-
-class MetadataRelated(Metadata):
-    """
-    Resolve related pages
-    """
-    def __init__(self, *args, **kw):
-        kw.setdefault("structure", True)
-        super().__init__(*args, **kw)
-
-    def on_load(self, page: Page):
-        if self.name not in page.meta:
-            page.meta[self.name] = {}
-
-    def on_analyze(self, page: Page):
-        related = page.meta.get("related")
-        # TODO: if this fails, we can introduce a LazyPage(page, path),
-        # resolved at usage time to the actual page
-        for k, v in related.items():
-            if isinstance(v, str):
-                related[k] = page.resolve_path(v)
