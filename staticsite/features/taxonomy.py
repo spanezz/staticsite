@@ -196,7 +196,7 @@ class TaxonomyPage(Page):
             category_meta["date"] = pages[-1].meta["date"]
             category_meta["site_path"] = os.path.join(self.meta["site_path"], category)
             # TODO: synthetise a directory?
-            category_page = CategoryPage(self.site, category, meta=category_meta, dir=self.dir)
+            category_page = CategoryPage(self.site, self.src, category, meta=category_meta, dir=self.dir)
             self.categories[category] = category_page
             self.site.add_page(category_page)
 
@@ -208,7 +208,7 @@ class TaxonomyPage(Page):
             archive_meta["date"] = category_meta["date"]
             archive_meta["site_path"] = os.path.join(self.meta["site_path"], category, "archive")
             # TODO: synthetise a directory?
-            archive_page = CategoryArchivePage(self.site, meta=archive_meta, dir=self.dir)
+            archive_page = CategoryArchivePage(self.site, self.src, meta=archive_meta, dir=self.dir)
             category_page.meta["archive"] = archive_page
             self.site.add_page(archive_page)
 
@@ -233,8 +233,8 @@ class CategoryPage(Page):
     """
     TYPE = "category"
 
-    def __init__(self, site: Site, name: str, meta: Meta, dir: Dir):
-        super().__init__(site=site, src=None, meta=meta, dir=dir)
+    def __init__(self, site: Site, src: File, name: str, meta: Meta, dir: Dir):
+        super().__init__(site=site, src=src, meta=meta, dir=dir)
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
         # Category name
         self.name = name
@@ -323,9 +323,9 @@ class CategoryArchivePage(Page):
     """
     TYPE = "category_archive"
 
-    def __init__(self, site: Site, meta: Meta, dir: Dir):
+    def __init__(self, site: Site, src: File, meta: Meta, dir: Dir):
         category_page = meta["category"]
-        super().__init__(site=site, src=None, meta=meta, dir=dir)
+        super().__init__(site=site, src=src, meta=meta, dir=dir)
 
         self.meta["build_path"] = os.path.join(meta["site_path"], "index.html")
 
