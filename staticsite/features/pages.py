@@ -13,9 +13,10 @@ class PagesFeature(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("pages")
-        self.site.register_metadata(Metadata("syndication", structure=True, doc=f"""
-If using the [pages](pages.md) feature, or for taxonomy or syndication pages,
-this is a list of pages selected by the current page.
+        self.site.register_metadata(Metadata("pages", structure=True, doc=f"""
+The `pages` metadata can use to select a set of pages shown by the current
+page. Although default `page.html` template will not do anything with them,
+other page templates, like `blog.html`, use this to select the pages to show.
 
 The `pages` feature allows defining a [page filter](page-filter.md) in the
 `pages` metadata element, which will be replaced with a list of matching pages.

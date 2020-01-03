@@ -223,6 +223,24 @@ During the analyze phase, it is resolved to the corresponding [image page](image
 If not set, and an image exists with the same name as the page (besides the
 extension), that image is used.
 
+<a name='pages'>
+
+### `pages`
+
+
+The `pages` metadata can use to select a set of pages shown by the current
+page. Although default `page.html` template will not do anything with them,
+other page templates, like `blog.html`, use this to select the pages to show.
+
+The `pages` feature allows defining a [page filter](page-filter.md) in the
+`pages` metadata element, which will be replaced with a list of matching pages.
+
+To select pages, the `pages` metadata is set to a dictionary that select pages
+in the site, with the `path`, and taxonomy names arguments similar to the
+`site_pages` function in [templates](templates.md).
+
+See [Selecting pages](page-filter.md) for details.
+
 <a name='syndication'>
 
 ### `syndication`
@@ -283,6 +301,21 @@ be syndicated before this date.
 
 If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
 
+<a name='related'>
+
+### `related`
+
+
+Dict of pages related to this page.
+
+Dict values will be resolved as pages.
+
+If there are no related pages, `page.meta.related` will be guaranteed to exist
+as an empty dictionary.
+
+Features can add to this. For example, [syndication](syndication.md) can add
+`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
+
 <a name='nav'>
 
 ### `nav`
@@ -301,18 +334,3 @@ Title to use when this paged is linked in a navbar.
 It defaults to `page.meta.title`, or to the series name for series pages.
 
 `nav_title` is only guaranteed to exist for pages that are used in `nav`.
-
-<a name='related'>
-
-### `related`
-
-
-Dict of pages related to this page.
-
-Dict values will be resolved as pages.
-
-If there are no related pages, `page.meta.related` will be guaranteed to exist
-as an empty dictionary.
-
-Features can add to this. For example, [syndication](syndication.md) can add
-`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
