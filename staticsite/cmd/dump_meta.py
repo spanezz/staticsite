@@ -35,6 +35,8 @@ You can use `ssite dump_meta` to see all the content and metadata that pages
 make available to templates via the `page` variable.""")
             for metadata in site.metadata.values():
                 print()
+                print(f"<a name='{metadata.name}'>")
+                print()
                 print(f"### `{metadata.name}`")
                 print()
                 for line in metadata.get_notes():
