@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% import 'lib/blog.html' as blog with context %}
+{{blog.archive()}}
+{% endblock %}
