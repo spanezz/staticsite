@@ -38,3 +38,9 @@ various sections of your site.
 
 You can use [`nav_title`](../reference/metadata.md#nav_title) to provide a
 shorter title for the page when shown in a navbar.
+
+
+## Next steps
+
+* [More HOWTOs](README.md)
+* [Back to main documentation](../../README.md)

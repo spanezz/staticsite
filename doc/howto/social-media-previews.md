@@ -44,3 +44,9 @@ Notes:
 
 * [Open Graph Check](https://opengraphcheck.com/)
 * [Description of Open Graph types](https://stackoverflow.com/questions/8263493/ogtype-and-valid-values-constantly-being-parsed-as-ogtype-website)
+
+
+## Next steps
+
+* [More HOWTOs](README.md)
+* [Back to main documentation](../../README.md)
