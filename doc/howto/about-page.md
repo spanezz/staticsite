@@ -42,5 +42,6 @@ shorter title for the page when shown in a navbar.
 
 ## Next steps
 
+* [Group blog posts in a directory](blog-posts-in-a-directory.md)
 * [More HOWTOs](README.md)
 * [Back to main documentation](../../README.md)

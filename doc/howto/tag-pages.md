@@ -46,5 +46,6 @@ tags: [travel, family]
 
 ## Next steps
 
+* [Post series](post-series.md)
 * [More HOWTOs](README.md)
 * [Back to main documentation](../../README.md)
