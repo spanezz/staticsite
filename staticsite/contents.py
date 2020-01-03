@@ -282,7 +282,7 @@ class ContentDir(Dir):
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
                 meta = self.file_meta[fname]
-                p = Asset(self.site, f, meta=self.file_meta[fname], dir=self, name=fname)
+                p = Asset(self.site, f, meta=meta, dir=self, name=fname)
                 self.site.add_page(p)
 
         # TODO: warn of contents not loaded at this point?

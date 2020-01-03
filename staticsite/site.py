@@ -297,6 +297,8 @@ It defaults to false, or true if `page.meta.date` is in the future.
             pw = pwd.getpwnam(user)
             meta["author"] = pw.pw_gecos.split(",")[0]
 
+        log.debug("Initial settings: %r", meta)
+
         return meta
 
     def scan_content(self):

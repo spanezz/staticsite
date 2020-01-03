@@ -17,8 +17,6 @@ class ServerMixin:
         from .server import Application
         import asyncio
         import webbrowser
-        app = Application(self.settings)
-        app.reload()
 
         sockets = tornado.netutil.bind_sockets(self.args.port, self.args.host)
         pairs = []
@@ -34,6 +32,9 @@ class ServerMixin:
 
         if self.settings.SITE_URL is None:
             self.settings.SITE_URL = url
+
+        app = Application(self.settings)
+        app.reload()
 
         server = tornado.httpserver.HTTPServer(app)
         server.add_sockets(sockets)
