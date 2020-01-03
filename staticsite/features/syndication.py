@@ -213,18 +213,6 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             self.site.theme.precompile_metadata_templates(meta)
 
-            archive_meta = meta.get("archive")
-            if archive_meta is None or archive_meta is True:
-                archive_meta = {}
-            elif archive_meta is False:
-                archive_meta = None
-            else:
-                archive_meta = dict(archive_meta)
-
-            if archive_meta is not None:
-                archive_page = ArchivePage.create_from(page, archive_meta)
-                self.site.add_page(archive_page)
-
             # RSS feed
             rss_page = RSSPage.create_from(page, dict(meta))
             meta["rss_page"] = rss_page
@@ -236,6 +224,26 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             meta["atom_page"] = atom_page
             self.site.add_page(atom_page)
             log.debug("%s: adding syndication page for %s", rss_page, page)
+
+            # Archive page
+            archive_meta = meta.get("archive")
+            if archive_meta is None or archive_meta is True:
+                archive_meta = {}
+            elif archive_meta is False:
+                archive_meta = None
+            else:
+                archive_meta = dict(archive_meta)
+
+            if archive_meta is not None:
+                archive_page = ArchivePage.create_from(page, archive_meta)
+                self.site.add_page(archive_page)
+                archive_page.add_related("rss_feed", rss_page)
+                archive_page.add_related("atom_feed", atom_page)
+            else:
+                archive_page = None
+
+            page.add_related("rss_feed", rss_page)
+            page.add_related("atom_feed", atom_page)
 
             # Add a link to the syndication to the pages listed in add_to
             add_to = meta.get("add_to", True)

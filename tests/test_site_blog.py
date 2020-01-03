@@ -63,7 +63,11 @@ class TestSite(TestCase):
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
                     'nav_title': 'My example blog',
-                    'related': {'archive': 'ArchivePage(/archive)'},
+                    'related': {
+                        'archive': 'ArchivePage(/archive)',
+                        'atom_feed': 'AtomPage(/index.atom)',
+                        'rss_feed': 'RSSPage(/index.rss)',
+                    },
                 },
                 "type": "markdown",
             })
@@ -88,7 +92,10 @@ class TestSite(TestCase):
                     'template': 'archive.html',
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
-                    'related': {},
+                    'related': {
+                        'atom_feed': 'AtomPage(/index.atom)',
+                        'rss_feed': 'RSSPage(/index.rss)',
+                    },
                 },
                 "type": "archive",
             })
