@@ -36,6 +36,7 @@
 * Feed links are now created based on `page.meta.related.rss_feed` and
   `page.meta.related.atom_feed`
 * Taxonomy now reuses blog and archive templates by default
+* `ssite build` now warns of broken internal links
 
 ## Upgrade notes
 
