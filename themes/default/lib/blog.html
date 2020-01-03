@@ -30,7 +30,7 @@
 {%- endmacro %}
 
 {% macro archive_link() -%}
-  {% if page.meta.related and page.meta.related.archive %}
+  {% if page.meta.related.archive %}
   <div class="card mb-2">
     <div class="card-header">
       <a href="{{url_for(page.meta.related.archive)}}">Archive</a>
