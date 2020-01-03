@@ -19,6 +19,16 @@
 </div>
 {%- endmacro %}
 
+{% macro archive_link() -%}
+  {% if page.meta.archive %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(page.meta.archive)}}">Archive</a>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+
 {% macro top_tags(limit=15) -%}
 {% with tags = taxonomy("tags") %}
   {% if tags %}

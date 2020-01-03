@@ -16,13 +16,7 @@
     {{blog.pages(limit=10)}}
     </div>
     <div class="col-sm-3">
-      {% if page.meta.archive %}
-      <div class="card mb-2">
-        <div class="card-header">
-          <a href="{{url_for(page.meta.archive)}}">Archive</a>
-        </div>
-      </div>
-      {% endif %}
+      {{blog.archive_link()}}
 
       {{blog.top_tags(limit=15)}}
 
