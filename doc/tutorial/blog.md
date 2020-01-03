@@ -40,4 +40,5 @@ The contents of `built_site` are ready to be published by any web server.
 ## Next steps
 
 * [See more tutorials](README.md)
+* [Add an about page](../howto/about-page.md)
 * [Back to main documentation](../../README.md)
