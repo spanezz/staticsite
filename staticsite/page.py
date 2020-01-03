@@ -68,7 +68,8 @@ class Page:
         """
         Generate this page derived from an existing one
         """
-        return cls(page.site, page.src, meta, dir=page.dir, created_from=page, **kw)
+        # If page is the root dir, it has dir set to None, and we can use it as dir
+        return cls(page.site, page.src, meta, dir=page.dir or page, created_from=page, **kw)
 
     def validate(self):
         """
