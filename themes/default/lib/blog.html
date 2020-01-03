@@ -82,6 +82,8 @@
 {% macro pages(pages, limit=10) -%}
   {% for page in syndicated_pages(pages, limit=limit) %}
   {{inline_page(page)}}
+  {% else %}
+  <p class="lead">There are no posts yet.</p>
   {% endfor %}
 {%- endmacro %}
 
@@ -89,6 +91,8 @@
 <ul class="list-group">
   {% for page in syndicated_pages(pages) %}
   <li class="list-group-item"><a href="{{url_for(page)}}">{{page.meta.date.strftime("%Y-%m-%d")}} - {{page.meta.title}}</a></li>
+  {% else %}
+  <p class="lead">There are no posts yet.</p>
   {% endfor %}
 </ul>
 {%- endmacro %}

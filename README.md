@@ -1,87 +1,33 @@
 # staticsite
 
-Static site generator, rendering contents with as little complication as
-possible.
+Static site generator.
+
+Builds a website out of [markdown](https://en.wikipedia.org/wiki/Markdown),
+[restructuredText](https://en.wikipedia.org/wiki/ReStructuredText),
+and [Jinja2](https://jinja.palletsprojects.com/) pages, and
+[json](https://en.wikipedia.org/wiki/JSON)/[yaml](https://en.wikipedia.org/wiki/YAML)/[toml](https://en.wikipedia.org/wiki/TOML)
+datasets.
+
+Create a blog, tag your posts, publish post series.
+
+Live preview your website, updated as you write it.
+
+Freely organise your contents, and turn any directory into a website.
 
 
-## Features
+## Get started
 
-* Input as [markdown](https://en.wikipedia.org/wiki/Markdown) ([github flavored](https://github.github.com/gfm/))
-* Input as [restructuredText](https://en.wikipedia.org/wiki/ReStructuredText)
-* Input as [json](https://en.wikipedia.org/wiki/JSON),
-  [yaml](https://en.wikipedia.org/wiki/YAML), and
-  [toml](https://en.wikipedia.org/wiki/TOML) data files
-* Free site structure, no need to split contents and assets
-* [Jinja2](https://jinja.palletsprojects.com/) templates
-* Live preview
+* [Build a blog in under one minute!](doc/tutorial/blog.md)
+* [See more quickstart guides](doc/tutorial/README.md)
 
 
-## Dependencies
-
-```sh
-apt install python3-tz python3-dateutil python3-slugify \
-            python3-markdown python3-docutils \
-	    python3-toml python3-yaml python3-ruamel.yaml \
-	    python3-jinja2 python3-livereload
-```
-
-## Quick start
-
-This is how to create a new site with markdown pages:
-
-**Create a new website**
-
-```sh
-mkdir mysite
-cd mysite
-```
-
-**Create your main index page**
-
-Write a file called `index.md`:
-```md
-# My new website
-
-This is the introduction of my new website
-```
-
-**Preview your site while you work on it**
-
-Run `ssite serve`, and visit <http://localhost:8000> for a live preview: each
-time you save `index.md`, you will see the preview updating automatically
-
-**Add pages**
-
-Create `about.md`
-
-Link it from the `index.md` as a normal markdown link, like:
-`[About this site](about.md)`
-
-**Build the site**
-
-Run `ssite build -o web`, and the site will be built inside the `web/`
-directory
-
-**Keep going: you have a new website!**
-
-
-Some tips:
-
-* Keep your browser open on `ssite serve` for an automatic live preview of
-  everything you do
-* You can use `python3 -m http.server 8000` to create a little web server
-  serving the version of your site built with `ssite build`. This is a
-  comfortable way to can have a look at it before publishing.
-* Here's a quick rsync command for publishing the site:
-  `rsync -avz web/ server:/path/to/webspace`
-* Run `ssite serve` on the example site provided with staticsite, and look at
-  its sources, to see examples of the various functions of staticsite.
-
-
-## Index of the documentation
+## Add features
 
 * [HOWTO guides](doc/howto/README.md): step by step guides for getting specific
   works done with staticsite
+
+## Get serious
+
 * [Reference documentation](doc/reference/README.md): description of each part of
   staticsite
 * [Developer documentation](doc/devel/README.md): documentation for developing
