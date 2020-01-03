@@ -243,20 +243,12 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                 pass
             elif add_to is True:
                 for dest in meta["pages"]:
-                    old = dest.meta.get("syndication")
-                    if old is not None:
-                        log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
-                                 dest, page, old["index"])
-                    dest.meta["syndication"] = meta
+                    dest.add_related("rss_feed", rss_page)
+                    dest.add_related("atom_feed", atom_page)
             else:
                 for dest in page.find_pages(**add_to):
-                    if dest == page:
-                        continue
-                    old = dest.meta.get("syndication")
-                    if old is not None:
-                        log.warn("%s: attempted to add meta.syndication from %r, but it already has it from %r",
-                                 dest, page, old["index"])
-                    dest.meta["syndication"] = meta
+                    dest.add_related("rss_feed", rss_page)
+                    dest.add_related("atom_feed", atom_page)
 
 
 class SyndicationPage(Page):
