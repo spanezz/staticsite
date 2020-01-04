@@ -160,6 +160,13 @@ class Theme:
                 self.theme_static_dirs.append(theme_static)
         log.info("%s: theme static directories: %r", self.name, self.theme_static_dirs)
 
+        # Merge theme metadata
+        meta_keys = frozenset(("image_sizes",))
+        self.meta: Meta = {}
+        for config in self.configs:
+            for key in config.keys() & meta_keys:
+                self.meta[key] = config[key]
+
     @classmethod
     def create(cls, site, name: str, search_paths: Sequence[str] = None) -> "Theme":
         """

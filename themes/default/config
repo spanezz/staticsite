@@ -1,0 +1,12 @@
+---
+# Scaled down widths of images that will be generated
+image_sizes:
+  medium:
+    width: 600
+    media: "(max-width: 800px)"
+  small:
+    width: 480
+    media: "(max-width: 600px)"
+  thumbnail:
+    width: 128
+    # No media: do not include in srcset
