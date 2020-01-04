@@ -125,3 +125,29 @@ class TestSite(TestCase):
                 },
                 "type": "rss",
             })
+
+            self.assertEqual(site.pages["/posts/example.jpg"].to_dict(), {
+                "src": {
+                    "relpath": "posts/example.jpg",
+                    "abspath": os.path.join(site.content_root, "posts/example.jpg"),
+                },
+                "meta": {
+                    "date": '2019-06-01 12:30:00+02:00',
+                    "draft": False,
+                    'author': "Test User",
+                    'copyright': '© 2019 Test User',
+                    'indexed': False,
+                    'syndicated': False,
+                    'site_name': 'My example blog',
+                    'site_path': '/posts/example.jpg',
+                    'site_url': 'https://www.example.org',
+                    "build_path": "posts/example.jpg",
+                    'template': 'page.html',
+                    'title': 'This is an example image',
+                    'width': 500,
+                    'height': 477,
+                    'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'related': {},
+                },
+                "type": "image",
+            })
