@@ -2,14 +2,14 @@
 
 # New in version 1.4
 
-* New [images support](doc/reference/images.md)
+* New [images support](doc/reference/images.md) (see #39, #46)
 * Use a horizontal rule with 3 or more *underscores* to introduce a
   introduction/rest of the post split in [markdown pages](doc/reference/markdown.md)
 * New `copyright` and `template_copyright` [metadata](doc/reference/metadata.md)
 * Added `ssite shell` to play with the built `Site` object for a site
 * Added [nav metadata](doc/reference/metadata.md) to add pages to the top navbar
 * [`pages` header](doc/reference/pages.md) can now be just a string, defaulting
-  to filtering by `path`.
+  to filtering by `path`. (#34)
 * `syndication` can be `true` to turn on syndication with default settings
 * `syndication.add_to`, if omitted, defaults to adding syndication links to all
   the pages in the syndication. It can be `false` to disable adding syndication
@@ -37,6 +37,7 @@
   `page.meta.related.atom_feed`
 * Taxonomy now reuses blog and archive templates by default
 * `ssite build` now warns of broken internal links
+* Added tutorials and HOWTOs on making a blog (#36)
 
 ## Upgrade notes
 
