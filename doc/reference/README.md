@@ -3,6 +3,7 @@
 ## Site structure
 
 * [The Site object](site.md)
+* [The Page object](page.md)
 * [Site settings](settings.md)
 * [Source contents](contents.md)
 * [Themes](theme.md)

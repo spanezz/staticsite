@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Any, Optional, Union, List
 import os
 import logging
 from urllib.parse import urlparse, urlunparse
@@ -155,7 +155,7 @@ class Page:
             limit: Optional[int] = None,
             sort: Optional[str] = None,
             root: Optional[str] = None,
-            **kw):
+            **kw) -> List["Page"]:
         """
         If not set, default root to the path of the containing directory for
         this page
@@ -265,16 +265,16 @@ class Page:
              parsed.params, parsed.query, parsed.fragment)
         )
 
-    def url_for(self, arg: Union[str, "Page"], absolute=False) -> str:
+    def url_for(self, target: Union[str, "Page"], absolute=False) -> str:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
         page: "Page"
 
-        if isinstance(arg, str):
-            page = self.resolve_path(arg)
+        if isinstance(target, str):
+            page = self.resolve_path(target)
         else:
-            page = arg
+            page = target
 
         # If the destination has a different site_url, generate an absolute url
         if self.meta["site_url"] != page.meta["site_url"]:
