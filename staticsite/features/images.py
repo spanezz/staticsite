@@ -129,7 +129,7 @@ class RenderedScaledImage(RenderedElement):
     def write(self, dst: File):
         import PIL
         with PIL.Image.open(self.src.abspath) as img:
-            img.resize((self.width, self.height))
+            img = img.resize((self.width, self.height))
             img.save(dst.abspath)
 
     def content(self):
