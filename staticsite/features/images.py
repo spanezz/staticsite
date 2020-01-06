@@ -92,6 +92,7 @@ extension), that image is used.
                     if info["width"] >= width:
                         continue
                     rel_meta = dict(meta)
+                    rel_meta["related"] = {}
                     rel_meta.pop("width", None)
                     rel_meta.pop("height", None)
                     rel_meta.update(**info)
