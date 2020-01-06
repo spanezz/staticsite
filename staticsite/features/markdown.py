@@ -35,22 +35,21 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
                 a.attrib["href"] = new_url
 
         for img in root.iter("img"):
-            page, new_url = self.resolve_url(img.attrib.get("src", None))
-            if new_url is not None:
-                img.attrib["src"] = new_url
-            if page is not None:
-                width = page.meta.get("width")
-                if width is not None:
-                    if "width" not in img.attrib:
-                        img.attrib["width"] = str(width)
-                height = page.meta.get("height")
-                if height is not None:
-                    if "height" not in img.attrib:
-                        img.attrib["height"] = str(height)
-                title = page.meta.get("title")
-                if title is not None:
-                    if "alt" not in img.attrib:
-                        img.attrib["alt"] = title
+            orig_url = img.attrib.get("src", None)
+            if orig_url is None:
+                continue
+
+            page, parsed = self.resolve_page(orig_url)
+            if page is None:
+                continue
+
+            try:
+                attrs = self.page.get_img_attributes(img)
+            except PageNotFoundError as e:
+                log.warn("%s: %s", self.page, e)
+                continue
+
+            img.attrib.update(attrs)
 
     def resolve_page(self, url) -> Tuple[Page, Tuple]:
         from markdown.util import AMP_SUBSTITUTE

@@ -380,52 +380,12 @@ class Theme:
             log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
             return ""
 
-        try:
-            img = cur_page.resolve_path(path)
-        except PageNotFoundError as e:
-            log.warn("%s:%s: %s", cur_page, context.name, e)
-            return ""
+        res_attrs = cur_page.get_img_attributes(path, type=type)
+        res_attrs.update(attrs)
 
-        def imgtag(attrs):
-            escape = jinja2.escape
-            res = ["<img"]
-            for k, v in attrs.items():
-                res.append(f" {escape(k)}='{escape(v)}'")
-            res.append("></img>")
-            return jinja2.Markup("".join(res))
-
-        img_url = cur_page.url_for(img)
-        attrs["src"] = img_url
-
-        if type is not None:
-            # If a specific version is required, do not use srcset
-            img = img.meta["related"].get(type, img)
-            attrs["width"] = str(img.meta["width"])
-            attrs["height"] = str(img.meta["height"])
-            attrs["alt"] = img.meta["title"]
-        else:
-            attrs["alt"] = img.meta["title"]
-
-            # https://developers.google.com/web/ilt/pwa/lab-responsive-images
-            # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
-            srcsets = []
-            for rel in img.meta["related"].values():
-                if rel.TYPE != "image":
-                    continue
-
-                width = rel.meta.get("width")
-                if width is None:
-                    continue
-
-                url = cur_page.url_for(rel)
-                srcsets.append(f"{jinja2.escape(url)} {width}w")
-
-            if srcsets:
-                width = img.meta["width"]
-                srcsets.append(f"{jinja2.escape(img_url)} {width}w")
-                attrs["srcset"] = ", ".join(srcsets)
-            else:
-                attrs["width"] = str(img.meta["width"])
-                attrs["height"] = str(img.meta["height"])
-
-        return imgtag(attrs)
+        escape = jinja2.escape
+        res = ["<img"]
+        for k, v in res_attrs.items():
+            res.append(f" {escape(k)}='{escape(v)}'")
+        res.append("></img>")
+        return jinja2.Markup("".join(res))
