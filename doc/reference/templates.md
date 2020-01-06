@@ -53,6 +53,10 @@ for example:
 * `taxonomies()`: a list of all known taxonomies.
 * `regex()`: alias to `re.compile`, which can be used to explicitly interpret
   a `site_pages` argument as a regular expression
+* `img_for(Union[str, Page], **attrs)`: create an `<img>` tag for the given
+  image or path to an image, with the `alt`, `src`, `srcset`, `width`, `height`
+  tags filled as needed. Provide extra tags as keyword arguments to add them to
+  the `<img>` tag.
 
 ### Filters
 
