@@ -30,4 +30,31 @@ automatically gets a `page.meta.image` value pointing to the image.
 
 You can use this, for example, to easily provide an image for blog posts.
 
+
+## Scaled versions of images
+
+[Theme](theme.md) configurations can specify a set of scaled versions of images
+to generate:
+
+```yaml
+# Scaled down widths of images that will be generated
+image_sizes:
+  medium:
+    width: 600
+  small:
+    width: 480
+  thumbnail:
+    width: 128
+```
+
+Given a `image.jpg` image file, this will generate `image-medium.jpg`,
+`image-small.jpg` and `image-thumbnail.jpg`.
+
+Using this feature, the [`img_for` template function](templates.md) will
+automatically generate `srcset` attributes to let the browser choose which
+version to load.
+
+Scaled versions of the image will be available in the image's [`meta.related`
+metadata](metadata.md#related).
+
 [Back to reference index](README.md)
