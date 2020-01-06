@@ -43,4 +43,39 @@ Return a URL that can be used in this page to link to `target`.
 Set `absolute=True` to force it to be an absolute URL.
 
 
+## `html_full() -> str`
+
+Render the full page, from the `<html>` tag downwards.
+
+This is used to render the page itself.
+
+
+## `html_body() -> str`
+
+Render the full body of the page, with UI elements excluding
+navigation, headers, footers.
+
+This is used when rendering the page itself, when the theme is doing the UI and
+the page needs to render its contents via Markdown or reStructuredText.
+
+
+## `html_inline() -> str`
+
+Render the content of the page to be shown inline, like in a blog page.
+
+For pages with a leading introduction, the rest of the content is not shown.
+
+Small images are used by default.
+
+No UI elements are used if possible.
+
+
+## `html_feed() -> str`
+
+Render the content of the page to be shown in a RSS/Atom feed.
+
+The whole contents are shown, without UI elements. All local links are rendered
+as absolute URLs
+
+
 [Back to reference index](README.md)
