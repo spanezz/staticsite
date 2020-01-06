@@ -389,7 +389,7 @@ class MarkdownPage(Page):
             self.body_rest = None
 
     def check(self, checker):
-        self.content
+        self.render()
 
     @jinja2.contextfunction
     def html_body(self, context, **kw) -> str:
