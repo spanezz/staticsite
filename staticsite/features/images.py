@@ -85,13 +85,17 @@ extension), that image is used.
             image_sizes = self.site.theme.meta.get("image_sizes")
             if image_sizes:
                 for name, info in image_sizes.items():
-                    if info["width"] >= meta["width"]:
+                    width = meta.get("width")
+                    if width is None:
+                        # SVG images, for example, don't have width
                         continue
-                    meta = dict(meta)
-                    meta.pop("width", None)
-                    meta.pop("height", None)
-                    meta.update(**info)
-                    scaled = ScaledImage.create_from(page, meta, mimetype=mimetype, name=name, info=info)
+                    if info["width"] >= width:
+                        continue
+                    rel_meta = dict(meta)
+                    rel_meta.pop("width", None)
+                    rel_meta.pop("height", None)
+                    rel_meta.update(**info)
+                    scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
                     pages.append(scaled)
 
             self.by_related_site_path[related_site_path] = page
