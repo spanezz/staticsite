@@ -43,17 +43,23 @@ def mock_file_stat(overrides: Dict[int, Any]):
             yield
 
 
+def test_settings(**kw):
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    kw.setdefault("SITE_NAME", "Test site")
+    kw.setdefault("SITE_URL", "https://www.example.org")
+    kw.setdefault("SITE_AUTHOR", "Test User")
+    kw.setdefault("CACHE_REBUILDS", False)
+    kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
+
+    settings = Settings()
+    for k, v in kw.items():
+        setattr(settings, k, v)
+    return settings
+
+
 class Site(staticsite.Site):
     def __init__(self, taxonomies=(), **kw):
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        kw.setdefault("SITE_NAME", "Test site")
-        kw.setdefault("SITE_URL", "https://www.example.org")
-        kw.setdefault("SITE_AUTHOR", "Test User")
-        kw.setdefault("CACHE_REBUILDS", False)
-        kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
-        settings = Settings()
-        for k, v in kw.items():
-            setattr(settings, k, v)
+        settings = test_settings(**kw)
         super().__init__(settings=settings)
         self._taxonomies = taxonomies
 
@@ -94,7 +100,8 @@ def testsite(files: Dict[str, Union[str, bytes, Dict]] = None, **kw):
     Take a dict representing directory contents and build a Site for it
     """
     with workdir(files) as root:
-        site = Site(CONTENT=root, **kw)
+        settings = test_settings(PROJECT_ROOT=root, **kw)
+        site = staticsite.Site(settings)
         site.load()
         site.analyze()
         yield site
@@ -138,7 +145,7 @@ def example_site(name="demo", stat_override=None, generation_time=None, **kw):
             if settings.PROJECT_ROOT is None:
                 settings.PROJECT_ROOT = root
             settings.CACHE_REBUILDS = False
-            settings.THEME_PATH = [os.path.join(src_root, "themes")]
+            settings.THEME_PATHS = [os.path.join(src_root, "themes")]
             for k, v in kw.items():
                 setattr(settings, k, v)
 

@@ -1,14 +1,18 @@
 from __future__ import annotations
-from typing import List, Dict
-from staticsite import Page, Feature, File, Site
-from staticsite.contents import ContentDir, Dir
+from typing import TYPE_CHECKING, List, Dict
+from staticsite import Page, Feature
+from staticsite.contents import ContentDir
 from staticsite.render import RenderedFile
 from staticsite.utils.typing import Meta
 from staticsite.utils.images import ImageScanner
 from staticsite.metadata import Metadata
+from staticsite.render import RenderedElement
 import os
 import mimetypes
 import logging
+
+if TYPE_CHECKING:
+    from staticsite import File
 
 log = logging.getLogger("images")
 
@@ -77,6 +81,24 @@ extension), that image is used.
             page = Image(self.site, src, meta=meta, dir=sitedir, mimetype=mimetype)
             pages.append(page)
 
+            # Look at theme's image_sizes and generate ScaledImage pages
+            image_sizes = self.site.theme.meta.get("image_sizes")
+            if image_sizes:
+                for name, info in image_sizes.items():
+                    width = meta.get("width")
+                    if width is None:
+                        # SVG images, for example, don't have width
+                        continue
+                    if info["width"] >= width:
+                        continue
+                    rel_meta = dict(meta)
+                    rel_meta["related"] = {}
+                    rel_meta.pop("width", None)
+                    rel_meta.pop("height", None)
+                    rel_meta.update(**info)
+                    scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
+                    pages.append(scaled)
+
             self.by_related_site_path[related_site_path] = page
 
         for fname in taken:
@@ -88,14 +110,58 @@ extension), that image is used.
 class Image(Page):
     TYPE = "image"
 
-    def __init__(self, site: Site, src: File, meta: Meta, dir: Dir = None, mimetype: str = None):
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
+    def __init__(self, *args, mimetype: str = None, **kw):
+        super().__init__(*args, **kw)
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        self.meta["build_path"] = meta["site_path"]
+        self.meta["build_path"] = self.meta["site_path"]
 
     def render(self, **kw):
         return {
             self.meta["build_path"]: RenderedFile(self.src),
+        }
+
+
+class RenderedScaledImage(RenderedElement):
+    def __init__(self, src: File, width: int, height: int):
+        self.src = src
+        self.width = width
+        self.height = height
+
+    def write(self, dst: File):
+        import PIL
+        with PIL.Image.open(self.src.abspath) as img:
+            img = img.resize((self.width, self.height))
+            img.save(dst.abspath)
+
+    def content(self):
+        with open(self.src.abspath, "rb") as fd:
+            return fd.read()
+
+
+class ScaledImage(Page):
+    TYPE = "image"
+
+    def __init__(self, *args, mimetype: str = None, name: str = None, info: Meta = None, **kw):
+        super().__init__(*args, **kw)
+        self.name = name
+        self.meta["date"] = self.created_from.meta["date"]
+
+        site_path = self.created_from.meta["site_path"]
+        base, ext = os.path.splitext(site_path)
+        site_path = f"{base}-{name}{ext}"
+        self.meta["site_path"] = site_path
+        self.meta["build_path"] = site_path
+
+        if "height" not in self.meta:
+            self.meta["height"] = round(
+                    self.created_from.meta["height"] * (
+                        info["width"] / self.created_from.meta["width"]))
+
+        self.created_from.add_related(name, self)
+
+    def render(self, **kw):
+        return {
+            self.meta["build_path"]: RenderedScaledImage(self.src, self.meta["width"], self.meta["height"]),
         }
 
 

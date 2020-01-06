@@ -160,6 +160,13 @@ class Theme:
                 self.theme_static_dirs.append(theme_static)
         log.info("%s: theme static directories: %r", self.name, self.theme_static_dirs)
 
+        # Merge theme metadata
+        meta_keys = frozenset(("image_sizes",))
+        self.meta: Meta = {}
+        for config in self.configs:
+            for key in config.keys() & meta_keys:
+                self.meta[key] = config[key]
+
     @classmethod
     def create(cls, site, name: str, search_paths: Sequence[str] = None) -> "Theme":
         """
@@ -221,6 +228,7 @@ class Theme:
             url_for=self.jinja2_url_for,
             page_for=self.jinja2_page_for,
             site_pages=self.jinja2_site_pages,
+            img_for=self.jinja2_img_for,
             now=self.site.generation_time,
             next_month=(
                 self.site.generation_time.replace(day=1) + datetime.timedelta(days=40)).replace(
@@ -359,3 +367,25 @@ class Theme:
             return []
 
         return cur_page.find_pages(**kw)
+
+    @jinja2.contextfunction
+    def jinja2_img_for(
+            self, context,
+            path: Union[str, Page],
+            type: Optional[str] = None,
+            absolute: bool = False,
+            **attrs) -> List[Page]:
+        cur_page = context.get("page")
+        if cur_page is None:
+            log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
+            return ""
+
+        res_attrs = cur_page.get_img_attributes(path, type=type)
+        res_attrs.update(attrs)
+
+        escape = jinja2.escape
+        res = ["<img"]
+        for k, v in res_attrs.items():
+            res.append(f" {escape(k)}='{escape(v)}'")
+        res.append("></img>")
+        return jinja2.Markup("".join(res))

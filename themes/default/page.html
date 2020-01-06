@@ -63,10 +63,13 @@
   </div>
 </div>
 
-{% import "lib/images.html" as images with context %}
-
 {% if page.meta.image %}
-{{images.figure(page.meta.image, classes="float-right mw-33 ml-3")}}
+{% with img = page.meta.image %}
+<figure class="figure float-right ml-3 text-center">
+  {{img_for(img, class="figure-img img-fluid rounded", sizes="(min-width: 1200px) 50vw, (min-width: 576px) 33vw, 100vw")}}
+  {% if img.meta.title %}<figcaption class="figure-caption text-center">{{img.meta.title}}</figcaption>{% endif %}
+</figure>
+{% endwith %}
 {% endif %}
 
 {% block page_content %}

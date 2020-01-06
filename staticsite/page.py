@@ -286,6 +286,47 @@ class Page:
         else:
             return page.meta["site_path"]
 
+    def get_img_attributes(self, image: Union[str, "Page"], type: Optional[str] = None) -> Dict[str, str]:
+        """
+        Get <img> attributes into the given dict
+        """
+        img = self.resolve_path(image)
+
+        res = {
+            "alt": img.meta["title"],
+        }
+
+        if type is not None:
+            # If a specific version is required, do not use srcset
+            rel = img.meta["related"].get(type, img)
+            res["width"] = str(rel.meta["width"])
+            res["height"] = str(rel.meta["height"])
+            res["src"] = self.url_for(rel)
+        else:
+            # https://developers.google.com/web/ilt/pwa/lab-responsive-images
+            # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
+            srcsets = []
+            for rel in img.meta["related"].values():
+                if rel.TYPE != "image":
+                    continue
+
+                width = rel.meta.get("width")
+                if width is None:
+                    continue
+
+                url = self.url_for(rel)
+                srcsets.append(f"{jinja2.escape(url)} {width}w")
+
+            if srcsets:
+                width = img.meta["width"]
+                srcsets.append(f"{jinja2.escape(self.url_for(img))} {width}w")
+                res["srcset"] = ", ".join(srcsets)
+            else:
+                res["width"] = str(img.meta["width"])
+                res["height"] = str(img.meta["height"])
+
+        return res
+
     def check(self, checker):
         pass
 

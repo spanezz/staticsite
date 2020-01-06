@@ -1,0 +1,9 @@
+---
+# Scaled down widths of images that will be generated
+image_sizes:
+  medium:
+    width: 600
+  small:
+    width: 480
+  thumbnail:
+    width: 128

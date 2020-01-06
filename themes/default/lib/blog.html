@@ -4,6 +4,15 @@
     <h3><a href="{{url_for(page)}}">{{page.meta.title}}</a></h3>
   </div>
   <div class="card-body">
+    {% if page.meta.image %}
+    {% with img = page.meta.image %}
+    <figure class="figure float-right ml-3 text-center">
+      {{img_for(img, class="figure-img img-fluid rounded", sizes="(min-width: 1200px) 33vw, (min-width: 576px) 25vw, 100vw")}}
+      {% if img.meta.title %}<figcaption class="figure-caption text-center">{{img.meta.title}}</figcaption>{% endif %}
+    </figure>
+    {% endwith %}
+    {% endif %}
+
     {{page.content_short|safe}}
   </div>
   <div class="card-footer text-muted d-flex justify-content-between align-items-center">

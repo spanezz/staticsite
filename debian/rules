@@ -30,7 +30,6 @@ override_dh_installdocs:
 	rm -r debian/staticsite$(themedir)/default/static/bootstrap4
 	rm -r debian/staticsite$(themedir)/default/static/fork-awesome
 	# Configure example site to use system versions instead
-	echo '---' > debian/staticsite$(themedir)/default/config
 	echo '# System-distributed assets in use' >> debian/staticsite$(themedir)/default/config
 	echo 'system_assets: [jquery, popper.js, bootstrap4, fork-awesome]' >> debian/staticsite$(themedir)/default/config
 

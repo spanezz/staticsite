@@ -8,6 +8,14 @@ class TestSite(TestCase):
         self.maxDiff = None
 
         with test_utils.example_site("blog", SITE_AUTHOR="Test User") as site:
+            site_paths = [path for path in site.pages.keys() if not path.startswith("/static/")]
+            self.assertCountEqual(site_paths, [
+                "/", "/index.rss", "/index.atom", "/archive",
+                "/about",
+                "/posts", "/posts/example",
+                "/posts/example.jpg", "/posts/example-small.jpg", "/posts/example-thumbnail.jpg",
+            ])
+
             page = site.pages["/about"]
             self.assertEqual(page.meta["title"], "About")
 
@@ -124,4 +132,85 @@ class TestSite(TestCase):
                     'related': {},
                 },
                 "type": "rss",
+            })
+
+            self.assertEqual(site.pages["/posts/example.jpg"].to_dict(), {
+                "src": {
+                    "relpath": "posts/example.jpg",
+                    "abspath": os.path.join(site.content_root, "posts/example.jpg"),
+                },
+                "meta": {
+                    "date": '2019-06-01 12:30:00+02:00',
+                    "draft": False,
+                    'author': "Test User",
+                    'copyright': '© 2019 Test User',
+                    'indexed': False,
+                    'syndicated': False,
+                    'site_name': 'My example blog',
+                    'site_path': '/posts/example.jpg',
+                    'site_url': 'https://www.example.org',
+                    "build_path": "posts/example.jpg",
+                    'template': 'page.html',
+                    'title': 'This is an example image',
+                    'width': 500,
+                    'height': 477,
+                    'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'related': {
+                        'small': 'ScaledImage(/posts/example-small.jpg)',
+                        'thumbnail': 'ScaledImage(/posts/example-thumbnail.jpg)',
+                    },
+                },
+                "type": "image",
+            })
+
+            self.assertEqual(site.pages["/posts/example-small.jpg"].to_dict(), {
+                "src": {
+                    "relpath": "posts/example.jpg",
+                    "abspath": os.path.join(site.content_root, "posts/example.jpg"),
+                },
+                "meta": {
+                    "date": '2019-06-01 12:30:00+02:00',
+                    "draft": False,
+                    'author': "Test User",
+                    'copyright': '© 2019 Test User',
+                    'indexed': False,
+                    'syndicated': False,
+                    'site_name': 'My example blog',
+                    'site_path': '/posts/example-small.jpg',
+                    'site_url': 'https://www.example.org',
+                    "build_path": "posts/example-small.jpg",
+                    'template': 'page.html',
+                    'title': 'This is an example image',
+                    'width': 480,
+                    'height': 458,
+                    'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'related': {},
+                },
+                "type": "image",
+            })
+
+            self.assertEqual(site.pages["/posts/example-thumbnail.jpg"].to_dict(), {
+                "src": {
+                    "relpath": "posts/example.jpg",
+                    "abspath": os.path.join(site.content_root, "posts/example.jpg"),
+                },
+                "meta": {
+                    "date": '2019-06-01 12:30:00+02:00',
+                    "draft": False,
+                    'author': "Test User",
+                    'copyright': '© 2019 Test User',
+                    'indexed': False,
+                    'syndicated': False,
+                    'site_name': 'My example blog',
+                    'site_path': '/posts/example-thumbnail.jpg',
+                    'site_url': 'https://www.example.org',
+                    "build_path": "posts/example-thumbnail.jpg",
+                    'template': 'page.html',
+                    'title': 'This is an example image',
+                    'width': 128,
+                    'height': 122,
+                    'nav': ['MarkdownPage(/)', 'MarkdownPage(/about)'],
+                    'related': {},
+                },
+                "type": "image",
             })
