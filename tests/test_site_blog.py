@@ -79,6 +79,13 @@ class TestSite(TestCase):
                 },
                 "type": "markdown",
             })
+            # A blog page renders images, relative links, only the beginning of
+            # split pages
+            rendered = site.pages["/"].render()
+            self.assertCountEqual(rendered.keys(), ["index.html"])
+            rendered = rendered["index.html"].content()
+            self.assertNotIn(b"This is the rest of the blog post", rendered)
+            self.assertIn(b"srcset='/posts/example", rendered)
 
             self.assertEqual(site.pages["/archive"].to_dict(), {
                 "src": {
