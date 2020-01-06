@@ -18,7 +18,7 @@
     {%- endfor %}
     <updated>{{page.meta.date|datetime_format("atom")}}</updated>
     <published>{{page.meta.syndication_date|datetime_format("atom")}}</published>
-    <content type="html">{{page.content_short|safe}}</content>
+    <content type="html">{{page.html_feed()|safe}}</content>
   </entry>
   {%- endfor %}
 </feed>

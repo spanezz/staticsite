@@ -345,40 +345,42 @@ class Page:
         else:
             return f"{self.TYPE}:auto:{self.meta['site_path']}"
 
-    def _render_page_content(self, **kw):
-        template = self.page_template
-        template_content = template.blocks.get("page_content")
-        block_name = "page_content"
-        if template_content is None:
-            template_content = template.blocks.get("content")
-            block_name = "content"
-            if template_content is None:
-                log.warn("%s: `page_content` and `content` not found in template %s", self, template.name)
-                return ""
+    @jinja2.contextfunction
+    def html_full(self, context, **kw) -> str:
+        """
+        Render the full page, from the <html> tag downwards.
+        """
+        context = dict(context)
+        context["render_style"] = "full"
+        context.update(kw)
+        return self.render_template(self.page_template, template_args=context)
 
-        try:
-            return jinja2.Markup("".join(template_content(template.new_context({"page": self, **kw}))))
-        except jinja2.TemplateError as e:
-            log.error("%s: failed to render %s.%s: %s", template.filename, self.src.relpath, block_name, e)
-            log.debug("%s: failed to render %s.%s: %s",
-                      template.filename, self.src.relpath, block_name, e, exc_info=True)
-            # TODO: return a "render error" page? But that risks silent errors
-            return ""
+    @jinja2.contextfunction
+    def html_body(self, context, **kw) -> str:
+        """
+        Render the full body of the page, with UI elements excluding
+        navigation, headers, footers
+        """
+        return ""
 
-    @lazy
-    def content_short(self):
+    @jinja2.contextfunction
+    def html_inline(self, context, **kw) -> str:
         """
-        Shorter version of the content to use, for example, in inline pages
-        """
-        return self._render_page_content(introduction=True)
+        Render the content of the page to be shown inline, like in a blog page.
 
-    @lazy
-    def content(self):
+        Above-the-fold content only, small images, no UI elements
         """
-        Return only the rendered content of the page, without headers, footers,
-        and navigation.
+        return ""
+
+    @jinja2.contextfunction
+    def html_feed(self, context, **kw) -> str:
         """
-        return self._render_page_content()
+        Render the content of the page to be shown in a RSS/Atom feed.
+
+        It shows the whole contents, without any UI elements, and with absolute
+        URLs
+        """
+        return ""
 
     def to_dict(self):
         from .utils import dump_meta
@@ -395,7 +397,7 @@ class Page:
 
     def render(self, **kw):
         res = {
-            self.meta["build_path"]: RenderedString(self.render_template(self.page_template, template_args=kw)),
+            self.meta["build_path"]: RenderedString(self.html_full(kw)),
         }
 
         aliases = self.meta.get("aliases", ())
@@ -412,7 +414,7 @@ class Page:
         """
         if template_args is None:
             template_args = {}
-        template_args.setdefault("page", self)
+        template_args["page"] = self
         try:
             return template.render(**template_args)
         except jinja2.TemplateError as e:

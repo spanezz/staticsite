@@ -73,7 +73,7 @@
 {% endif %}
 
 {% block page_content %}
-{{page.content|safe}}
+{{page.html_body()|safe}}
 {% endblock %}
 
 {% endblock %}

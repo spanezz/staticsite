@@ -13,7 +13,7 @@
     {% endwith %}
     {% endif %}
 
-    {{page.content_short|safe}}
+    {{page.html_inline()|safe}}
   </div>
   <div class="card-footer text-muted d-flex justify-content-between align-items-center">
     <div>

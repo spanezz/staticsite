@@ -5,7 +5,6 @@ from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
 from staticsite.contents import ContentDir
-from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
@@ -44,7 +43,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
                 continue
 
             try:
-                attrs = self.page.get_img_attributes(img)
+                attrs = self.page.get_img_attributes(page)
             except PageNotFoundError as e:
                 log.warn("%s: %s", self.page, e)
                 continue
@@ -392,19 +391,25 @@ class MarkdownPage(Page):
     def check(self, checker):
         self.content
 
-    @lazy
-    def content_short(self):
-        """
-        Shorter version of the content to use, for example, in inline pages
-        """
+    @jinja2.contextfunction
+    def html_body(self, context, **kw) -> str:
+        if self.content_has_split:
+            body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
+            return self.mdpages.render_page(self, body, render_type="c")
+        else:
+            return self.mdpages.render_page(self, self.body_start, render_type="f")
+
+    @jinja2.contextfunction
+    def html_inline(self, context, **kw) -> str:
         if self.content_has_split:
             body = self.body_start + ["", f"[(continue reading)](/{self.meta['site_path']})"]
             return self.mdpages.render_page(self, body, render_type="s")
         else:
             return self.mdpages.render_page(self, self.body_start, render_type="f")
 
-    @lazy
-    def content(self):
+    @jinja2.contextfunction
+    def html_feed(self, context, **kw) -> str:
+        # TODO: set link resolver to absolute URLs
         if self.content_has_split:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
             return self.mdpages.render_page(self, body, render_type="c")

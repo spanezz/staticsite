@@ -5,6 +5,7 @@ from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.page_filter import PageFilter
 from staticsite.metadata import Metadata
+from staticsite.features.jinja2 import RenderPartialTemplateMixin
 import jinja2
 import re
 import os
@@ -151,7 +152,7 @@ def write_data(fd, data, fmt):
         raise NotImplementedError("data format {} is not supported".format(fmt))
 
 
-class DataPage(Page):
+class DataPage(RenderPartialTemplateMixin, Page):
     TYPE = "data"
 
     def __init__(self, *args, **kw):

@@ -261,9 +261,6 @@ class CategoryPage(Page):
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
-    def _render_page_content(self, **kw):
-        return ""
-
     def series_info(self):
         """
         Return a dict describing this category as a series

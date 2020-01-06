@@ -7,7 +7,7 @@
 <h1 class="display-4">{{page.meta.title}}</h1>
 
 {% block page_content %}
-{{page.content|safe}}
+{{page.html_inline()|safe}}
 {% endblock %}
 
 <div class="container-fluid">

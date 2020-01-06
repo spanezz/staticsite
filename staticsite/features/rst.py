@@ -4,13 +4,13 @@ from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.contents import ContentDir
-from staticsite.utils import lazy
 from staticsite.utils.typing import Meta
 from staticsite.file import File
 import docutils.io
 import docutils.core
 import docutils.nodes
 import docutils.writers.html5_polyglot
+import jinja2
 import os
 import io
 import logging
@@ -295,8 +295,16 @@ class RstPage(Page):
         # })
         return parts["body"]
 
-    @lazy
-    def content(self):
+    @jinja2.contextfunction
+    def html_body(self, context, **kw) -> str:
+        return self._render_page()
+
+    @jinja2.contextfunction
+    def html_inline(self, context, **kw) -> str:
+        return self._render_page()
+
+    @jinja2.contextfunction
+    def html_feed(self, context, **kw) -> str:
         return self._render_page()
 
 

@@ -99,7 +99,62 @@ class J2Pages(Feature):
         return pages
 
 
-class J2Page(Page):
+class RenderPartialTemplateMixin:
+    def _find_block(self, *names):
+        for name in names:
+            block = self.page_template.blocks.get("page_content")
+            block_name = "page_content"
+            if block is not None:
+                return block_name, block
+        log.warn("%s: `page_content` and `content` not found in template %s", self, self.page_template.name)
+        return None, None
+
+    @jinja2.contextfunction
+    def html_body(self, context, **kw) -> str:
+        block_name, block = self._find_block("page_content", "content")
+        if block is None:
+            return ""
+        return self.render_template_block(block, block_name, context, render_style="body")
+
+    @jinja2.contextfunction
+    def html_inline(self, context, **kw) -> str:
+        block_name, block = self._find_block("page_content", "content")
+        if block is None:
+            return ""
+        return self.render_template_block(block, block_name, context, render_style="inline")
+
+    @jinja2.contextfunction
+    def html_feed(self, context, **kw) -> str:
+        block_name, block = self._find_block("page_content", "content")
+        if block is None:
+            return ""
+        return self.render_template_block(block, block_name, context, render_style="feed")
+
+    def render_template_block(self, block, block_name, context, **kw) -> str:
+        render_stack = list(context.get("render_stack", ()))
+
+        render_style = kw.get("render_style")
+
+        if (self, render_style) in render_stack:
+            render_stack.append((self, render_style))
+            render_stack_path = ' → '.join(f"{p}:{s}" for p, s in render_stack)
+            raise RuntimeError(f"{self}: render loop detected: {render_stack_path}")
+
+        render_stack.append((self, render_style))
+        kw["render_stack"] = render_stack
+        kw["page"] = self
+
+        try:
+            return jinja2.Markup("".join(block(self.page_template.new_context(context, shared=True, locals=kw))))
+        except jinja2.TemplateError as e:
+            log.error("%s: %s: failed to render block %s: %s", self, self.page_template.filename, block_name, e)
+            log.debug("%s: %s: failed to render block %s: %s",
+                      self, self.page_template.filename, block_name, e, exc_info=True)
+            # TODO: return a "render error" page? But that risks silent errors
+            return ""
+
+
+class J2Page(RenderPartialTemplateMixin, Page):
     TYPE = "jinja2"
 
     def __init__(self, *args, feature: J2Pages, **kw):
