@@ -24,7 +24,10 @@
     {%- endfor %}
     <pubDate>{{page.meta.syndication_date|datetime_format("rss2")}}</pubDate>
     <dcterms:modified>{{page.meta.date|datetime_format("w3cdtf")}}</dcterms:modified>
-    <description>{{page.html_feed()|safe}}</description>
+    <description>
+      {% if page.meta.image %}{{img_for(page.meta.image, type="small", absolute=True)}}{% endif %}
+      {{page.html_feed()|safe}}
+    </description>
   </item>
   {%- endfor %}
   </channel>

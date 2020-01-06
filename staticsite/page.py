@@ -286,7 +286,8 @@ class Page:
         else:
             return page.meta["site_path"]
 
-    def get_img_attributes(self, image: Union[str, "Page"], type: Optional[str] = None) -> Dict[str, str]:
+    def get_img_attributes(
+            self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
         """
         Get <img> attributes into the given dict
         """
@@ -301,7 +302,7 @@ class Page:
             rel = img.meta["related"].get(type, img)
             res["width"] = str(rel.meta["width"])
             res["height"] = str(rel.meta["height"])
-            res["src"] = self.url_for(rel)
+            res["src"] = self.url_for(rel, absolute=absolute)
         else:
             # https://developers.google.com/web/ilt/pwa/lab-responsive-images
             # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
@@ -314,7 +315,7 @@ class Page:
                 if width is None:
                     continue
 
-                url = self.url_for(rel)
+                url = self.url_for(rel, absolute=absolute)
                 srcsets.append(f"{jinja2.escape(url)} {width}w")
 
             if srcsets:

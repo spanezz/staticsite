@@ -21,10 +21,12 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.page = None
+        self.absolute = False
         self.substituted = {}
 
-    def set_page(self, page):
+    def set_page(self, page, absolute=False):
         self.page = page
+        self.absolute = absolute
         self.substituted = {}
 
     def run(self, root):
@@ -43,7 +45,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
                 continue
 
             try:
-                attrs = self.page.get_img_attributes(page)
+                attrs = self.page.get_img_attributes(page, absolute=self.absolute)
             except PageNotFoundError as e:
                 log.warn("%s: %s", self.page, e)
                 continue
@@ -101,7 +103,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         if page is None:
             return page, url
 
-        new_url = self.page.url_for(page)
+        new_url = self.page.url_for(page, absolute=self.absolute)
         dest = urlparse(new_url)
 
         return page, urlunparse(
@@ -150,11 +152,11 @@ class MarkdownPages(Feature):
     def jinja2_markdown(self, context, mdtext):
         return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
 
-    def render_page(self, page, body, render_type):
+    def render_page(self, page, body, render_type, absolute=False):
         """
         Render markdown in the context of the given page.
         """
-        self.link_resolver.set_page(page)
+        self.link_resolver.set_page(page, absolute)
 
         cache_key = f"{render_type}:{page.src.relpath}"
 
@@ -395,24 +397,23 @@ class MarkdownPage(Page):
     def html_body(self, context, **kw) -> str:
         if self.content_has_split:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
-            return self.mdpages.render_page(self, body, render_type="c")
+            return self.mdpages.render_page(self, body, render_type="hb")
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="f")
+            return self.mdpages.render_page(self, self.body_start, render_type="s")
 
     @jinja2.contextfunction
     def html_inline(self, context, **kw) -> str:
         if self.content_has_split:
             body = self.body_start + ["", f"[(continue reading)](/{self.meta['site_path']})"]
-            return self.mdpages.render_page(self, body, render_type="s")
+            return self.mdpages.render_page(self, body, render_type="h")
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="f")
+            return self.mdpages.render_page(self, self.body_start, render_type="s")
 
     @jinja2.contextfunction
     def html_feed(self, context, **kw) -> str:
-        # TODO: set link resolver to absolute URLs
         if self.content_has_split:
-            body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
-            return self.mdpages.render_page(self, body, render_type="c")
+            body = self.body_start + [""] + self.body_rest
+            return self.mdpages.render_page(self, body, render_type="f")
         else:
             return self.mdpages.render_page(self, self.body_start, render_type="f")
 

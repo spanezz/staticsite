@@ -380,7 +380,7 @@ class Theme:
             log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
             return ""
 
-        res_attrs = cur_page.get_img_attributes(path, type=type)
+        res_attrs = cur_page.get_img_attributes(path, type=type, absolute=absolute)
         res_attrs.update(attrs)
 
         escape = jinja2.escape

@@ -140,6 +140,12 @@ class TestSite(TestCase):
                 },
                 "type": "rss",
             })
+            # A feed page renders images, all of a split page, absolute site urls
+            rendered = site.pages["/index.rss"].render()
+            self.assertCountEqual(rendered.keys(), ["index.rss"])
+            rendered = rendered["index.rss"].content()
+            self.assertIn(b"src='https://www.example.org/posts/example-small.jpg", rendered)
+            self.assertIn(b"This is the rest of the blog post", rendered)
 
             self.assertEqual(site.pages["/posts/example.jpg"].to_dict(), {
                 "src": {
