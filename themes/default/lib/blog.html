@@ -89,8 +89,16 @@
 {%- endmacro %}
 
 {% macro pages(pages, limit=10) -%}
-  {% for page in syndicated_pages(pages, limit=limit) %}
-  {{inline_page(page)}}
+  {% for entry in syndicated_pages(pages, limit=limit + 1) %}
+    {% if loop.index == 11 %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <a href="{{url_for(page.meta.related.archive)}}#{{loop.index0}}">Archive of all posts</a>
+      </div>
+    </div>
+    {% else %}
+    {{inline_page(entry)}}
+    {% endif %}
   {% else %}
   <p class="lead">There are no posts yet.</p>
   {% endfor %}
@@ -99,7 +107,7 @@
 {% macro archive(pages) -%}
 <ul class="list-group">
   {% for page in syndicated_pages(pages) %}
-  <li class="list-group-item"><a href="{{url_for(page)}}">{{page.meta.date.strftime("%Y-%m-%d")}} - {{page.meta.title}}</a></li>
+  <li class="list-group-item"><a name="{{loop.index}}"><a href="{{url_for(page)}}">{{page.meta.date.strftime("%Y-%m-%d")}} - {{page.meta.title}}</a></li>
   {% else %}
   <p class="lead">There are no posts yet.</p>
   {% endfor %}
