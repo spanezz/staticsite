@@ -1,3 +1,10 @@
+staticsite (1.5-1) UNRELEASED; urgency=medium
+
+  * New upstream version
+     - Polished code repository use case. See NEWS.md for details.
+
+ -- Enrico Zini <enrico@debian.org>  Tue, 07 Jan 2020 14:31:21 +0100
+
 staticsite (1.4.1-1) unstable; urgency=medium
 
   * New upstream version

@@ -1,5 +1,7 @@
 # staticsite user-relevant changes
 
+# New in version 1.5
+
 # New in version 1.4.1
 
 * `ssite edit` can now filter by taxonomies
