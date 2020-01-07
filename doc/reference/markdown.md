@@ -21,7 +21,7 @@ page fold. When rendering the page inline, such as in a blog index page, or in
 RSS/Atom syndication, the content from the horizontal rule onwards will not be
 shown.
 
-If you wan to add a horizontal rule without introducing a page fold, use a
+If you want to add a horizontal rule without introducing a page fold, use a
 sequence of three or more asterisks (`***`) or dashes (`---`) instead.
 
 
