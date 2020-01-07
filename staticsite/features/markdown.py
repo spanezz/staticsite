@@ -283,41 +283,6 @@ class MarkdownPages(Feature):
         return MarkdownArchetype(archetypes, relpath, self)
 
 
-def parse_markdown_with_front_matter(fd):
-    """
-    Parse lines of markdown with front matter.
-
-    Returns two arrays: one with the lines of front matter and one with the
-    lines of markdown.
-    """
-    fmatter = []
-    body = []
-
-    front_matter_end = None
-    in_front_matter = True
-
-    for lineno, line in enumerate(fd, 1):
-        line = line.rstrip()
-        if lineno == 1:
-            if line == "{":
-                front_matter_end = "}"
-            elif line == "---":
-                front_matter_end = "---"
-            elif line == "+++":
-                front_matter_end = "+++"
-            else:
-                in_front_matter = False
-
-        if in_front_matter:
-            fmatter.append(line)
-            if lineno > 1 and line == front_matter_end:
-                in_front_matter = False
-        else:
-            body.append(line)
-
-    return fmatter, body
-
-
 class MarkdownArchetype(Archetype):
     def __init__(self, archetypes, relpath, mdpages):
         super().__init__(archetypes, relpath)
@@ -327,29 +292,29 @@ class MarkdownArchetype(Archetype):
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version
-        with io.StringIO(rendered) as fd:
+        with io.BytesIO(rendered.encode()) as fd:
             # Reparse it separating front matter and markdown content
-            fmatter, body = parse_markdown_with_front_matter(fd)
-        try:
-            style, meta = front_matter.read_string(fmatter)
-        except Exception as e:
-            log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=e)
-            log.warn("archetype %s: failed to parse front matter", self.relpath)
+            try:
+                style, meta, body = front_matter.read_markdown_partial(fd)
+            except Exception as e:
+                log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=e)
+                log.warn("archetype %s: failed to parse front matter", self.relpath)
+                return
 
-        # Make a copy of the full parsed metadata
-        archetype_meta = dict(meta)
+            # Make a copy of the full parsed metadata
+            archetype_meta = dict(meta)
 
-        # Remove the path entry
-        meta.pop("path", None)
+            # Remove the path entry
+            meta.pop("path", None)
 
-        # Reserialize the page with the edited metadata
-        fmatter = front_matter.write(meta, style)
-        with io.StringIO() as fd:
-            fd.write(fmatter)
-            print(file=fd)
-            for line in body:
-                print(line, file=fd)
-            post_body = fd.getvalue()
+            # Reserialize the page with the edited metadata
+            fmatter = front_matter.write(meta, style)
+            with io.StringIO() as fd:
+                fd.write(fmatter)
+                print(file=fd)
+                for line in body:
+                    print(line, file=fd)
+                post_body = fd.getvalue()
 
         return archetype_meta, post_body
 
