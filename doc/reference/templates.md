@@ -75,4 +75,14 @@ for example:
    pages. `sort` takes the same values as in [page filters](page-filter.md).
 
 
+### Template loading
+
+Referring to a template by path, looks it up in theme directories. If a
+template is not found in a theme, it is looked up in the themes it extends.
+
+Prefix a template name with `content:` to look it up in the site content
+directory insted. This way you could have content pages that extend other
+content pages, or a local base template in the content directory that extends
+the one from the theme.
+
 [Back to reference index](README.md)

@@ -38,6 +38,9 @@
 * Taxonomy now reuses blog and archive templates by default
 * `ssite build` now warns of broken internal links
 * Added tutorials and HOWTOs on making a blog (#36)
+* Use [`content:` prefix for template names](templates.md) to distinguish
+  templates in content directory from templates in theme directories. The
+  content directory is no longer in the template search path by default.
 
 ## Upgrade notes
 
@@ -63,6 +66,9 @@
   `taxonomy/category.html`
 * The default template for taxonomy category archives is now `archive.html`
   instead of `taxonomy/archive.html`
+* Use [`content:` prefix for template names](templates.md) to load templates
+  from the content directory: the content directory is no longer in the
+  template search path by default.
 
 # New in version 1.3
 
