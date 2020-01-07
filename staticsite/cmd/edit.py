@@ -12,17 +12,6 @@ class Edit(SiteCommand):
 
     MENU_SIZE = 5
 
-    def match_page(self, page):
-        for m in self.args.match:
-            if m.startswith("+"):
-                tags = page.meta.get("tags", ())
-                if m[1:] not in tags:
-                    return False
-            elif (m.lower() not in page.meta.get("title", "").lower()
-                  and m.lower() not in page.src.relpath.lower()):
-                return False
-        return True
-
     def select_page_menu(self, pages):
         """
         Prompt the user to select a page from `pages`.
@@ -74,23 +63,42 @@ class Edit(SiteCommand):
     def run(self):
         site = self.load_site()
 
+        filter_args = {
+            "sort": "-date",
+        }
+
+        # Filter by taxonomy
+        taxonomies = site.features["taxonomy"]
+        args = []
+        for arg in self.args.match:
+            if arg.startswith("+"):
+                filter_args.setdefault("tags", []).append(arg[1:])
+            else:
+                for name in taxonomies.taxonomies.keys():
+                    if arg.startswith(f"{name}:"):
+                        filter_args.setdefault("tags", []).append(arg[len(name) + 1:])
+                        break
+                else:
+                    args.append(arg)
+
+        def match_page(page):
+            for m in args:
+                if (m.lower() not in page.meta.get("title", "").lower()
+                        and m.lower() not in page.src.relpath.lower()):
+                    return False
+            return True
+
         # Build a list of all findable pages, present on disk, sorted with the newest first
-        f = PageFilter(site, sort="-date")
-        pages = [page for page in f.filter(site.pages.values()) if page.src.stat is not None]
+        f = PageFilter(site, **filter_args)
+        pages = [page for page in f.filter(site.pages.values()) if page.src.stat is not None and match_page(page)]
 
-        selected = []
-        for page in pages:
-            if not self.match_page(page):
-                continue
-            selected.append(page)
-
-        if len(selected) == 0:
+        if len(pages) == 0:
             raise Fail("No page found matching {}".format(" ".join(shlex.quote(x) for x in self.args.match)))
 
-        if len(selected) == 1:
-            page = selected[0]
+        if len(pages) == 1:
+            page = pages[0]
         else:
-            page = self.select_page_menu(selected)
+            page = self.select_page_menu(pages)
 
         if page is None:
             return
