@@ -4,6 +4,7 @@ include README.md
 include NEWS.md
 include coverage.sh
 include .coveragerc
+include .staticsite
 recursive-include example *
 recursive-include themes *
 recursive-include doc *
