@@ -13,7 +13,6 @@ class ServerMixin:
             import tornado.netutil
         except ModuleNotFoundError:
             raise Fail("python3-tornado is not installed")
-        from .pagefs import PageFS
         from .server import Application
         import asyncio
         import webbrowser

@@ -1,6 +1,5 @@
 from unittest import TestCase
 import os
-import datetime
 from . import utils as test_utils
 
 
