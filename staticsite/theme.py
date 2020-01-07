@@ -114,6 +114,48 @@ class Loader:
         return config
 
 
+class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
+    re_content = re.compile(r"^content:(.+)")
+
+    def __init__(self, theme):
+        self.loader_content = jinja2.FileSystemLoader(theme.site.content_root)
+        self.loader_theme = jinja2.FileSystemLoader(theme.template_lookup_paths)
+
+    def get_loader(self, template):
+        mo = self.re_content.match(template)
+        if mo:
+            return self.loader_content, mo.group(1)
+        else:
+            return self.loader_theme, template
+
+    def get_source(self, environment, template):
+        loader, name = self.get_loader(template)
+        try:
+            return loader.get_source(environment, name)
+        except jinja2.TemplateNotFound:
+            # re-raise the exception with the correct filename here.
+            # (the one that includes the prefix)
+            raise jinja2.TemplateNotFound(template)
+
+    @jinja2.utils.internalcode
+    def load(self, environment, name, globals=None):
+        loader, local_name = self.get_loader(name)
+        try:
+            return loader.load(environment, local_name, globals)
+        except jinja2.TemplateNotFound:
+            # re-raise the exception with the correct filename here.
+            # (the one that includes the prefix)
+            raise jinja2.TemplateNotFound(name)
+
+    def list_templates(self):
+        result = []
+        for template in self.loader_theme.list_templates():
+            result.append(template)
+        for template in self.loader_content.list_templates():
+            result.append("content:" + template)
+        return result
+
+
 class Theme:
     def __init__(self, site, name, configs: List[Meta]):
         # Site object
@@ -133,7 +175,7 @@ class Theme:
         self.metadata_templates: Optional[List[Metadata]] = None
 
         # Compute template lookup paths
-        self.template_lookup_paths: List[str] = [self.site.content_root]
+        self.template_lookup_paths: List[str] = []
         for config in reversed(self.configs):
             self.template_lookup_paths.append(config["root"])
         log.info("%s: template lookup paths: %r", self.name, self.template_lookup_paths)
@@ -200,7 +242,6 @@ class Theme:
         self.site.stage_features_constructed = True
 
         # Jinja2 template engine
-        from jinja2 import FileSystemLoader
         if self.site.settings.JINJA2_SANDBOXED:
             from jinja2.sandbox import ImmutableSandboxedEnvironment
             env_cls = ImmutableSandboxedEnvironment
@@ -209,7 +250,7 @@ class Theme:
             env_cls = Environment
 
         self.jinja2 = env_cls(
-            loader=FileSystemLoader(self.template_lookup_paths),
+            loader=Jinja2TemplateLoader(self),
             autoescape=True,
         )
 

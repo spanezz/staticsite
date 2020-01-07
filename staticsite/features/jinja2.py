@@ -57,7 +57,7 @@ class J2Pages(Feature):
             return
 
         try:
-            template = self.site.theme.jinja2.get_template(index.relpath)
+            template = self.site.theme.jinja2.get_template("content:" + index.relpath)
         except Exception:
             log.exception("%s: cannot load template", index.relpath)
         else:
@@ -169,7 +169,7 @@ class J2Page(RenderPartialTemplateMixin, Page):
         self.meta.setdefault("indexed", True)
 
         try:
-            template = self.site.theme.jinja2.get_template(self.src.relpath)
+            template = self.site.theme.jinja2.get_template("content:" + self.src.relpath)
         except Exception:
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
