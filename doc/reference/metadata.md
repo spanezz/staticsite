@@ -301,21 +301,6 @@ be syndicated before this date.
 
 If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
 
-<a name='related'>
-
-### `related`
-
-
-Dict of pages related to this page.
-
-Dict values will be resolved as pages.
-
-If there are no related pages, `page.meta.related` will be guaranteed to exist
-as an empty dictionary.
-
-Features can add to this. For example, [syndication](syndication.md) can add
-`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
-
 <a name='nav'>
 
 ### `nav`
@@ -334,3 +319,38 @@ Title to use when this paged is linked in a navbar.
 It defaults to `page.meta.title`, or to the series name for series pages.
 
 `nav_title` is only guaranteed to exist for pages that are used in `nav`.
+
+<a name='related'>
+
+### `related`
+
+
+Dict of pages related to this page.
+
+Dict values will be resolved as pages.
+
+If there are no related pages, `page.meta.related` will be guaranteed to exist
+as an empty dictionary.
+
+Features can add to this. For example, [syndication](syndication.md) can add
+`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
+
+<a name='series'>
+
+### `series`
+
+
+List of categories for the `series` taxonomy.
+
+Setting this as a simple string is the same as setting it as a list of one
+element.
+
+<a name='tags'>
+
+### `tags`
+
+
+List of categories for the `tags` taxonomy.
+
+Setting this as a simple string is the same as setting it as a list of one
+element.
