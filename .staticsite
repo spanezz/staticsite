@@ -1,0 +1,6 @@
+dirs:
+  themes:
+    asset: yes
+  example:
+    asset: yes
+nav: [doc/tutorial/README.md, doc/howto/README.md, doc/reference/README.md, doc/devel/README.md]

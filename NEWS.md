@@ -41,6 +41,8 @@
 * Use [`content:` prefix for template names](templates.md) to distinguish
   templates in content directory from templates in theme directories. The
   content directory is no longer in the template search path by default.
+* Added a link to the archive at the bottom of blog posts in default
+  `lib/blog.html`
 
 ## Upgrade notes
 

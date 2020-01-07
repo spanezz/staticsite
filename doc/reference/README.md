@@ -1,4 +1,4 @@
-# staticsite reference documentation
+# Reference documentation
 
 ## Site structure
 
