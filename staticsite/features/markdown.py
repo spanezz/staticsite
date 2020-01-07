@@ -369,7 +369,7 @@ class MarkdownPage(Page):
     @jinja2.contextfunction
     def html_inline(self, context, **kw) -> str:
         if self.content_has_split:
-            body = self.body_start + ["", f"[(continue reading)](/{self.meta['site_path']})"]
+            body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
             return self.mdpages.render_page(self, body, render_type="h")
         else:
             return self.mdpages.render_page(self, self.body_start, render_type="s")
