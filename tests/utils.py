@@ -79,6 +79,7 @@ def test_settings(**kw):
     kw.setdefault("SITE_NAME", "Test site")
     kw.setdefault("SITE_URL", "https://www.example.org")
     kw.setdefault("SITE_AUTHOR", "Test User")
+    kw.setdefault("TIMEZONE", "Europe/Rome")
     kw.setdefault("CACHE_REBUILDS", False)
     kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
 
@@ -171,6 +172,8 @@ def example_site(name="demo", **kw):
             settings.THEME_PATHS = [os.path.join(src_root, "themes")]
             for k, v in kw.items():
                 setattr(settings, k, v)
+            if settings.TIMEZONE is None:
+                settings.TIMEZONE = "Europe/Rome"
 
             site = staticsite.Site(settings=settings)
             with stat_override(site):
