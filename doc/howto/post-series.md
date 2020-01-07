@@ -36,6 +36,7 @@ sees a category in the `series` taxonomy, it will use it to render *first*,
 
 ## Next steps
 
+* [Add an image for a post](post-image.md)
 * [More HOWTOs](README.md)
 * [Back to main documentation](../../README.md)
 

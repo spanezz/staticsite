@@ -44,4 +44,5 @@ The contents of `built_site` are ready to be published by any web server.
 * [Group blog posts in a directory](../howto/blog-posts-in-a-directory.md)
 * [Tag site pages](../howto/tag-pages.md)
 * [Post series](../howto/post-series.md)
+* [Add an image for a post](../howto/post-image.md)
 * [Back to main documentation](../../README.md)
