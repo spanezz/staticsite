@@ -1,7 +1,7 @@
 ```yaml
 site_url: https://www.example.org
 template: blog.html
-nav: [index.md, about.md]
+nav: [about.md]
 syndication: yes
 pages: "posts/*"
 ```
