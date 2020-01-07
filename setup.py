@@ -16,7 +16,7 @@ setup(
         'serve': ['tornado'],
         'fast_caching': ['lmdb'],
     },
-    version="1.4",
+    version="1.4.1",
     description="Static site generator",
     author="Enrico Zini",
     author_email="enrico@enricozini.org",

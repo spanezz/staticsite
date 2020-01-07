@@ -1,5 +1,11 @@
 # staticsite user-relevant changes
 
+# New in version 1.4.1
+
+* `ssite edit` can now filter by taxonomies
+* Fixed generation of "continue reading" links in markdown inline pages
+* Fixed use of markdown archetypes
+
 # New in version 1.4
 
 * New [images support](doc/reference/images.md) (see #39, #46)
