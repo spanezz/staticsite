@@ -181,7 +181,9 @@ class Application(tornado.web.Application):
         # TODO: reload when source changes
         # See /usr/lib/python3/dist-packages/tornado/autoreload.py:_reload_on_update
         # for example code on how to list source files for the running program
-        dirs = list(self.site.theme.feature_dirs) + list(self.site.theme.template_lookup_paths)
+        dirs = [self.site.content_root]
+        dirs.extend(self.site.theme.feature_dirs)
+        dirs.extend(self.site.theme.template_lookup_paths)
         for name in self.site.theme.system_assets:
             dirs.append(os.path.join("/usr/share/javascript", name))
         return dirs
