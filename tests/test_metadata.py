@@ -28,11 +28,7 @@ title: Test1 title
 {% endblock %}""",
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(PROJECT_ROOT=root)
-            site.load()
-            site.analyze()
-
+        with test_utils.testsite(files) as site:
             self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("/static/")], [
                 "/", "/test.html", "/test1.html"
             ])

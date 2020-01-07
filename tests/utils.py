@@ -43,6 +43,37 @@ def mock_file_stat(overrides: Dict[int, Any]):
             yield
 
 
+class StatOverride:
+    """
+    Override file stat() results with well-known values
+    """
+    def __init__(self, kw):
+        """
+        Pluck the arguments we need from a bundle of keyword arguments
+        """
+        self.stat_override = kw.pop("stat_override", None)
+        if self.stat_override is None:
+            self.stat_override = {
+                # date +%s --date="2019-06-01 12:30"
+                "st_mtime": 1559385000,
+            }
+        elif self.stat_override is False:
+            self.stat_override = None
+
+        self.generation_time = kw.pop("generation_time", None)
+        if self.generation_time is None:
+            self.generation_time = datetime.datetime(2020, 2, 1, 16, 0, tzinfo=pytz.utc)
+        elif self.generation_time is False:
+            self.generation_time = None
+
+    @contextmanager
+    def __call__(self, site):
+        if self.generation_time is not None:
+            site.generation_time = self.generation_time
+        with mock_file_stat(self.stat_override):
+            yield
+
+
 def test_settings(**kw):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     kw.setdefault("SITE_NAME", "Test site")
@@ -99,11 +130,14 @@ def testsite(files: Dict[str, Union[str, bytes, Dict]] = None, **kw):
     """
     Take a dict representing directory contents and build a Site for it
     """
+    stat_override = StatOverride(kw)
+
     with workdir(files) as root:
         settings = test_settings(PROJECT_ROOT=root, **kw)
         site = staticsite.Site(settings)
-        site.load()
-        site.analyze()
+        with stat_override(site):
+            site.load()
+            site.analyze()
         yield site
 
 
@@ -121,19 +155,8 @@ def example_site_dir(name="demo"):
 
 
 @contextmanager
-def example_site(name="demo", stat_override=None, generation_time=None, **kw):
-    if stat_override is None:
-        stat_override = {
-            # date +%s --date="2019-06-01 12:30"
-            "st_mtime": 1559385000,
-        }
-    elif stat_override is False:
-        stat_override = None
-
-    if generation_time is None:
-        generation_time = datetime.datetime(2020, 2, 1, 16, 0, tzinfo=pytz.utc)
-    elif generation_time is False:
-        generation_time = None
+def example_site(name="demo", **kw):
+    stat_override = StatOverride(kw)
 
     with assert_no_logs():
         with example_site_dir(name) as root:
@@ -149,10 +172,8 @@ def example_site(name="demo", stat_override=None, generation_time=None, **kw):
             for k, v in kw.items():
                 setattr(settings, k, v)
 
-            with mock_file_stat(stat_override):
-                site = staticsite.Site(settings=settings)
-                if generation_time is not None:
-                    site.generation_time = generation_time
+            site = staticsite.Site(settings=settings)
+            with stat_override(site):
                 site.load()
                 site.analyze()
             yield site

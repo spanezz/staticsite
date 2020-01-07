@@ -18,12 +18,6 @@ class TestNav(TestCase):
         }
 
         with test_utils.testsite(files) as site:
-            test_time = datetime.datetime(2020, 1, 2, 12, 00, tzinfo=site.timezone)
-            for page in site.pages.values():
-                page.meta["date"] = test_time
-                if "syndication_date" in page.meta:
-                    page.meta["syndication_date"] = test_time
-
             page = site.pages["/dir1/dir2/dir3/page"]
             self.assertEqual(page.to_dict(), {
                 "src": {
@@ -32,13 +26,13 @@ class TestNav(TestCase):
                 },
                 "meta": {
                     "author": "Test User",
-                    "copyright": '© 2020 Test User',
-                    "date": '2020-01-02 12:00:00+01:00',
+                    "copyright": '© 2019 Test User',
+                    "date": '2019-06-01 12:30:00+02:00',
                     "draft": False,
                     'indexed': True,
                     'nav': ["MarkdownPage(/about)"],
                     'syndicated': True,
-                    "syndication_date": '2020-01-02 12:00:00+01:00',
+                    "syndication_date": '2019-06-01 12:30:00+02:00',
                     'site_name': 'Test site',
                     'site_path': '/dir1/dir2/dir3/page',
                     'site_url': 'https://www.example.org',
