@@ -8,12 +8,12 @@ setup(
     install_requires=[
         'markdown', 'docutils',
         'toml', 'pyyaml', 'ruamel.yaml',
-        'jinja2', 'PIL',
+        'jinja2', 'Pillow',
         'python_dateutil', 'python_slugify', 'pytz'],
 
     # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
     extras_require={
-        'serve': ['tornado'],
+        'serve': ['tornado', 'pyinotify'],
         'fast_caching': ['lmdb'],
     },
     version="1.5",
