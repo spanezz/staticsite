@@ -2,6 +2,9 @@
 
 # New in version 1.5
 
+* Force escape HTML content in syndication feeds, to fix displaying contents in
+  some feed readers
+
 # New in version 1.4.1
 
 * `ssite edit` can now filter by taxonomies
