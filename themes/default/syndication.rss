@@ -25,8 +25,8 @@
     <pubDate>{{page.meta.syndication_date|datetime_format("rss2")}}</pubDate>
     <dcterms:modified>{{page.meta.date|datetime_format("w3cdtf")}}</dcterms:modified>
     <description>
-      {% if page.meta.image %}{{img_for(page.meta.image, type="small", absolute=True)}}{% endif %}
-      {{page.html_feed()|safe}}
+      {% if page.meta.image %}{{img_for(page.meta.image, type="small", absolute=True)|forceescape}}{% endif %}
+      {{page.html_feed()|forceescape}}
     </description>
   </item>
   {%- endfor %}

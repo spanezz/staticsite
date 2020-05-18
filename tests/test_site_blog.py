@@ -143,7 +143,7 @@ class TestSite(TestCase):
             rendered = site.pages["/index.rss"].render()
             self.assertCountEqual(rendered.keys(), ["index.rss"])
             rendered = rendered["index.rss"].content()
-            self.assertIn(b"src='https://www.example.org/posts/example-small.jpg", rendered)
+            self.assertIn(b"src=&#39;https://www.example.org/posts/example-small.jpg", rendered)
             self.assertIn(b"This is the rest of the blog post", rendered)
 
             self.assertEqual(site.pages["/posts/example.jpg"].to_dict(), {
