@@ -41,7 +41,7 @@ if lmdb is not None:
         @lazy_value
         def db(self):
             os.makedirs(os.path.dirname(self.fname), exist_ok=True)
-            return lmdb.open(self.fname, metasync=False, sync=False)
+            return lmdb.open(self.fname, metasync=False, sync=False, map_size=100*1024*1024)
 
         def get(self, relpath):
             with self.db.begin() as tr:
