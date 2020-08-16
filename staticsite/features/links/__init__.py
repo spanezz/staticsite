@@ -29,29 +29,30 @@ class MetadataLinks(Metadata):
         if render_type in ("hb", "s") and external_links:
             feature = self.site.features["links"]
             links = feature.links
-            tag_indices = feature.indices[0].by_tag
-            data = {}
-            for url in external_links:
-                info = links.get(url)
-                if info is None:
-                    continue
-                info = info.as_dict()
+            if feature.indices:
+                tag_indices = feature.indices[0].by_tag
+                data = {}
+                for url in external_links:
+                    info = links.get(url)
+                    if info is None:
+                        continue
+                    info = info.as_dict()
 
-                # Resolve tag urls for page into a { title: …,  url: … } dict
-                tags = info.get("tags")
-                if tags:
-                    tag_dicts = []
-                    for tag in tags:
-                        dest = tag_indices[tag]
-                        tag_dicts.append({"tag": tag, "url": page.url_for(dest)})
-                    info["tags"] = tag_dicts
+                    # Resolve tag urls for page into a { title: …,  url: … } dict
+                    tags = info.get("tags")
+                    if tags:
+                        tag_dicts = []
+                        for tag in tags:
+                            dest = tag_indices[tag]
+                            tag_dicts.append({"tag": tag, "url": page.url_for(dest)})
+                        info["tags"] = tag_dicts
 
-                data[url] = info
-            rendered += (
-                "\n<script type='application/json' id='external-links'>"
-                f"{json.dumps(data)}"
-                "</script>\n"
-            )
+                    data[url] = info
+                rendered += (
+                    "\n<script type='application/json' id='external-links'>"
+                    f"{json.dumps(data)}"
+                    "</script>\n"
+                )
         return rendered
 
 
