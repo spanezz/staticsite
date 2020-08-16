@@ -186,7 +186,7 @@ class MarkdownPages(Feature):
         rendered = self.markdown.convert("\n".join(body))
 
         rendered = self.site.metadata.on_contents_rendered(
-                self, rendered,
+                page, rendered,
                 render_type=render_type,
                 external_links=self.link_resolver.external_links)
 

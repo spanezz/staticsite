@@ -27,12 +27,26 @@ class MetadataLinks(Metadata):
         render_type = kw.get("render_type", "s")
         external_links = kw.get("external_links", ())
         if render_type in ("hb", "s") and external_links:
-            links = self.site.features["links"].links
+            feature = self.site.features["links"]
+            links = feature.links
+            tag_indices = feature.indices[0].by_tag
             data = {}
             for url in external_links:
                 info = links.get(url)
-                if info is not None:
-                    data[url] = info.as_dict()
+                if info is None:
+                    continue
+                info = info.as_dict()
+
+                # Resolve tag urls for page into a { title: …,  url: … } dict
+                tags = info.get("tags")
+                if tags:
+                    tag_dicts = []
+                    for tag in tags:
+                        dest = tag_indices[tag]
+                        tag_dicts.append({"tag": tag, "url": page.url_for(dest)})
+                    info["tags"] = tag_dicts
+
+                data[url] = info
             rendered += (
                 "\n<script type='application/json' id='external-links'>"
                 f"{json.dumps(data)}"
@@ -161,7 +175,9 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
 
     @jinja2.contextfunction
     def links_tag_index_url(self, context, tag):
-        return os.path.join(self.site.settings.SITE_ROOT, "links", tag + "-links")
+        dest = self.indices[0].by_tag[tag]
+        page = context.parent["page"]
+        return page.url_for(dest)
 
     def finalize(self):
         # Index of all links

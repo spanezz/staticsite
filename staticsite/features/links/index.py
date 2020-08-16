@@ -28,6 +28,8 @@ class LinkIndexPage(Page):
         self.meta.setdefault("nav_title", name.capitalize())
         self.meta.setdefault("title", "All links shared in the site")
 
+        self.by_tag: Dict[str, "LinksTagPage"] = {}
+
 #    def to_dict(self):
 #        from staticsite.utils import dump_meta
 #        res = super().to_dict()
@@ -47,6 +49,7 @@ class LinkIndexPage(Page):
             meta["title"] = f"{tag} links"
             meta["links"] = links
             page = LinksTagPage.create_from(self, meta, links=links)
+            self.by_tag[tag] = page
             self.site.add_page(page)
             pages.append(page)
 

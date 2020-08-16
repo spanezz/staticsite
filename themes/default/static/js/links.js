@@ -83,13 +83,13 @@ class ExternalLink
 
             if (this.info.tags)
             {
-                for (const name of this.info.tags)
+                for (const taginfo of this.info.tags)
                 {
                     let tag = document.createElement("a");
                     tag.className = "badge badge-pill badge-info ml-1";
                     tag.setAttribute("data-role", "tag");
-                    tag.setAttribute("href", "…...…");
-                    tag.append(name);
+                    tag.setAttribute("href", taginfo.url);
+                    tag.append(taginfo.tag);
                     pills.append(tag);
                 }
             }
@@ -170,6 +170,7 @@ class ExternalLinks
         if (!el)
             return;
         this.links = JSON.parse(el.text);
+        // console.log("Link data:", this.links)
 
         // Store <a> elements into a static array, otherwise we cannot create
         // more <a> records without having them dynamically inserted in the
