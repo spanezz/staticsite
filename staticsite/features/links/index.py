@@ -38,9 +38,7 @@ class LinkIndexPage(Page):
 
     def finalize(self):
         pages = []
-        all_links = LinkCollection()
         for tag, links in self.feature_links.by_tag.items():
-            all_links.merge(links)
             meta = dict(self.meta)
             meta["site_path"] = os.path.join(meta["site_path"], tag + "-links")
             if meta["site_path"] in self.site.pages:
@@ -55,7 +53,7 @@ class LinkIndexPage(Page):
         # Set self.meta.pages to the sorted list of categories
         pages.sort(key=lambda x: x.meta["title"])
         self.meta["pages"] = pages
-        self.links = all_links
+        self.links = self.feature_links.links
 
 
 class LinksTagPage(Page):

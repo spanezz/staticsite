@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional, Dict
 from collections import Counter
 import logging
 
@@ -18,28 +19,45 @@ class Link:
         self.related = info.get("related", ())
         self.abstract = info.get("abstract")
 
+    def as_dict(self):
+        res = {"url": self.url}
+        if self.title:
+            res["title"] = self.title
+        if self.tags:
+            res["tags"] = list(self.tags)
+        if self.archive:
+            res["archive"] = self.archive
+        if self.related:
+            res["related"] = self.related
+        if self.abstract:
+            res["abstract"] = self.abstract
+        return res
+
 
 class LinkCollection:
     """
     Collection of links
     """
-    def __init__(self, links=None):
-        self.links = links if links is not None else []
+    def __init__(self, links: Optional[Dict[str, Link]] = None):
+        self.links: Dict[str, Link] = links if links is not None else {}
 
         # Compute count of link and tag cardinalities
         self.card = Counter()
-        for link in self.links:
+        for link in self.links.values():
             for tag in link.tags:
                 self.card[tag] += 1
 
     def __iter__(self):
-        return iter(self.links)
+        return self.links.values().__iter__()
 
     def __len__(self):
         return len(self.links)
 
     def __bool__(self):
         return bool(self.links)
+
+    def get(self, url: str) -> Optional[str]:
+        return self.links.get(url)
 
     def tags_and_cards(self):
         """
@@ -50,12 +68,12 @@ class LinkCollection:
         return res
 
     def append(self, link):
-        self.links.append(link)
+        self.links[link.url] = link
         for tag in link.tags:
             self.card[tag] += 1
 
     def merge(self, coll):
-        self.links.extend(coll.links)
+        self.links.update(coll.links)
         self.card += coll.card
 
     def make_groups(self):
@@ -69,19 +87,19 @@ class LinkCollection:
         for tag, card in self.card.most_common():
             if card < 4:
                 break
-            selected = [l for l in self.links if tag in l.tags]
+            selected = {l.url: l for l in self.links.values() if tag in l.tags}
             if len(selected) == len(self.links):
                 continue
-            seen.update(l.url for l in selected)
+            seen.update(l.url for l in selected.values())
             groups.append((tag, LinkCollection(selected)))
 
         groups.sort()
 
-        others = [l for l in self.links if l.url not in seen]
+        others = {l.url: l for l in self.links.values() if l.url not in seen}
         if others:
             # If all elements in other share a tag, use that instead of None
             other_tag = None
-            common_tags = set.intersection(*(l.tags for l in others))
+            common_tags = set.intersection(*(l.tags for l in others.values()))
             if common_tags:
                 other_tag = sorted(common_tags)[0]
             groups.append((other_tag, LinkCollection(others)))

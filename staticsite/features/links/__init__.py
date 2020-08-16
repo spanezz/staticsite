@@ -27,9 +27,12 @@ class MetadataLinks(Metadata):
         render_type = kw.get("render_type", "s")
         external_links = kw.get("external_links", ())
         if render_type in ("hb", "s") and external_links:
+            links = self.site.features["links"].links
             data = {}
-            for link in external_links:
-                data[link] = {}
+            for url in external_links:
+                info = links.get(url)
+                if info is not None:
+                    data[url] = info.as_dict()
             rendered += (
                 "\n<script type='application/json' id='external-links'>"
                 f"{json.dumps(data)}"
@@ -44,7 +47,7 @@ class LinksPage(DataPage):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.links = LinkCollection([Link(link, page=self) for link in self.meta["links"]])
+        self.links = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
 
 
 class Links(Feature):
@@ -161,10 +164,15 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
         return os.path.join(self.site.settings.SITE_ROOT, "links", tag + "-links")
 
     def finalize(self):
+        # Index of all links
+        self.links = LinkCollection()
+
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
         for page in self.site.pages_by_metadata["links"]:
-            for link in page.links:
+            for link in page.meta["links"]:
+                link = Link(link)
+                self.links.append(link)
                 for tag in link.tags:
                     self.by_tag[tag].append(link)
 
