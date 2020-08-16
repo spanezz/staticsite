@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import List, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, List, Dict, Iterable, Optional
 from staticsite import Page
 from staticsite.feature import Feature
-from staticsite.contents import ContentDir
 from staticsite.metadata import Metadata
 from collections import defaultdict
 import heapq
 import functools
 import os
 import logging
+
+if TYPE_CHECKING:
+    from staticsite.contents import ContentDir
 
 log = logging.getLogger("taxonomy")
 
