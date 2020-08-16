@@ -44,11 +44,11 @@ class TestPageFilter(TestCase):
         with test_utils.testsite(files) as site:
             page = site.pages["/page"]
             # dir1 = site.pages["dir"]
-            dir2 = site.pages["/dir/dir"]
+            # dir2 = site.pages["/dir/dir"]
             page1 = site.pages["/dir/page1"]
             page2 = site.pages["/dir/page2"]
             page3 = site.pages["/dir/dir/page3"]
             page4 = site.pages["/dir/dir/page4"]
 
-            self.assertCountEqual(page.meta["pages"], [page1, page2, page3, page4, dir2])
+            self.assertCountEqual(page.meta["pages"], [page1, page2, page3, page4])
             self.assertCountEqual(page1.meta["pages"], [page3, page4])
