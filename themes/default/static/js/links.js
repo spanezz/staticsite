@@ -38,7 +38,7 @@ class ExternalLink
 
         // Show details on hover
         this.el.addEventListener("mouseenter", evt => { this.delayed_open(); });
-        this.el.addEventListener("mouseleave", evt => { this.delayed_close(); });
+        this.el.addEventListener("mouseleave", evt => { this.cancel_delayed_open(); this.delayed_close(); });
         contents.addEventListener("mouseenter", evt => { this.cancel_delayed_close(); });
     }
 
@@ -125,7 +125,7 @@ class ExternalLink
 
     delayed_open()
     {
-        this.open_timeout = setTimeout(() => { this.open() }, 300);
+        this.open_timeout = setTimeout(() => { this.open() }, 600);
     }
 
     cancel_delayed_open()
@@ -138,7 +138,7 @@ class ExternalLink
 
     delayed_close()
     {
-        this.close_timeout = setTimeout(() => { this.close() }, 300);
+        this.close_timeout = setTimeout(() => { this.close() }, 600);
     }
 
     cancel_delayed_close()
