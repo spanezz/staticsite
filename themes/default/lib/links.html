@@ -1,0 +1,68 @@
+{% macro render_link(link) %}
+  <div class="d-flex justify-content-between align-items-center">
+    <a data-role="link" href="{{link.url}}">{{link.title}}</a>
+    <div>
+      {% for tag in link.tags|sort %}
+      <a data-role="tag" href="{{links_tag_index_url(tag)}}" class="badge badge-pill badge-info">{{tag}}</a>
+      {% endfor %}
+      {% for related in link.related %}
+      <a data-role="related" class="badge badge-pill badge-primary" href="{{related.url}}">{{related.title}}</a>
+      {% endfor %}
+      {% if link.archive %}<a data-role="archive" class="badge badge-pill badge-primary" href="{{link.archive}}">archive.org</a>{% endif %}
+      {% if link.page %}<div class="text-right"><small><a href="{{url_for(link.page)}}">{{link.page.meta.date.date()}}</a></small></div>{% endif %}
+    </div>
+  </div>
+  {% if link.abstract %}<blockquote>{{link.abstract}}</blockquote>{% endif %}
+{% endmacro %}
+
+{% macro render_ungrouped(links) %}
+  {% for link in links %}
+  {{render_link(link)}}
+  {% endfor %}
+{% endmacro %}
+
+{% macro render_grouped(all, groups) %}
+<a name="all"></a>
+
+{# Group index #}
+<div class="text-center mb-4 sticky-top bg-white">
+<a class="badge badge-pill badge-light" href="#all">All</a>
+{% for tag, links in groups %}
+<a class="badge badge-pill badge-light" href="#group-{{tag}}">{{tag|default("other", True)|capitalize}}</a>
+{% endfor %}
+</div>
+
+<div class="row">
+  {# Post groups #}
+  <div class="col-lg-10">
+    {% for tag, coll in groups %}
+    <a name="group-{{tag}}"></a>
+      <h5 class="card-title text-center">{{tag|default("other categories", True)|capitalize}}</h5>
+      {{render_ungrouped(coll.links)}}
+    {% endfor %}
+  </div>
+
+  {# Tag list #}
+  <div class="col-sm-2">
+    <h5>Tags</h5>
+    <ul class="taglist">
+    {% for tag, card in all.tags_and_cards() %}
+    <a href="{{links_tag_index_url(tag)}}" class="d-flex justify-content-between align-items-center">
+    {{tag}}
+    <span class="badge badge-primary badge-pill">{{card}}</span>
+    </a>
+    {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_links(all, groups) %}
+<div data-role="links">
+  {% if groups|length == 1 %}
+    {{render_ungrouped(all)}}
+  {% else %}
+    {{render_grouped(all, groups)}}
+  {% endif %}
+</div>
+{% endmacro %}
