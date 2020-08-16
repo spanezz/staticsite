@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Set
 from staticsite import Page, Feature
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
@@ -8,6 +8,7 @@ from staticsite.contents import ContentDir
 from staticsite.utils.typing import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
+import json
 import re
 import os
 import io
@@ -23,11 +24,13 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         self.page: Optional[Page] = None
         self.absolute: bool = False
         self.substituted: Dict[str, str] = {}
+        self.external_links: Set[str] = set()
 
     def set_page(self, page, absolute=False):
         self.page = page
         self.absolute = absolute
         self.substituted = {}
+        self.external_links = set()
 
     def run(self, root):
         for a in root.iter("a"):
@@ -66,6 +69,9 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
 
         # If it's an absolute url, leave it unchanged
         if parsed.scheme or parsed.netloc:
+            self.external_links.add(url)
+            return None, url
+
             return None, parsed
 
         # If it's an anchor inside the page, leave it unchanged
@@ -179,6 +185,16 @@ class MarkdownPages(Feature):
 
         self.markdown.reset()
         rendered = self.markdown.convert("\n".join(body))
+
+        if render_type in ("hb", "s") and self.link_resolver.external_links:
+            data = {}
+            for link in self.link_resolver.external_links:
+                data[link] = {}
+            rendered += (
+                "\n<script type='application/json' id='external-links'>"
+                f"{json.dumps(data)}"
+                "</script>\n"
+            )
 
         self.render_cache.put(cache_key, {
             "mtime": page.src.stat.st_mtime,
