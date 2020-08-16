@@ -23,7 +23,7 @@ class ExternalLink
 
         // Dropdown menu opener icon next to the link
         this.icon = document.createElement("button");
-        this.icon.className = "fa fa-external-link btn btn-link p-0 pl-1";
+        this.icon.className = "fa fa-external-link btn btn-link p-0 pl-1 align-baseline";
         this.icon.setAttribute("id", id);
         this.icon.setAttribute("data-toggle", "dropdown");
         this.icon.setAttribute("aria-haspopup", "true");
