@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 import jinja2
 import os
+import json
 import logging
 from collections import defaultdict
 from staticsite.metadata import Metadata
@@ -16,6 +17,25 @@ if TYPE_CHECKING:
     from staticsite.contents import ContentDir
 
 log = logging.getLogger("links")
+
+
+class MetadataLinks(Metadata):
+    """
+    Annotate rendered contents with link information
+    """
+    def on_contents_rendered(self, page: Page, rendered: str, **kw):
+        render_type = kw.get("render_type", "s")
+        external_links = kw.get("external_links", ())
+        if render_type in ("hb", "s") and external_links:
+            data = {}
+            for link in external_links:
+                data[link] = {}
+            rendered += (
+                "\n<script type='application/json' id='external-links'>"
+                f"{json.dumps(data)}"
+                "</script>\n"
+            )
+        return rendered
 
 
 class LinksPage(DataPage):
@@ -50,7 +70,7 @@ class Links(Feature):
 
         # Collect 'links' metadata
         self.site.tracked_metadata.add("links")
-        self.site.register_metadata(Metadata("links", doc="""
+        self.site.register_metadata(MetadataLinks("links", doc="""
 Extra metadata for external links.
 
 It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:

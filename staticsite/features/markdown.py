@@ -8,7 +8,6 @@ from staticsite.contents import ContentDir
 from staticsite.utils.typing import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
-import json
 import re
 import os
 import io
@@ -186,15 +185,10 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         rendered = self.markdown.convert("\n".join(body))
 
-        if render_type in ("hb", "s") and self.link_resolver.external_links:
-            data = {}
-            for link in self.link_resolver.external_links:
-                data[link] = {}
-            rendered += (
-                "\n<script type='application/json' id='external-links'>"
-                f"{json.dumps(data)}"
-                "</script>\n"
-            )
+        rendered = self.site.metadata.on_contents_rendered(
+                self, rendered,
+                render_type=render_type,
+                external_links=self.link_resolver.external_links)
 
         self.render_cache.put(cache_key, {
             "mtime": page.src.stat.st_mtime,

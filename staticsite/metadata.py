@@ -28,6 +28,9 @@ class Registry:
         # Functions called when loading directory metadata
         self.on_dir_meta_functions: List[Callable[Page, Meta], None] = []
 
+        # Functions called to tweak page content rendered from markdown/rst
+        self.on_contents_rendered_functions: List[Callable[Page, str], str] = []
+
     def add(self, metadata: "Metadata"):
         metadata.site = self.site
         self.registry[metadata.name] = metadata
@@ -43,6 +46,10 @@ class Registry:
         on_dir_meta = getattr(metadata, "on_dir_meta", None)
         if not getattr(on_dir_meta, "skip", False):
             self.on_dir_meta_functions.append(on_dir_meta)
+
+        on_contents_rendered = getattr(metadata, "on_contents_rendered", None)
+        if not getattr(on_contents_rendered, "skip", False):
+            self.on_contents_rendered_functions.append(on_contents_rendered)
 
     def on_load(self, page: Page):
         """
@@ -64,6 +71,14 @@ class Registry:
         """
         for f in self.on_dir_meta_functions:
             f(page, meta)
+
+    def on_contents_rendered(self, page: Page, rendered: str, **kw) -> str:
+        """
+        Run on_contents_rendered functions on the page
+        """
+        for f in self.on_contents_rendered_functions:
+            rendered = f(page, rendered, **kw)
+        return rendered
 
     def __getitem__(self, key: str) -> "Metadata":
         return self.registry[key]
@@ -138,6 +153,15 @@ class Metadata:
         pass
 
     on_dir_meta.skip = True
+
+    def on_contents_rendered(self, page: Page, rendered: str, **kw) -> str:
+        """
+        Hook to potentially annotate page contents rendered from markdown/rst
+        before it is passed to Jinja2
+        """
+        return rendered
+
+    on_contents_rendered.skip = True
 
 
 class MetadataInherited(Metadata):
