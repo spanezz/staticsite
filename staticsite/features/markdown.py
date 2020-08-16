@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from staticsite import Page, Feature
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
@@ -20,9 +20,9 @@ log = logging.getLogger("markdown")
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.page = None
-        self.absolute = False
-        self.substituted = {}
+        self.page: Optional[Page] = None
+        self.absolute: bool = False
+        self.substituted: Dict[str, str] = {}
 
     def set_page(self, page, absolute=False):
         self.page = page
