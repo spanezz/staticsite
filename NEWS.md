@@ -4,6 +4,7 @@
 
 * Force escape HTML content in syndication feeds, to fix displaying contents in
   some feed readers
+* Added [links](doc/reference/links.md) feature
 
 # New in version 1.4.1
 
