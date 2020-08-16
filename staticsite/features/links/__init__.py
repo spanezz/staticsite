@@ -63,37 +63,6 @@ class LinkCollection:
         self.links.extend(coll.links)
         self.card += coll.card
 
-#    def most_selective_tag(self):
-#        """
-#        Return tag in a collection of links that best partitions the collection
-#        into two groups of a similar size
-#        """
-#        count = len(self.links)
-#
-#        def score(tag):
-#            card = self.card[tag]
-#            return (count - card) / count
-#
-#        tag = min(self.card.keys(), key=score)
-#        if self.card[tag] < 4:
-#            return None
-#        return tag
-#
-#    def partition(self, tag):
-#        """
-#        Return two LinkCollection objects, one for links with tag, one for
-#        links without
-#        """
-#        selected = []
-#        not_selected = []
-#        for link in self.links:
-#            if tag in link.tags:
-#                selected.append(link)
-#            else:
-#                not_selected.append(link)
-#
-#        return LinkCollection(selected), LinkCollection(not_selected)
-
     def make_groups(self):
         """
         Compute groups from links.
@@ -122,16 +91,6 @@ class LinkCollection:
                 other_tag = sorted(common_tags)[0]
             groups.append((other_tag, LinkCollection(others)))
 
-#        remainder = self
-#
-#        groups = {}
-#        while remainder:
-#            tag = remainder.most_selective_tag()
-#            if tag is None:
-#                groups[None] = remainder
-#                break
-#            groups[tag], remainder = remainder.partition(tag)
-#
         return groups
 
 
