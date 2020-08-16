@@ -38,7 +38,7 @@
     {% for tag, coll in groups %}
     <a name="group-{{tag}}"></a>
       <h5 class="card-title text-center">{{tag|default("other categories", True)|capitalize}}</h5>
-      {{render_ungrouped(coll.links)}}
+      {{render_ungrouped(coll)}}
     {% endfor %}
   </div>
 
