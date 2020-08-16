@@ -28,4 +28,13 @@ This is the full list of supported links metadata:
 
 ## Templates
 
-TODO
+The template used to render link collections is `data-links.html`, which works
+both on [data-only](data.md) link collections, and on `.links`-generated pages.
+
+
+## Link indices
+
+If you add a `name.links` file, empty or containing some metadata, it will be
+rendered as a hierarchy of index pages one for each link tag found.
+
+`data-links.html` is used as default template for `.links`-generated pages.
