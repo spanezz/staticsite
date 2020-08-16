@@ -3,6 +3,7 @@ import jinja2
 import os
 import logging
 from collections import Counter, defaultdict
+from staticsite.metadata import Metadata
 from staticsite.feature import Feature
 from staticsite.features.data import DataPage
 from staticsite.page_filter import PageFilter
@@ -134,8 +135,29 @@ class Links(Feature):
         super().__init__(*args, **kw)
         self.j2_globals["links_merged"] = self.links_merged
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
+
+        # Shortcut to access the Data feature
         self.data = self.site.features["data"]
+
+        # Let the Data feature render link collections from pure yaml files,
+        # when they have a `data_type: links` metadata
         self.data.register_page_class("links", LinksPage)
+
+        # Collect 'links' metadata
+        self.site.tracked_metadata.add("links")
+        self.site.register_metadata(Metadata("links", doc="""
+Extra metadata for external links.
+
+It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:
+
+* `title`: str: short title for the link
+* `url`: str: external URL
+* `abstract`: str: long description or abstract for the link
+* `archive`: str: URL to an archived version of the site
+* `tags`: List[str]: tags for this link
+* `related`: List[Dict[str, str]]: other related links, as a list of dicts with
+  `title` and `url` keys
+"""))
 
     @jinja2.contextfunction
     def links_merged(self, context, path=None, limit=None, sort=None, link_tags=None, **kw):
@@ -168,7 +190,7 @@ class Links(Feature):
     def finalize(self):
         # Index links by tag
         by_tag = defaultdict(LinkCollection)
-        for page in self.data.by_type.get("links", ()):
+        for page in self.site.pages_by_metadata["links"]:
             for link in page.links:
                 for tag in link.tags:
                     by_tag[tag].append(link)
