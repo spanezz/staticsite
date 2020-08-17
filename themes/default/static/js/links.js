@@ -10,6 +10,7 @@ class ExternalLink
         this.sequence = sequence;
         this.open_timeout = null;
         this.close_timeout = null;
+        this.popper = null;
         this.decorate();
     }
 
@@ -19,33 +20,37 @@ class ExternalLink
 
         // Main dropdown container
         this.dropdown = document.createElement("span");
-        this.dropdown.className = "dropdown";
+        // this.dropdown.className = "dropdown";
 
         // Dropdown menu opener icon next to the link
         this.icon = document.createElement("button");
         this.icon.className = "fa fa-external-link btn btn-link p-0 pl-1 align-baseline";
         this.icon.setAttribute("id", id);
-        this.icon.setAttribute("data-toggle", "dropdown");
+        // this.icon.setAttribute("data-toggle", "dropdown");
         this.icon.setAttribute("aria-haspopup", "true");
         this.icon.setAttribute("aria-expanded", "false");
         this.dropdown.append(this.icon);
 
         // Dropdown contents
-        let contents = this.render_info(id);
-        this.dropdown.append(contents);
+        this.details = this.render_info(id);
+        this.dropdown.append(this.details);
 
         this.el.after(this.dropdown);
 
         // Show details on hover
         this.el.addEventListener("mouseenter", evt => { this.delayed_open(); });
         this.el.addEventListener("mouseleave", evt => { this.cancel_delayed_open(); this.delayed_close(); });
-        contents.addEventListener("mouseenter", evt => { this.cancel_delayed_close(); });
+        this.details.addEventListener("mouseenter", evt => { this.cancel_delayed_close(); });
+        this.details.addEventListener("blur", evt => { this.close(); });
+        this.icon.addEventListener("mousedown", evt => { this.toggle(); evt.preventDefault(); });
     }
 
     render_info(opener_name)
     {
         let contents = document.createElement("div");
-        contents.className = "dropdown-menu dropdown-menu-right";
+
+        // contents.className = "dropdown-menu dropdown-menu-right";
+        contents.className = "d-none bg-white border border-dark rounded-lg pb-2 pt-2";
         contents.setAttribute("aria-labelledby", "dropdown1");
 
         if (this.info.title)
@@ -151,14 +156,40 @@ class ExternalLink
 
     open()
     {
-        $(this.icon).dropdown("show");
+        // $(this.icon).dropdown("show");
+        this.popper = new Popper(this.el, this.details, {
+            placement: "top",
+            modifiers: {
+                flip: { enabled: true },
+                // shift: { enabled: true },
+                offset: { enabled: true, offset: "4px, 4px" },
+            },
+        });
+        this.details.classList.remove("d-none");
+        this.details.setAttribute("tabindex", "-1");
+        this.details.focus();
         this.open_timeout = null;
     }
 
     close()
     {
-        $(this.icon).dropdown("hide");
+        // $(this.icon).dropdown("hide");
+        if (this.popper !== null)
+        {
+            this.popper.destroy();
+            this.popper = null;
+        }
+        this.details.classList.add("d-none");
+        this.details.removeAttribute("tabindex");
         this.close_timeout = null;
+    }
+
+    toggle()
+    {
+        if (this.popper === null)
+            this.open();
+        else
+            this.close();
     }
 };
 
