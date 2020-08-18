@@ -41,8 +41,28 @@ class ExternalLink
         this.el.addEventListener("mouseenter", evt => { this.delayed_open(); });
         this.el.addEventListener("mouseleave", evt => { this.cancel_delayed_open(); this.delayed_close(); });
         this.details.addEventListener("mouseenter", evt => { this.cancel_delayed_close(); });
-        this.details.addEventListener("blur", evt => { this.close(); });
-        this.icon.addEventListener("mousedown", evt => { this.toggle(); evt.preventDefault(); });
+        this.details.addEventListener("blur", evt => {
+            if (this.click_action === null)
+                this.close();
+        });
+
+        this.click_action = null;
+        this.icon.addEventListener("mousedown", evt => {
+            if (this.popper === null)
+                this.click_action = "open";
+            else
+                this.click_action = "close";
+        });
+        this.icon.addEventListener("mouseup", evt => {
+            if (this.click_action !== null)
+                this[this.click_action]();
+            this.click_action = null;
+        });
+        this.icon.addEventListener("mouseleave", evt => {
+            if (this.click_action !== null)
+                this[this.click_action]();
+            this.click_action = null;
+        });
     }
 
     render_info(opener_name)
@@ -156,18 +176,21 @@ class ExternalLink
 
     open()
     {
-        // $(this.icon).dropdown("show");
-        this.popper = new Popper(this.el, this.details, {
-            placement: "top",
-            modifiers: {
-                flip: { enabled: true },
-                // shift: { enabled: true },
-                offset: { enabled: true, offset: "4px, 4px" },
-            },
-        });
-        this.details.classList.remove("d-none");
-        this.details.setAttribute("tabindex", "-1");
-        this.details.focus();
+        if (this.popper === null)
+        {
+            // $(this.icon).dropdown("show");
+            this.popper = new Popper(this.el, this.details, {
+                placement: "top",
+                modifiers: {
+                    flip: { enabled: true },
+                    // shift: { enabled: true },
+                    offset: { enabled: true, offset: "4px, 4px" },
+                },
+            });
+            this.details.classList.remove("d-none");
+            this.details.setAttribute("tabindex", "-1");
+            this.details.focus();
+        }
         this.open_timeout = null;
     }
 
@@ -182,14 +205,6 @@ class ExternalLink
         this.details.classList.add("d-none");
         this.details.removeAttribute("tabindex");
         this.close_timeout = null;
-    }
-
-    toggle()
-    {
-        if (this.popper === null)
-            this.open();
-        else
-            this.close();
     }
 };
 
