@@ -49,7 +49,7 @@ class MetadataLinks(Metadata):
 
                     data[url] = info
                 rendered += (
-                    "\n<script type='application/json' id='external-links'>"
+                    "\n<script type='application/json' class='links-metadata'>"
                     f"{json.dumps(data)}"
                     "</script>\n"
                 )

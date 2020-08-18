@@ -212,10 +212,15 @@ class ExternalLinks
 {
     constructor()
     {
-        let el = document.getElementById("external-links");
-        if (!el)
+        // Merge all links-metadata information snippets found in the page
+        this.links = new Map();
+        for (let el of document.getElementsByClassName("links-metadata"))
+        {
+            const chunk = new Map(Object.entries(JSON.parse(el.text)));
+            this.links = new Map([...this.links, ...chunk]);
+        }
+        if (!this.links.size)
             return;
-        this.links = JSON.parse(el.text);
         // console.log("Link data:", this.links)
 
         // Store <a> elements into a static array, otherwise we cannot create
@@ -229,7 +234,7 @@ class ExternalLinks
         for (let el of elements)
         {
             const href = el.getAttribute("href");
-            const info = this.links[href];
+            const info = this.links.get(href);
             if (info === undefined)
                 continue;
 
