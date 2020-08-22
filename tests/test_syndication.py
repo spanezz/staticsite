@@ -131,7 +131,8 @@ text
             "index.md": """---
 date: 2020-01-01 12:00:00+02:00
 syndication: yes
-pages: blog/*
+pages: "blog/*"
+template: blog.html
 ---
 
 # Blog
@@ -166,6 +167,12 @@ static char * bottom_active_xpm[] = {
                 "/blog/post",
                 "/blog/images/photo.xpm",
             ])
+
+            post = site.pages["/"]
+            rendered = post.render()["index.html"].buf
+            mo = re.search(r'src="([a-z/]+)/photo.xpm"', rendered.decode())
+            self.assertTrue(mo)
+            self.assertEqual(mo.group(1), "/blog/images")
 
             post = site.pages["/blog/post"]
             rendered = post.render()["blog/post/index.html"].buf
