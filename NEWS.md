@@ -5,6 +5,8 @@
 * Force escape HTML content in syndication feeds, to fix displaying contents in
   some feed readers
 * Added [links](doc/reference/links.md) feature
+* Fixed issue #49: "Inline image links in syndication feeds are relative to the
+  wrong page"
 
 # New in version 1.4.1
 
