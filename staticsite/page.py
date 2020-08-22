@@ -322,11 +322,11 @@ class Page:
                 width = img.meta["width"]
                 srcsets.append(f"{jinja2.escape(self.url_for(img))} {width}w")
                 res["srcset"] = ", ".join(srcsets)
+                res["src"] = self.url_for(img, absolute=absolute)
             else:
                 res["width"] = str(img.meta["width"])
                 res["height"] = str(img.meta["height"])
-                rel = img.meta["related"].get(type, img)
-                res["src"] = self.url_for(rel, absolute=absolute)
+                res["src"] = self.url_for(img, absolute=absolute)
 
         return res
 
