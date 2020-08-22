@@ -1,5 +1,6 @@
 from __future__ import annotations
 from unittest import TestCase
+import re
 from . import utils as test_utils
 
 
@@ -123,3 +124,63 @@ text
             self.assertNotIn("syndication", widget.meta)
             self.assertEqual(rss.meta["pages"], synd["pages"])
             self.assertEqual(atom.meta["pages"], synd["pages"])
+
+    def test_images(self):
+        self.maxDiff = None
+        files = {
+            "index.md": """---
+date: 2020-01-01 12:00:00+02:00
+syndication: yes
+pages: "blog/*"
+template: blog.html
+---
+
+# Blog
+""",
+            "blog/post.md": """---
+date: 2020-01-01 12:00:00+02:00
+---
+
+# Title
+
+![Photo](images/photo.xpm)
+""",
+            "blog/images/photo.xpm": """/* XPM */
+static char * bottom_active_xpm[] = {
+"24 3 3 1",
+"       c None",
+"#      c #C0C0C0 s active_color_2",
+"@      c #C0C0FF s active_color_2",
+"@@@@@@@@@@@@@@@@@@@@@@@@",
+"@@@@@@@@@@@@@@@@@@@@@@@@",
+"@@@@@@@@@@@@@@@@@@@@@@@@"};
+""",
+        }
+
+        with test_utils.testsite(files) as site:
+            self.assertCountEqual([x for x in site.pages.keys() if not x.startswith("/static/")], [
+                "/",
+                "/index.rss",
+                "/index.atom",
+                "/archive",
+                "/blog",
+                "/blog/post",
+                "/blog/images/photo.xpm",
+            ])
+
+            post = site.pages["/"]
+            rendered = post.render()["index.html"].buf
+            mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
+            self.assertTrue(mo)
+            self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
+
+            post = site.pages["/blog/post"]
+            rendered = post.render()["blog/post/index.html"].buf
+            mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
+            self.assertTrue(mo)
+            self.assertEqual(mo.group(1), "/blog/images")
+
+            rss = site.pages["/index.rss"]
+            rendered = rss.render()["index.rss"].buf
+            mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
+            self.assertEqual(mo.group(1), "https://www.example.org/blog/images")

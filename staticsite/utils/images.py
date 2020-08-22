@@ -62,7 +62,8 @@ class ImageScanner:
                 "title": "",
             }
 
-            meta.update(self.read_meta_exiftool(pathname))
+            if img.format not in ("XPM",):
+                meta.update(self.read_meta_exiftool(pathname))
 
         return meta
 

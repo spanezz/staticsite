@@ -325,6 +325,8 @@ class Page:
             else:
                 res["width"] = str(img.meta["width"])
                 res["height"] = str(img.meta["height"])
+                rel = img.meta["related"].get(type, img)
+                res["src"] = self.url_for(rel, absolute=absolute)
 
         return res
 

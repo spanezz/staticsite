@@ -127,8 +127,8 @@ class StaticSiteExtension(markdown.extensions.Extension):
     def reset(self):
         pass
 
-    def set_page(self, page):
-        self.link_resolver.set_page(page)
+    def set_page(self, page: Page, absolute: bool):
+        self.link_resolver.set_page(page, absolute)
 
 
 class MarkdownPages(Feature):
@@ -157,7 +157,7 @@ class MarkdownPages(Feature):
     def jinja2_markdown(self, context, mdtext):
         return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
 
-    def render_page(self, page, body, render_type, absolute=False):
+    def render_page(self, page: Page, body: List[str], render_type: str, absolute: bool = False):
         """
         Render markdown in the context of the given page.
         """
@@ -207,7 +207,7 @@ class MarkdownPages(Feature):
         """
         if content is None:
             content = page.get_content()
-        self.link_resolver.set_page(page)
+        self.link_resolver.set_page(page, absolute=False)
         self.markdown.reset()
         return self.markdown.convert(content)
 
@@ -370,27 +370,30 @@ class MarkdownPage(Page):
 
     @jinja2.contextfunction
     def html_body(self, context, **kw) -> str:
+        absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
-            return self.mdpages.render_page(self, body, render_type="hb")
+            return self.mdpages.render_page(self, body, render_type="hb", absolute=absolute)
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="s")
+            return self.mdpages.render_page(self, self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.contextfunction
     def html_inline(self, context, **kw) -> str:
+        absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
-            return self.mdpages.render_page(self, body, render_type="h")
+            return self.mdpages.render_page(self, body, render_type="h", absolute=absolute)
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="s")
+            return self.mdpages.render_page(self, self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.contextfunction
     def html_feed(self, context, **kw) -> str:
+        absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + [""] + self.body_rest
-            return self.mdpages.render_page(self, body, render_type="f")
+            return self.mdpages.render_page(self, body, render_type="f", absolute=absolute)
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="f")
+            return self.mdpages.render_page(self, self.body_start, render_type="f", absolute=absolute)
 
 
 FEATURES = {
