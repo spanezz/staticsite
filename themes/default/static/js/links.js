@@ -11,67 +11,86 @@ class ExternalLink
         this.open_timeout = null;
         this.close_timeout = null;
         this.popper = null;
-        this.decorate();
-    }
-
-    decorate()
-    {
-        const id = `dropdown-${this.sequence}`;
+        // True if the popup should close automatically
+        this.temporary = false;
+        // ID of the toggle icon
+        this.id = `dropdown-${this.sequence}`;
+        // Toggle icon
+        this.icon = this.make_toggle_icon();
+        // Popup details
+        this.details = this.make_details();
 
         // Main dropdown container
         this.dropdown = document.createElement("span");
         // this.dropdown.className = "dropdown";
-
-        // Dropdown menu opener icon next to the link
-        this.icon = document.createElement("button");
-        this.icon.className = "fa fa-external-link btn btn-link p-0 pl-1 align-baseline";
-        this.icon.setAttribute("id", id);
-        // this.icon.setAttribute("data-toggle", "dropdown");
-        this.icon.setAttribute("aria-haspopup", "true");
-        this.icon.setAttribute("aria-expanded", "false");
         this.dropdown.append(this.icon);
-
-        // Dropdown contents
-        this.details = this.render_info(id);
         this.dropdown.append(this.details);
-
         this.el.after(this.dropdown);
 
         // Show details on hover
-        this.el.addEventListener("mouseenter", evt => { this.delayed_open(); });
-        this.el.addEventListener("mouseleave", evt => { this.cancel_delayed_open(); this.delayed_close(); });
-        this.details.addEventListener("mouseenter", evt => { this.cancel_delayed_close(); });
-        this.details.addEventListener("blur", evt => {
-            if (this.click_action === null)
-                this.close();
+        this.el.addEventListener("mouseenter", evt => {
+            if (!this.is_open)
+            {
+                this.temporary = true;
+                this.delayed_open();
+            }
+        });
+        this.el.addEventListener("mouseleave", evt => {
+            if (!this.temporary)
+                return;
+            this.cancel_delayed_open();
+            this.delayed_close();
         });
 
-        this.click_action = null;
-        this.icon.addEventListener("mousedown", evt => {
-            if (this.popper === null)
-                this.click_action = "open";
+        // Don't close automatically once the cursor enters the popup
+        this.details.addEventListener("mouseenter", evt => {
+            this.temporary = false;
+            this.cancel_delayed_close();
+        });
+
+        // Toggle when clicking on the icon
+        this.icon.addEventListener("click", evt => {
+            if (this.is_open)
+                this.close();
             else
-                this.click_action = "close";
+            {
+                this.open();
+                this.temporary = false;
+            }
+            evt.stopPropagation();
         });
-        this.icon.addEventListener("mouseup", evt => {
-            if (this.click_action !== null)
-                this[this.click_action]();
-            this.click_action = null;
-        });
-        this.icon.addEventListener("mouseleave", evt => {
-            if (this.click_action !== null)
-                this[this.click_action]();
-            this.click_action = null;
-        });
+
+        // Close the popup when clicking outside it. Clicking inside it stops
+        // propagation to document.
+        document.addEventListener("click", evt => { this.close(); });
+        this.details.addEventListener("click", evt => { evt.stopPropagation(); });
     }
 
-    render_info(opener_name)
+    get is_open()
+    {
+        return this.popper !== null;
+    }
+
+    make_toggle_icon()
+    {
+        // Dropdown menu opener icon next to the link
+        let icon = document.createElement("button");
+        icon.className = "fa fa-external-link btn btn-link p-0 pl-1 align-baseline";
+        icon.setAttribute("id", this.id);
+        // icon.setAttribute("data-toggle", "dropdown");
+        icon.setAttribute("aria-haspopup", "true");
+        icon.setAttribute("aria-expanded", "false");
+        return icon;
+    }
+
+    make_details()
     {
         let contents = document.createElement("div");
 
         // contents.className = "dropdown-menu dropdown-menu-right";
         contents.className = "d-none bg-white border border-dark rounded-lg pb-2 pt-2";
-        contents.setAttribute("aria-labelledby", "dropdown1");
+        contents.style.maxWidth = "80%";
+        contents.setAttribute("aria-labelledby", this.id);
 
         if (this.info.title)
         {
@@ -188,8 +207,6 @@ class ExternalLink
                 },
             });
             this.details.classList.remove("d-none");
-            this.details.setAttribute("tabindex", "-1");
-            this.details.focus();
         }
         this.open_timeout = null;
     }
@@ -203,7 +220,6 @@ class ExternalLink
             this.popper = null;
         }
         this.details.classList.add("d-none");
-        this.details.removeAttribute("tabindex");
         this.close_timeout = null;
     }
 };
