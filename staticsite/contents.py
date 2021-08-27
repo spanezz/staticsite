@@ -349,6 +349,8 @@ class AssetDir(ContentDir):
 
         # Load every file as an asset
         for fname, f in self.files.items():
+            if f.stat is None:
+                continue
             if stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
                 p = Asset(self.site, f, meta={}, dir=self, name=fname)

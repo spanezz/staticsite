@@ -1,6 +1,9 @@
 from __future__ import annotations
 from typing import NamedTuple, Optional
 import os
+import logging
+
+log = logging.getLogger("contents")
 
 
 class File(NamedTuple):
@@ -13,7 +16,7 @@ class File(NamedTuple):
     relpath: str
     # Absolute path to the file
     abspath: Optional[str] = None
-    # File stats if the file exists, else NOne
+    # File stats if the file exists, else None
     stat: Optional[os.stat_result] = None
 
     def __str__(self):
@@ -30,10 +33,17 @@ class File(NamedTuple):
 
     @classmethod
     def from_dir_entry(cls, dir: "File", entry: os.DirEntry) -> "File":
+        try:
+            st = entry.stat()
+        except FileNotFoundError:
+            log.warning("%s: cannot stat() file: broken symlink?",
+                      os.path.join(dir.abspath, entry.name))
+            st = None
+
         return cls(
                 relpath=os.path.join(dir.relpath, entry.name),
                 abspath=os.path.join(dir.abspath, entry.name),
-                stat=entry.stat())
+                stat=st)
 
     @classmethod
     def with_stat(cls, relpath: str, abspath: str):
