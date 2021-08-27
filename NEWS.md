@@ -1,6 +1,6 @@
 # staticsite user-relevant changes
 
-# New in version 1.6
+# New in version 1.6 (unreleased)
 
 * Deal gracefully with broken symlinks (#55)
 * Open links from link collections in new tabs
