@@ -121,6 +121,32 @@ A python datetime object, timezone aware. If the date is in the future when
 If missing, the modification time of the file is used.
 """))
 
+        self.register_metadata(metadata.MetadataInherited("site_name", doc="""
+Name of the site. If missing, it defaults to the title of the toplevel index
+page. If missing, it defaults to the name of the content directory.
+"""))
+
+        self.register_metadata(metadata.MetadataInherited("site_url", doc="""
+Base URL for the site, used to generate an absolute URL to the page.
+"""))
+
+        self.register_metadata(metadata.MetadataSitePath("site_path", doc="""
+Where a content directory appears in the site.
+
+By default, is is the `site_path` of the parent directory, plus the directory
+name.
+
+If you are publishing the site at `/prefix` instead of the root of the domain,
+override this with `/prefix` in the content root.
+"""))
+
+        self.register_metadata(metadata.MetadataDraft("draft", doc="""
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `page.meta.date` is in the future.
+"""))
+
         self.register_metadata(metadata.MetadataInherited("author", doc="""
             A string with the name of the author for this page.
 
@@ -169,25 +195,6 @@ HTML markup in it.
 The page description. If omitted, the page will have no description.
 """))
 
-        self.register_metadata(metadata.MetadataInherited("site_name", doc="""
-Name of the site. If missing, it defaults to the title of the toplevel index
-page. If missing, it defaults to the name of the content directory.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("site_url", doc="""
-Base URL for the site, used to generate an absolute URL to the page.
-"""))
-
-        self.register_metadata(metadata.MetadataSitePath("site_path", doc="""
-Where a content directory appears in the site.
-
-By default, is is the `site_path` of the parent directory, plus the directory
-name.
-
-If you are publishing the site at `/prefix` instead of the root of the domain,
-override this with `/prefix` in the content root.
-"""))
-
         self.register_metadata(Metadata("build_path", doc="""
 Relative path in the build directory for the file that will be written
 when this page gets rendered. For example, `blog/2016/example.md`
@@ -218,13 +225,6 @@ If true, the page appears in [directory indices](dir.md) and in
 
 It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
-"""))
-
-        self.register_metadata(metadata.MetadataDraft("draft", doc="""
-If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
-
-It defaults to false, or true if `page.meta.date` is in the future.
 """))
 
     def register_metadata(self, metadata: Metadata):
