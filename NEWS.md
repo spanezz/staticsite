@@ -5,6 +5,8 @@
 * Deal gracefully with broken symlinks (#55)
 * Open links from link collections in new tabs
 * Use topological sorting from python's stdlib if available (#56)
+* Fixed `title` and `parent` metadata of dir pages to match
+  [documentation](doc/reference/dir.md) (#56)
 
 # New in version 1.5
 
