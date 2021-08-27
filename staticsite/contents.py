@@ -38,7 +38,7 @@ class Dir(Page):
         # Directory name
         self.name: Optional[str] = name
         # Subdirectory of this directory
-        self.subdirs: List["ContentDir"] = []
+        self.subdirs: List["Dir"] = []
         # Files found in this directory
         self.files: Dict[str, file.File] = {}
         # Rules for assigning metadata to subdirectories
