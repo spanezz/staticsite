@@ -28,5 +28,5 @@ category:
 # Archive metadata is used for each tag archive page
 archive:
   # template: taxonomy/archive.html
-  template_title: "Archive of posts for tag <strong>{{page.name}}</strong>"
-  template_description: "Archive of all posts with tag <strong>{{page.name}}</strong>"
+  template_title: "Archive of posts for tag <strong>{{page.created_from.name}}</strong>"
+  template_description: "Archive of all posts with tag <strong>{{page.created_from.name}}</strong>"
