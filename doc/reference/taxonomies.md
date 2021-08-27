@@ -116,10 +116,10 @@ usual [meta](metadata.md), documented here.
 
 **Category archive**:
 
-* `page.name`: the category name
-* `page.meta.pages`: the pages that have this category
-* `page.meta.taxonomy`: the taxonomy index page for this category
-* `page.meta.category`: the category index page for this category
+This is created automatically by the [syndication](syndication.md) feature.
+
+You can refer to the category page from its archive page, using
+`page.created_from`.
 
 
 [Back to reference index](README.md)

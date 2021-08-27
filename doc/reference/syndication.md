@@ -68,5 +68,11 @@ RSS and Atom pages have these extra properties:
 * `page.meta.index` is the page defining the syndication
 * `page.meta.pages` is a list of all the pages included in the syndication
 
+## Archive pages
+
+An archive page is automatically created for each syndication.
+
+* `page.meta.pages`: the pages in the archive
+* `page.created_from`: the page for which the archive page was created
 
 [Back to reference index](README.md)
