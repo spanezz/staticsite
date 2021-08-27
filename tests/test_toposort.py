@@ -13,15 +13,15 @@ class TestTopoSort(TestCase):
     def test_singledeps(self):
         graph = {}
         graph["a"] = set()
-        graph["b"] = {"a"}
-        graph["c"] = {"b"}
+        graph["a"] = {"b"}
+        graph["b"] = {"c"}
         self.assertEqual(toposort.sort(graph), ["c", "b", "a"])
 
     def test_cycle(self):
         graph = {}
-        graph["a"] = {"b"}
-        graph["b"] = {"c"}
-        graph["c"] = {"a"}
+        graph["b"] = {"a"}
+        graph["c"] = {"b"}
+        graph["a"] = {"c"}
         with self.assertRaises(ValueError) as e:
             self.assertEqual(toposort.sort(graph), ["a", "c", "b"])
-        self.assertEqual(str(e.exception), "cycle detected: (c, b, a)")
+        self.assertEqual(str(e.exception), "('nodes are in a cycle', ['b', 'c', 'a', 'b'])")

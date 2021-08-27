@@ -54,7 +54,7 @@ class Loader:
 
         for parent in config["extends"]:
             self.load_configs(parent)
-            self.deps[parent].add(name)
+            self.deps[name].add(parent)
 
         sorted_names = toposort.sort(self.deps)
         return [self.configs[name] for name in sorted_names]
@@ -74,7 +74,7 @@ class Loader:
 
         for parent in config["extends"]:
             self.load_configs(parent)
-            self.deps[parent].add(name)
+            self.deps[name].add(parent)
 
     def find_root(self, name: str) -> str:
         """

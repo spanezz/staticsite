@@ -135,14 +135,14 @@ class Features:
                     log.warn("feature %s: ignoring RUN_AFTER relation on %s which is not available",
                              feature, name)
                     continue
-                graph[name].add(feature.NAME)
+                graph[feature.NAME].add(name)
 
             for name in feature.RUN_BEFORE:
                 if name not in features and name not in graph:
                     log.warn("feature %s: ignoring RUN_BEFORE relation on %s which is not available",
                              feature, name)
                     continue
-                graph[feature.NAME].add(name)
+                graph[name].add(feature.NAME)
 
         # Build the sorted list of features
         sorted_names = toposort.sort(graph)
