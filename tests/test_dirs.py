@@ -33,18 +33,22 @@ class TestDirs(TestCase):
             self.assertCountEqual(dir_root.subdirs, [dir_dir1])
             self.assertIsNone(dir_root.dir)
             self.assertIsNone(dir_root.meta["parent"])
+            self.assertEqual(dir_root.meta["title"], "Test site")
 
             self.assertCountEqual(dir_dir1.meta["pages"], [site.pages["/dir1/page_sub"]])
             self.assertCountEqual(dir_dir1.subdirs, [dir_dir2])
             self.assertEqual(dir_dir1.dir, dir_root)
             self.assertEqual(dir_dir1.meta["parent"], dir_root)
+            self.assertEqual(dir_dir1.meta["title"], "dir1")
 
             self.assertCountEqual(dir_dir2.meta["pages"], [])
             self.assertCountEqual(dir_dir2.subdirs, [dir_dir3])
             self.assertEqual(dir_dir2.dir, dir_dir1)
             self.assertEqual(dir_dir2.meta["parent"], dir_dir1)
+            self.assertEqual(dir_dir2.meta["title"], "dir2")
 
             self.assertCountEqual(dir_dir3.meta["pages"], [site.pages["/dir1/dir2/dir3/page_sub3"]])
             self.assertCountEqual(dir_dir3.subdirs, [])
             self.assertEqual(dir_dir3.dir, dir_dir2)
             self.assertEqual(dir_dir3.meta["parent"], dir_dir2)
+            self.assertEqual(dir_dir3.meta["title"], "dir3")
