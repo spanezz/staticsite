@@ -4,6 +4,7 @@
 
 * Deal gracefully with broken symlinks (#55)
 * Open links from link collections in new tabs
+* Use topological sorting from python's stdlib if available (#56)
 
 # New in version 1.5
 
