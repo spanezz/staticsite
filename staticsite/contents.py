@@ -100,16 +100,6 @@ class Dir(Page):
         for subdir in self.subdirs:
             subdir.finalize()
 
-        # TODO if self.src.relpath:
-        # TODO     self.meta["title"] = os.path.basename(self.src.relpath)
-        # TODO elif self.site.settings.SITE_NAME:
-        # TODO     # If src_relpath is empty, we are the toplevel directory index
-        # TODO     self.meta["title"] = self.site.settings.SITE_NAME
-        # TODO else:
-        # TODO     # If we have no site name and we need to generate the toplevel
-        # TODO     # directory index, pick a fallback title.
-        # TODO     self.meta["title"] = os.path.dirname(self.site.content_root)
-
         self.meta["pages"] = [p for p in self.pages if not p.meta["draft"]]
         self.meta.setdefault("template", "dir.html")
         self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html").lstrip("/")
@@ -118,6 +108,8 @@ class Dir(Page):
         self.meta.setdefault("syndicated", False)
 
         self.meta.setdefault("parent", self.dir)
+        if self.dir is not None:
+            self.meta["title"] = os.path.basename(self.src.relpath)
 
         # TODO: set draft if all subdirs and pages are drafts
 
