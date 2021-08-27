@@ -7,6 +7,8 @@
 * Use topological sorting from python's stdlib if available (#56)
 * Fixed `title` and `parent` metadata of dir pages to match
   [documentation](doc/reference/dir.md) (#56)
+* Fixed missing `page.meta.site_name` when evaluating `template_title` and
+  `template_description` (#51)
 
 # New in version 1.5
 
