@@ -9,6 +9,8 @@
   [documentation](doc/reference/dir.md) (#56)
 * Fixed missing `page.meta.site_name` when evaluating `template_title` and
   `template_description` (#51)
+* Fixed broken `page.name` references in example site (#50)
+* Added a title to archive pages in the default theme (#50)
 
 # New in version 1.5
 
