@@ -97,6 +97,7 @@ class ExternalLink
             let a = document.createElement("a");
             a.className = "text-dark";
             a.setAttribute("href", this.info.url);
+            a.setAttribute("target", "_blank");
             a.append(document.createTextNode(this.info.title));
 
             let header = document.createElement("h6");
@@ -114,6 +115,7 @@ class ExternalLink
             let a = document.createElement("a");
             a.className = "text-dark";
             a.setAttribute("href", this.info.url);
+            a.setAttribute("target", "_blank");
             a.append(this.info["abstract"]);
 
             p.append(a);
@@ -144,6 +146,7 @@ class ExternalLink
                 link.className = "badge badge-pill badge-primary ml-1";
                 link.setAttribute("data-role", "archive");
                 link.setAttribute("href", this.info.archive);
+                link.setAttribute("target", "_blank");
                 link.append("archive")
                 pills.append(link);
             }
@@ -156,6 +159,7 @@ class ExternalLink
                     a.className = "badge badge-pill badge-primary ml-1";
                     a.setAttribute("data-role", "related");
                     a.setAttribute("href", rel.url);
+                    a.setAttribute("target", "_blank");
                     a.append(rel.title);
                     pills.append(a);
                 }
