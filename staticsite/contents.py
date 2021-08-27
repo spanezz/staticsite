@@ -117,6 +117,8 @@ class Dir(Page):
         self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
         self.meta.setdefault("syndicated", False)
 
+        self.meta.setdefault("parent", self.dir)
+
         # TODO: set draft if all subdirs and pages are drafts
 
         # Since finalize is called from the bottom up, subdirs have their date
