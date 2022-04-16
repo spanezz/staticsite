@@ -1,9 +1,11 @@
-staticsite (1.5-1) UNRELEASED; urgency=medium
+staticsite (1.5-1) unstable; urgency=medium
 
   * New upstream version
      - Polished code repository use case. See NEWS.md for details.
+     - Forward ported to Jinja3
+  * Fixed versioned dependency on debhelper
 
- -- Enrico Zini <enrico@debian.org>  Tue, 07 Jan 2020 14:31:21 +0100
+ -- Enrico Zini <enrico@debian.org>  Sat, 16 Apr 2022 14:41:25 +0200
 
 staticsite (1.4.1-1) unstable; urgency=medium
 
