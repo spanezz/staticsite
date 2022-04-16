@@ -295,15 +295,15 @@ class RstPage(Page):
         # })
         return parts["body"]
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         return self._render_page()
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         return self._render_page()
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         return self._render_page()
 

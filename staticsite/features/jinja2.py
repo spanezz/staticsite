@@ -7,6 +7,7 @@ from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
 from staticsite.utils.typing import Meta
 import jinja2
+import markupsafe
 import os
 import logging
 
@@ -109,21 +110,21 @@ class RenderPartialTemplateMixin:
         log.warn("%s: `page_content` and `content` not found in template %s", self, self.page_template.name)
         return None, None
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
         return self.render_template_block(block, block_name, context, render_style="body")
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
         return self.render_template_block(block, block_name, context, render_style="inline")
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         block_name, block = self._find_block("page_content", "content")
         if block is None:
@@ -145,7 +146,7 @@ class RenderPartialTemplateMixin:
         kw["page"] = self
 
         try:
-            return jinja2.Markup("".join(block(self.page_template.new_context(context, shared=True, locals=kw))))
+            return markupsafe.Markup("".join(block(self.page_template.new_context(context, shared=True, locals=kw))))
         except jinja2.TemplateError as e:
             log.error("%s: %s: failed to render block %s: %s", self, self.page_template.filename, block_name, e)
             log.debug("%s: %s: failed to render block %s: %s",

@@ -134,7 +134,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
         self.j2_globals["syndicated_pages"] = self.jinja2_syndicated_pages
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_syndicated_pages(self, context, what: Union[str, Page, List[Page], None] = None, limit=None) -> bool:
         """
         Get the list of pages to be syndicated

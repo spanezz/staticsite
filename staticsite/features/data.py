@@ -120,7 +120,7 @@ This is used to group data of the same type together, and to choose a
         for pages in self.by_type.values():
             pages.sort(key=lambda x: x.meta["date"])
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
         return page_filter.filter(self.by_type.get(type, []))
