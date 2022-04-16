@@ -7,6 +7,7 @@ from .utils import lazy
 from .utils.typing import Meta
 from .render import RenderedString
 import jinja2
+import markupsafe
 
 if TYPE_CHECKING:
     from .site import Site
@@ -316,11 +317,11 @@ class Page:
                     continue
 
                 url = self.url_for(rel, absolute=absolute)
-                srcsets.append(f"{jinja2.escape(url)} {width}w")
+                srcsets.append(f"{markupsafe.escape(url)} {width}w")
 
             if srcsets:
                 width = img.meta["width"]
-                srcsets.append(f"{jinja2.escape(self.url_for(img))} {width}w")
+                srcsets.append(f"{markupsafe.escape(self.url_for(img))} {width}w")
                 res["srcset"] = ", ".join(srcsets)
                 res["src"] = self.url_for(img, absolute=absolute)
             else:
@@ -348,7 +349,7 @@ class Page:
         else:
             return f"{self.TYPE}:auto:{self.meta['site_path']}"
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_full(self, context, **kw) -> str:
         """
         Render the full page, from the <html> tag downwards.
@@ -358,7 +359,7 @@ class Page:
         context.update(kw)
         return self.render_template(self.page_template, template_args=context)
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         """
         Render the full body of the page, with UI elements excluding
@@ -366,7 +367,7 @@ class Page:
         """
         return ""
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         """
         Render the content of the page to be shown inline, like in a blog page.
@@ -375,7 +376,7 @@ class Page:
         """
         return ""
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         """
         Render the content of the page to be shown in a RSS/Atom feed.

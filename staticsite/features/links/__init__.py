@@ -150,7 +150,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
             meta = {}
         return meta
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def links_merged(self, context, path=None, limit=None, sort=None, link_tags=None, **kw):
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
 
@@ -174,7 +174,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
 
         return links
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def links_tag_index_url(self, context, tag):
         dest = self.indices[0].by_tag[tag]
         page = context.parent["page"]

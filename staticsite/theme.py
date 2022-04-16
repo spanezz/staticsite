@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List, Optional, Union, Sequence, Dict, Set
 import jinja2
+import markupsafe
 import os
 import re
 import datetime
@@ -331,7 +332,7 @@ class Theme:
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)
 
-    @jinja2.contextfilter
+    @jinja2.pass_context
     def jinja2_datetime_format(self, context, dt: datetime.datetime, format: str = None) -> str:
         if not isinstance(dt, datetime.datetime):
             import dateutil.parser
@@ -355,7 +356,7 @@ class Theme:
                      context.parent["page"].src.relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_has_page(self, context, arg: str) -> bool:
         cur_page = context.get("page")
         try:
@@ -365,7 +366,7 @@ class Theme:
         else:
             return True
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_page_for(self, context, arg: Union[str, Page]) -> Page:
         """
         Generate a URL for a page, specified by path or with the page itself
@@ -384,7 +385,7 @@ class Theme:
             log.warn("%s:%s: %s", cur_page, context.name, e)
             return ""
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False) -> str:
         """
         Generate a URL for a page, specified by path or with the page itself
@@ -400,7 +401,7 @@ class Theme:
             log.warn("%s:%s: %s", cur_page, context.name, e)
             return ""
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_site_pages(self, context, **kw) -> List[Page]:
         cur_page = context.get("page")
         if cur_page is None:
@@ -409,7 +410,7 @@ class Theme:
 
         return cur_page.find_pages(**kw)
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def jinja2_img_for(
             self, context,
             path: Union[str, Page],
@@ -424,9 +425,9 @@ class Theme:
         res_attrs = cur_page.get_img_attributes(path, type=type, absolute=absolute)
         res_attrs.update(attrs)
 
-        escape = jinja2.escape
+        escape = markupsafe.escape
         res = ["<img"]
         for k, v in res_attrs.items():
             res.append(f" {escape(k)}='{escape(v)}'")
         res.append("></img>")
-        return jinja2.Markup("".join(res))
+        return markupsafe.Markup("".join(res))

@@ -235,7 +235,7 @@ class MetadataTemplateInherited(Metadata):
         """
         Hook for inheriting metadata entries from a parent page
         """
-        import jinja2
+        import markupsafe
 
         # If template_for exists, no need to render anything
         if self.template_for in page.meta:
@@ -257,7 +257,7 @@ class MetadataTemplateInherited(Metadata):
         if isinstance(src, str):
             src = self.site.theme.jinja2.from_string(src)
 
-        page.meta[self.template_for] = jinja2.Markup(page.render_template(src))
+        page.meta[self.template_for] = markupsafe.Markup(page.render_template(src))
 
     def on_dir_meta(self, page: Page, meta: Meta):
         """

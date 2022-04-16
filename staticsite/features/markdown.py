@@ -8,6 +8,7 @@ from staticsite.contents import ContentDir
 from staticsite.utils.typing import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
+import markupsafe
 import re
 import os
 import io
@@ -153,9 +154,9 @@ class MarkdownPages(Feature):
 
         self.render_cache = self.site.caches.get("markdown")
 
-    @jinja2.contextfilter
+    @jinja2.pass_context
     def jinja2_markdown(self, context, mdtext):
-        return jinja2.Markup(self.render_snippet(context.parent["page"], mdtext))
+        return markupsafe.Markup(self.render_snippet(context.parent["page"], mdtext))
 
     def render_page(self, page: Page, body: List[str], render_type: str, absolute: bool = False):
         """
@@ -368,7 +369,7 @@ class MarkdownPage(Page):
     def check(self, checker):
         self.render()
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
@@ -377,7 +378,7 @@ class MarkdownPage(Page):
         else:
             return self.mdpages.render_page(self, self.body_start, render_type="s", absolute=absolute)
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
@@ -386,7 +387,7 @@ class MarkdownPage(Page):
         else:
             return self.mdpages.render_page(self, self.body_start, render_type="s", absolute=absolute)
 
-    @jinja2.contextfunction
+    @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
