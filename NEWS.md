@@ -12,6 +12,7 @@
 * Fixed broken `page.name` references in example site (#50)
 * Added a title to archive pages in the default theme (#50)
 * Documented that taxonomy archive pages are created using the syndication feature (#50)
+* Forward port to Jinja3. Thanks Tobias Gruetzmacher
 
 # New in version 1.5
 
