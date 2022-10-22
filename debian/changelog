@@ -1,3 +1,23 @@
+staticsite (1.6-1) unstable; urgency=medium
+
+  * New upstream version
+     - Deal gracefully with broken symlinks (#55)
+     - Open links from link collections in new tabs
+     - Use topological sorting from python's stdlib if available (#56)
+     - Fixed `title` and `parent` metadata of dir pages to match
+       [documentation](doc/reference/dir.md) (#56)
+     - Fixed missing `page.meta.site_name` when evaluating `template_title` and
+       `template_description` (#51)
+     - Fixed broken `page.name` references in example site (#50)
+     - Added a title to archive pages in the default theme (#50)
+     - Documented that taxonomy archive pages are created using the syndication feature (#50)
+     - Forward port to Jinja3. Thanks Tobias Gruetzmacher
+     - Work with newer python3-markdown, Thanks @donkult (#58)
+     - Fixed filesystem-dependent test failure (#54)
+  * Updated Standards-Version, no changes required
+
+ -- Enrico Zini <enrico@debian.org>  Sat, 22 Oct 2022 12:13:14 +0200
+
 staticsite (1.5-1) unstable; urgency=medium
 
   * New upstream version
