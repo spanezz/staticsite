@@ -1,4 +1,4 @@
-staticsite (1.6-2) UNRELEASED; urgency=medium
+staticsite (1.6-3) UNRELEASED; urgency=medium
 
   * debian/copyright: use spaces rather than tabs to start continuation lines.
   * Bump debhelper from old 12 to 13.
@@ -6,6 +6,12 @@ staticsite (1.6-2) UNRELEASED; urgency=medium
   * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
 
  -- Debian Janitor <janitor@jelmer.uk>  Thu, 03 Nov 2022 07:33:34 -0000
+
+staticsite (1.6-2) unstable; urgency=medium
+
+  * Source-only build for transition into testing
+
+ -- Enrico Zini <enrico@debian.org>  Sat, 22 Oct 2022 15:46:23 +0200
 
 staticsite (1.6-1) unstable; urgency=medium
 
