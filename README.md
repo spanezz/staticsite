@@ -14,6 +14,17 @@ Live preview your website, updated as you write it.
 
 Freely organise your contents, and turn any directory into a website.
 
+## Installation
+
+For Debian systems: `apt install staticsite`
+
+For RPM based systems:
+
+```
+python3 setup.py bdist_rpm \
+   --requires="python3-inotify python3-markdown python3-docutils python3-jinja2 python3-pytz python3-dateutil python3-pyyaml python3-pillow"`
+```
+
 
 ## Get started
 

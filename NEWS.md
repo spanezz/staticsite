@@ -13,6 +13,7 @@
 * Added a title to archive pages in the default theme (#50)
 * Documented that taxonomy archive pages are created using the syndication feature (#50)
 * Forward port to Jinja3. Thanks Tobias Gruetzmacher
+* Work with newer python3-markdown, Thanks @donkult (#58)
 
 # New in version 1.5
 
