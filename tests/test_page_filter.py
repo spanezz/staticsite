@@ -19,12 +19,12 @@ class TestPageFilter(TestCase):
             "blog/post2.md": {},
         }
         with test_utils.testsite(files) as site:
-            self.assertEqual(select(site, path="blog/*"), [
+            self.assertCountEqual(select(site, path="blog/*"), [
                 "/blog/post1",
                 "/blog/post2",
             ])
 
-            self.assertEqual(select(site, path=r"^blog/"), [
+            self.assertCountEqual(select(site, path=r"^blog/"), [
                 "/blog/post1",
                 "/blog/post2",
             ])
