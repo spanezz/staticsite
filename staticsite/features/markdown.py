@@ -119,10 +119,9 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
-    def extendMarkdown(self, md, md_globals):
+    def extendMarkdown(self, md):
         self.link_resolver = LinkResolver(md)
-        # Insert instance of 'mypattern' before 'references' pattern
-        md.treeprocessors.add('staticsite', self.link_resolver, '_end')
+        md.treeprocessors.register(self.link_resolver, 'staticsite', 0)
         md.registerExtension(self)
 
     def reset(self):
