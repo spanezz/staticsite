@@ -1,6 +1,7 @@
 staticsite (1.6-2) UNRELEASED; urgency=medium
 
   * debian/copyright: use spaces rather than tabs to start continuation lines.
+  * Bump debhelper from old 12 to 13.
 
  -- Debian Janitor <janitor@jelmer.uk>  Thu, 03 Nov 2022 07:33:34 -0000
 

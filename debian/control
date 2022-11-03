@@ -2,7 +2,7 @@ Source: staticsite
 Maintainer: Enrico Zini <enrico@debian.org>
 Section: web
 Priority: optional
-Build-Depends: debhelper (>= 12),
+Build-Depends: debhelper (>= 13~),
                dh-python,
                python3-all,
                python3-setuptools,
