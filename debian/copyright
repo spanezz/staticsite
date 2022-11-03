@@ -49,11 +49,11 @@ License: Expat
 
 Files: example/theme/static/images/favicon.ico
 Copyright: 2011-2015, Twitter, Inc.
-	   2014, jQuery Foundation and other contributors
-	   2014, "Cowboy" Ben Alman, contributors
-	   HTML5 Boilerplate
-	   2011, Nicolas Gallagher <nicolas@nicolasgallagher.com>
-	   2012, 2013, Tim Kadlec <tim@timkadlec.com>
+           2014, jQuery Foundation and other contributors
+           2014, "Cowboy" Ben Alman, contributors
+           HTML5 Boilerplate
+           2011, Nicolas Gallagher <nicolas@nicolasgallagher.com>
+           2012, 2013, Tim Kadlec <tim@timkadlec.com>
 License: Expat
 
 Files: example/theme/static/css/github.css
