@@ -1,5 +1,10 @@
 # staticsite user-relevant changes
 
+# New in UNRELEASED
+
+* New template filter `next_month` that given a date returns the date of the
+  beginning of the following month
+
 # New in version 1.6
 
 * Deal gracefully with broken symlinks (#55)

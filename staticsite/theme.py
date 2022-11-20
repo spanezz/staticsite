@@ -278,6 +278,7 @@ class Theme:
         )
 
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
+        self.jinja2.filters["next_month"] = self.jinja2_next_month
         self.jinja2.filters["basename"] = self.jinja2_basename
         self.jinja2.filters["arrange"] = arrange
 
@@ -333,7 +334,7 @@ class Theme:
         return os.path.basename(val)
 
     @jinja2.pass_context
-    def jinja2_datetime_format(self, context, dt: datetime.datetime, format: str = None) -> str:
+    def jinja2_datetime_format(self, context, dt: Union[str, datetime.datetime], format: str = None) -> str:
         if not isinstance(dt, datetime.datetime):
             import dateutil.parser
             dt = dateutil.parser.parse(dt)
@@ -355,6 +356,23 @@ class Theme:
             log.warn("%s+%s: invalid datetime format %r requested",
                      context.parent["page"].src.relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
+
+    @jinja2.pass_context
+    def jinja2_next_month(
+            self, context, dt: Union[str, datetime.date, datetime.datetime]) -> Union[datetime.date, datetime.datetime]:
+        if isinstance(dt, str):
+            import dateutil.parser
+            dt = dateutil.parser.parse(dt)
+
+        if isinstance(dt, datetime.datetime):
+            return (dt.replace(day=1) + datetime.timedelta(days=40)).replace(
+                    day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif isinstance(dt, datetime.date):
+            return dt.replace(day=1) + datetime.timedelta(days=40).replace(day=1)
+        else:
+            log.warn("%s+%s: invalid datetime %r of type %r: accepted are str, datetime, date",
+                     context.parent["page"].src.relpath, context.name, dt, type(dt))
+            return f"(unknown value {dt!r})"
 
     @jinja2.pass_context
     def jinja2_has_page(self, context, arg: str) -> bool:
