@@ -185,7 +185,7 @@ class Page:
 
             # Try by source path
             # src.relpath is indexed without leading / in site
-            res = self.site.pages_by_src_relpath.get(target_relpath.lstrip("/"))
+            res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
             if res is not None:
                 return res
 
@@ -198,7 +198,7 @@ class Page:
             target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath.lstrip("/"))
 
             # Try by source path
-            res = self.site.pages_by_src_relpath.get(target_relpath)
+            res = self.site.structure.pages_by_src_relpath.get(target_relpath)
             if res is not None:
                 log.warn("%s: please use %s instead of %s", self, target_relpath, target)
                 return res
@@ -217,7 +217,7 @@ class Page:
                 root = os.path.join("/", self.dir.src.relpath)
 
             target_relpath = os.path.normpath(os.path.join(root, target))
-            res = self.site.pages_by_src_relpath.get(target_relpath.lstrip("/"))
+            res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
             if res is not None:
                 return res
 

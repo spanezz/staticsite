@@ -54,9 +54,6 @@ class Site:
         # Site pages indexed by site_path
         self.pages: Dict[str, Page] = {}
 
-        # Site pages indexed by src.relpath
-        self.pages_by_src_relpath: Dict[str, Page] = {}
-
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
 
@@ -236,6 +233,15 @@ It defaults to true at least for [Markdown](markdown.md),
         return self.structure.pages_by_metadata
 
     @property
+    def pages_by_src_relpath(self):
+        """
+        Compatibility accessor for structure.pages_by_src_relpath
+        """
+        warnings.warn(
+            "use site.structure.pages_by_src_relpath instead of site.pages_by_src_relpath", DeprecationWarning)
+        return self.structure.pages_by_src_relpath
+
+    @property
     def tracked_metadata(self):
         """
         Compatibility accessor for structure.tracked_metadata
@@ -407,7 +413,7 @@ It defaults to true at least for [Markdown](markdown.md),
         # Mount page by src.relpath
         # Skip pages derived from other pages, or they would overwrite them
         if page.src is not None and not page.created_from:
-            self.pages_by_src_relpath[page.src.relpath] = page
+            self.structure.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.structure.tracked_metadata:

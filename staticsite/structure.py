@@ -15,3 +15,6 @@ class Structure:
 
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: set[str] = set()
+
+        # Site pages indexed by src.relpath
+        self.pages_by_src_relpath: dict[str, Page] = {}
