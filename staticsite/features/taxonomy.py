@@ -35,7 +35,7 @@ class TaxonomyFeature(Feature):
 
     def register_taxonomy_name(self, name):
         self.known_taxonomies.add(name)
-        self.site.tracked_metadata.add(name)
+        self.site.structure.tracked_metadata.add(name)
         # Note that if we want to make the tags inheritable, we need to
         # interface with 'rst' (or 'rst' to interface with us) because rst
         # needs to know which metadata items are taxonomies in order to parse

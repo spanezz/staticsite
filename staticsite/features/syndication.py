@@ -80,7 +80,7 @@ class SyndicationFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.tracked_metadata.add("syndication")
+        self.site.structure.tracked_metadata.add("syndication")
         self.site.features["rst"].yaml_tags.add("syndication")
         self.site.register_metadata(Metadata("syndication", structure=True, doc="""
 Defines syndication for the contents of this page.

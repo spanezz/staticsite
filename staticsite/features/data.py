@@ -42,7 +42,7 @@ class DataPages(Feature):
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
-        self.site.tracked_metadata.add("data_type")
+        self.site.structure.tracked_metadata.add("data_type")
 
         self.site.register_metadata(Metadata("data_type", doc="""
 Type of data for this file.

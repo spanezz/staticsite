@@ -87,7 +87,7 @@ class Links(Feature):
         self.data.register_page_class("links", LinksPage)
 
         # Collect 'links' metadata
-        self.site.tracked_metadata.add("links")
+        self.site.structure.tracked_metadata.add("links")
         self.site.register_metadata(MetadataLinks("links", doc="""
 Extra metadata for external links.
 

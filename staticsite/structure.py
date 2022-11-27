@@ -12,3 +12,6 @@ class Structure:
     def __init__(self, site: Site):
         # Site pages that have the given metadata
         self.pages_by_metadata: dict[str, list[Page]] = defaultdict(list)
+
+        # Metadata for which we add pages to pages_by_metadata
+        self.tracked_metadata: set[str] = set()

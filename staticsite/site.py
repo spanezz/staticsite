@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set, Any, Union, TYPE_CHECKING
+from typing import Optional, Dict, List, Any, Union, TYPE_CHECKING
 import os
 import datetime
 import pytz
@@ -56,9 +56,6 @@ class Site:
 
         # Site pages indexed by src.relpath
         self.pages_by_src_relpath: Dict[str, Page] = {}
-
-        # Metadata for which we add pages to pages_by_metadata
-        self.tracked_metadata: Set[str] = set()
 
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
@@ -238,6 +235,14 @@ It defaults to true at least for [Markdown](markdown.md),
         warnings.warn("use site.structure.pages_by_metadata instead of site.pages_by_metadata", DeprecationWarning)
         return self.structure.pages_by_metadata
 
+    @property
+    def tracked_metadata(self):
+        """
+        Compatibility accessor for structure.tracked_metadata
+        """
+        warnings.warn("use site.structure.tracked_metadata instead of site.tracked_metadata", DeprecationWarning)
+        return self.structure.tracked_metadata
+
     def register_metadata(self, metadata: Metadata):
         """
         Add a well-known metadata description to the metadata registry.
@@ -405,7 +410,7 @@ It defaults to true at least for [Markdown](markdown.md),
             self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
-        for tracked in page.meta.keys() & self.tracked_metadata:
+        for tracked in page.meta.keys() & self.structure.tracked_metadata:
             self.structure.pages_by_metadata[tracked].append(page)
 
     def analyze(self):
@@ -426,7 +431,7 @@ It defaults to true at least for [Markdown](markdown.md),
 
         # Add missing pages_by_metadata entries in case no matching page were
         # found for some of them
-        for key in self.tracked_metadata:
+        for key in self.structure.tracked_metadata:
             if key not in self.structure.pages_by_metadata:
                 self.structure.pages_by_metadata[key] = []
 
