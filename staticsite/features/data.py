@@ -112,7 +112,7 @@ This is used to group data of the same type together, and to choose a
 
     def finalize(self):
         # Dispatch pages by type
-        for page in self.site.pages_by_metadata["data_type"]:
+        for page in self.site.structure.pages_by_metadata["data_type"]:
             data_type = page.meta.get("data_type")
             self.by_type[data_type].append(page)
 

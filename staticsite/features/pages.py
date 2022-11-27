@@ -13,7 +13,7 @@ class PagesFeature(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.site.tracked_metadata.add("pages")
-        self.site.register_metadata(Metadata("pages", structure=True, doc=f"""
+        self.site.register_metadata(Metadata("pages", structure=True, doc="""
 The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
@@ -30,7 +30,7 @@ See [Selecting pages](page-filter.md) for details.
 
     def finalize(self):
         # Expand pages expressions
-        for page in self.site.pages_by_metadata["pages"]:
+        for page in self.site.structure.pages_by_metadata["pages"]:
             pages = page.meta["pages"]
             if isinstance(pages, str):
                 pages = {"path": pages}

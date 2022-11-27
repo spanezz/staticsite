@@ -5,12 +5,13 @@ import datetime
 import pytz
 import dateutil.parser
 import re
-from collections import defaultdict
+import warnings
 from .settings import Settings
 from .cache import Caches, DisabledCaches
 from .utils import lazy, open_dir_fd, timings
 from . import metadata
 from .metadata import Metadata
+from .structure import Structure
 from . import contents
 from .file import File
 import logging
@@ -47,6 +48,9 @@ class Site:
         # Repository of metadata descriptions
         self.metadata = metadata.Registry(self)
 
+        # Structure of pages in the site
+        self.structure = Structure(self)
+
         # Site pages indexed by site_path
         self.pages: Dict[str, Page] = {}
 
@@ -55,9 +59,6 @@ class Site:
 
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: Set[str] = set()
-
-        # Site pages that have the given metadata
-        self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)
 
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
@@ -229,6 +230,14 @@ It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 """))
 
+    @property
+    def pages_by_metadata(self):
+        """
+        Compatibility accessor for structure.pages_by_metadata
+        """
+        warnings.warn("use site.structure.pages_by_metadata instead of site.pages_by_metadata", DeprecationWarning)
+        return self.structure.pages_by_metadata
+
     def register_metadata(self, metadata: Metadata):
         """
         Add a well-known metadata description to the metadata registry.
@@ -397,7 +406,7 @@ It defaults to true at least for [Markdown](markdown.md),
 
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.tracked_metadata:
-            self.pages_by_metadata[tracked].append(page)
+            self.structure.pages_by_metadata[tracked].append(page)
 
     def analyze(self):
         """
@@ -418,8 +427,8 @@ It defaults to true at least for [Markdown](markdown.md),
         # Add missing pages_by_metadata entries in case no matching page were
         # found for some of them
         for key in self.tracked_metadata:
-            if key not in self.pages_by_metadata:
-                self.pages_by_metadata[key] = []
+            if key not in self.structure.pages_by_metadata:
+                self.structure.pages_by_metadata[key] = []
 
         # Call finalize hook on features
         for feature in self.features.ordered():

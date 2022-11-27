@@ -180,7 +180,7 @@ class TaxonomyPage(Page):
     def finalize(self):
         # Group pages by category
         by_category = defaultdict(list)
-        for page in self.site.pages_by_metadata[self.name]:
+        for page in self.site.structure.pages_by_metadata[self.name]:
             categories = page.meta.get(self.name)
             if not categories:
                 continue
@@ -208,7 +208,7 @@ class TaxonomyPage(Page):
             self.site.add_page(category_page)
 
         # Replace category names with category pages in each categorized page
-        for page in self.site.pages_by_metadata[self.name]:
+        for page in self.site.structure.pages_by_metadata[self.name]:
             categories = page.meta.get(self.name)
             if not categories:
                 continue

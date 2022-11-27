@@ -185,7 +185,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
     def finalize(self):
         # Build syndications from pages with a 'syndication' metadata
-        for page in self.site.pages_by_metadata["syndication"]:
+        for page in self.site.structure.pages_by_metadata["syndication"]:
             # The syndication header is the base for the feed pages's metadata,
             # and is added as 'syndication' to all the pages that get the feed
             # links

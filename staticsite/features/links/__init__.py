@@ -186,7 +186,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
 
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
-        for page in self.site.pages_by_metadata["links"]:
+        for page in self.site.structure.pages_by_metadata["links"]:
             for link in page.meta["links"]:
                 link = Link(link)
                 self.links.append(link)
