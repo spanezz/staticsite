@@ -179,7 +179,7 @@ class ContentDir(Dir):
             self.take_dir_rules(config)
             dir_meta.update(config)
 
-        # Lead features add to directory metadata
+        # Let features add to directory metadata
         for feature in self.site.features.ordered():
             m = feature.load_dir_meta(self)
             if m is not None:

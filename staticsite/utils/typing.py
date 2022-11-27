@@ -1,5 +1,5 @@
-from typing import Dict, Any
+from typing import Any
 
-Meta = Dict[str, Any]
+Meta = dict[str, Any]
 
 __all__ = "Meta"
