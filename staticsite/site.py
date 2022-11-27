@@ -154,7 +154,8 @@ It defaults to false, or true if `page.meta.date` is in the future.
 
             If not found, it defaults to the current user's name.
         """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_copyright", template_for="copyright", doc="""
+        self.register_metadata(metadata.MetadataTemplateInherited("template_copyright", template_for="copyright",
+                               doc="""
 If set instead of `copyright`, it is a jinja2 template used to generate the
 copyright information.
 
@@ -185,7 +186,8 @@ If omitted:
    inherited.
  * if still no title can be found, the site name is used as a default.
 """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_description", template_for="description", doc="""
+        self.register_metadata(metadata.MetadataTemplateInherited("template_description", template_for="description",
+                               doc="""
 If set instead of `description`, it is a jinja2 template used to generate the
 description. The template context will have `page` available, with the current
 page. The result of the template will not be further escaped, so you can use

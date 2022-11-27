@@ -37,7 +37,7 @@ class File(NamedTuple):
             st = entry.stat()
         except FileNotFoundError:
             log.warning("%s: cannot stat() file: broken symlink?",
-                      os.path.join(dir.abspath, entry.name))
+                        os.path.join(dir.abspath, entry.name))
             st = None
 
         return cls(

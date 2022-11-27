@@ -111,7 +111,7 @@ class PageFilter:
                 if not t_filter.issubset(page_tags):
                     fail_taxonomies = True
             if fail_taxonomies:
-                    continue
+                continue
             pages.append(page)
 
         if self.sort_key is not None:
