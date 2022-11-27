@@ -1,14 +1,78 @@
 from __future__ import annotations
 
 import logging
+import os
+import re
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from .site import Site
     from .page import Page
+    from .site import Site
 
 log = logging.getLogger("structure")
+
+
+re_pathsep = re.compile(re.escape(os.pathsep) + "+")
+
+
+class Path(tuple[str]):
+    """
+    Path in the site, split into components
+    """
+    @property
+    def head(self) -> str:
+        """
+        Return the first element in the path
+        """
+        return self[0]
+
+    @property
+    def tail(self) -> Path:
+        """
+        Return the Path after the first element
+        """
+        # TODO: check if it's worth making this a cached_property
+        return Path(self[1:])
+
+    @classmethod
+    def from_string(cls, path: str) -> "Path":
+        """
+        Split a string into a path
+        """
+        return cls(re_pathsep.split(path.strip(os.pathsep)))
+
+
+class Entry:
+    """
+    One node in the rendered directory hierarchy of the site
+    """
+    def __init__(self, name: str):
+        # Basename of this directory
+        self.name = name
+        # Index page for this directory, if present
+        self.page: Optional[Page] = None
+        # Subdirectories
+        self.sub: Optional[dict[str, Entry]] = None
+
+    def add_page(self, page: Page, path: Path):
+        """
+        Add a page with the given path to this directory structure
+        """
+        if not path:
+            # Add/replace as index for this entry
+            self.page = page
+            return
+
+        # Add as sub-entry
+        if self.sub is None:
+            self.sub = {}
+
+        if (entry := self.sub.get(path.head)) is None:
+            entry = Entry(path.head)
+            self.sub[path.head] = entry
+
+        entry.add_page(page, path.tail)
 
 
 class Structure:
@@ -16,6 +80,9 @@ class Structure:
     Track and index the site structure
     """
     def __init__(self, site: Site):
+        # Root directory of the site
+        self.root = Entry("")
+
         # Site pages indexed by site_path
         self.pages: dict[str, Page] = {}
 
@@ -43,6 +110,10 @@ class Structure:
             else:
                 log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
+
+        # Add to site structure
+        path = Path.from_string(site_path)
+        self.root.add_page(page, path)
 
         # Mount page by src.relpath
         # Skip pages derived from other pages, or they would overwrite them
