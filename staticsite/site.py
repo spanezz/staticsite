@@ -410,14 +410,7 @@ It defaults to true at least for [Markdown](markdown.md),
                 log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
 
-        # Mount page by src.relpath
-        # Skip pages derived from other pages, or they would overwrite them
-        if page.src is not None and not page.created_from:
-            self.structure.pages_by_src_relpath[page.src.relpath] = page
-
-        # Also group pages by tracked metadata
-        for tracked in page.meta.keys() & self.structure.tracked_metadata:
-            self.structure.pages_by_metadata[tracked].append(page)
+        self.structure.add_page(page)
 
     def analyze(self):
         """
