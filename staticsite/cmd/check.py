@@ -17,7 +17,7 @@ class Check(SiteCommand):
 
     def check(self, site):
         counts = Counter()
-        for page in site.pages.values():
+        for page in site.structure.pages.values():
             counts[page.TYPE] += 1
             page.check(self)
 

@@ -166,7 +166,7 @@ class Page:
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)
-        return f.filter(self.site.pages.values())
+        return f.filter(self.site.structure.pages.values())
 
     def resolve_path(self, target: Union[str, "Page"]) -> "Page":
         """
@@ -190,7 +190,7 @@ class Page:
                 return res
 
             # Try by site path
-            res = self.site.pages.get(target_relpath)
+            res = self.site.structure.pages.get(target_relpath)
             if res is not None:
                 return res
 
@@ -227,7 +227,7 @@ class Page:
         else:
             root = self.dir.meta["site_path"]
         target_relpath = os.path.normpath(os.path.join(root, target))
-        res = self.site.pages.get(target_relpath)
+        res = self.site.structure.pages.get(target_relpath)
         if res is not None:
             return res
 

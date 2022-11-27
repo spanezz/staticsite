@@ -78,10 +78,10 @@ class Nav(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.register_metadata(MetadataNav("nav", doc=f"""
+        self.site.register_metadata(MetadataNav("nav", doc="""
 List of page paths that are used for the navbar.
 """))
-        self.site.register_metadata(metadata.Metadata("nav_title", doc=f"""
+        self.site.register_metadata(metadata.Metadata("nav_title", doc="""
 Title to use when this paged is linked in a navbar.
 
 It defaults to `page.meta.title`, or to the series name for series pages.
@@ -93,7 +93,7 @@ It defaults to `page.meta.title`, or to the series name for series pages.
         # Expand pages expressions
         nav_pages = set()
 
-        for page in self.site.pages.values():
+        for page in self.site.structure.pages.values():
             nav = page.meta.get("nav")
             if nav is None:
                 continue

@@ -129,7 +129,7 @@ class Dir(Page):
         else:
             self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
-        if self.meta["indexed"] and self.meta["site_path"] not in self.site.pages:
+        if self.meta["indexed"] and self.meta["site_path"] not in self.site.structure.pages:
             self.site.add_page(self)
 
     def validate(self):

@@ -98,7 +98,7 @@ class Builder:
 #     def write_multi_process(self, child_count):
 #         log.info("Generating pages using %d child processes", child_count)
 #
-#         pages = list(self.site.pages.values())
+#         pages = list(self.site.structure.pages.values())
 #
 #         # From http://code.activestate.com/recipes/576785-partition-an-iterable-into-n-lists/
 #         chunks = [pages[i::child_count] for i in range(child_count)]
@@ -122,7 +122,7 @@ class Builder:
 #             pids.discard(pid)
 
     def write_single_process(self):
-        sums, counts = self.write_pages(self.site.pages.values())
+        sums, counts = self.write_pages(self.site.structure.pages.values())
         for type in sorted(sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)", type, counts[type], sums[type], counts[type]/sums[type] * 60)
 

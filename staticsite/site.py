@@ -51,9 +51,6 @@ class Site:
         # Structure of pages in the site
         self.structure = Structure(self)
 
-        # Site pages indexed by site_path
-        self.pages: Dict[str, Page] = {}
-
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
 
@@ -223,6 +220,14 @@ If true, the page appears in [directory indices](dir.md) and in
 It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 """))
+
+    @property
+    def pages(self):
+        """
+        Compatibility accessor for structure.pages
+        """
+        warnings.warn("use site.structure.pages instead of site.pages", DeprecationWarning)
+        return self.structure.pages
 
     @property
     def pages_by_metadata(self):
@@ -398,18 +403,6 @@ It defaults to true at least for [Markdown](markdown.md),
             log.info("%s: page is still a draft: skipping", page)
             return
 
-        # Mount page by site path
-        site_path = page.meta["site_path"]
-        old = self.pages.get(site_path)
-        if old is not None:
-            if old.TYPE == "asset" and page.TYPE == "asset":
-                pass
-            # elif old.TYPE == "dir" and page.TYPE not in ("dir", "asset"):
-            #     pass
-            else:
-                log.warn("%s: replacing page %s", page, old)
-        self.pages[site_path] = page
-
         self.structure.add_page(page)
 
     def analyze(self):
@@ -423,7 +416,7 @@ It defaults to true at least for [Markdown](markdown.md),
             log.warn("analyze called before loading site contents")
 
         # Run metadata on_analyze functions
-        for page in self.pages.values():
+        for page in self.structure.pages.values():
             if page.meta.get("asset", False):
                 continue
             self.metadata.on_analyze(page)

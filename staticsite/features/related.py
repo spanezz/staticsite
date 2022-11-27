@@ -28,7 +28,7 @@ Features can add to this. For example, [syndication](syndication.md) can add
 
     def finalize(self):
         # Expand pages expressions
-        for page in self.site.pages.values():
+        for page in self.site.structure.pages.values():
             related = page.meta.get("related", None)
             if related is None:
                 page.meta[self.name] = related = {}

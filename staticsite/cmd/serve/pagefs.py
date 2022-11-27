@@ -23,7 +23,7 @@ class PageFS:
         self.paths = {}
 
         if site:
-            for page in site.pages.values():
+            for page in site.structure.pages.values():
                 for build_path in page.target_relpaths():
                     self.add_page(page, build_path)
 
