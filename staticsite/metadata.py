@@ -121,7 +121,7 @@ class Metadata:
 
     def on_load(self, page: Page):
         """
-        Cleanup hook for the metadata on page load.
+        Hook for the metadata on page load.
 
         Hooks are run in the order they have been registered, which follows
         feature dependency order, meaning that hooks for one feature can
@@ -134,7 +134,7 @@ class Metadata:
 
     def on_analyze(self, page: Page):
         """
-        Cleanup hook for the metadata at the start of the analyze pass.
+        Hook for the metadata at the start of the analyze pass.
 
         Hooks are run in the order they have been registered, which follows
         feature dependency order, meaning that hooks for one feature can

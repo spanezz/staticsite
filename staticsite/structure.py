@@ -52,3 +52,16 @@ class Structure:
         # Also group pages by tracked metadata
         for tracked in page.meta.keys() & self.tracked_metadata:
             self.pages_by_metadata[tracked].append(page)
+
+    def analyze(self):
+        """
+        Iterate through all Pages in the site to build aggregated content like
+        taxonomies and directory indices.
+
+        Call this after all Pages have been added to the site.
+        """
+        # Add missing pages_by_metadata entries in case no matching page were
+        # found for some of them
+        for key in self.tracked_metadata:
+            if key not in self.pages_by_metadata:
+                self.pages_by_metadata[key] = []

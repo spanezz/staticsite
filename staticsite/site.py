@@ -421,11 +421,7 @@ It defaults to true at least for [Markdown](markdown.md),
                 continue
             self.metadata.on_analyze(page)
 
-        # Add missing pages_by_metadata entries in case no matching page were
-        # found for some of them
-        for key in self.structure.tracked_metadata:
-            if key not in self.structure.pages_by_metadata:
-                self.structure.pages_by_metadata[key] = []
+        self.structure.analyze()
 
         # Call finalize hook on features
         for feature in self.features.ordered():
