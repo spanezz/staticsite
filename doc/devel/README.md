@@ -1,5 +1,9 @@
 # Developer documentation
 
+## Architectural documentation
+
+* [Constraints and invariants](constraints.md)
+
 ## Playing with the internals
 
 You can run `ssite shell` on an existing site, to get a python shell with the
