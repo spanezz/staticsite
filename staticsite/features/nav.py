@@ -6,7 +6,7 @@ from staticsite import metadata
 import logging
 
 if TYPE_CHECKING:
-    from staticsite.utils.typing import Meta
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("nav")
 

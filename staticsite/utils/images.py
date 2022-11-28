@@ -11,7 +11,7 @@ import logging
 if TYPE_CHECKING:
     from staticsite import File
     from staticsite.cache import Cache
-    from .typing import Meta
+    from ..metadata import Meta
 
 log = logging.getLogger("utils.images")
 

@@ -15,7 +15,7 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import scan, file, structure
-    from staticsite.utils.typing import Meta
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("data")
 

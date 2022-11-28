@@ -4,7 +4,6 @@ import os
 import logging
 from urllib.parse import urlparse, urlunparse
 from .utils import lazy
-from .utils.typing import Meta
 from .render import RenderedString
 import jinja2
 import markupsafe
@@ -14,6 +13,7 @@ if TYPE_CHECKING:
     from .render import RenderedElement
     from .site import Site
     from .file import File
+    from .metadata import Meta
 
 log = logging.getLogger("page")
 
@@ -71,8 +71,8 @@ class Page:
         Generate this page derived from an existing one
         """
         # If page is the root dir, it has dir set to None, and we can use it as dir
-        new_meta = page.site.metadata.derive(page.meta)
-        new_meta.update(meta)
+        new_meta = page.meta.derive()
+        new_meta.update(meta.values)
         return cls(page.site, src=page.src, meta=new_meta, created_from=page, **kw)
 
     def add_related(self, name: str, page: "Page"):

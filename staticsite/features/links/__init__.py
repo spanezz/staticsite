@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Any
 import jinja2
 import os
 import json
@@ -13,8 +13,8 @@ from staticsite.features.links.index import LinkIndexPage
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
-    from staticsite import Page
-    from staticsite.contents import ContentDir
+    from staticsite import Page, structure, scan, file
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("links")
 
@@ -104,46 +104,51 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(
+            self,
+            node: structure.Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
         """
         Handle .links pages that generate the browseable archive of annotated
         external links
         """
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             if not fname.endswith(".links"):
                 continue
             taken.append(fname)
 
             name = fname[:-6]
 
-            meta = sitedir.meta_file(fname)
-            meta["site_path"] = os.path.join(sitedir.meta["site_path"], name)
-
             try:
-                fm_meta = self.load_file_meta(sitedir, src, fname)
+                fm_meta = self.load_file_meta(directory, fname)
             except Exception:
                 log.exception("%s: cannot parse taxonomy information", src.relpath)
                 continue
             meta.update(fm_meta)
 
-            page = LinkIndexPage(self.site, src, meta=meta, name=name, dir=sitedir, links=self)
+            page = LinkIndexPage(self.site, src=src, meta=meta, name=name, links=self)
             pages.append(page)
+
+            page.meta["site_path"] = os.path.join(directory.meta["site_path"], name)
+            page.meta["build_path"] = page.meta["site_path"]
+            node.add_page(page, src=src, name=name)
 
             self.indices.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
-    def load_file_meta(self, sitedir, src, fname):
+    def load_file_meta(self, directory: scan.Directory, fname) -> dict[str, Any]:
         """
         Parse the links file to read its description
         """
         from staticsite.utils import front_matter
-        with sitedir.open(fname, src, "rt") as fd:
+        with directory.open(fname, "rt") as fd:
             fmt, meta = front_matter.read_whole(fd)
         if meta is None:
             meta = {}

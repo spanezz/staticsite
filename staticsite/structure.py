@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .site import Site
     from .asset import Asset
     from . import file
-    from .utils.typing import Meta
+    from .metadata import Meta
 
 log = logging.getLogger("structure")
 
@@ -185,8 +185,9 @@ class Structure:
             self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
-        for tracked in page.meta.keys() & self.tracked_metadata:
-            self.pages_by_metadata[tracked].append(page)
+        for tracked in self.tracked_metadata:
+            if tracked in page.meta:
+                self.pages_by_metadata[tracked].append(page)
 
     def analyze(self):
         """

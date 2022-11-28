@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict
 from staticsite import Page, Feature
 from staticsite.render import RenderedFile
-from staticsite.utils.typing import Meta
 from staticsite.utils.images import ImageScanner
 from staticsite.metadata import Metadata
 from staticsite.render import RenderedElement
@@ -12,6 +11,7 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import file, scan, structure
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("images")
 
@@ -96,11 +96,11 @@ extension), that image is used.
                         continue
                     if info["width"] >= width:
                         continue
-                    rel_meta = dict(meta)
+                    rel_meta = meta.derive()
                     rel_meta["related"] = {}
                     rel_meta.pop("width", None)
                     rel_meta.pop("height", None)
-                    rel_meta.update(**info)
+                    rel_meta.update(info)
                     scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
                     pages.append(scaled)
 

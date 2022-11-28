@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, List, Dict, Iterable, Optional, Any
 from staticsite import Page
 from staticsite.feature import Feature
 from staticsite.metadata import Metadata
@@ -11,7 +11,7 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import file, scan, structure
-    from staticsite.typing import Meta
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("taxonomy")
 
@@ -50,7 +50,7 @@ Setting this as a simple string is the same as setting it as a list of one
 element.
 """))
 
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
         for fname in directory.files.keys():
             if not fname.endswith(".taxonomy"):
                 continue
@@ -202,7 +202,7 @@ class TaxonomyPage(Page):
             pages.sort(key=lambda p: p.meta["date"])
 
             # Create category page
-            category_meta = dict(self.category_meta)
+            category_meta = self.category_meta.derive()
             category_meta["taxonomy"] = self
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]

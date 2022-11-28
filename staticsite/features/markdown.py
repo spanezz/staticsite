@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict, Set, TYPE_CHECKING
+from typing import List, Tuple, Optional, Dict, Set, TYPE_CHECKING, Any
 from staticsite import Page, Feature
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
-from staticsite.utils.typing import Meta
+from staticsite.metadata import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
 import markupsafe
@@ -251,7 +251,7 @@ class MarkdownPages(Feature):
 
         return pages
 
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
@@ -266,7 +266,7 @@ class MarkdownPages(Feature):
         else:
             return meta
 
-    def load_file_meta(self, directory: scan.Directory, fname: str) -> Tuple[Meta, List[str]]:
+    def load_file_meta(self, directory: scan.Directory, fname: str) -> tuple[dict[str, Any], list[str]]:
         """
         Load metadata for a file.
 

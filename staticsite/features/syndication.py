@@ -4,7 +4,7 @@ import os
 import logging
 from staticsite.feature import Feature
 from staticsite.page import Page, PageNotFoundError
-from staticsite.metadata import Metadata
+from staticsite.metadata import Metadata, Meta
 from staticsite.utils import arrange
 import jinja2
 
@@ -167,7 +167,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             log.warn("%s: %s", context.name, e)
             return []
 
-    def prepare_syndication_list(self, pages):
+    def prepare_syndication_list(self, pages) -> list[Page]:
         """
         Given a list of pages to potentially syndicate, filter them by their
         syndicated header, and sort by syndication date.
@@ -189,17 +189,17 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             # The syndication header is the base for the feed pages's metadata,
             # and is added as 'syndication' to all the pages that get the feed
             # links
-            meta = page.meta.get("syndication")
-            if meta is None:
+            meta_dict = page.meta.get("syndication")
+            if meta_dict is None:
                 continue
-
-            if meta is True:
-                meta = {}
+            elif meta_dict is True:
+                meta = Meta(self.site.metadata)
             else:
                 # Make a shallow copy to prevent undesired side effects if multiple
                 # pages share the same syndication dict, as may be the case with
                 # taxonomies
-                meta = dict(meta)
+                meta = Meta(self.site.metadata)
+                meta.update(meta_dict)
 
             # Add the syndication link to the index page
             page.meta["syndication"] = meta
@@ -214,7 +214,9 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             self.site.theme.precompile_metadata_templates(meta)
 
             # RSS feed
-            rss_page = RSSPage.create_from(page, dict(meta))
+            rss_page_meta = meta.derive()
+            rss_page_meta["pages"] = meta["pages"]
+            rss_page = RSSPage.create_from(page, rss_page_meta)
             meta["rss_page"] = rss_page
             build_path = rss_page.created_from.meta["build_path"]
             root, ext = os.path.splitext(build_path)
@@ -225,7 +227,9 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
-            atom_page = AtomPage.create_from(page, dict(meta))
+            atom_page_meta = meta.derive()
+            atom_page_meta["pages"] = meta["pages"]
+            atom_page = AtomPage.create_from(page, atom_page_meta)
             meta["atom_page"] = atom_page
             build_path = atom_page.created_from.meta["build_path"]
             root, ext = os.path.splitext(build_path)
@@ -236,15 +240,18 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             log.debug("%s: adding syndication page for %s", atom_page, page)
 
             # Archive page
-            archive_meta = meta.get("archive")
-            if archive_meta is None or archive_meta is True:
-                archive_meta = {}
+            archive_meta: Optional[Meta] = None
+            archive_meta_extra = meta.get("archive")
+            if archive_meta_extra is None or archive_meta_extra is True:
+                archive_meta = meta.derive()
             elif archive_meta is False:
                 archive_meta = None
             else:
-                archive_meta = dict(archive_meta)
+                archive_meta = meta.derive()
+                archive_meta.update(archive_meta_extra)
 
             if archive_meta is not None:
+                archive_meta["pages"] = meta["pages"]
                 archive_page = ArchivePage.create_from(page, archive_meta)
                 if "site_path" not in archive_page.meta:
                     site_path = os.path.join(archive_page.created_from.meta["site_path"], "archive")

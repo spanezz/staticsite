@@ -3,13 +3,13 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from .metadata import Meta
 from .page import Page
 from .render import RenderedElement, RenderedFile
 
 if TYPE_CHECKING:
     from . import file
     from .site import Site
-    from .utils.typing import Meta
 
 
 class Asset(Page):
@@ -25,7 +25,8 @@ class Asset(Page):
         Create an asset, shortcutting metadata derivation
         """
         site_path = os.path.join(parent_meta["site_path"], name)
-        meta = {
+        meta = Meta(site.metadata, parent_meta)
+        meta.values = {
             "date": site.localized_timestamp(src.stat.st_mtime),
             "title": name,
             "site_url": parent_meta["site_url"],

@@ -6,12 +6,12 @@ import logging
 import os
 import re
 import stat
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 
 from . import file, dirindex
 from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
-from .utils.typing import Meta
+from .metadata import Meta
 
 if TYPE_CHECKING:
     from . import structure
@@ -44,8 +44,8 @@ def scan_tree(site: Site, src: file.File, site_meta: Meta):
         node.src = src
 
     # Metadata for this directory
-    meta = site.metadata.derive(site_meta)
-    meta.setdefault("site_path",  site_meta.get("site_path", "/"))
+    meta = site_meta.derive()
+    meta.setdefault("site_path", site_meta.get("site_path", "/"))
 
     with open_dir_fd(src.abspath) as dir_fd:
         scan(site=site, directory=Directory(src, dir_fd, meta=meta), node=node)
@@ -107,18 +107,18 @@ class Directory:
 def take_dir_rules(
         dir_rules: list[tuple[re.Pattern, Meta]],
         file_rules: list[tuple[re.Pattern, Meta]],
-        meta: Meta):
+        data: dict[str, Any]):
     """
     Acquire dir and file rules from meta, removing them from it
     """
     # Compile directory matching rules
-    dir_meta = meta.pop("dirs", None)
+    dir_meta = data.pop("dirs", None)
     if dir_meta is None:
         dir_meta = {}
     dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
 
     # Compute file matching rules
-    file_meta = meta.pop("files", None)
+    file_meta = data.pop("files", None)
     if file_meta is None:
         file_meta = {}
     file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
@@ -135,7 +135,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
     # Load dir metadata from .staticsite
     if directory.dircfg is not None:
-        config: Meta = {}
+        config: dict[str, Any]
 
         # Load .staticsite if found
         with directory.open(".staticsite", "rt") as fd:
@@ -174,7 +174,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     # Compute metadata for files
     files_meta: dict[str, tuple[Meta, file.File]] = {}
     for fname, src in directory.files.items():
-        res: Meta = site.metadata.derive(directory.meta)
+        res: Meta = directory.meta.derive()
         for pattern, meta in file_rules:
             if pattern.match(fname):
                 res.update(meta)
@@ -203,7 +203,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     # Recurse into subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
-        dir_meta: Meta = site.metadata.derive(directory.meta)
+        dir_meta: Meta = directory.meta.derive()
         dir_meta["site_path"] = os.path.join(directory.meta["site_path"], name)
         for pattern, dmeta in dir_rules:
             if pattern.match(name):
@@ -238,7 +238,7 @@ def scan_assets(*, site: Site, directory: Directory, node: structure.Node):
     # Scan subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
-        dir_meta: Meta = site.metadata.derive(directory.meta)
+        dir_meta: Meta = directory.meta.derive()
         dir_meta["site_path"] = os.path.join(directory.meta["site_path"], name)
 
         # Recursively descend into the directory

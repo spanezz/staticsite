@@ -2,7 +2,6 @@ from unittest import TestCase
 from . import utils as test_utils
 from staticsite.asset import Asset
 from staticsite.file import File
-from staticsite.contents import Dir
 from contextlib import contextmanager
 import os
 import time

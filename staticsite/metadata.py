@@ -1,11 +1,11 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Dict, List, Callable
+
 import inspect
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 if TYPE_CHECKING:
     from .page import Page
     from .site import Site
-    from .utils.typing import Meta
 
 
 class Registry:
@@ -16,20 +16,21 @@ class Registry:
     def __init__(self, site: Site):
         self.site = site
 
-        self.registry: Dict[str, "Metadata"] = {}
+        # Map metadata names to their definitions
+        self.registry: dict[str, "Metadata"] = {}
 
         # Functions called to copy entries to a derived page metadata
-        self.derive_functions: List[Callable[Meta, Meta], None] = []
+        self.derive_functions: list[Callable[Meta, Meta], None] = []
 
         # Functions called on a page to cleanup metadata on page load
-        self.on_load_functions: List[Callable[Page], None] = []
+        self.on_load_functions: list[Callable[Page], None] = []
 
         # Functions called on a page to cleanup metadata at the beginning of
         # the analyze pass
-        self.on_analyze_functions: List[Callable[Page], None] = []
+        self.on_analyze_functions: list[Callable[Page], None] = []
 
         # Functions called to tweak page content rendered from markdown/rst
-        self.on_contents_rendered_functions: List[Callable[Page, str], str] = []
+        self.on_contents_rendered_functions: list[Callable[Page, str], str] = []
 
     def add(self, metadata: "Metadata"):
         metadata.site = self.site
@@ -58,9 +59,9 @@ class Registry:
         This is used to create metadata entry for pages in a directory, or for
         subpages of pages
         """
-        res: meta = {}
+        res: Meta = Meta(self, parent=meta)
         for f in self.derive_functions:
-            f(meta, res)
+            f(meta.values, res.values)
         return res
 
     def on_load(self, page: Page):
@@ -100,7 +101,7 @@ class Registry:
 
 class Metadata:
     """
-    Declarative description of a metadata used by staticsite
+    Declarative description of a metadata element used by staticsite
     """
 
     def __init__(
@@ -291,3 +292,61 @@ class MetadataDefault(Metadata):
 
     def on_load(self, page: Page):
         page.meta.setdefault(self.name, self.default)
+
+
+class Meta:
+    """
+    Holder for metadata values
+    """
+    def __init__(self, registry: Registry, parent: Optional[Meta] = None):
+        self.registry = registry
+        self.parent = parent
+        self.values: dict[str, Any] = {}
+
+    def __repr__(self):
+        return f"{self.values=!r},{self.parent=!r}"
+
+    def __getitem__(self, key: str) -> Any:
+        """
+        Lookup one metadata element
+        """
+        return self.values[key]
+
+    def __setitem__(self, key: str, value: Any):
+        """
+        Set one metadata element
+        """
+        self.values[key] = value
+
+    def __contains__(self, key: str):
+        return self.values.__contains__(key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Lookup one metadata element
+        """
+        return self.values.get(key, default)
+
+    def setdefault(self, key: str, value: Any) -> Any:
+        """
+        Set a value unless it was locally set
+        """
+        return self.values.setdefault(key, value)
+
+    def pop(self, key: str, *args) -> Any:
+        """
+        Remove and return a value, if it was locally set
+        """
+        return self.values.pop(key, *args)
+
+    def update(self, values: dict[str, Any]):
+        """
+        Copy locally set values from another meta
+        """
+        self.values.update(values)
+
+    def derive(self) -> Meta:
+        """
+        Create a Meta element derived from this one
+        """
+        return self.registry.derive(self)

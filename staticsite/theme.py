@@ -9,8 +9,7 @@ import logging
 from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
-from .utils.typing import Meta
-from .metadata import Metadata
+from .metadata import Metadata, Meta
 from .file import File
 from . import toposort
 
@@ -291,9 +290,9 @@ class Theme:
         """
         Load static assets
         """
-        meta = dict(meta)
-        meta["asset"] = True
-        meta["site_path"] = site_path = os.path.join(meta["site_path"], self.site.settings.STATIC_PATH)
+        root_meta = meta.derive()
+        root_meta["asset"] = True
+        root_meta["site_path"] = site_path = os.path.join(meta["site_path"], self.site.settings.STATIC_PATH)
 
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
@@ -301,7 +300,7 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            fmeta = dict(meta)
+            fmeta = root_meta.derive()
             fmeta["site_path"] = os.path.join(site_path, name)
             # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
@@ -313,7 +312,7 @@ class Theme:
         for path in self.theme_static_dirs:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
-                meta=meta,
+                meta=root_meta,
             )
 
     def precompile_metadata_templates(self, meta: Meta):

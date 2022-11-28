@@ -1,10 +1,9 @@
 from __future__ import annotations
-from typing import List, TYPE_CHECKING, Optional
+from typing import List, TYPE_CHECKING, Optional, Any
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
-from staticsite.utils.typing import Meta
 import jinja2
 import markupsafe
 import os
@@ -12,6 +11,7 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import file, scan, structure
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("jinja2")
 
@@ -20,7 +20,7 @@ class IgnorePage(Exception):
     pass
 
 
-def load_front_matter(template: jinja2.Template) -> Meta:
+def load_front_matter(template: jinja2.Template) -> dict[str, Any]:
     """
     Load front matter from a jinja2 template
     """
@@ -53,7 +53,7 @@ class J2Pages(Feature):
 
     See doc/reference/templates.md for details.
     """
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
         # Load front matter from index.html
         if (index := directory.files.get("index.html")) is None:
             return None
@@ -63,9 +63,8 @@ class J2Pages(Feature):
         except Exception:
             log.exception("%s: cannot load template", index.relpath)
         else:
-            meta = load_front_matter(template)
-            if meta:
-                return meta
+            if (front_matter := load_front_matter(template)):
+                return front_matter
 
     def load_dir(
             self,
@@ -180,9 +179,9 @@ class J2Page(RenderPartialTemplateMixin, Page):
             log.exception("%s: cannot load template", self.src.relpath)
             raise IgnorePage
 
-        meta = load_front_matter(template)
-        if meta:
-            self.meta.update(**meta)
+        front_matter = load_front_matter(template)
+        if front_matter:
+            self.meta.update(front_matter)
 
         self.meta["template"] = template
 

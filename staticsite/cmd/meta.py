@@ -3,7 +3,7 @@ from .command import Command, Fail, Success
 from staticsite.utils import images
 from staticsite.cache import DisabledCache
 from staticsite.utils import yaml_codec as yaml
-from staticsite.utils.typing import Meta
+from staticsite.metadata import Meta
 import shlex
 import tempfile
 import logging

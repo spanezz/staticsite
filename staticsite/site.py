@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, Any, Union, TYPE_CHECKING
+from typing import Optional, Union, TYPE_CHECKING
 import os
 import datetime
 import pytz
@@ -10,7 +10,7 @@ from .settings import Settings
 from .cache import Caches, DisabledCaches
 from .utils import lazy, timings
 from . import metadata
-from .metadata import Metadata
+from .metadata import Metadata, Meta
 from .structure import Structure
 from . import scan
 from .file import File
@@ -20,8 +20,6 @@ if TYPE_CHECKING:
     from .page import Page
 
 log = logging.getLogger("site")
-
-Meta = Dict[str, Any]
 
 
 class Site:
@@ -298,9 +296,8 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         Build directory metadata based on site settings
         """
-        meta = {
-            "template_copyright": "© {{page.meta.date.year}} {{page.meta.author}}",
-        }
+        meta = Meta(self.metadata)
+        meta["template_copyright"] = "© {{page.meta.date.year}} {{page.meta.author}}"
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:

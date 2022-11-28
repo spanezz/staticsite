@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import List, Tuple, TYPE_CHECKING, Optional
+from typing import List, Tuple, TYPE_CHECKING, Optional, Any
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
-from staticsite.utils.typing import Meta
 import docutils.io
 import docutils.core
 import docutils.nodes
@@ -15,6 +14,7 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import scan, file, structure
+    from staticsite.metadata import Meta
 
 log = logging.getLogger("rst")
 
@@ -123,7 +123,7 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
