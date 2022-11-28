@@ -69,7 +69,7 @@ class Page:
         Generate this page derived from an existing one
         """
         # If page is the root dir, it has dir set to None, and we can use it as dir
-        return cls(page.site, src=page.src, meta=meta, dir=page.dir or page, created_from=page, **kw)
+        return cls(page.site, src=page.src, meta=meta, src_dir=page.src_dir, created_from=page, **kw)
 
     def add_related(self, name: str, page: "Page"):
         """
@@ -160,8 +160,8 @@ class Page:
         If not set, default root to the path of the containing directory for
         this page
         """
-        if root is None and self.dir is not None and self.dir.src.relpath:
-            root = self.dir.src.relpath
+        if root is None and self.src_dir is not None and self.src_dir.src.relpath:
+            root = self.src_dir.src.relpath
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)
