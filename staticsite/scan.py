@@ -202,7 +202,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     for fname, (file_meta, src) in files_meta.items():
         if src.stat and stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
-            node.add_asset(src=src, name=fname)
+            node.add_asset(src=src, name=fname, parent_meta=directory.meta)
     # Recurse into subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
@@ -230,16 +230,13 @@ def scan_assets(*, site: Site, directory: Directory, node: structure.Node):
     # TODO: build a directory page here? Or at site load time?
     # TODO: its contents can be added at analyze time
 
-    if node.page is None:
-        dirindex.Dir.create(node, directory)
-
     # Load every file as an asset
     for fname, src in directory.files.items():
         if src.stat is None:
             continue
         if stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
-            node.add_asset(src=src, name=fname)
+            node.add_asset(src=src, name=fname, parent_meta=directory.meta)
 
     # Scan subdirectories
     for name, src in directory.subdirs.items():
