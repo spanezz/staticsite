@@ -45,7 +45,7 @@ def scan_tree(site: Site, src: file.File, site_meta: Meta):
 
     # Metadata for this directory
     meta = site.metadata.derive(site_meta)
-    meta["site_path"] = "/"
+    meta.setdefault("site_path",  site_meta.get("site_path", "/"))
 
     with open_dir_fd(src.abspath) as dir_fd:
         scan(site=site, directory=Directory(src, dir_fd, meta=meta), node=node)
@@ -102,39 +102,6 @@ class Directory:
         def _file_opener(fname, flags):
             return os.open(fname, flags, dir_fd=self.dir_fd)
         return io.open(os.path.join(self.src.abspath, name), *args, opener=_file_opener, **kw)
-
-
-# class Dir:
-#     """
-#     Source directory to be scanned
-#     """
-#     def __init__(self, src: file.File, meta: Meta):
-#         self.src = src
-#         self.meta: Meta = dict(meta) if meta else {}
-#
-#     @classmethod
-#     def create(
-#             cls,
-#             src: file.File,
-#             meta: Meta):
-#         # Check whether to load subdirectories as asset trees
-#         if meta.get("asset"):
-#             return AssetDir(src, meta)
-#         else:
-#             return SourceDir(src, meta)
-#
-#     def open(self, fname: str, src: file.File, *args, **kw):
-#         if self.dir_fd:
-#             def _file_opener(fname, flags):
-#                 return os.open(fname, flags, dir_fd=self.dir_fd)
-#             return io.open(src.abspath, *args, opener=_file_opener, **kw)
-#         else:
-#             return io.open(src.abspath, *args, **kw)
-
-def open_dirfd(fname: str, *args, src: file.File, dir_fd: int, **kw):
-    def _file_opener(fname, flags):
-        return os.open(fname, flags, dir_fd=dir_fd)
-    return io.open(src.abspath, *args, opener=_file_opener, **kw)
 
 
 def take_dir_rules(
