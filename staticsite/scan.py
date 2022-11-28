@@ -234,6 +234,8 @@ class SourceDir(Dir):
 
         # TODO: warn of contents not loaded at this point?
 
+        # If we didn't load an index, create a default directory index
+
 
 class AssetDir(Dir):
     """
