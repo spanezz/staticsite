@@ -180,7 +180,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
         page = context.parent["page"]
         return page.url_for(dest)
 
-    def finalize(self):
+    def analyze(self):
         # Index of all links
         self.links = LinkCollection()
 
@@ -193,9 +193,9 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
                 for tag in link.tags:
                     self.by_tag[tag].append(link)
 
-        # Call finalize on all .links pages, to populate them
+        # Call analyze on all .links pages, to populate them
         for index in self.indices:
-            index.finalize()
+            index.analyze()
 
     def add_site_commands(self, subparsers):
         super().add_site_commands(subparsers)

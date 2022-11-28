@@ -109,7 +109,7 @@ This is used to group data of the same type together, and to choose a
             return None
         return DataArchetype(archetypes, relpath, self, fmt)
 
-    def finalize(self):
+    def analyze(self):
         # Dispatch pages by type
         for page in self.site.structure.pages_by_metadata["data_type"]:
             data_type = page.meta.get("data_type")

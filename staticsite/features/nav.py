@@ -89,7 +89,7 @@ It defaults to `page.meta.title`, or to the series name for series pages.
 `nav_title` is only guaranteed to exist for pages that are used in `nav`.
 """))
 
-    def finalize(self):
+    def analyze(self):
         # Expand pages expressions
         nav_pages = set()
 

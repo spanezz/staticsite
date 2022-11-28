@@ -101,11 +101,11 @@ element.
     def jinja2_taxonomy(self, name) -> Optional["TaxonomyPage"]:
         return self.taxonomies.get(name)
 
-    def finalize(self):
-        # Call finalize on all taxonomy pages, to populate them by scanning
+    def analyze(self):
+        # Call analyze on all taxonomy pages, to populate them by scanning
         # site pages
         for taxonomy in self.taxonomies.values():
-            taxonomy.finalize()
+            taxonomy.analyze()
 
 
 class TaxonomyPage(Page):
@@ -177,7 +177,7 @@ class TaxonomyPage(Page):
         """
         return heapq.nlargest(count, self.categories.values(), key=lambda c: c.meta["date"])
 
-    def finalize(self):
+    def analyze(self):
         # Group pages by category
         by_category = defaultdict(list)
         for page in self.site.structure.pages_by_metadata[self.name]:

@@ -3,6 +3,7 @@ from typing import Dict, Callable, Set, List, Type, TYPE_CHECKING
 from collections import defaultdict
 import logging
 import sys
+import warnings
 from .page import Page
 from . import scan, file
 from . import site
@@ -87,11 +88,18 @@ class Feature:
         """
         return None
 
-    def finalize(self):
+    def analyze(self):
         """
         Hook called after all the pages have been loaded
         """
         pass
+
+    def finalize(self):
+        """
+        Hook called after all the pages have been loaded
+        """
+        warnings.warn("use Feature.analyze instead of Feature.finalize", DeprecationWarning)
+        self.analyze()
 
     def add_site_commands(self, subparsers):
         """

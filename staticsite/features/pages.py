@@ -28,7 +28,7 @@ in the site, with the `path`, and taxonomy names arguments similar to the
 See [Selecting pages](page-filter.md) for details.
 """))
 
-    def finalize(self):
+    def analyze(self):
         # Expand pages expressions
         for page in self.site.structure.pages_by_metadata["pages"]:
             pages = page.meta["pages"]

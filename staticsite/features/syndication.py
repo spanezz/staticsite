@@ -183,7 +183,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
         res.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
         return res
 
-    def finalize(self):
+    def analyze(self):
         # Build syndications from pages with a 'syndication' metadata
         for page in self.site.structure.pages_by_metadata["syndication"]:
             # The syndication header is the base for the feed pages's metadata,

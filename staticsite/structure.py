@@ -47,7 +47,9 @@ class Entry:
     """
     One node in the rendered directory hierarchy of the site
     """
-    def __init__(self, name: str):
+    def __init__(self, name: str, parent: Optional[Entry] = None):
+        # Parent node, or None if this is the root
+        self.parent = parent
         # Basename of this directory
         self.name = name
         # Index page for this directory, if present
@@ -61,7 +63,10 @@ class Entry:
         """
         if not path:
             # Add/replace as index for this entry
+            if self.page is not None:
+                self.page.site_dir = None
             self.page = page
+            self.page.site_dir = self
             return
 
         # Add as sub-entry

@@ -417,9 +417,9 @@ It defaults to true at least for [Markdown](markdown.md),
 
         self.structure.analyze()
 
-        # Call finalize hook on features
+        # Call analyze hook on features
         for feature in self.features.ordered():
-            feature.finalize()
+            feature.analyze()
 
         self.stage_pages_analyzed = True
 

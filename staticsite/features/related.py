@@ -26,7 +26,7 @@ Features can add to this. For example, [syndication](syndication.md) can add
 `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
 """))
 
-    def finalize(self):
+    def analyze(self):
         # Expand pages expressions
         for page in self.site.structure.pages.values():
             related = page.meta.get("related", None)
