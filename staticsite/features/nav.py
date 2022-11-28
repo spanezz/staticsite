@@ -1,10 +1,12 @@
 from __future__ import annotations
-# from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING
 from staticsite.page import Page, PageNotFoundError
 from staticsite.feature import Feature
 from staticsite import metadata
-import os
 import logging
+
+if TYPE_CHECKING:
+    from staticsite.utils.typing import Meta
 
 log = logging.getLogger("nav")
 
@@ -14,33 +16,7 @@ class MetadataNav(metadata.MetadataInherited):
         kw.setdefault("structure", True)
         super().__init__(*args, **kw)
 
-    def on_dir_meta(self, page: Page, meta):
-        """
-        Inherited metadata are copied from directory indices into directory
-        metadata
-        """
-        val = meta.get(self.name)
-        if val is not None:
-            page.meta[self.name] = val
-            return
-
-        if page.dir is None:
-            return
-
-        val = page.dir.meta.get(self.name)
-        if val is None:
-            return
-
-        res = []
-        for path in val:
-            if isinstance(path, str):
-                try:
-                    path = page.dir.resolve_path(path)
-                except PageNotFoundError:
-                    path = os.path.join("..", path)
-            res.append(path)
-
-        page.meta[self.name] = res
+    # TODO: we lack a way to resolve the paths relative to the page that defined them
 
     def on_load(self, page: Page):
         if self.name in page.meta:
