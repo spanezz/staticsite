@@ -398,12 +398,8 @@ class Page:
             }
         return res
 
-    def render(self, **kw) -> dict[str, RenderedElement]:
-        res = {
-            self.meta["build_path"]: RenderedString(self.html_full(kw)),
-        }
-
-        return res
+    def render(self, **kw) -> RenderedElement:
+        return RenderedString(self.html_full(kw))
 
     def render_template(self, template: jinja2.Template, template_args: Dict[Any, Any] = None) -> str:
         """

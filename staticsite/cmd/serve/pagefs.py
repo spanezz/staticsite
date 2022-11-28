@@ -62,13 +62,8 @@ class PageFS:
         except locale.Error as e:
             log.warn("%s: cannot set locale to %s: %s", page, lname, e)
 
-        for relpath, rendered in page.render(**kw).items():
-            if relpath == dst_relpath:
-                break
-        else:
-            return None, None
-
-        return relpath, rendered.content()
+        rendered = page.render(**kw)
+        return page.meta["build_path"], rendered.content()
 
     def serve_path(self, path, environ, start_response):
         """

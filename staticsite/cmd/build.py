@@ -141,14 +141,14 @@ class Builder:
         for type, pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
             start = time.perf_counter()
             for page in pgs:
-                contents = page.render()
-                for relpath, rendered in contents.items():
-                    fullpath = self.output_abspath(relpath)
-                    dst = self.existing_paths.pop(fullpath, None)
-                    if dst is None:
-                        dst = File.from_abspath(self.output_root, fullpath)
-                    rendered.write(dst)
-                    self.existing_paths.pop(dst, None)
+                relpath = page.meta["build_path"]
+                rendered = page.render()
+                fullpath = self.output_abspath(relpath)
+                dst = self.existing_paths.pop(fullpath, None)
+                if dst is None:
+                    dst = File.from_abspath(self.output_root, fullpath)
+                rendered.write(dst)
+                self.existing_paths.pop(dst, None)
             end = time.perf_counter()
             sums[type] = end - start
             counts[type] = len(pgs)

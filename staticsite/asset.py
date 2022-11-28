@@ -4,7 +4,7 @@ import os
 from typing import TYPE_CHECKING
 
 from .page import Page
-from .render import RenderedFile
+from .render import RenderedElement, RenderedFile
 
 if TYPE_CHECKING:
     from . import file
@@ -41,7 +41,5 @@ class Asset(Page):
         # needed
         pass
 
-    def render(self, **kw):
-        return {
-            self.meta["build_path"]: RenderedFile(self.src),
-        }
+    def render(self, **kw) -> RenderedElement:
+        return RenderedFile(self.src)

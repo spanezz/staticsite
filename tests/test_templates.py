@@ -164,7 +164,5 @@ class TestTemplates(TestCase):
                 "type": "jinja2",
             })
 
-            rendered = page.render()
-            self.assertCountEqual(rendered.keys(), ["page.html"])
-            rendered = rendered["page.html"].content()
+            rendered = page.render().content()
             self.assertEqual(b"", rendered)
