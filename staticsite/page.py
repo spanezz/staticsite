@@ -210,10 +210,10 @@ class Page:
 
         # First using the source paths
         if self.src is not None:
-            if self.src_dir is None:
-                root = "/"
+            if (dir_path := os.path.dirname(self.src.relpath)):
+                root = os.path.join("/", dir_path)
             else:
-                root = os.path.join("/", self.src_dir.src.relpath)
+                root = "/"
 
             target_relpath = os.path.normpath(os.path.join(root, target))
             res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
@@ -221,10 +221,7 @@ class Page:
                 return res
 
         # Finally, using the site paths
-        if self.src_dir is None:
-            root = self.meta["site_path"]
-        else:
-            root = self.src_dir.meta["site_path"]
+        root = self.meta["site_path"]
         target_relpath = os.path.normpath(os.path.join(root, target))
         res = self.site.structure.pages.get(target_relpath)
         if res is not None:
