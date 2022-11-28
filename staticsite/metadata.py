@@ -28,9 +28,6 @@ class Registry:
         # the analyze pass
         self.on_analyze_functions: List[Callable[Page], None] = []
 
-        # Functions called when loading directory metadata
-        self.on_dir_meta_functions: List[Callable[Page, Meta], None] = []
-
         # Functions called to tweak page content rendered from markdown/rst
         self.on_contents_rendered_functions: List[Callable[Page, str], str] = []
 
@@ -49,10 +46,6 @@ class Registry:
         if (on_analyze := getattr(metadata, "on_analyze", None)):
             if not getattr(on_analyze, "skip", False):
                 self.on_analyze_functions.append(on_analyze)
-
-        if (on_dir_meta := getattr(metadata, "on_dir_meta", None)):
-            if not getattr(on_dir_meta, "skip", False):
-                self.on_dir_meta_functions.append(on_dir_meta)
 
         if (on_contents_rendered := getattr(metadata, "on_contents_rendered", None)):
             if not getattr(on_contents_rendered, "skip", False):
@@ -83,13 +76,6 @@ class Registry:
         """
         for f in self.on_analyze_functions:
             f(page)
-
-    def on_dir_meta(self, page: Page, meta: Meta):
-        """
-        Run on_dir_meta functions on the page
-        """
-        for f in self.on_dir_meta_functions:
-            f(page, meta)
 
     def on_contents_rendered(self, page: Page, rendered: str, **kw) -> str:
         """
@@ -173,15 +159,6 @@ class Metadata:
     # Mark as a noop to avoid calling it for each page unless overridden
     on_analyze.skip = True
 
-    def on_dir_meta(self, page: Page, meta: Meta):
-        """
-        Hook to potentially transfer metadata from what is found in a directory
-        index page to the directory metadata
-        """
-        pass
-
-    on_dir_meta.skip = True
-
     def on_contents_rendered(self, page: Page, rendered: str, **kw) -> str:
         """
         Hook to potentially annotate page contents rendered from markdown/rst
@@ -209,24 +186,6 @@ class MetadataInherited(Metadata):
         if (val := src_meta.get(self.name)) is None:
             return
         dst_meta[self.name] = val
-
-    def on_dir_meta(self, page: Page, meta: Meta):
-        """
-        Inherited metadata are copied from directory indices into directory
-        metadata
-        """
-        if self.name in meta:
-            page.meta[self.name] = meta[self.name]
-            return
-
-        if page.dir is None:
-            return
-
-        val = page.dir.meta.get(self.name)
-        if val is None:
-            return
-
-        page.meta[self.name] = val
 
 
 class MetadataTemplateInherited(Metadata):
@@ -280,24 +239,6 @@ class MetadataTemplateInherited(Metadata):
             src = self.site.theme.jinja2.from_string(src)
 
         page.meta[self.template_for] = markupsafe.Markup(page.render_template(src))
-
-    def on_dir_meta(self, page: Page, meta: Meta):
-        """
-        Inherited metadata are copied from directory indices into directory
-        metadata
-        """
-        if self.name in meta:
-            page.meta[self.name] = meta[self.name]
-            return
-
-        if page.dir is None:
-            return
-
-        val = page.dir.meta.get(self.name)
-        if val is None:
-            return
-
-        page.meta[self.name] = val
 
 
 class MetadataDate(Metadata):

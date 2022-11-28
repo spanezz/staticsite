@@ -154,9 +154,6 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
             take_dir_rules(dir_rules, file_rules, m)
             directory.meta.update(m)
 
-    # Merge in metadata, limited to inherited flags
-    # TODO: site.metadata.on_dir_meta(self, self.meta)
-
     # Make sure site_path is absolute
     directory.meta["site_path"] = os.path.join("/", directory.meta["site_path"])
 
