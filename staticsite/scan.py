@@ -116,7 +116,7 @@ class SourceDir(Dir):
                     # Take note of directories
                     subdirs[entry.name] = file.File.from_dir_entry(self.src, entry)
                 elif entry.name == ".staticsite":
-                    dircfg = file.File.from_dir_entry(self.src, entry.name)
+                    dircfg = file.File.from_dir_entry(self.src, entry)
                 elif entry.name.startswith("."):
                     # Skip hidden files
                     continue
