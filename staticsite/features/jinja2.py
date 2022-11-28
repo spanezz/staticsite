@@ -93,7 +93,7 @@ class J2Pages(Feature):
             taken.append(fname)
             pages.append(page)
 
-            dirname, basename = os.path.split(self.src.relpath)
+            dirname, basename = os.path.split(src.relpath)
             dst_basename = basename.replace(".j2", "")
             page.meta["build_path"] = os.path.join(dirname, dst_basename)
 

@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .site import Site
     from .asset import Asset
     from . import file
+    from .utils.typing import Meta
 
 log = logging.getLogger("structure")
 
@@ -88,13 +89,15 @@ class Node:
         else:
             self.child(name, src=src)._attach_page(page)
 
-    def add_asset(self, *, src: file.File, name: str) -> Asset:
+    def add_asset(self, *, src: file.File, name: str, parent_meta: Optional[Meta] = None) -> Asset:
         """
         Add an Asset as a subnode of this one
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        page = Asset.create(site=self.site, src=src, parent_meta=self.page.meta, name=name)
+        if parent_meta is None:
+            parent_meta = self.page.meta
+        page = Asset.create(site=self.site, src=src, parent_meta=parent_meta, name=name)
         self.child(name, src=src)._attach_page(page)
         return page
 

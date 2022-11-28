@@ -209,21 +209,17 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
     # Compute metadata for files
     files_meta: dict[str, tuple[Meta, file.File]] = {}
-    for fname, f in directory.files.items():
+    for fname, src in directory.files.items():
         res: Meta = site.metadata.derive(directory.meta)
         for pattern, meta in file_rules:
             if pattern.match(fname):
                 res.update(meta)
-        files_meta[fname] = (res, f)
 
-    # Handle files marked as assets in their metadata
-    taken = []
-    for fname, (file_meta, src) in files_meta.items():
-        if file_meta.get("asset"):
-            node.add_asset(src=src, name=fname)
-            taken.append(fname)
-    for fname in taken:
-        del files_meta[fname]
+        # Handle assets right away
+        if res.get("asset"):
+            node.add_asset(src=src, name=fname, parent_meta=directory.meta)
+        else:
+            files_meta[fname] = (res, src)
 
     # Let features pick their files
     for handler in site.features.ordered():
@@ -231,16 +227,15 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         if not files_meta:
             break
 
+    if node.page is None:
+        dirindex.Dir.create(node, directory)
+
     # Use everything else as an asset
     # TODO: move into an asset feature?
     for fname, (file_meta, src) in files_meta.items():
         if src.stat and stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
             node.add_asset(src=src, name=fname)
-
-    if node.page is None:
-        dirindex.Dir.create(node, directory)
-
     # Recurse into subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
