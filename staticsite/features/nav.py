@@ -48,7 +48,7 @@ class MetadataNav(metadata.MetadataInherited):
 
         parent = page.created_from
         if parent is None:
-            parent = page.dir
+            parent = page.src_dir
             if parent is None:
                 return
 

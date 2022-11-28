@@ -119,7 +119,7 @@ page. If missing, it defaults to the name of the content directory.
 Base URL for the site, used to generate an absolute URL to the page.
 """))
 
-        self.register_metadata(metadata.MetadataSitePath("site_path", doc="""
+        self.register_metadata(metadata.Metadata("site_path", doc="""
 Where a content directory appears in the site.
 
 By default, is is the `site_path` of the parent directory, plus the directory

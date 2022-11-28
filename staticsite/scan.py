@@ -181,7 +181,7 @@ class SourceDir(Dir):
         # Compute metadata for files
         file_meta: dict[str, tuple[Meta, file.File]] = {}
         for fname, f in files.items():
-            res: Meta = {}
+            res: Meta = site.metadata.derive(self.meta)
             for pattern, meta in file_rules:
                 if pattern.match(fname):
                     res.update(meta)
@@ -208,7 +208,7 @@ class SourceDir(Dir):
         taken = []
         for fname, (meta, f) in files.items():
             if meta and meta.get("asset"):
-                p = Asset(site, f, meta=meta, dir=self, name=fname)
+                p = Asset(site, src=f, meta=meta, src_dir=self, name=fname)
                 site.add_page(p)
                 taken.append(fname)
         for fname in taken:
@@ -229,7 +229,7 @@ class SourceDir(Dir):
         for fname, (meta, f) in files.items():
             if f.stat and stat.S_ISREG(f.stat.st_mode):
                 log.debug("Loading static file %s", f.relpath)
-                p = Asset(site, f, meta=meta, dir=self, name=fname)
+                p = Asset(site, src=f, meta=meta, src_dir=self, name=fname)
                 site.add_page(p)
 
         # TODO: warn of contents not loaded at this point?
@@ -264,8 +264,8 @@ class AssetDir(Dir):
         # Scan subdirectories
         for name, src in subdirs.items():
             # Compute metadata for this directory
-            meta: Meta = dict(self.meta)
-            meta["site_path"] = os.path.join(meta["site_path"], name)
+            meta: Meta = site.metadata.derive(self.meta)
+            meta["site_path"] = os.path.join(self.meta["site_path"], name)
 
             # Recursively descend into the directory
             subdir = Dir.create(src, meta=meta)
@@ -292,5 +292,5 @@ class AssetDir(Dir):
                 continue
             if stat.S_ISREG(src.stat.st_mode):
                 log.debug("Loading static file %s", src.relpath)
-                p = Asset(site, src, meta={}, dir=self, name=fname)
+                p = Asset(site, src=src, meta={}, src_dir=self, name=fname)
                 site.add_page(p)

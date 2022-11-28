@@ -18,6 +18,9 @@ class Registry:
 
         self.registry: Dict[str, "Metadata"] = {}
 
+        # Functions called to copy entries to a derived page metadata
+        self.derive_functions: List[Callable[Meta, Meta], None] = []
+
         # Functions called on a page to cleanup metadata on page load
         self.on_load_functions: List[Callable[Page], None] = []
 
@@ -35,21 +38,37 @@ class Registry:
         metadata.site = self.site
         self.registry[metadata.name] = metadata
 
-        on_load = getattr(metadata, "on_load", None)
-        if not getattr(on_load, "skip", False):
-            self.on_load_functions.append(on_load)
+        if (derive := getattr(metadata, "derive", None)):
+            if not getattr(derive, "skip", False):
+                self.derive_functions.append(derive)
 
-        on_analyze = getattr(metadata, "on_analyze", None)
-        if not getattr(on_analyze, "skip", False):
-            self.on_analyze_functions.append(on_analyze)
+        if (on_load := getattr(metadata, "on_load", None)):
+            if not getattr(on_load, "skip", False):
+                self.on_load_functions.append(on_load)
 
-        on_dir_meta = getattr(metadata, "on_dir_meta", None)
-        if not getattr(on_dir_meta, "skip", False):
-            self.on_dir_meta_functions.append(on_dir_meta)
+        if (on_analyze := getattr(metadata, "on_analyze", None)):
+            if not getattr(on_analyze, "skip", False):
+                self.on_analyze_functions.append(on_analyze)
 
-        on_contents_rendered = getattr(metadata, "on_contents_rendered", None)
-        if not getattr(on_contents_rendered, "skip", False):
-            self.on_contents_rendered_functions.append(on_contents_rendered)
+        if (on_dir_meta := getattr(metadata, "on_dir_meta", None)):
+            if not getattr(on_dir_meta, "skip", False):
+                self.on_dir_meta_functions.append(on_dir_meta)
+
+        if (on_contents_rendered := getattr(metadata, "on_contents_rendered", None)):
+            if not getattr(on_contents_rendered, "skip", False):
+                self.on_contents_rendered_functions.append(on_contents_rendered)
+
+    def derive(self, meta: Meta) -> Meta:
+        """
+        Derive a new metadata dictionary from an existing one.
+
+        This is used to create metadata entry for pages in a directory, or for
+        subpages of pages
+        """
+        res: meta = {}
+        for f in self.derive_functions:
+            f(meta, res)
+        return res
 
     def on_load(self, page: Page):
         """
@@ -119,6 +138,15 @@ class Metadata:
     def get_notes(self):
         return ()
 
+    def derive(self, src_meta: Meta, dst_meta: Meta):
+        """
+        Copy this metadata from src_meta to dst_meta, if needed
+        """
+        pass
+
+    # Mark as a noop to avoid calling it for each page unless overridden
+    derive.skip = True
+
     def on_load(self, page: Page):
         """
         Hook for the metadata on page load.
@@ -174,23 +202,13 @@ class MetadataInherited(Metadata):
         yield from super().get_notes()
         yield "Inherited from directory indices."
 
-    def on_load(self, page: Page):
-        """
-        Hook for inheriting metadata entries from a parent page
-        """
-        if self.name in page.meta:
+    def derive(self, src_meta: Meta, dst_meta: Meta):
+        if self.name in dst_meta:
             return
 
-        parent = page.created_from
-        if parent is None:
-            parent = page.dir
-            if parent is None:
-                return
-
-        val = parent.meta.get(self.name)
-        if val is None:
+        if (val := src_meta.get(self.name)) is None:
             return
-        page.meta[self.name] = val
+        dst_meta[self.name] = val
 
     def on_dir_meta(self, page: Page, meta: Meta):
         """
@@ -231,6 +249,18 @@ class MetadataTemplateInherited(Metadata):
         yield "Inherited from directory indices."
         yield f"Template for {self.template_for}"
 
+    def derive(self, src_meta: Meta, dst_meta: Meta):
+        if self.name in dst_meta:
+            return
+
+        if (val := src_meta.get(self.name)) is None:
+            return
+
+        if isinstance(val, str):
+            dst_meta[self.name] = self.site.theme.jinja2.from_string(val)
+        else:
+            dst_meta[self.name] = val
+
     def on_load(self, page: Page):
         """
         Hook for inheriting metadata entries from a parent page
@@ -244,15 +274,7 @@ class MetadataTemplateInherited(Metadata):
         # Find template in page or in parent dir
         src = page.meta.get(self.name)
         if src is None:
-            parent = page.created_from
-            if parent is None:
-                parent = page.dir
-                if parent is None:
-                    return
-
-            src = parent.meta.get(self.name)
-            if src is None:
-                return
+            return
 
         if isinstance(src, str):
             src = self.site.theme.jinja2.from_string(src)
@@ -276,17 +298,6 @@ class MetadataTemplateInherited(Metadata):
             return
 
         page.meta[self.name] = val
-
-
-class MetadataSitePath(Metadata):
-    def on_dir_meta(self, page: Page, meta: Meta):
-        """
-        Inherited metadata are copied from directory indices into directory
-        metadata
-        """
-        if self.name not in meta:
-            return
-        page.meta[self.name] = meta[self.name]
 
 
 class MetadataDate(Metadata):
