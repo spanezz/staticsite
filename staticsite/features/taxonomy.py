@@ -202,7 +202,8 @@ class TaxonomyPage(Page):
             pages.sort(key=lambda p: p.meta["date"])
 
             # Create category page
-            category_meta = self.category_meta.derive()
+            category_meta = self.meta.derive()
+            category_meta.update(self.category_meta)
             category_meta["taxonomy"] = self
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
