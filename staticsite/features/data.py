@@ -96,7 +96,7 @@ This is used to group data of the same type together, and to choose a
 
             if page_name != "index":
                 page.meta["site_path"] = os.path.join(directory.meta["site_path"], page_name)
-                page.self.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
                 node.add_page(page, src=src, name=page_name)
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
