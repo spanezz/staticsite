@@ -92,7 +92,7 @@ This is used to group data of the same type together, and to choose a
             meta.update(fm_meta)
 
             cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(self.site, src=src, meta=meta, dir=sourcedir)
+            page = cls(self.site, src=src, meta=meta, src_dir=sourcedir)
             pages.append(page)
 
         for fname in taken:

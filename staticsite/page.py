@@ -69,7 +69,9 @@ class Page:
         Generate this page derived from an existing one
         """
         # If page is the root dir, it has dir set to None, and we can use it as dir
-        return cls(page.site, src=page.src, meta=meta, src_dir=page.src_dir, created_from=page, **kw)
+        new_meta = page.site.metadata.derive(page.meta)
+        new_meta.update(meta)
+        return cls(page.site, src=page.src, meta=new_meta, src_dir=page.src_dir, created_from=page, **kw)
 
     def add_related(self, name: str, page: "Page"):
         """
@@ -210,10 +212,10 @@ class Page:
 
         # First using the source paths
         if self.src is not None:
-            if self.dir is None:
+            if self.src_dir is None:
                 root = "/"
             else:
-                root = os.path.join("/", self.dir.src.relpath)
+                root = os.path.join("/", self.src_dir.src.relpath)
 
             target_relpath = os.path.normpath(os.path.join(root, target))
             res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
@@ -221,10 +223,10 @@ class Page:
                 return res
 
         # Finally, using the site paths
-        if self.dir is None:
+        if self.src_dir is None:
             root = self.meta["site_path"]
         else:
-            root = self.dir.meta["site_path"]
+            root = self.src_dir.meta["site_path"]
         target_relpath = os.path.normpath(os.path.join(root, target))
         res = self.site.structure.pages.get(target_relpath)
         if res is not None:

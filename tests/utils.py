@@ -174,6 +174,10 @@ def example_site(name="demo", **kw):
                 setattr(settings, k, v)
             if settings.TIMEZONE is None:
                 settings.TIMEZONE = "Europe/Rome"
+            if settings.SITE_URL is None:
+                settings.SITE_URL = "http://localhost"
+            if settings.SITE_NAME is None:
+                settings.SITE_NAME = "Test Site"
 
             site = staticsite.Site(settings=settings)
             with stat_override(site):
