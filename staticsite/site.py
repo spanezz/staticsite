@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, TYPE_CHECKING
 import os
 import datetime
 import pytz
@@ -15,6 +15,9 @@ from .structure import Structure
 from . import scan
 from .file import File
 import logging
+
+if TYPE_CHECKING:
+    from .page import Page
 
 log = logging.getLogger("site")
 
@@ -204,12 +207,6 @@ If set to True in a directory index, the directory and all its subdirectories
 are loaded as static assets, without the interventions of features.
 """))
 
-        self.register_metadata(metadata.MetadataInherited("aliases", doc="""
-Relative paths in the destination directory where the page should also show up.
-[Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
-existing links when moving a page to a different location.
-"""))
-
         self.register_metadata(metadata.MetadataIndexed("indexed", doc="""
 If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).
@@ -377,6 +374,23 @@ It defaults to true at least for [Markdown](markdown.md),
             self.scan_content()
         with timings("Loaded contents in %fs"):
             self.load_content()
+
+    def is_page_ignored(self, page: Page) -> bool:
+        """
+        Check if this page should be ignored and not added to the site
+        """
+        from .page import PageValidationError
+        try:
+            page.validate()
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            return True
+
+        if not self.settings.DRAFT_MODE and page.meta["draft"]:
+            log.info("%s: page is still a draft: skipping", page)
+            return True
+
+        return False
 
     def analyze(self):
         """

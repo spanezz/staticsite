@@ -50,7 +50,8 @@ class LinkIndexPage(Page):
             meta["links"] = links
             page = LinksTagPage.create_from(self, meta, links=links)
             self.by_tag[tag] = page
-            self.site.add_page(page)
+            page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+            self.site.structure.add_generated_page(page, page.meta["build_path"])
             pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories
@@ -68,7 +69,6 @@ class LinksTagPage(Page):
     def __init__(self, *args, **kw):
         links = kw.pop("links", None)
         super().__init__(*args, **kw)
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
         self.meta["syndicated"] = False
         if links is None:
             self.links = LinkCollection([Link(link) for link in self.meta["links"]])

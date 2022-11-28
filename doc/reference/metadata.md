@@ -143,18 +143,6 @@ name.
 If you are publishing the site at `/prefix` instead of the root of the domain,
 override this with `/prefix` in the content root.
 
-<a name='build_path'>
-
-### `build_path`
-
-
-Relative path in the build directory for the file that will be written
-when this page gets rendered. For example, `blog/2016/example.md`
-generates `blog/2016/example/index.html`.
-
-If found in pages front matter, it is ignored, and is always computed at page
-load time.
-
 <a name='asset'>
 
 ### `asset`

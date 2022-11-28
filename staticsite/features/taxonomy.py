@@ -210,7 +210,8 @@ class TaxonomyPage(Page):
 
             category_page = CategoryPage.create_from(self, meta=category_meta, name=category)
             self.categories[category] = category_page
-            self.site.add_page(category_page)
+            category_page.meta["build_path"] = os.path.join(category_page.meta["site_path"], "index.html")
+            self.site.structure.add_generated_page(category_page, category_page.meta["build_path"])
 
         # Replace category names with category pages in each categorized page
         for page in self.site.structure.pages_by_metadata[self.name]:
@@ -235,7 +236,6 @@ class CategoryPage(Page):
 
     def __init__(self, *args, name: str = None, **kw):
         super().__init__(*args, **kw)
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
         # Category name
         self.name = name
         # Index of each page in the category sequence

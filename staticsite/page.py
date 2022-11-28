@@ -11,6 +11,7 @@ import markupsafe
 
 if TYPE_CHECKING:
     from . import structure
+    from .render import RenderedElement
     from .site import Site
     from .file import File
 
@@ -72,7 +73,7 @@ class Page:
         # If page is the root dir, it has dir set to None, and we can use it as dir
         new_meta = page.site.metadata.derive(page.meta)
         new_meta.update(meta)
-        return cls(page.site, src=page.src, meta=new_meta, src_dir=page.src_dir, created_from=page, **kw)
+        return cls(page.site, src=page.src, meta=new_meta, created_from=page, **kw)
 
     def add_related(self, name: str, page: "Page"):
         """
@@ -129,10 +130,6 @@ class Page:
             return template
         return self.site.theme.jinja2.get_template(template)
 
-    @lazy
-    def redirect_template(self):
-        return self.site.theme.jinja2.get_template("redirect.html")
-
     @property
     def date_as_iso8601(self):
         from dateutil.tz import tzlocal
@@ -163,8 +160,8 @@ class Page:
         If not set, default root to the path of the containing directory for
         this page
         """
-        if root is None and self.src_dir is not None and self.src_dir.src.relpath:
-            root = self.src_dir.src.relpath
+        if root is None and self.node is not None and self.node.src is not None and self.node.src.relpath:
+            root = self.node.src.relpath
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)
@@ -401,16 +398,10 @@ class Page:
             }
         return res
 
-    def render(self, **kw):
+    def render(self, **kw) -> dict[str, RenderedElement]:
         res = {
             self.meta["build_path"]: RenderedString(self.html_full(kw)),
         }
-
-        aliases = self.meta.get("aliases", ())
-        if aliases:
-            for relpath in aliases:
-                html = self.render_template(self.redirect_template, template_args=kw)
-                res[os.path.join(relpath, "index.html")] = RenderedString(html)
 
         return res
 

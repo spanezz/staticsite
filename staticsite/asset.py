@@ -30,7 +30,6 @@ class Asset(Page):
             "title": name,
             "site_url": parent_meta["site_url"],
             "site_path": site_path,
-            "build_path": site_path.lstrip("/"),
             "asset": True,
             "draft": False,
             "indexed": False,

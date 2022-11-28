@@ -82,6 +82,10 @@ extension), that image is used.
             page = Image(self.site, src=src, meta=meta, mimetype=mimetype)
             pages.append(page)
 
+            page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
+            page.meta["build_path"] = page.meta["site_path"]
+            node.add_page(page, src=src, name=fname)
+
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
             if image_sizes:
@@ -100,11 +104,14 @@ extension), that image is used.
                     scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
                     pages.append(scaled)
 
-            self.by_related_site_path[related_site_path] = page
+                    site_path = scaled.created_from.meta["site_path"]
+                    base, ext = os.path.splitext(site_path)
+                    site_path = f"{base}-{name}{ext}"
+                    scaled.meta["site_path"] = site_path
+                    scaled.meta["build_path"] = site_path
+                    self.site.structure.add_generated_page(scaled, site_path)
 
-            page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
-            page.meta["build_path"] = page.meta["site_path"]
-            node.add_page(page, src=src, name=fname)
+            self.by_related_site_path[related_site_path] = page
 
         for fname in taken:
             del files[fname]
@@ -149,12 +156,6 @@ class ScaledImage(Page):
         super().__init__(*args, **kw)
         self.name = name
         self.meta["date"] = self.created_from.meta["date"]
-
-        site_path = self.created_from.meta["site_path"]
-        base, ext = os.path.splitext(site_path)
-        site_path = f"{base}-{name}{ext}"
-        self.meta["site_path"] = site_path
-        self.meta["build_path"] = site_path
 
         if "height" not in self.meta:
             self.meta["height"] = round(
