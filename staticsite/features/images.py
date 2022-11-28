@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict
 from staticsite import Page, Feature
-from staticsite.contents import ContentDir
 from staticsite.render import RenderedFile
 from staticsite.utils.typing import Meta
 from staticsite.utils.images import ImageScanner
@@ -12,7 +11,7 @@ import mimetypes
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import File
+    from staticsite import file, scan
 
 log = logging.getLogger("images")
 
@@ -57,10 +56,10 @@ extension), that image is used.
         # Index images by the site path a related article would have
         self.by_related_site_path: Dict[str, "Image"] = {}
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             base, ext = os.path.splitext(fname)
             mimetype = mimetypes.types_map.get(ext)
             if mimetype is None:
@@ -71,14 +70,13 @@ extension), that image is used.
 
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
-            related_site_path = os.path.join(sitedir.meta["site_path"], base)
-            meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname)
+            related_site_path = os.path.join(sourcedir.meta["site_path"], base)
+            meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname)
 
-            img_meta = self.scanner.scan(sitedir, src, mimetype)
+            img_meta = self.scanner.scan(sourcedir, src, mimetype)
             meta.update(img_meta)
 
-            page = Image(self.site, src, meta=meta, dir=sitedir, mimetype=mimetype)
+            page = Image(self.site, src, meta=meta, dir=sourcedir, mimetype=mimetype)
             pages.append(page)
 
             # Look at theme's image_sizes and generate ScaledImage pages
@@ -102,7 +100,7 @@ extension), that image is used.
             self.by_related_site_path[related_site_path] = page
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
@@ -122,12 +120,12 @@ class Image(Page):
 
 
 class RenderedScaledImage(RenderedElement):
-    def __init__(self, src: File, width: int, height: int):
+    def __init__(self, src: file.File, width: int, height: int):
         self.src = src
         self.width = width
         self.height = height
 
-    def write(self, dst: File):
+    def write(self, dst: file.File):
         import PIL
         with PIL.Image.open(self.src.abspath) as img:
             img = img.resize((self.width, self.height))

@@ -1,12 +1,15 @@
 from __future__ import annotations
-from typing import Dict, Callable, Set, List, Type
+from typing import Dict, Callable, Set, List, Type, TYPE_CHECKING
 from collections import defaultdict
 import logging
 import sys
 from .page import Page
-from . import contents
+from . import scan, file
 from . import site
 from . import toposort
+
+if TYPE_CHECKING:
+    from .utils.typing import Meta
 
 log = logging.getLogger("feature")
 
@@ -56,7 +59,7 @@ class Feature:
         else:
             return self.__doc__.lstrip().splitlines()[0].strip()
 
-    def load_dir_meta(self, sitedir: "contents.ContentDir"):
+    def load_dir_meta(self, sourcedir: "scan.SourceDir", files: dict[str, file.File]):
         """
         Hook to load extra directory metadata for the given sitedir.
 
@@ -66,7 +69,7 @@ class Feature:
         # Do nothing by default
         pass
 
-    def load_dir(self, sitedir: "contents.ContentDir") -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         """
         Load pages from the given Dir.
 

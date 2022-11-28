@@ -14,7 +14,8 @@ from collections import defaultdict
 import logging
 
 if TYPE_CHECKING:
-    from staticsite.contents import ContentDir
+    from staticsite import scan, file
+    from staticsite.utils.typing import Meta
 
 log = logging.getLogger("data")
 
@@ -54,20 +55,18 @@ This is used to group data of the same type together, and to choose a
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         taken = []
         pages = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             mo = re_ext.search(fname)
             if not mo:
                 continue
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
-
             fmt = mo.group(1)
 
-            with sitedir.open(fname, src, "rt") as fd:
+            with sourcedir.open(fname, src, "rt") as fd:
                 try:
                     fm_meta = parse_data(fd, fmt)
                 except Exception:
@@ -86,18 +85,18 @@ This is used to group data of the same type together, and to choose a
 
             page_name = fname[:-len(mo.group(0))]
             if page_name != "index":
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], page_name)
+                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], page_name)
             else:
-                meta["site_path"] = sitedir.meta["site_path"]
+                meta["site_path"] = sourcedir.meta["site_path"]
 
             meta.update(fm_meta)
 
             cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(self.site, src, meta=meta, dir=sitedir)
+            page = cls(self.site, src, meta=meta, dir=sourcedir)
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 

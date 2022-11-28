@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Any, Union, TYPE_CHECKING
+from typing import Optional, Dict, Any, Union, TYPE_CHECKING
 import os
 import datetime
 import pytz
@@ -8,11 +8,11 @@ import re
 import warnings
 from .settings import Settings
 from .cache import Caches, DisabledCaches
-from .utils import lazy, open_dir_fd, timings
+from .utils import lazy, timings
 from . import metadata
 from .metadata import Metadata
 from .structure import Structure
-from . import contents
+from . import scan
 from .file import File
 import logging
 
@@ -91,9 +91,6 @@ class Site:
 
         # Content root for the website
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
-
-        # List of content roots scanned for this site
-        self.content_roots: List[contents.Dir] = []
 
         # Register well-known metadata
         self.register_metadata(metadata.MetadataDefault("template", default="page.html", doc="""
@@ -340,9 +337,10 @@ It defaults to true at least for [Markdown](markdown.md),
             log.info("%s: content tree does not exist", self.content_root)
             return
 
+        site_meta = self._settings_to_meta()
         src = File.with_stat("", os.path.abspath(self.content_root))
-        self.scan_tree(src, meta=self._settings_to_meta())
-        self.theme.scan_assets()
+        self.scan_tree(src, meta=site_meta)
+        self.theme.scan_assets(meta=site_meta)
         self.stage_content_directory_scanned = True
 
     def scan_tree(self, src: File, meta: Meta):
@@ -352,11 +350,7 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         # site_path: str = "", asset: bool = False):
         # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-        root = contents.Dir.create(self, src, meta=meta)
-        root.site = self
-        self.content_roots.append(root)
-        with open_dir_fd(src.abspath) as dir_fd:
-            root.scan(dir_fd)
+        scan.SourceDir.scan_tree(self, src, meta)
 
     def load_content(self):
         """
@@ -365,9 +359,9 @@ It defaults to true at least for [Markdown](markdown.md),
         if not self.stage_content_directory_scanned:
             log.warn("load_content called before site features have been loaded")
 
-        for root in self.content_roots:
-            with open_dir_fd(root.src.abspath) as dir_fd:
-                root.load(dir_fd)
+        # for root in self.content_roots:
+        #     with open_dir_fd(root.src.abspath) as dir_fd:
+        #         root.load(dir_fd)
 
         self.stage_content_directory_loaded = True
 

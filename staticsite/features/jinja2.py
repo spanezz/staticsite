@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import List
+from typing import List, TYPE_CHECKING
 from staticsite.page import Page
 from staticsite.feature import Feature
-from staticsite.contents import ContentDir
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
 from staticsite.utils.typing import Meta
@@ -10,6 +9,9 @@ import jinja2
 import markupsafe
 import os
 import logging
+
+if TYPE_CHECKING:
+    from staticsite import file, scan
 
 log = logging.getLogger("jinja2")
 
@@ -51,10 +53,9 @@ class J2Pages(Feature):
 
     See doc/reference/templates.md for details.
     """
-    def load_dir_meta(self, sitedir: ContentDir):
+    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
         # Load front matter from index.html
-        index = sitedir.files.get("index.html")
-        if index is None:
+        if (index := files.get("index.html")) is None:
             return
 
         try:
@@ -66,13 +67,13 @@ class J2Pages(Feature):
             if meta:
                 return meta
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:
                 if pattern.match(fname):
@@ -80,14 +81,13 @@ class J2Pages(Feature):
             else:
                 continue
 
-            meta = sitedir.meta_file(fname)
             if fname != "index.html":
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname)
+                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname)
             else:
-                meta["site_path"] = sitedir.meta["site_path"]
+                meta["site_path"] = sourcedir.meta["site_path"]
 
             try:
-                page = J2Page(self.site, src, meta=meta, dir=sitedir, feature=self)
+                page = J2Page(self.site, src, meta=meta, dir=sourcedir, feature=self)
             except IgnorePage:
                 continue
 
@@ -95,7 +95,7 @@ class J2Pages(Feature):
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 

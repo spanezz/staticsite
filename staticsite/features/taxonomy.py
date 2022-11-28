@@ -10,7 +10,8 @@ import os
 import logging
 
 if TYPE_CHECKING:
-    from staticsite.contents import ContentDir
+    from staticsite import file, scan
+    from staticsite.typing import Meta
 
 log = logging.getLogger("taxonomy")
 
@@ -49,47 +50,46 @@ Setting this as a simple string is the same as setting it as a list of one
 element.
 """))
 
-    def load_dir_meta(self, sitedir: ContentDir):
-        for fname in sitedir.files.keys():
+    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
+        for fname in files.keys():
             if not fname.endswith(".taxonomy"):
                 continue
             self.register_taxonomy_name(fname[:-9])
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             if not fname.endswith(".taxonomy"):
                 continue
             taken.append(fname)
 
             name = fname[:-9]
 
-            meta = sitedir.meta_file(fname)
-            meta["site_path"] = os.path.join(sitedir.meta["site_path"], name)
+            meta["site_path"] = os.path.join(sourcedir.meta["site_path"], name)
 
             try:
-                fm_meta = self.load_file_meta(sitedir, src, fname)
+                fm_meta = self.load_file_meta(sourcedir, src, fname)
             except Exception:
                 log.exception("%s: cannot parse taxonomy information", src.relpath)
                 continue
             meta.update(fm_meta)
 
-            page = TaxonomyPage(self.site, src, meta=meta, name=name, dir=sitedir)
+            page = TaxonomyPage(self.site, src, meta=meta, name=name, dir=sourcedir)
             self.taxonomies[page.name] = page
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
-    def load_file_meta(self, sitedir, src, fname):
+    def load_file_meta(self, sourcedir: scan.SourceDir, src: file.File, fname: str):
         """
         Parse the taxonomy file to read its description
         """
         from staticsite.utils import front_matter
-        with sitedir.open(fname, src, "rt") as fd:
+        with sourcedir.open(fname, src, "rt") as fd:
             fmt, meta = front_matter.read_whole(fd)
         if meta is None:
             meta = {}

@@ -287,11 +287,11 @@ class Theme:
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
-    def scan_assets(self):
+    def scan_assets(self, meta: Meta):
         """
         Load static assets
         """
-        meta = dict(self.site.content_roots[0].meta)
+        meta = dict(meta)
         meta["asset"] = True
         meta["site_path"] = site_path = os.path.join(meta["site_path"], self.site.settings.STATIC_PATH)
 

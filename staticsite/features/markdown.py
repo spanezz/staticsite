@@ -1,10 +1,9 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict, Set
+from typing import List, Tuple, Optional, Dict, Set, TYPE_CHECKING
 from staticsite import Page, Feature
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
-from staticsite.contents import ContentDir
 from staticsite.utils.typing import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
@@ -14,6 +13,9 @@ import os
 import io
 import markdown
 import logging
+
+if TYPE_CHECKING:
+    from staticsite import file, scan
 
 log = logging.getLogger("markdown")
 
@@ -211,22 +213,21 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             if not fname.endswith(".md"):
                 continue
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
             if fname not in ("index.md", "README.md"):
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname[:-3])
+                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname[:-3])
             else:
-                meta["site_path"] = sitedir.meta["site_path"]
+                meta["site_path"] = sourcedir.meta["site_path"]
 
             try:
-                fm_meta, body = self.load_file_meta(sitedir, src, fname)
+                fm_meta, body = self.load_file_meta(sourcedir, src, fname)
             except Exception as e:
                 log.warn("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
                 log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
@@ -234,31 +235,31 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            page = MarkdownPage(self.site, src, meta=meta, dir=sitedir, feature=self, body=body)
+            page = MarkdownPage(self.site, src, meta=meta, dir=sourcedir, feature=self, body=body)
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
-    def load_dir_meta(self, sitedir: ContentDir):
+    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        src = sitedir.files.get("index.md")
+        src = files.get("index.md")
         if src is None:
             return
 
         try:
-            meta, body = self.load_file_meta(sitedir, src, "index.md")
+            meta, body = self.load_file_meta(sourcedir, src, "index.md")
         except Exception as e:
             log.debug("%s: failed to parse front matter", src.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", src.relpath)
         else:
             return meta
 
-    def load_file_meta(self, sitedir, src, fname) -> Tuple[Meta, List[str]]:
+    def load_file_meta(self, sourcedir: scan.SourceDir, src, fname) -> Tuple[Meta, List[str]]:
         """
         Load metadata for a file.
 
@@ -267,7 +268,7 @@ class MarkdownPages(Feature):
         # Read the contents
 
         # Parse separating front matter and markdown content
-        with sitedir.open(fname, src, "rb") as fd:
+        with sourcedir.open(fname, src, "rb") as fd:
             fmt, meta, body = front_matter.read_markdown_partial(fd)
 
             body = list(body)

@@ -1,11 +1,9 @@
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
-from staticsite.contents import ContentDir
 from staticsite.utils.typing import Meta
-from staticsite.file import File
 import docutils.io
 import docutils.core
 import docutils.nodes
@@ -14,6 +12,9 @@ import jinja2
 import os
 import io
 import logging
+
+if TYPE_CHECKING:
+    from staticsite import scan, file
 
 log = logging.getLogger("rst")
 
@@ -122,11 +123,11 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def load_dir_meta(self, sitedir: ContentDir):
+    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        index = sitedir.files.get("index.rst")
+        index = files.get("index.rst")
         if index is None:
             return
 
@@ -136,7 +137,7 @@ class RestructuredText(Feature):
 
         return meta
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
         # Update the list of yaml tags with information from site.metadata
         if not self.yaml_tags_filled:
             for meta in self.site.metadata.values():
@@ -146,19 +147,18 @@ class RestructuredText(Feature):
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (meta, src) in files.items():
             if not fname.endswith(".rst"):
                 continue
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
             if fname not in ("index.rst", "README.rst"):
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname[:-4])
+                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname[:-4])
             else:
-                meta["site_path"] = sitedir.meta["site_path"]
+                meta["site_path"] = sourcedir.meta["site_path"]
 
             try:
-                fm_meta, doctree_scan = self.load_file_meta(sitedir, src, fname)
+                fm_meta, doctree_scan = self.load_file_meta(sourcedir, src, fname)
             except Exception as e:
                 log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
                 log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
@@ -166,17 +166,17 @@ class RestructuredText(Feature):
 
             meta.update(fm_meta)
 
-            page = RstPage(self.site, src, meta=meta, dir=sitedir, feature=self, doctree_scan=doctree_scan)
+            page = RstPage(self.site, src, meta=meta, dir=sourcedir, feature=self, doctree_scan=doctree_scan)
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
-    def load_file_meta(self, sitedir: ContentDir, src: File, fname: str) -> Tuple[Meta, DoctreeScan]:
+    def load_file_meta(self, sourcedir: scan.SourceDir, src: file.File, fname: str) -> Tuple[Meta, DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
-        with sitedir.open(fname, src, "rt") as fd:
+        with sourcedir.open(fname, src, "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd)
 
         return meta, doctree_scan
