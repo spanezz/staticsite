@@ -20,7 +20,7 @@ class Registry:
         self.registry: dict[str, "Metadata"] = {}
 
         # Functions called to copy entries to a derived page metadata
-        self.derive_functions: list[Callable[Meta, Meta], None] = []
+        self.derive_functions: dict[str, Callable[[Meta, dict[str, Any]], None]] = {}
 
         # Functions called on a page to cleanup metadata on page load
         self.on_load_functions: list[Callable[Page], None] = []
@@ -38,7 +38,7 @@ class Registry:
 
         if (derive := getattr(metadata, "derive", None)):
             if not getattr(derive, "skip", False):
-                self.derive_functions.append(derive)
+                self.derive_functions[metadata.name] = derive
 
         if (on_load := getattr(metadata, "on_load", None)):
             if not getattr(on_load, "skip", False):
@@ -51,18 +51,6 @@ class Registry:
         if (on_contents_rendered := getattr(metadata, "on_contents_rendered", None)):
             if not getattr(on_contents_rendered, "skip", False):
                 self.on_contents_rendered_functions.append(on_contents_rendered)
-
-    def derive(self, meta: Meta) -> Meta:
-        """
-        Derive a new metadata dictionary from an existing one.
-
-        This is used to create metadata entry for pages in a directory, or for
-        subpages of pages
-        """
-        res: Meta = Meta(self, parent=meta)
-        for f in self.derive_functions:
-            f(meta.values, res.values)
-        return res
 
     def on_load(self, page: Page):
         """
@@ -125,7 +113,7 @@ class Metadata:
     def get_notes(self):
         return ()
 
-    def derive(self, src_meta: Meta, dst_meta: Meta):
+    def derive(self, src_meta: Meta, dst: dict[str, Any]):
         """
         Copy this metadata from src_meta to dst_meta, if needed
         """
@@ -180,13 +168,9 @@ class MetadataInherited(Metadata):
         yield from super().get_notes()
         yield "Inherited from directory indices."
 
-    def derive(self, src_meta: Meta, dst_meta: Meta):
-        if self.name in dst_meta:
-            return
-
-        if (val := src_meta.get(self.name)) is None:
-            return
-        dst_meta[self.name] = val
+    def derive(self, src_meta: Meta, dst: dict[str, Any]):
+        dst[self.name] = val = src_meta.get(self.name)
+        return val
 
 
 class MetadataTemplateInherited(Metadata):
@@ -209,17 +193,14 @@ class MetadataTemplateInherited(Metadata):
         yield "Inherited from directory indices."
         yield f"Template for {self.template_for}"
 
-    def derive(self, src_meta: Meta, dst_meta: Meta):
-        if self.name in dst_meta:
-            return
-
+    def derive(self, src_meta: Meta, dst: dict[str, Any]):
         if (val := src_meta.get(self.name)) is None:
-            return
-
-        if isinstance(val, str):
-            dst_meta[self.name] = self.site.theme.jinja2.from_string(val)
+            dst[self.name] = None
+        elif isinstance(val, str):
+            dst[self.name] = self.site.theme.jinja2.from_string(val)
         else:
-            dst_meta[self.name] = val
+            dst[self.name] = val
+        return val
 
     def on_load(self, page: Page):
         """
@@ -296,7 +277,14 @@ class MetadataDefault(Metadata):
 
 class Meta:
     """
-    Holder for metadata values
+    Holder for metadata values.
+
+    Note that, compared to a dict, a value of None is considered the same as
+    missing, in order to cache locally an inherited value that is missing from
+    the parents.
+
+    You can use something like False or the empty string as alternatives for
+    None
     """
     def __init__(self, registry: Registry, parent: Optional[Meta] = None):
         self.registry = registry
@@ -310,7 +298,22 @@ class Meta:
         """
         Lookup one metadata element
         """
-        return self.values[key]
+        if key not in self.values:
+            if (derive := self.registry.derive_functions.get(key)) is None:
+                # It cannot be inherited
+                raise KeyError(key)
+            if self.parent is None:
+                # There is no parent to inherit this from
+                raise KeyError(key)
+            if (val := derive(self.parent, self.values)) is None:
+                # Derivation returned a missing
+                raise KeyError(key)
+            return val
+        elif (val := self.values[key]) is not None:
+            # A None is a cached failed derivation
+            return val
+        else:
+            raise KeyError(key)
 
     def __setitem__(self, key: str, value: Any):
         """
@@ -319,13 +322,42 @@ class Meta:
         self.values[key] = value
 
     def __contains__(self, key: str):
-        return self.values.__contains__(key)
+        if key not in self.values:
+            if (derive := self.registry.derive_functions.get(key)) is None:
+                # It cannot be inherited
+                return False
+            if self.parent is None:
+                # There is no parent to inherit this from
+                return False
+            if derive(self.parent, self.values) is None:
+                # Derivation returned a missing
+                return False
+            return True
+        elif self.values[key] is not None:
+            return True
+        else:
+            return False
 
     def get(self, key: str, default: Any = None) -> Any:
         """
         Lookup one metadata element
         """
-        return self.values.get(key, default)
+        if key not in self.values:
+            if (derive := self.registry.derive_functions.get(key)) is None:
+                # It cannot be inherited
+                return default
+            if self.parent is None:
+                # There is no parent to inherit this from
+                return default
+            if (val := derive(self.parent, self.values)) is None:
+                # Derivation returned a missing
+                return default
+            return val
+        elif (val := self.values[key]) is not None:
+            # A None is a cached failed derivation
+            return val
+        else:
+            return default
 
     def setdefault(self, key: str, value: Any) -> Any:
         """
@@ -349,4 +381,4 @@ class Meta:
         """
         Create a Meta element derived from this one
         """
-        return self.registry.derive(self)
+        return Meta(self.registry, parent=self)
