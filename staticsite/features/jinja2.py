@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.utils import front_matter
@@ -11,7 +11,7 @@ import os
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, scan, structure
 
 log = logging.getLogger("jinja2")
 
@@ -53,10 +53,10 @@ class J2Pages(Feature):
 
     See doc/reference/templates.md for details.
     """
-    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
         # Load front matter from index.html
-        if (index := files.get("index.html")) is None:
-            return
+        if (index := directory.files.get("index.html")) is None:
+            return None
 
         try:
             template = self.site.theme.jinja2.get_template("content:" + index.relpath)
@@ -67,7 +67,11 @@ class J2Pages(Feature):
             if meta:
                 return meta
 
-    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
+    def load_dir(
+            self,
+            node: structure.Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
@@ -81,18 +85,24 @@ class J2Pages(Feature):
             else:
                 continue
 
-            if fname != "index.html":
-                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname)
-            else:
-                meta["site_path"] = sourcedir.meta["site_path"]
-
             try:
-                page = J2Page(self.site, src=src, meta=meta, src_dir=sourcedir, feature=self)
+                page = J2Page(self.site, src=src, meta=meta, feature=self)
             except IgnorePage:
                 continue
 
             taken.append(fname)
             pages.append(page)
+
+            dirname, basename = os.path.split(self.src.relpath)
+            dst_basename = basename.replace(".j2", "")
+            page.meta["build_path"] = os.path.join(dirname, dst_basename)
+
+            if fname != "index.html":
+                page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
+                node.add_page(page, src=src, name=fname)
+            else:
+                page.meta["site_path"] = directory.meta["site_path"]
+                node.add_page(page)
 
         for fname in taken:
             del files[fname]
@@ -160,11 +170,6 @@ class J2Page(RenderPartialTemplateMixin, Page):
 
     def __init__(self, *args, feature: J2Pages, **kw):
         super().__init__(*args, **kw)
-
-        dirname, basename = os.path.split(self.src.relpath)
-        dst_basename = basename.replace(".j2", "")
-
-        self.meta["build_path"] = os.path.join(dirname, dst_basename)
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

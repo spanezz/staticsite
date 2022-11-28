@@ -72,7 +72,6 @@ class Links(Feature):
     Optionally generate link collections.
     """
     RUN_AFTER = ["data"]
-    RUN_BEFORE = ["dirs"]
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

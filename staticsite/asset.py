@@ -7,7 +7,9 @@ from .page import Page
 from .render import RenderedFile
 
 if TYPE_CHECKING:
+    from . import file
     from .site import Site
+    from .utils.typing import Meta
 
 
 class Asset(Page):
@@ -16,14 +18,24 @@ class Asset(Page):
     def __init__(self, site: Site, *, name: str, **kw):
         super().__init__(site, **kw)
         self.name = name
-        self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        self.meta["title"] = name
-        self.meta["site_url"] = self.src_dir.meta["site_url"]
-        self.meta["site_path"] = os.path.join(self.src_dir.meta["site_path"], name)
-        self.meta["build_path"] = self.meta["site_path"].lstrip("/")
-        self.meta["asset"] = True
-        self.meta["draft"] = False
-        self.meta["indexed"] = False
+
+    @classmethod
+    def create(cls, *, site: Site, src: file.File, parent_meta: Meta, name: str) -> Asset:
+        """
+        Create an asset, shortcutting metadata derivation
+        """
+        site_path = os.path.join(parent_meta["site_path"], name)
+        meta = {
+            "date": site.localized_timestamp(src.stat.st_mtime),
+            "title": name,
+            "site_url": parent_meta["site_url"],
+            "site_path": site_path,
+            "build_path": site_path.lstrip("/"),
+            "asset": True,
+            "draft": False,
+            "indexed": False,
+        }
+        return cls(site=site, meta=meta, src=src, name=name)
 
     def validate(self):
         # Disable the default page validation: the constructor does all that is

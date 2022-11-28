@@ -9,7 +9,6 @@ import os
 import logging
 
 if TYPE_CHECKING:
-    from staticsite.contents import ContentDir
     from staticsite import File
     from staticsite.cache import Cache
     from .typing import Meta
@@ -32,7 +31,7 @@ class ImageScanner:
     def __init__(self, cache: Cache):
         self.cache = cache
 
-    def scan(self, sitedir: ContentDir, src: File, mimetype: str) -> Meta:
+    def scan(self, src: File, mimetype: str) -> Meta:
         key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
         meta = self.cache.get(key)
         if meta is None:

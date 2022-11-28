@@ -6,14 +6,15 @@ import logging
 import os
 import re
 import stat
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
-from . import file
+from . import file, dirindex
 from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
 from .utils.typing import Meta
 
 if TYPE_CHECKING:
+    from . import structure
     from .site import Site
 
 log = logging.getLogger("scan")
@@ -33,80 +34,50 @@ def with_dir_fd(f):
     return wrapper
 
 
-class Dir:
+def scan_tree(site: Site, src: file.File, site_meta: Meta):
     """
-    Source directory to be scanned
+    Recursively scan a source tree
     """
-    def __init__(self, src: file.File, meta: Meta):
+    # Add src to the root node if it was missing
+    node = site.structure.root
+    if node.src is None:
+        node.src = src
+
+    # Metadata for this directory
+    meta = site.metadata.derive(site_meta)
+    meta["site_path"] = "/"
+
+    with open_dir_fd(src.abspath) as dir_fd:
+        scan(site=site, directory=Directory(src, dir_fd, meta=meta), node=node)
+
+
+def scan(*, directory: Directory, **kw):
+    if directory.meta.get("asset"):
+        scan_assets(directory=directory, **kw)
+    else:
+        scan_pages(directory=directory, **kw)
+
+
+class Directory:
+    """
+    Fast accessor to files in a directory
+    """
+    def __init__(self, src: file.File, dir_fd: int, meta: Meta):
+        # The directory itself
         self.src = src
-        self.meta: Meta = dict(meta) if meta else {}
+        # dir_fd for fast access to contents
+        self.dir_fd = dir_fd
+        # Metadata for this directory
+        self.meta = meta
+        # File pointing to a .staticsite file, if present
+        self.dircfg: Optional[file.File] = None
+        # Subdirectories
+        self.subdirs: dict[str, file.File] = {}
+        # Plain files
+        self.files: dict[str, file.File] = {}
 
-    @classmethod
-    def create(
-            cls,
-            src: file.File,
-            meta: Meta):
-        # Check whether to load subdirectories as asset trees
-        if meta.get("asset"):
-            return AssetDir(src, meta)
-        else:
-            return SourceDir(src, meta)
-
-    @classmethod
-    def scan_tree(cls, site: Site, src: file.File, meta: Meta):
-        """
-        Recursively scan a source tree
-        """
-        scanner = cls.create(src, meta)
-        with open_dir_fd(src.abspath) as dir_fd:
-            scanner.scan(site=site, dir_fd=dir_fd)
-
-    def open(self, fname: str, src: file.File, *args, **kw):
-        if self.dir_fd:
-            def _file_opener(fname, flags):
-                return os.open(fname, flags, dir_fd=self.dir_fd)
-            return io.open(src.abspath, *args, opener=_file_opener, **kw)
-        else:
-            return io.open(src.abspath, *args, **kw)
-
-
-class SourceDir(Dir):
-    """
-    Source directory to be scanned for pages and assets
-    """
-    @classmethod
-    def take_dir_rules(
-            self,
-            dir_rules: list[tuple[re.Pattern, Meta]],
-            file_rules: list[tuple[re.Pattern, Meta]],
-            meta: Meta):
-        """
-        Acquire dir and file rules from meta, removing them from it
-        """
-        # Compile directory matching rules
-        dir_meta = meta.pop("dirs", None)
-        if dir_meta is None:
-            dir_meta = {}
-        dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
-
-        # Compute file matching rules
-        file_meta = meta.pop("files", None)
-        if file_meta is None:
-            file_meta = {}
-        file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
-
-    @with_dir_fd
-    def scan(self, *, site: Site, dir_fd: int):
         # Scan directory contents
-        dircfg: Optional[file.File] = None
-        subdirs: dict[str, file.File] = {}
-        files: dict[str, file.File] = {}
-        # Rules for assigning metadata to subdirectories
-        dir_rules: list[tuple[re.Pattern, Meta]] = []
-        # Rules for assigning metadata to files
-        file_rules: list[tuple[re.Pattern, Meta]] = []
-
-        with os.scandir(self.dir_fd) as entries:
+        with os.scandir(dir_fd) as entries:
             for entry in entries:
                 # Note: is_dir, is_file, and stat, follow symlinks by default
                 if entry.is_dir():
@@ -114,185 +85,206 @@ class SourceDir(Dir):
                         # Skip hidden directories
                         continue
                     # Take note of directories
-                    subdirs[entry.name] = file.File.from_dir_entry(self.src, entry)
+                    self.subdirs[entry.name] = file.File.from_dir_entry(src, entry)
                 elif entry.name == ".staticsite":
-                    dircfg = file.File.from_dir_entry(self.src, entry)
+                    self.dircfg = file.File.from_dir_entry(src, entry)
                 elif entry.name.startswith("."):
                     # Skip hidden files
                     continue
                 else:
                     # Take note of files
-                    files[entry.name] = file.File.from_dir_entry(self.src, entry)
+                    self.files[entry.name] = file.File.from_dir_entry(src, entry)
 
-        # Load dir metadata from .staticsite, if present
-        # TODO: move this to a feature implementing just load_dir_meta?
-        if dircfg is not None:
-            config: dict[str, Any] = {}
-
-            # Load .staticsite if found
-            with self.open(".staticsite", dircfg, "rt") as fd:
-                fmt, config = front_matter.read_whole(fd)
-
-            self.take_dir_rules(dir_rules, file_rules, config)
-            self.meta.update(config)
-
-        # Let features add to directory metadata
-        for feature in site.features.ordered():
-            m = feature.load_dir_meta(self, files)
-            if m is not None:
-                self.take_dir_rules(dir_rules, file_rules, m)
-                self.meta.update(m)
-
-        # Merge in metadata, limited to inherited flags
-        # TODO: site.metadata.on_dir_meta(self, self.meta)
-
-        # Make sure site_path is absolute
-        self.meta["site_path"] = os.path.join("/", self.meta["site_path"])
-
-        # If site_name is not defined, use the root page title or the content
-        # directory name
-        if "site_name" not in self.meta:
-            # Default site name to the root page title, if site name has not been
-            # set yet
-            # TODO: template_title is not supported (yet?)
-            title = self.meta.get("title")
-            if title is not None:
-                self.meta["site_name"] = title
-            else:
-                self.meta["site_name"] = os.path.basename(self.src.abspath)
-
-        site.theme.precompile_metadata_templates(self.meta)
-
-        # Scan subdirectories
-        for name, src in subdirs.items():
-            # Compute metadata for this directory
-            meta: Meta = dict(self.meta)
-            meta["site_path"] = os.path.join(meta["site_path"], name)
-            for pattern, dmeta in dir_rules:
-                if pattern.match(name):
-                    meta.update(dmeta)
-
-            # Recursively descend into the directory
-            # subdir = SourceDir(src, meta=meta)
-            subdir = Dir.create(src, meta=meta)  # TODO: see contents.Dir.create
-            with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
-                subdir.scan(site=site, dir_fd=subdir_fd)
-
-        # Compute metadata for files
-        file_meta: dict[str, tuple[Meta, file.File]] = {}
-        for fname, f in files.items():
-            res: Meta = site.metadata.derive(self.meta)
-            for pattern, meta in file_rules:
-                if pattern.match(fname):
-                    res.update(meta)
-            file_meta[fname] = (res, f)
-
-            # TODO: build (but not load) pages here?
-            #       or hook into features here to keep track of the pages they want
-            #       to load, and later just call the load method of each feature
-        self.load(site, file_meta)
-
-    def load(self, site: Site, files: dict[str, tuple[Meta, file.File]]):
+    def open(self, name, *args, **kw):
         """
-        Read static assets and pages from this directory and all its subdirectories
-
-        Load files through features by default
+        Open a file contained in this directory
         """
-        from .asset import Asset
-
-        site_path = self.meta["site_path"]
-
-        log.debug("Loading pages from %s as %s", self.src.abspath, site_path)
-
-        # Handle files marked as assets in their metadata
-        taken = []
-        for fname, (meta, f) in files.items():
-            if meta and meta.get("asset"):
-                p = Asset(site, src=f, meta=meta, src_dir=self, name=fname)
-                site.add_page(p)
-                taken.append(fname)
-        for fname in taken:
-            del files[fname]
-
-        # Let features pick their files
-        for handler in site.features.ordered():
-            for page in handler.load_dir(self, files):
-                site.add_page(page)
-                # TODO: if page.meta["indexed"]:
-                # TODO:     self.pages.append(page)
-            if not files:
-                break
-
-        # Use everything else as an asset
-        # TODO: move into an asset feature?
-        site_path = self.meta["site_path"]
-        for fname, (meta, f) in files.items():
-            if f.stat and stat.S_ISREG(f.stat.st_mode):
-                log.debug("Loading static file %s", f.relpath)
-                p = Asset(site, src=f, meta=meta, src_dir=self, name=fname)
-                site.add_page(p)
-
-        # TODO: warn of contents not loaded at this point?
-
-        # If we didn't load an index, create a default directory index
+        def _file_opener(fname, flags):
+            return os.open(fname, flags, dir_fd=self.dir_fd)
+        return io.open(os.path.join(self.src.abspath, name), *args, opener=_file_opener, **kw)
 
 
-class AssetDir(Dir):
+# class Dir:
+#     """
+#     Source directory to be scanned
+#     """
+#     def __init__(self, src: file.File, meta: Meta):
+#         self.src = src
+#         self.meta: Meta = dict(meta) if meta else {}
+#
+#     @classmethod
+#     def create(
+#             cls,
+#             src: file.File,
+#             meta: Meta):
+#         # Check whether to load subdirectories as asset trees
+#         if meta.get("asset"):
+#             return AssetDir(src, meta)
+#         else:
+#             return SourceDir(src, meta)
+#
+#     def open(self, fname: str, src: file.File, *args, **kw):
+#         if self.dir_fd:
+#             def _file_opener(fname, flags):
+#                 return os.open(fname, flags, dir_fd=self.dir_fd)
+#             return io.open(src.abspath, *args, opener=_file_opener, **kw)
+#         else:
+#             return io.open(src.abspath, *args, **kw)
+
+def open_dirfd(fname: str, *args, src: file.File, dir_fd: int, **kw):
+    def _file_opener(fname, flags):
+        return os.open(fname, flags, dir_fd=dir_fd)
+    return io.open(src.abspath, *args, opener=_file_opener, **kw)
+
+
+def take_dir_rules(
+        dir_rules: list[tuple[re.Pattern, Meta]],
+        file_rules: list[tuple[re.Pattern, Meta]],
+        meta: Meta):
     """
-    Source directory to be scanned for assets only
+    Acquire dir and file rules from meta, removing them from it
     """
-    @with_dir_fd
-    def scan(self, *, site: Site, dir_fd: int):
-        subdirs: dict[str, file.File] = {}
-        files: dict[str, file.File] = {}
+    # Compile directory matching rules
+    dir_meta = meta.pop("dirs", None)
+    if dir_meta is None:
+        dir_meta = {}
+    dir_rules.extend((compile_page_match(k), v) for k, v in dir_meta.items())
 
-        with os.scandir(self.dir_fd) as entries:
-            for entry in entries:
-                if entry.name.startswith("."):
-                    # Skip hidden directories
-                    continue
+    # Compute file matching rules
+    file_meta = meta.pop("files", None)
+    if file_meta is None:
+        file_meta = {}
+    file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
-                # Note: is_dir, is_file, and stat, follow symlinks by default
-                if entry.is_dir():
-                    # Take note of directories
-                    subdirs[entry.name] = file.File.from_dir_entry(self.src, entry)
-                else:
-                    # Take note of files
-                    files[entry.name] = file.File.from_dir_entry(self.src, entry)
 
-        # TODO: build a directory page here? Or at site load time?
-        # TODO: its contents can be added at analyze time
+def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
+    """
+    Scan for pages and assets
+    """
+    # Rules for assigning metadata to subdirectories
+    dir_rules: list[tuple[re.Pattern, Meta]] = []
+    # Rules for assigning metadata to files
+    file_rules: list[tuple[re.Pattern, Meta]] = []
 
-        # Scan subdirectories
-        for name, src in subdirs.items():
-            # Compute metadata for this directory
-            meta: Meta = site.metadata.derive(self.meta)
-            meta["site_path"] = os.path.join(self.meta["site_path"], name)
+    # Load dir metadata from .staticsite
+    if directory.dircfg is not None:
+        config: Meta = {}
 
-            # Recursively descend into the directory
-            subdir = Dir.create(src, meta=meta)
-            with open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
-                subdir.scan(site=site, dir_fd=subdir_fd)
+        # Load .staticsite if found
+        with directory.open(".staticsite", "rt") as fd:
+            fmt, config = front_matter.read_whole(fd)
 
-        self.load(site, files)
+        take_dir_rules(dir_rules, file_rules, config)
+        directory.meta.update(config)
 
-    def load(self, site: Site, files: dict[str, file.File]):
-        """
-        Read static assets from this directory and all its subdirectories
+    # Let features add to directory metadata
+    #
+    # This for example lets metadata of an index.md do the same work as a
+    # .staticfile file
+    for feature in site.features.ordered():
+        m = feature.load_dir_meta(directory)
+        if m is not None:
+            take_dir_rules(dir_rules, file_rules, m)
+            directory.meta.update(m)
 
-        Loader load assets directly without consulting features
-        """
-        from .asset import Asset
+    # Merge in metadata, limited to inherited flags
+    # TODO: site.metadata.on_dir_meta(self, self.meta)
 
-        site_path = self.meta["site_path"]
+    # Make sure site_path is absolute
+    directory.meta["site_path"] = os.path.join("/", directory.meta["site_path"])
 
-        log.debug("Loading pages from %s as %s", self.src.abspath, site_path)
+    # If site_name is not defined, use the root page title or the content
+    # directory name
+    if "site_name" not in directory.meta:
+        # Default site name to the root page title, if site name has not been
+        # set yet
+        # TODO: template_title is not supported (yet?)
+        title = directory.meta.get("title")
+        if title is not None:
+            directory.meta["site_name"] = title
+        else:
+            directory.meta["site_name"] = os.path.basename(directory.src.relpath)
 
-        # Load every file as an asset
-        for fname, src in files.items():
-            if src.stat is None:
-                continue
-            if stat.S_ISREG(src.stat.st_mode):
-                log.debug("Loading static file %s", src.relpath)
-                p = Asset(site, src=src, meta={}, src_dir=self, name=fname)
-                site.add_page(p)
+    site.theme.precompile_metadata_templates(directory.meta)
+
+    # Compute metadata for files
+    files_meta: dict[str, tuple[Meta, file.File]] = {}
+    for fname, f in directory.files.items():
+        res: Meta = site.metadata.derive(directory.meta)
+        for pattern, meta in file_rules:
+            if pattern.match(fname):
+                res.update(meta)
+        files_meta[fname] = (res, f)
+
+    # Handle files marked as assets in their metadata
+    taken = []
+    for fname, (file_meta, src) in files_meta.items():
+        if file_meta.get("asset"):
+            node.add_asset(src=src, name=fname)
+            taken.append(fname)
+    for fname in taken:
+        del files_meta[fname]
+
+    # Let features pick their files
+    for handler in site.features.ordered():
+        handler.load_dir(node, directory, files_meta)
+        if not files_meta:
+            break
+
+    # Use everything else as an asset
+    # TODO: move into an asset feature?
+    for fname, (file_meta, src) in files_meta.items():
+        if src.stat and stat.S_ISREG(src.stat.st_mode):
+            log.debug("Loading static file %s", src.relpath)
+            node.add_asset(src=src, name=fname)
+
+    if node.page is None:
+        dirindex.Dir.create(node, directory)
+
+    # Recurse into subdirectories
+    for name, src in directory.subdirs.items():
+        # Compute metadata for this directory
+        dir_meta: Meta = site.metadata.derive(directory.meta)
+        dir_meta["site_path"] = os.path.join(directory.meta["site_path"], name)
+        for pattern, dmeta in dir_rules:
+            if pattern.match(name):
+                dir_meta.update(dmeta)
+
+        # Recursively descend into the directory
+        with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:
+            scan(site=site, directory=Directory(src, subdir_fd, meta=dir_meta), node=node.child(name, src=src))
+
+    # TODO: warn of contents not loaded at this point?
+
+    # If we didn't load an index, create a default directory index
+    # TODO: delegate to Dir feature's load_dir, set to running as after all
+    # other features
+
+
+def scan_assets(*, site: Site, directory: Directory, node: structure.Node):
+    """
+    Scan for assets only
+    """
+    # TODO: build a directory page here? Or at site load time?
+    # TODO: its contents can be added at analyze time
+
+    if node.page is None:
+        dirindex.Dir.create(node, directory)
+
+    # Load every file as an asset
+    for fname, src in directory.files.items():
+        if src.stat is None:
+            continue
+        if stat.S_ISREG(src.stat.st_mode):
+            log.debug("Loading static file %s", src.relpath)
+            node.add_asset(src=src, name=fname)
+
+    # Scan subdirectories
+    for name, src in directory.subdirs.items():
+        # Compute metadata for this directory
+        dir_meta: Meta = site.metadata.derive(directory.meta)
+        dir_meta["site_path"] = os.path.join(directory.meta["site_path"], name)
+
+        # Recursively descend into the directory
+        with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:
+            scan(site=site, directory=Directory(src, subdir_fd, meta=dir_meta), node=node.child(name, src=src))

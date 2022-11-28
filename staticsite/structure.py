@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from .page import Page
     from .site import Site
+    from .asset import Asset
+    from . import file
 
 log = logging.getLogger("structure")
 
@@ -43,41 +45,104 @@ class Path(tuple[str]):
         return cls(re_pathsep.split(path.strip(os.pathsep)))
 
 
-class Entry:
+class Node:
     """
     One node in the rendered directory hierarchy of the site
     """
-    def __init__(self, name: str, parent: Optional[Entry] = None):
-        # Parent node, or None if this is the root
-        self.parent = parent
+    def __init__(
+            self,
+            site: Site,
+            name: str, *,
+            src: Optional[file.File] = None,
+            parent: Optional[Node] = None):
+        # Pointer to the root structure
+        self.site = site
         # Basename of this directory
-        self.name = name
+        self.name: str = name
+        # Parent node, or None if this is the root
+        self.parent: Optional[Node] = parent
+        # Set if node corresponds to a source directory in the file system
+        self.src: Optional[file.File] = src
         # Index page for this directory, if present
         self.page: Optional[Page] = None
         # Subdirectories
-        self.sub: Optional[dict[str, Entry]] = None
+        self.sub: Optional[dict[str, Node]] = None
 
-    def add_page(self, page: Page, path: Path):
+    def add_page(self, page: Page, *, src: Optional[file.File] = None, name: Optional[str] = None):
         """
-        Add a page with the given path to this directory structure
+        Add a page as a subnode of this one, or as the page of this one if name is None
         """
-        if not path:
-            # Add/replace as index for this entry
-            if self.page is not None:
-                self.page.site_dir = None
-            self.page = page
-            self.page.site_dir = self
+        from .page import PageValidationError
+        try:
+            page.validate()
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
             return
 
-        # Add as sub-entry
+        if not self.site.settings.DRAFT_MODE and page.meta["draft"]:
+            log.info("%s: page is still a draft: skipping", page)
+            return
+
+        if name is None:
+            self._attach_page(page)
+        else:
+            self.child(name, src=src)._attach_page(page)
+
+    def add_asset(self, *, src: file.File, name: str) -> Asset:
+        """
+        Add an Asset as a subnode of this one
+        """
+        # Import here to avoid cyclical imports
+        from .asset import Asset
+        page = Asset.create(site=self.site, src=src, parent_meta=self.page.meta, name=name)
+        self.child(name, src=src)._attach_page(page)
+        return page
+
+    def _attach_page(self, page: Page):
+        """
+        Attach a page to this node
+        """
+        page.node = self
+        self.page = page
+        self.site.structure.index(page)
+
+    def child(self, name: str, *, src: Optional[file.File] = None) -> Node:
+        """
+        Return the given subnode, creating it if missing
+        """
         if self.sub is None:
             self.sub = {}
 
-        if (entry := self.sub.get(path.head)) is None:
-            entry = Entry(path.head)
-            self.sub[path.head] = entry
+        if (node := self.sub.get(name)):
+            if src and not node.src:
+                node.src = src
+            return node
 
-        entry.add_page(page, path.tail)
+        node = Node(site=self.site, name=name, parent=self, src=src)
+        self.sub[name] = node
+        return node
+
+    # def add_page(self, page: Page, path: Path):
+    #     """
+    #     Add a page with the given path to this directory structure
+    #     """
+    #     if not path:
+    #         # Add/replace as index for this entry
+    #         if self.page is not None:
+    #             self.page.site_dir = None
+    #         self.page = page
+    #         self.page.site_dir = self
+    #         return
+
+    #     # Add as sub-entry
+    #     if self.sub is None:
+    #         self.sub = {}
+
+    #     if (entry := self.sub.get(path.head)) is None:
+    #         entry = Node(path.head)
+    #         self.sub[path.head] = entry
+
+    #     entry.add_page(page, path.tail)
 
 
 class Structure:
@@ -86,7 +151,7 @@ class Structure:
     """
     def __init__(self, site: Site):
         # Root directory of the site
-        self.root = Entry("")
+        self.root = Node(site, "")
 
         # Site pages indexed by site_path
         self.pages: dict[str, Page] = {}
@@ -100,7 +165,7 @@ class Structure:
         # Site pages indexed by src.relpath
         self.pages_by_src_relpath: dict[str, Page] = {}
 
-    def add_page(self, page: Page):
+    def index(self, page: Page):
         """
         Register a new page in the site
         """
@@ -115,10 +180,6 @@ class Structure:
             else:
                 log.warn("%s: replacing page %s", page, old)
         self.pages[site_path] = page
-
-        # Add to site structure
-        path = Path.from_string(site_path)
-        self.root.add_page(page, path)
 
         # Mount page by src.relpath
         # Skip pages derived from other pages, or they would overwrite them

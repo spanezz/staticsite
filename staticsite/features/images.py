@@ -11,7 +11,7 @@ import mimetypes
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, scan, structure
 
 log = logging.getLogger("images")
 
@@ -56,7 +56,11 @@ extension), that image is used.
         # Index images by the site path a related article would have
         self.by_related_site_path: Dict[str, "Image"] = {}
 
-    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
+    def load_dir(
+            self,
+            node: structure.Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
         for fname, (meta, src) in files.items():
@@ -70,13 +74,12 @@ extension), that image is used.
 
             taken.append(fname)
 
-            related_site_path = os.path.join(sourcedir.meta["site_path"], base)
-            meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname)
+            related_site_path = os.path.join(directory.meta["site_path"], base)
 
-            img_meta = self.scanner.scan(sourcedir, src, mimetype)
+            img_meta = self.scanner.scan(src, mimetype)
             meta.update(img_meta)
 
-            page = Image(self.site, src=src, meta=meta, src_dir=sourcedir, mimetype=mimetype)
+            page = Image(self.site, src=src, meta=meta, mimetype=mimetype)
             pages.append(page)
 
             # Look at theme's image_sizes and generate ScaledImage pages
@@ -99,6 +102,10 @@ extension), that image is used.
 
             self.by_related_site_path[related_site_path] = page
 
+            page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
+            page.meta["build_path"] = page.meta["site_path"]
+            node.add_page(page, src=src, name=fname)
+
         for fname in taken:
             del files[fname]
 
@@ -111,7 +118,6 @@ class Image(Page):
     def __init__(self, *args, mimetype: str = None, **kw):
         super().__init__(*args, **kw)
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        self.meta["build_path"] = self.meta["site_path"]
 
     def render(self, **kw):
         return {

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict, Any, Union, TYPE_CHECKING
+from typing import Optional, Dict, Any, Union
 import os
 import datetime
 import pytz
@@ -15,9 +15,6 @@ from .structure import Structure
 from . import scan
 from .file import File
 import logging
-
-if TYPE_CHECKING:
-    from .page import Page
 
 log = logging.getLogger("site")
 
@@ -91,6 +88,9 @@ class Site:
 
         # Content root for the website
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
+
+        # Root site metadata, initialized from settings
+        self.meta: Optional[Meta] = None
 
         # Register well-known metadata
         self.register_metadata(metadata.MetadataDefault("template", default="page.html", doc="""
@@ -255,8 +255,8 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         Add a well-known metadata description to the metadata registry.
 
-        This can be called safely by feature constructors and features
-        `load_dir_meta` methods.
+        This can be called safely by feature constructors and `load_dir_meta`
+        methods of features.
 
         After directory metadata have been loaded, this method should not be
         called anymore.
@@ -337,10 +337,10 @@ It defaults to true at least for [Markdown](markdown.md),
             log.info("%s: content tree does not exist", self.content_root)
             return
 
-        site_meta = self._settings_to_meta()
+        self.meta = self._settings_to_meta()
         src = File.with_stat("", os.path.abspath(self.content_root))
-        self.scan_tree(src, meta=site_meta)
-        self.theme.scan_assets(meta=site_meta)
+        self.scan_tree(src, meta=self.meta)
+        self.theme.scan_assets(meta=self.meta)
         self.stage_content_directory_scanned = True
 
     def scan_tree(self, src: File, meta: Meta):
@@ -350,7 +350,7 @@ It defaults to true at least for [Markdown](markdown.md),
         """
         # site_path: str = "", asset: bool = False):
         # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-        scan.SourceDir.scan_tree(self, src, meta)
+        scan.scan_tree(self, src, meta)
 
     def load_content(self):
         """
@@ -377,27 +377,6 @@ It defaults to true at least for [Markdown](markdown.md),
             self.scan_content()
         with timings("Loaded contents in %fs"):
             self.load_content()
-
-    def add_page(self, page: Page):
-        """
-        Add a Page object to the site.
-
-        Use this only when the normal Site content loading functions are not
-        enough. This is exported as a public function mainly for the benefit of
-        unit tests.
-        """
-        from .page import PageValidationError
-        try:
-            page.validate()
-        except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
-            return
-
-        if not self.settings.DRAFT_MODE and page.meta["draft"]:
-            log.info("%s: page is still a draft: skipping", page)
-            return
-
-        self.structure.add_page(page)
 
     def analyze(self):
         """

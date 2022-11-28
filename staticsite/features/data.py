@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
@@ -14,7 +14,7 @@ from collections import defaultdict
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import scan, file
+    from staticsite import scan, file, structure
     from staticsite.utils.typing import Meta
 
 log = logging.getLogger("data")
@@ -55,7 +55,11 @@ This is used to group data of the same type together, and to choose a
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
 
-    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
+    def load_dir(
+            self,
+            node: structure.Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
         taken = []
         pages = []
         for fname, (meta, src) in files.items():
@@ -66,7 +70,7 @@ This is used to group data of the same type together, and to choose a
 
             fmt = mo.group(1)
 
-            with sourcedir.open(fname, src, "rt") as fd:
+            with directory.open(fname, "rt") as fd:
                 try:
                     fm_meta = parse_data(fd, fmt)
                 except Exception:
@@ -84,16 +88,20 @@ This is used to group data of the same type together, and to choose a
                 continue
 
             page_name = fname[:-len(mo.group(0))]
-            if page_name != "index":
-                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], page_name)
-            else:
-                meta["site_path"] = sourcedir.meta["site_path"]
-
             meta.update(fm_meta)
 
             cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(self.site, src=src, meta=meta, src_dir=sourcedir)
+            page = cls(self.site, src=src, meta=meta)
             pages.append(page)
+
+            if page_name != "index":
+                page.meta["site_path"] = os.path.join(directory.meta["site_path"], page_name)
+                page.self.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                node.add_page(page, src=src, name=page_name)
+            else:
+                page.meta["site_path"] = directory.meta["site_path"]
+                page.self.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                node.add_page(page)
 
         for fname in taken:
             del files[fname]
@@ -156,8 +164,6 @@ class DataPage(RenderPartialTemplateMixin, Page):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, Tuple, TYPE_CHECKING, Optional
 from staticsite import Page, Feature
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
@@ -14,7 +14,7 @@ import io
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import scan, file
+    from staticsite import scan, file, structure
 
 log = logging.getLogger("rst")
 
@@ -123,21 +123,24 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        index = files.get("index.rst")
-        if index is None:
-            return
+        if "index.rst" not in directory.files:
+            return None
 
         # Parse to get at the front matter
-        with open(index.abspath, "rt") as fd:
+        with directory.open("index.rst", "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd, remove_docinfo=False)
 
         return meta
 
-    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
+    def load_dir(
+            self,
+            node: structure.Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
         # Update the list of yaml tags with information from site.metadata
         if not self.yaml_tags_filled:
             for meta in self.site.metadata.values():
@@ -152,13 +155,8 @@ class RestructuredText(Feature):
                 continue
             taken.append(fname)
 
-            if fname not in ("index.rst", "README.rst"):
-                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname[:-4])
-            else:
-                meta["site_path"] = sourcedir.meta["site_path"]
-
             try:
-                fm_meta, doctree_scan = self.load_file_meta(sourcedir, src, fname)
+                fm_meta, doctree_scan = self.load_file_meta(directory, fname)
             except Exception as e:
                 log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
                 log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
@@ -166,17 +164,26 @@ class RestructuredText(Feature):
 
             meta.update(fm_meta)
 
-            page = RstPage(self.site, src=src, meta=meta, src_dir=sourcedir, feature=self, doctree_scan=doctree_scan)
+            page = RstPage(self.site, src=src, meta=meta, feature=self, doctree_scan=doctree_scan)
             pages.append(page)
+
+            if fname not in ("index.rst", "README.rst"):
+                page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname[:-4])
+                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                node.add_page(page, src=src, name=fname[:-4])
+            else:
+                page.meta["site_path"] = directory.meta["site_path"]
+                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                node.add_page(page)
 
         for fname in taken:
             del files[fname]
 
         return pages
 
-    def load_file_meta(self, sourcedir: scan.SourceDir, src: file.File, fname: str) -> Tuple[Meta, DoctreeScan]:
+    def load_file_meta(self, directory: scan.Directory, fname: str) -> Tuple[Meta, DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
-        with sourcedir.open(fname, src, "rt") as fd:
+        with directory.open(fname, "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd)
 
         return meta, doctree_scan
@@ -236,8 +243,6 @@ class RstPage(Page):
 
     def __init__(self, *args, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
         super().__init__(*args, **kw)
-
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)

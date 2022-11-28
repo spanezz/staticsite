@@ -23,6 +23,11 @@ changed**
 * When adding contents from multiple roots, the second root cannot replace
   files from the first root
 
+**Pages cannot determine the type of other pages**
+
+* The type of a page is a function  only of its format, metadata, and the
+  metadata of the directory that contains it.
+
 **Jinja2 templates can only depend on page query expression of pages**
 
 * TODO: log queries during jinja2 rendering

@@ -15,7 +15,7 @@ import markdown
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, scan, structure
 
 log = logging.getLogger("markdown")
 
@@ -213,7 +213,11 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def load_dir(self, sourcedir: scan.SourceDir, files: dict[str, tuple[Meta, file.File]]) -> List[Page]:
+    def load_dir(
+            self,
+            node: structure.Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
         for fname, (meta, src) in files.items():
@@ -221,13 +225,8 @@ class MarkdownPages(Feature):
                 continue
             taken.append(fname)
 
-            if fname not in ("index.md", "README.md"):
-                meta["site_path"] = os.path.join(sourcedir.meta["site_path"], fname[:-3])
-            else:
-                meta["site_path"] = sourcedir.meta["site_path"]
-
             try:
-                fm_meta, body = self.load_file_meta(sourcedir, src, fname)
+                fm_meta, body = self.load_file_meta(directory, fname)
             except Exception as e:
                 log.warn("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
                 log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
@@ -235,31 +234,39 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            page = MarkdownPage(self.site, src=src, meta=meta, src_dir=sourcedir, feature=self, body=body)
+            page = MarkdownPage(self.site, src=src, meta=meta, feature=self, body=body)
             pages.append(page)
+
+            if fname not in ("index.md", "README.md"):
+                page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname[:-3])
+                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                node.add_page(page, src=src, name=fname[:-3])
+            else:
+                page.meta["site_path"] = directory.meta["site_path"]
+                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
+                node.add_page(page)
 
         for fname in taken:
             del files[fname]
 
         return pages
 
-    def load_dir_meta(self, sourcedir: scan.SourceDir, files: dict[str, file.File]):
+    def load_dir_meta(self, directory: scan.Directory) -> Optional[Meta]:
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        src = files.get("index.md")
-        if src is None:
-            return
+        if (src := directory.files.get("index.md")) is None:
+            return None
 
         try:
-            meta, body = self.load_file_meta(sourcedir, src, "index.md")
+            meta, body = self.load_file_meta(directory, "index.md")
         except Exception as e:
             log.debug("%s: failed to parse front matter", src.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", src.relpath)
         else:
             return meta
 
-    def load_file_meta(self, sourcedir: scan.SourceDir, src, fname) -> Tuple[Meta, List[str]]:
+    def load_file_meta(self, directory: scan.Directory, fname: str) -> Tuple[Meta, List[str]]:
         """
         Load metadata for a file.
 
@@ -268,7 +275,7 @@ class MarkdownPages(Feature):
         # Read the contents
 
         # Parse separating front matter and markdown content
-        with sourcedir.open(fname, src, "rb") as fd:
+        with directory.open(fname, "rb") as fd:
             fmt, meta, body = front_matter.read_markdown_partial(fd)
 
             body = list(body)
@@ -338,8 +345,6 @@ class MarkdownPage(Page):
 
     def __init__(self, *args, feature: MarkdownPages, body: List[str], **kw):
         super().__init__(*args, **kw)
-
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
 
         # Indexed by default
         self.meta.setdefault("indexed", True)
