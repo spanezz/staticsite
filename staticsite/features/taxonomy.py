@@ -75,7 +75,7 @@ element.
                 continue
             meta.update(fm_meta)
 
-            page = TaxonomyPage(self.site, src, meta=meta, name=name, dir=sourcedir)
+            page = TaxonomyPage(self.site, src=src, meta=meta, name=name, dir=sourcedir)
             self.taxonomies[page.name] = page
             pages.append(page)
 

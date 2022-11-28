@@ -87,7 +87,7 @@ class J2Pages(Feature):
                 meta["site_path"] = sourcedir.meta["site_path"]
 
             try:
-                page = J2Page(self.site, src, meta=meta, dir=sourcedir, feature=self)
+                page = J2Page(self.site, src=src, meta=meta, dir=sourcedir, feature=self)
             except IgnorePage:
                 continue
 

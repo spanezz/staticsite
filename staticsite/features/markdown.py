@@ -235,7 +235,7 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            page = MarkdownPage(self.site, src, meta=meta, dir=sourcedir, feature=self, body=body)
+            page = MarkdownPage(self.site, src=src, meta=meta, dir=sourcedir, feature=self, body=body)
             pages.append(page)
 
         for fname in taken:

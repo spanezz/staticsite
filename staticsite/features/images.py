@@ -76,7 +76,7 @@ extension), that image is used.
             img_meta = self.scanner.scan(sourcedir, src, mimetype)
             meta.update(img_meta)
 
-            page = Image(self.site, src, meta=meta, dir=sourcedir, mimetype=mimetype)
+            page = Image(self.site, src=src, meta=meta, dir=sourcedir, mimetype=mimetype)
             pages.append(page)
 
             # Look at theme's image_sizes and generate ScaledImage pages

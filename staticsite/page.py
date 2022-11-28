@@ -43,11 +43,10 @@ class Page:
     TYPE: str
 
     def __init__(
-            self,
-            site: Site,
-            src: Optional[File],
+            self, site: Site, *,
             meta: Meta,
-            dir: Optional[Dir],
+            src: Optional[File] = None,
+            dir: Optional[Dir] = None,
             created_from: Optional["Page"] = None):
         # Site for this page
         self.site = site
@@ -70,7 +69,7 @@ class Page:
         Generate this page derived from an existing one
         """
         # If page is the root dir, it has dir set to None, and we can use it as dir
-        return cls(page.site, page.src, meta, dir=page.dir or page, created_from=page, **kw)
+        return cls(page.site, src=page.src, meta=meta, dir=page.dir or page, created_from=page, **kw)
 
     def add_related(self, name: str, page: "Page"):
         """
