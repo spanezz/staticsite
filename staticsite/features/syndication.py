@@ -215,6 +215,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             # RSS feed
             rss_page_meta = meta.derive()
+            rss_page_meta["index"] = meta["index"]
             rss_page_meta["pages"] = meta["pages"]
             rss_page = RSSPage.create_from(page, rss_page_meta)
             meta["rss_page"] = rss_page
@@ -228,6 +229,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             # Atom feed
             atom_page_meta = meta.derive()
+            atom_page_meta["index"] = meta["index"]
             atom_page_meta["pages"] = meta["pages"]
             atom_page = AtomPage.create_from(page, atom_page_meta)
             meta["atom_page"] = atom_page
@@ -252,6 +254,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             if archive_meta is not None:
                 archive_meta["pages"] = meta["pages"]
+                archive_meta["index"] = meta["index"]
                 archive_page = ArchivePage.create_from(page, archive_meta)
                 if "site_path" not in archive_page.meta:
                     site_path = os.path.join(archive_page.created_from.meta["site_path"], "archive")

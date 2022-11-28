@@ -126,10 +126,8 @@ class Image(Page):
         super().__init__(*args, **kw)
         self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
 
-    def render(self, **kw):
-        return {
-            self.meta["build_path"]: RenderedFile(self.src),
-        }
+    def render(self, **kw) -> RenderedElement:
+        return RenderedFile(self.src)
 
 
 class RenderedScaledImage(RenderedElement):
@@ -164,10 +162,8 @@ class ScaledImage(Page):
 
         self.created_from.add_related(name, self)
 
-    def render(self, **kw):
-        return {
-            self.meta["build_path"]: RenderedScaledImage(self.src, self.meta["width"], self.meta["height"]),
-        }
+    def render(self, **kw) -> RenderedElement:
+        return RenderedScaledImage(self.src, self.meta["width"], self.meta["height"])
 
 
 FEATURES = {

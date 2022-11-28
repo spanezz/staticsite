@@ -334,6 +334,10 @@ It defaults to true at least for [Markdown](markdown.md),
         self.meta = self._settings_to_meta()
         src = File.with_stat("", os.path.abspath(self.content_root))
         self.scan_tree(src, meta=self.meta)
+        # Here we may have loaded more site-wide metadata from the root's index
+        # page: incorporate them
+        if self.structure.root.page:
+            self.meta.update(self.structure.root.page.meta.values)
         self.theme.scan_assets(meta=self.meta)
         self.stage_content_directory_scanned = True
 

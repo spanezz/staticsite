@@ -25,16 +25,14 @@ class Asset(Page):
         Create an asset, shortcutting metadata derivation
         """
         site_path = os.path.join(parent_meta["site_path"], name)
-        meta = Meta(site.metadata, parent_meta)
-        meta.values = {
-            "date": site.localized_timestamp(src.stat.st_mtime),
-            "title": name,
-            "site_url": parent_meta["site_url"],
-            "site_path": site_path,
-            "asset": True,
-            "draft": False,
-            "indexed": False,
-        }
+        meta = parent_meta.derive()
+        meta["date"] = site.localized_timestamp(src.stat.st_mtime)
+        meta["title"] = name
+        meta["site_path"] = site_path
+        meta["build_path"] = site_path.lstrip("/")
+        meta["asset"] = True
+        meta["draft"] = False
+        meta["indexed"] = False
         return cls(site=site, meta=meta, src=src, name=name)
 
     def validate(self):
