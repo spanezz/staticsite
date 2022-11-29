@@ -113,6 +113,7 @@ class Node:
         Attach a page to this node
         """
         page.node = self
+        page.build_node = self
         self.page = page
         self.site.structure.index(page)
 
