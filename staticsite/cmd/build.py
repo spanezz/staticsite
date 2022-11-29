@@ -131,7 +131,7 @@ class Builder:
             log.info("%s: %d in %.3fs (%.1f per minute)", type, counts[type], sums[type], counts[type]/sums[type] * 60)
 
     def write_subtree(self, node: structure.Node, dir_fd: int) -> tuple[Counter, Counter]:
-        # print(node.compute_build_path(), repr(node.page))
+        # print(node.compute_path(), repr(node.page))
         sums = Counter()
         counts = Counter()
 
@@ -139,11 +139,10 @@ class Builder:
 
         if node.page:
             if node.sub:
-                log.warning("Node %r has both page and sub", node)
+                # log.warning("Node %r has both page and sub", node)
                 name = "index.html"
             else:
                 name = node.name
-            # TODO: render page
             start = time.perf_counter_ns()
             rendered = node.page.render()
             end = time.perf_counter_ns()

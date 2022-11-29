@@ -94,12 +94,11 @@ This is used to group data of the same type together, and to choose a
             page = cls(self.site, src=src, meta=meta)
             pages.append(page)
 
-            if page_name != "index":
-                page.meta["site_path"] = os.path.join(node.meta["site_path"], page_name)
-                node.add_page(page, src=src, path=structure.Path(page_name, "index.html"))
+            if page_name == "index":
+                node.add_page(page, src=src)
             else:
-                page.meta["site_path"] = node.meta["site_path"]
-                node.add_page(page, path=structure.Path(("index.html",)))
+                node.add_page(page, src=src, path=structure.Path((page_name,)))
+            page.build_as("index.html")
 
         for fname in taken:
             del files[fname]

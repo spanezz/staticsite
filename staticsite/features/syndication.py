@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Union, List, Optional
 import os
 import logging
+from staticsite import structure
 from staticsite.feature import Feature
 from staticsite.page import Page, PageNotFoundError
 from staticsite.metadata import Metadata, Meta
@@ -214,17 +215,15 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             self.site.theme.precompile_metadata_templates(meta.values)
 
+            page_name, ext = os.path.splitext(page.build_node.name)
+
             # RSS feed
             rss_page_meta = meta.derive()
             rss_page_meta["index"] = meta["index"]
             rss_page_meta["pages"] = meta["pages"]
             rss_page = RSSPage.create_from(page, rss_page_meta)
             meta["rss_page"] = rss_page
-            build_path = rss_page.created_from.build_path
-            root, ext = os.path.splitext(build_path)
-            build_path = f"{root}.{rss_page.TYPE}"
-            rss_page.meta["site_path"] = "/" + build_path
-            self.site.structure.add_generated_page(rss_page, build_path)
+            page.node.add_page(rss_page, path=structure.Path((f"{page_name}.{rss_page.TYPE}",)))
             log.debug("%s: adding syndication page for %s", rss_page, page)
 
             # Atom feed
@@ -233,11 +232,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             atom_page_meta["pages"] = meta["pages"]
             atom_page = AtomPage.create_from(page, atom_page_meta)
             meta["atom_page"] = atom_page
-            build_path = atom_page.created_from.build_path
-            root, ext = os.path.splitext(build_path)
-            build_path = f"{root}.{atom_page.TYPE}"
-            atom_page.meta["site_path"] = "/" + build_path
-            self.site.structure.add_generated_page(atom_page, build_path)
+            page.node.add_page(atom_page, path=structure.Path((f"{page_name}.{atom_page.TYPE}",)))
             log.debug("%s: adding syndication page for %s", atom_page, page)
 
             # Archive page
@@ -255,12 +250,8 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                 archive_meta["pages"] = meta["pages"]
                 archive_meta["index"] = meta["index"]
                 archive_page = ArchivePage.create_from(page, archive_meta)
-                if "site_path" not in archive_page.meta:
-                    site_path = os.path.join(archive_page.created_from.meta["site_path"], "archive")
-                    archive_page.meta["site_path"] = site_path
-                self.site.structure.add_generated_page(
-                        archive_page,
-                        os.path.join(archive_page.meta["site_path"], "index.html").lstrip("/"))
+                page.node.add_page(archive_page, path=structure.Path(("archive",)))
+                archive_page.build_as("index.html")
                 archive_page.add_related("rss_feed", rss_page)
                 archive_page.add_related("atom_feed", atom_page)
             else:

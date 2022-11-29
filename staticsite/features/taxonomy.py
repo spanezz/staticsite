@@ -82,7 +82,8 @@ element.
             pages.append(page)
 
             page.meta["site_path"] = os.path.join(node.meta["site_path"], name)
-            node.add_page(page, src=src, path=structure.Path((name, "index.html")))
+            node.add_page(page, src=src, path=structure.Path((name,)))
+            page.build_as("index.html")
 
         for fname in taken:
             del files[fname]
@@ -207,13 +208,11 @@ class TaxonomyPage(Page):
             category_meta["name"] = category
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
-            category_meta["site_path"] = os.path.join(self.meta["site_path"], category)
 
             category_page = CategoryPage.create_from(self, meta=category_meta, name=category)
             self.categories[category] = category_page
-            self.site.structure.add_generated_page(
-                    category_page,
-                    os.path.join(category_page.meta["site_path"], "index.html"))
+            self.node.add_page(category_page, path=structure.Path((category,)))
+            category_page.build_as("index.html")
 
         # Replace category names with category pages in each categorized page
         for page in self.site.structure.pages_by_metadata[self.name]:

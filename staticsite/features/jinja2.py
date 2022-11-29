@@ -7,7 +7,6 @@ from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
 import jinja2
 import markupsafe
-import os
 import logging
 
 if TYPE_CHECKING:
@@ -93,14 +92,13 @@ class J2Pages(Feature):
             taken.append(fname)
             pages.append(page)
 
-            if fname != "index.html":
-                page.meta["site_path"] = os.path.join(node.meta["site_path"], fname)
+            if fname == "index.html":
+                node.add_page(page, src=src)
+                page.build_as("index.html")
+            else:
                 # Is this still needed?
                 fname = fname.replace(".j2", "")
                 node.add_page(page, src=src, path=structure.Path((fname,)))
-            else:
-                page.meta["site_path"] = node.meta["site_path"]
-                node.add_page(page, path=structure.Path(("index.html",)))
 
         for fname in taken:
             del files[fname]

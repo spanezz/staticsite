@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-import os
 import logging
 from staticsite import Page
 from .data import Link, LinkCollection
@@ -40,19 +39,21 @@ class LinkIndexPage(Page):
     def analyze(self):
         pages = []
         for tag, links in self.feature_links.by_tag.items():
-            meta = self.meta.derive()
-            site_path = os.path.join(self.meta["site_path"], tag + "-links")
-            meta["site_path"] = site_path
-            if meta["site_path"] in self.site.structure.pages:
+            name = tag + "-links"
+            sub = self.node.child(name)
+
+            if sub.page is not None:
+                # A page already exists
                 continue
+
+            meta = sub.meta.derive()
             meta["data_type"] = "links"
             meta["title"] = f"{tag} links"
             meta["links"] = links
             page = LinksTagPage.create_from(self, meta=meta, links=links)
             self.by_tag[tag] = page
-            self.site.structure.add_generated_page(
-                    page,
-                    os.path.join(site_path, "index.html"))
+
+            sub.add_page(page)
             pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories

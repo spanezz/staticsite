@@ -6,11 +6,11 @@ import warnings
 from urllib.parse import urlparse, urlunparse
 from .utils import lazy
 from .render import RenderedString
+from . import structure
 import jinja2
 import markupsafe
 
 if TYPE_CHECKING:
-    from . import structure
     from .render import RenderedElement
     from .site import Site
     from .file import File
@@ -85,12 +85,27 @@ class Page:
         return self.meta.get("created_from")
 
     @property
+    def site_path(self) -> str:
+        """
+        Accessor to support the migration away from meta['build_path']
+        """
+        # return self.meta["build_path"]
+        return self.node.compute_path()
+
+    @property
     def build_path(self) -> str:
         """
         Accessor to support the migration away from meta['build_path']
         """
         # return self.meta["build_path"]
-        return self.build_node.compute_build_path()
+        return self.build_node.compute_path()
+
+    def build_as(self, *args: tuple[str]):
+        """
+        Do not build this page as self.node, but as a subnode of it using the given path components
+        """
+        self.build_node = self.node.at_path(structure.Path(args))
+        self.build_node.page = self
 
     def add_related(self, name: str, page: "Page"):
         """
@@ -127,11 +142,6 @@ class Page:
         # Check the existence of other mandatory fields
         if "site_url" not in self.meta:
             raise PageMissesFieldError(self, "site_url")
-
-        # Make sure site_path exists and is relative
-        site_path = self.meta.get("site_path")
-        if site_path is None:
-            raise PageMissesFieldError(self, "site_path")
 
     @lazy
     def page_template(self):
@@ -170,8 +180,17 @@ class Page:
         If not set, default root to the path of the containing directory for
         this page
         """
-        if root is None and self.node is not None and self.node.src is not None and self.node.src.relpath:
-            root = self.node.src.relpath
+        if root is None:
+            if (parent_node := self.node.parent) is not None:
+                if parent_node.src is not None:
+                    if parent_node.src.relpath:
+                        root = parent_node.src.relpath
+                        # print("ROOT FROM PARENT src")
+                else:
+                    root = parent_node.compute_path()
+                    # print("ROOT FROM PARENT build_path")
+
+        # print("FIND_PAGES UNDER", root)
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)
@@ -190,11 +209,11 @@ class Page:
 
         # Absolute URLs are resolved as is
         if target.startswith("/"):
-            target_relpath = os.path.normpath(target)
+            target_relpath = os.path.normpath(target).strip("/")
 
             # Try by source path
             # src.relpath is indexed without leading / in site
-            res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
+            res = self.site.structure.pages_by_src_relpath.get(target_relpath)
             if res is not None:
                 return res
 
@@ -204,7 +223,7 @@ class Page:
                 return res
 
             # Try adding STATIC_PATH as a compatibility with old links
-            target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath.lstrip("/"))
+            target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath)
 
             # Try by source path
             res = self.site.structure.pages_by_src_relpath.get(target_relpath)
@@ -231,7 +250,7 @@ class Page:
                 return res
 
         # Finally, using the site paths
-        root = self.meta["site_path"]
+        root = self.site_path
         target_relpath = os.path.normpath(os.path.join(root, target))
         res = self.site.structure.pages.get(target_relpath)
         if res is not None:
@@ -289,9 +308,9 @@ class Page:
 
         if absolute:
             site_url = page.meta["site_url"].rstrip("/")
-            return f"{site_url}{page.meta['site_path']}"
+            return f"{site_url}/{page.site_path}"
         else:
-            return page.meta["site_path"]
+            return "/" + page.site_path
 
     def get_img_attributes(
             self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
@@ -341,13 +360,13 @@ class Page:
         pass
 
     def __str__(self):
-        return self.meta["site_path"]
+        return self.site_path
 
     def __repr__(self):
         if self.src:
             return f"{self.TYPE}:{self.src.relpath}"
         else:
-            return f"{self.TYPE}:auto:{self.meta['site_path']}"
+            return f"{self.TYPE}:auto:{self.site_path}"
 
     @jinja2.pass_context
     def html_full(self, context, **kw) -> str:
@@ -391,6 +410,7 @@ class Page:
         res = {
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
+            "site_path": self.site_path,
             "build_path": self.build_path,
         }
         if self.src:

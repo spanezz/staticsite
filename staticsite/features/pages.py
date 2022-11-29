@@ -37,6 +37,7 @@ See [Selecting pages](page-filter.md) for details.
             elif not isinstance(pages, dict):
                 # Skip pages that already have a populated pages list
                 continue
+            # print("FILTER", pages)
 
             # Replace the dict with the expanded list of pages
             # Do not include self in the result list

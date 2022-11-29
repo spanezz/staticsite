@@ -97,7 +97,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             return None, parsed
 
         # Cache the page site_path
-        self.substituted[url] = page.meta["site_path"]
+        self.substituted[url] = page.site_path
 
         return page, parsed
 
@@ -237,12 +237,11 @@ class MarkdownPages(Feature):
             page = MarkdownPage(self.site, src=src, meta=meta, feature=self, body=body)
             pages.append(page)
 
-            if fname not in ("index.md", "README.md"):
-                page.meta["site_path"] = os.path.join(node.meta["site_path"], fname[:-3])
-                node.add_page(page, src=src, path=structure.Path((fname[:-3], "index.html")))
+            if fname in ("index.md", "README.md"):
+                node.add_page(page, src=src)
             else:
-                page.meta["site_path"] = node.meta["site_path"]
-                node.add_page(page, src=src, path=structure.Path(("index.html",)))
+                node.add_page(page, src=src, path=structure.Path((fname[:-3],)))
+            page.build_as("index.html")
 
         for fname in taken:
             del files[fname]

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Any
 import jinja2
-import os
 import json
 import logging
 from collections import defaultdict
@@ -133,7 +132,6 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
             page = LinkIndexPage(self.site, src=src, meta=meta, name=name, links=self)
             pages.append(page)
 
-            page.meta["site_path"] = os.path.join(node.meta["site_path"], name)
             node.add_page(page, src=src, path=structure.Path((name,)))
 
             self.indices.append(page)

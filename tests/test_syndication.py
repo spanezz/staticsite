@@ -35,12 +35,12 @@ text
 """
 
         with test_utils.testsite(files) as site:
-            blog = site.pages["/blog"]
-            post1 = site.pages["/blog/post1"]
-            post2 = site.pages["/blog/post2"]
-            widget = site.pages["/blog/widget"]
-            rss = site.pages["/blog/index.rss"]
-            atom = site.pages["/blog/index.atom"]
+            blog = site.pages["blog"]
+            post1 = site.pages["blog/post1"]
+            post2 = site.pages["blog/post2"]
+            widget = site.pages["blog/widget"]
+            rss = site.pages["blog/index.rss"]
+            atom = site.pages["blog/index.atom"]
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
@@ -73,12 +73,12 @@ syndication:
 text
 """
         with test_utils.testsite(files) as site:
-            blog = site.pages["/blog"]
-            post1 = site.pages["/blog/post1"]
-            post2 = site.pages["/blog/post2"]
-            widget = site.pages["/blog/widget"]
-            rss = site.pages["/blog/index.rss"]
-            atom = site.pages["/blog/index.atom"]
+            blog = site.pages["blog"]
+            post1 = site.pages["blog/post1"]
+            post2 = site.pages["blog/post2"]
+            widget = site.pages["blog/widget"]
+            rss = site.pages["blog/index.rss"]
+            atom = site.pages["blog/index.atom"]
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
@@ -105,12 +105,12 @@ text
 """
 
         with test_utils.testsite(files) as site:
-            blog = site.pages["/blog"]
-            post1 = site.pages["/blog/post1"]
-            post2 = site.pages["/blog/post2"]
-            widget = site.pages["/blog/widget"]
-            rss = site.pages["/blog/index.rss"]
-            atom = site.pages["/blog/index.atom"]
+            blog = site.pages["blog"]
+            post1 = site.pages["blog/post1"]
+            post2 = site.pages["blog/post2"]
+            widget = site.pages["blog/widget"]
+            rss = site.pages["blog/index.rss"]
+            atom = site.pages["blog/index.atom"]
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2])
@@ -158,14 +158,14 @@ static char * bottom_active_xpm[] = {
         }
 
         with test_utils.testsite(files) as site:
-            self.assertCountEqual([x for x in site.pages.keys() if not x.startswith("/static/")], [
-                "/",
-                "/index.rss",
-                "/index.atom",
-                "/archive",
-                "/blog",
-                "/blog/post",
-                "/blog/images/photo.xpm",
+            self.assertCountEqual([x for x in site.pages.keys() if not x.startswith("static/")], [
+                "",
+                "index.rss",
+                "index.atom",
+                "archive",
+                "blog",
+                "blog/post",
+                "blog/images/photo.xpm",
             ])
 
             post = site.pages["/"]

@@ -47,7 +47,7 @@ def sort_args(sort: Optional[str]) -> Tuple[Optional[str], bool, Optional[Callab
         sort = None
 
         def key(page):
-            return page.meta["site_path"]
+            return page.site_path
     else:
         def key(page):
             return page.meta.get(sort, None)

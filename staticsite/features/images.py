@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING
 from staticsite import Page, Feature, structure
 from staticsite.render import RenderedFile
 from staticsite.utils.images import ImageScanner
@@ -25,9 +25,22 @@ class MetadataImage(Metadata):
     def on_analyze(self, page: Page):
         val = page.meta.get(self.name)
         if val is None:
-            val = self.images.by_related_site_path.get(page.meta["site_path"])
-            if val is not None:
-                page.meta[self.name] = val
+            if (parent := page.node.parent) is None:
+                return
+            if parent not in self.images.nodes_with_images:
+                return
+            # Look for sibling pages that are images, that share the file name
+            # without extension
+            prefix = page.node.name + "."
+            for name, subnode in parent.sub.items():
+                if not name.startswith(prefix):
+                    continue
+                if not subnode.page:
+                    continue
+                if not isinstance(subnode.page, Image):
+                    continue
+                page.meta[self.name] = subnode.page
+                break
         elif isinstance(val, str):
             val = page.resolve_path(val)
             page.meta[self.name] = val
@@ -53,16 +66,16 @@ During the analyze phase, it is resolved to the corresponding [image page](image
 If not set, and an image exists with the same name as the page (besides the
 extension), that image is used.
 """))
-        # Index images by the site path a related article would have
-        self.by_related_site_path: Dict[str, "Image"] = {}
+        # Nodes that contain images
+        self.nodes_with_images: set[structure.Node] = set()
 
     def load_dir(
             self,
             node: structure.Node,
             directory: scan.Directory,
             files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
-        taken: List[str] = []
-        pages: List[Page] = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (meta, src) in files.items():
             base, ext = os.path.splitext(fname)
             mimetype = mimetypes.types_map.get(ext)
@@ -74,16 +87,12 @@ extension), that image is used.
 
             taken.append(fname)
 
-            related_site_path = os.path.join(node.meta["site_path"], base)
-
             img_meta = self.scanner.scan(src, mimetype)
             meta.update(img_meta)
 
             page = Image(self.site, src=src, meta=meta, mimetype=mimetype)
             pages.append(page)
 
-            page.meta["site_path"] = os.path.join(node.meta["site_path"], fname)
-            page.meta["build_path"] = page.meta["site_path"]
             node.add_page(page, src=src, path=structure.Path((fname,)))
 
             # Look at theme's image_sizes and generate ScaledImage pages
@@ -104,13 +113,11 @@ extension), that image is used.
                     scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
                     pages.append(scaled)
 
-                    site_path = scaled.created_from.meta["site_path"]
-                    base, ext = os.path.splitext(site_path)
-                    site_path = f"{base}-{name}{ext}"
-                    scaled.meta["site_path"] = site_path
-                    self.site.structure.add_generated_page(scaled, site_path)
+                    base, ext = os.path.splitext(fname)
+                    scaled_fname = f"{base}-{name}{ext}"
+                    node.add_page(scaled, src=src, path=structure.Path((scaled_fname,)))
 
-            self.by_related_site_path[related_site_path] = page
+            self.nodes_with_images.add(node)
 
         for fname in taken:
             del files[fname]

@@ -32,7 +32,7 @@ class TestUrlFor(TestCase):
                     context = None
                 return site.theme.jinja2_url_for(context, dest, **kw)
 
-            page = site.pages["/"]
+            page = site.pages[""]
             self.assertEqual(url_for("page1.md", page=page), "/page1")
             self.assertEqual(url_for("page1", page=page), "/page1")
 
@@ -73,7 +73,7 @@ class TestUrlFor(TestCase):
                     context = None
                 return site.theme.jinja2_url_for(context, dest, **kw)
 
-            page = site.pages["/prefix"]
+            page = site.pages["prefix"]
             self.assertEqual(url_for("page1.md", page=page), "/prefix/page1")
             self.assertEqual(url_for("page1", page=page), "/prefix/page1")
 
@@ -97,7 +97,7 @@ class TestMarkdownFilter(TestCase):
             site.load()
             site.analyze()
 
-            page = site.pages["/"]
+            page = site.pages[""]
 
             tpl = site.theme.jinja2.from_string(
                     "{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")

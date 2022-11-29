@@ -34,5 +34,6 @@ class Dir(Page):
     @classmethod
     def create(cls, node: structure.Node, directory: scan.Directory):
         page = cls(node.site, name=node.name, meta=node.meta, src=directory.src)
-        node.add_page(page, path=structure.Path(("index.html",)))
+        node.add_page(page)
+        page.build_as("index.html")
         return page

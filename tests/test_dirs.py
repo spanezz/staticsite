@@ -18,10 +18,10 @@ class TestDirs(TestCase):
             site.analyze()
 
             # We have a root dir index and dir indices for all subdirs
-            dir_root = site.pages["/"]
-            dir_dir1 = site.pages["/dir1"]
-            dir_dir2 = site.pages["/dir1/dir2"]
-            dir_dir3 = site.pages["/dir1/dir2/dir3"]
+            dir_root = site.pages[""]
+            dir_dir1 = site.pages["dir1"]
+            dir_dir2 = site.pages["dir1/dir2"]
+            dir_dir3 = site.pages["dir1/dir2/dir3"]
 
             self.assertEqual(dir_root.TYPE, "dir")
             self.assertEqual(dir_dir1.TYPE, "dir")
@@ -29,13 +29,13 @@ class TestDirs(TestCase):
             self.assertEqual(dir_dir3.TYPE, "dir")
 
             # Check the contents of all dirs
-            self.assertCountEqual(dir_root.meta["pages"], [site.pages["/page_root"]])
+            self.assertCountEqual(dir_root.meta["pages"], [site.pages["page_root"]])
             self.assertCountEqual(dir_root.subdirs, [dir_dir1])
             self.assertIsNone(dir_root.dir)
             self.assertIsNone(dir_root.meta["parent"])
             self.assertEqual(dir_root.meta["title"], "Test site")
 
-            self.assertCountEqual(dir_dir1.meta["pages"], [site.pages["/dir1/page_sub"]])
+            self.assertCountEqual(dir_dir1.meta["pages"], [site.pages["dir1/page_sub"]])
             self.assertCountEqual(dir_dir1.subdirs, [dir_dir2])
             self.assertEqual(dir_dir1.dir, dir_root)
             self.assertEqual(dir_dir1.meta["parent"], dir_root)
@@ -47,7 +47,7 @@ class TestDirs(TestCase):
             self.assertEqual(dir_dir2.meta["parent"], dir_dir1)
             self.assertEqual(dir_dir2.meta["title"], "dir2")
 
-            self.assertCountEqual(dir_dir3.meta["pages"], [site.pages["/dir1/dir2/dir3/page_sub3"]])
+            self.assertCountEqual(dir_dir3.meta["pages"], [site.pages["dir1/dir2/dir3/page_sub3"]])
             self.assertCountEqual(dir_dir3.subdirs, [])
             self.assertEqual(dir_dir3.dir, dir_dir2)
             self.assertEqual(dir_dir3.meta["parent"], dir_dir2)
