@@ -74,7 +74,7 @@ extension), that image is used.
 
             taken.append(fname)
 
-            related_site_path = os.path.join(directory.meta["site_path"], base)
+            related_site_path = os.path.join(node.meta["site_path"], base)
 
             img_meta = self.scanner.scan(src, mimetype)
             meta.update(img_meta)
@@ -82,7 +82,7 @@ extension), that image is used.
             page = Image(self.site, src=src, meta=meta, mimetype=mimetype)
             pages.append(page)
 
-            page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
+            page.meta["site_path"] = os.path.join(node.meta["site_path"], fname)
             page.meta["build_path"] = page.meta["site_path"]
             node.add_page(page, src=src, path=structure.Path((fname,)))
 

@@ -34,7 +34,7 @@ def with_dir_fd(f):
     return wrapper
 
 
-def scan_tree(site: Site, src: file.File, site_meta: Meta, node: Optional[structure.Node] = None):
+def scan_tree(site: Site, src: file.File, node: Optional[structure.Node] = None):
     """
     Recursively scan a source tree
     """
@@ -45,32 +45,26 @@ def scan_tree(site: Site, src: file.File, site_meta: Meta, node: Optional[struct
     if node.src is None:
         node.src = src
 
-    # Metadata for this directory
-    meta = site_meta.derive()
-    meta.setdefault("site_path", site_meta.get("site_path", "/"))
-
     with open_dir_fd(src.abspath) as dir_fd:
-        scan(site=site, directory=Directory(src, dir_fd, meta=meta), node=node)
+        scan(site=site, directory=Directory(src, dir_fd), node=node)
 
 
-def scan(*, directory: Directory, **kw):
-    if directory.meta.get("asset"):
-        scan_assets(directory=directory, **kw)
+def scan(*, node: structure.Node, **kw):
+    if node.meta.get("asset"):
+        scan_assets(node=node, **kw)
     else:
-        scan_pages(directory=directory, **kw)
+        scan_pages(node=node, **kw)
 
 
 class Directory:
     """
     Fast accessor to files in a directory
     """
-    def __init__(self, src: file.File, dir_fd: int, meta: Meta):
+    def __init__(self, src: file.File, dir_fd: int):
         # The directory itself
         self.src = src
         # dir_fd for fast access to contents
         self.dir_fd = dir_fd
-        # Metadata for this directory
-        self.meta = meta
         # File pointing to a .staticsite file, if present
         self.dircfg: Optional[file.File] = None
         # Subdirectories
@@ -144,9 +138,9 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
             fmt, config = front_matter.read_whole(fd)
 
         take_dir_rules(dir_rules, file_rules, config)
-        directory.meta.update(config)
+        node.meta.update(config)
 
-    # Let features add to directory metadata
+    # Let features add to node metadata
     #
     # This for example lets metadata of an index.md do the same work as a
     # .staticfile file
@@ -154,36 +148,36 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         m = feature.load_dir_meta(directory)
         if m is not None:
             take_dir_rules(dir_rules, file_rules, m)
-            directory.meta.update(m)
+            node.meta.update(m)
 
     # Make sure site_path is absolute
-    directory.meta["site_path"] = os.path.join("/", directory.meta["site_path"])
+    node.meta["site_path"] = os.path.join("/", node.meta["site_path"])
 
     # If site_name is not defined, use the root page title or the content
     # directory name
-    if "site_name" not in directory.meta:
+    if "site_name" not in node.meta:
         # Default site name to the root page title, if site name has not been
         # set yet
         # TODO: template_title is not supported (yet?)
-        title = directory.meta.get("title")
+        title = node.meta.get("title")
         if title is not None:
-            directory.meta["site_name"] = title
+            node.meta["site_name"] = title
         else:
-            directory.meta["site_name"] = os.path.basename(directory.src.abspath)
+            node.meta["site_name"] = os.path.basename(directory.src.abspath)
 
-    site.theme.precompile_metadata_templates(directory.meta.values)
+    site.theme.precompile_metadata_templates(node.meta.values)
 
     # Compute metadata for files
     files_meta: dict[str, tuple[Meta, file.File]] = {}
     for fname, src in directory.files.items():
-        res: Meta = directory.meta.derive()
+        res: Meta = node.meta.derive()
         for pattern, meta in file_rules:
             if pattern.match(fname):
                 res.update(meta)
 
         # Handle assets right away
         if res.get("asset"):
-            node.add_asset(src=src, name=fname, parent_meta=directory.meta)
+            node.add_asset(src=src, name=fname, parent_meta=node.meta)
         else:
             files_meta[fname] = (res, src)
 
@@ -201,19 +195,19 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     for fname, (file_meta, src) in files_meta.items():
         if src.stat and stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
-            node.add_asset(src=src, name=fname, parent_meta=directory.meta)
+            node.add_asset(src=src, name=fname, parent_meta=node.meta)
     # Recurse into subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
-        dir_meta: Meta = directory.meta.derive()
-        dir_meta["site_path"] = os.path.join(directory.meta["site_path"], name)
+        dir_node = node.child(name, src=src)
+        dir_node.meta["site_path"] = os.path.join(node.meta["site_path"], name)
         for pattern, dmeta in dir_rules:
             if pattern.match(name):
-                dir_meta.update(dmeta)
+                dir_node.meta.update(dmeta)
 
         # Recursively descend into the directory
         with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:
-            scan(site=site, directory=Directory(src, subdir_fd, meta=dir_meta), node=node.child(name, src=src))
+            scan(site=site, directory=Directory(src, subdir_fd), node=dir_node)
 
     # TODO: warn of contents not loaded at this point?
 
@@ -235,14 +229,14 @@ def scan_assets(*, site: Site, directory: Directory, node: structure.Node):
             continue
         if stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
-            node.add_asset(src=src, name=fname, parent_meta=directory.meta)
+            node.add_asset(src=src, name=fname, parent_meta=node.meta)
 
-    # Scan subdirectories
+    # Recurse into subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
-        dir_meta: Meta = directory.meta.derive()
-        dir_meta["site_path"] = os.path.join(directory.meta["site_path"], name)
+        dir_node = node.child(name, src=src)
+        dir_node.meta["site_path"] = os.path.join(node.meta["site_path"], name)
 
         # Recursively descend into the directory
         with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:
-            scan(site=site, directory=Directory(src, subdir_fd, meta=dir_meta), node=node.child(name, src=src))
+            scan(site=site, directory=Directory(src, subdir_fd), node=dir_node)

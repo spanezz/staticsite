@@ -11,7 +11,7 @@ from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
 from .metadata import Metadata, Meta
 from .file import File
-from . import toposort
+from . import toposort, structure
 
 log = logging.getLogger("theme")
 
@@ -286,13 +286,14 @@ class Theme:
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
-    def scan_assets(self, meta: Meta):
+    def scan_assets(self):
         """
         Load static assets
         """
-        root_meta = meta.derive()
-        root_meta["asset"] = True
-        root_meta["site_path"] = site_path = os.path.join(meta["site_path"], self.site.settings.STATIC_PATH)
+        site_path = os.path.join(self.site.structure.root.meta["site_path"], self.site.settings.STATIC_PATH)
+        root = self.site.structure.root.at_path(structure.Path.from_string(self.site.settings.STATIC_PATH))
+        root.meta["asset"] = True
+        root.meta["site_path"] = site_path
 
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
@@ -300,7 +301,7 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            fmeta = root_meta.derive()
+            fmeta = root.derive()
             fmeta["site_path"] = os.path.join(site_path, name)
             # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
@@ -313,8 +314,7 @@ class Theme:
         for path in self.theme_static_dirs:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
-                meta=root_meta,
-                root=site_path,
+                root=root,
             )
 
     def precompile_metadata_templates(self, values: dict[str, Any]):

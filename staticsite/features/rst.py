@@ -168,10 +168,10 @@ class RestructuredText(Feature):
             pages.append(page)
 
             if fname not in ("index.rst", "README.rst"):
-                page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname[:-4])
+                page.meta["site_path"] = os.path.join(node.meta["site_path"], fname[:-4])
                 node.add_page(page, src=src, path=structure.Path((fname[:-4], "index.html")))
             else:
-                page.meta["site_path"] = directory.meta["site_path"]
+                page.meta["site_path"] = node.meta["site_path"]
                 node.add_page(page, src=src, path=structure.Path(("index.html",)))
 
         for fname in taken:

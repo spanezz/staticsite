@@ -6,12 +6,13 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Optional
 
+from .metadata import Meta
+
 if TYPE_CHECKING:
+    from . import file
+    from .asset import Asset
     from .page import Page
     from .site import Site
-    from .asset import Asset
-    from . import file
-    from .metadata import Meta
 
 log = logging.getLogger("structure")
 
@@ -54,6 +55,7 @@ class Node:
             self,
             site: Site,
             name: str, *,
+            meta: Meta,
             src: Optional[file.File] = None,
             parent: Optional[Node] = None):
         # Pointer to the root structure
@@ -62,6 +64,8 @@ class Node:
         self.name: str = name
         # Parent node, or None if this is the root
         self.parent: Optional[Node] = parent
+        # Metadata for this directory
+        self.meta = meta
         # Set if node corresponds to a source directory in the file system
         self.src: Optional[file.File] = src
         # Index page for this directory, if present
@@ -124,7 +128,7 @@ class Node:
                 node.src = src
             return node
 
-        node = Node(site=self.site, name=name, parent=self, src=src)
+        node = Node(site=self.site, name=name, parent=self, src=src, meta=self.meta.derive())
         self.sub[name] = node
         return node
 
@@ -160,7 +164,7 @@ class Structure:
         self.site = site
 
         # Root directory of the site
-        self.root = Node(site, "")
+        self.root = Node(site, "", meta=Meta(site.metadata))
 
         # Site pages indexed by site_path
         self.pages: dict[str, Page] = {}

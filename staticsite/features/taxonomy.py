@@ -81,7 +81,7 @@ element.
             self.taxonomies[page.name] = page
             pages.append(page)
 
-            page.meta["site_path"] = os.path.join(directory.meta["site_path"], name)
+            page.meta["site_path"] = os.path.join(node.meta["site_path"], name)
             node.add_page(page, src=src, path=structure.Path((name, "index.html")))
 
         for fname in taken:

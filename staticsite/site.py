@@ -89,9 +89,6 @@ class Site:
         # Content root for the website
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
 
-        # Root site metadata, initialized from settings
-        self.meta: Optional[Meta] = None
-
         # Register well-known metadata
         self.register_metadata(metadata.MetadataDefault("template", default="page.html", doc="""
 Template used to render the page. Defaults to `page.html`, although specific
@@ -287,11 +284,10 @@ It defaults to true at least for [Markdown](markdown.md),
 
         self.theme.load()
 
-    def _settings_to_meta(self) -> Meta:
+    def _settings_to_meta(self, meta: Meta):
         """
         Build directory metadata based on site settings
         """
-        meta = Meta(self.metadata)
         meta["template_copyright"] = "© {{meta.date.year}} {{meta.author}}"
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
@@ -312,8 +308,6 @@ It defaults to true at least for [Markdown](markdown.md),
 
         log.debug("Initial settings: %r", meta)
 
-        return meta
-
     def scan_content(self):
         """
         Scan content root directories, building metadata for the directories in
@@ -326,27 +320,24 @@ It defaults to true at least for [Markdown](markdown.md),
             log.info("%s: content tree does not exist", self.content_root)
             return
 
-        self.meta = self._settings_to_meta()
+        self._settings_to_meta(self.structure.root.meta)
         src = File.with_stat("", os.path.abspath(self.content_root))
-        self.scan_tree(src, meta=self.meta)
+        self.scan_tree(src)
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
-        if self.structure.root.page:
-            self.meta.update(self.structure.root.page.meta.values)
-        self.theme.scan_assets(meta=self.meta)
+        # if self.structure.root.page:
+        #     self.meta.update(self.structure.root.page.meta.values)
+        self.theme.scan_assets()
         self.stage_content_directory_scanned = True
 
-    def scan_tree(self, src: File, meta: Meta, root: Optional[str] = None):
+    def scan_tree(self, src: File, root: Optional[structure.Node] = None):
         """
         Scan the contents of the given directory, mounting them under the given
         site_path
         """
         if root is None:
-            node = self.structure.root
-        else:
-            path = structure.Path.from_string(root)
-            node = self.structure.root.at_path(path)
-        scan.scan_tree(self, src, meta, node=node)
+            root = self.structure.root
+        scan.scan_tree(self, src, node=root)
 
     def load_content(self):
         """

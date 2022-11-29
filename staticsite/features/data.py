@@ -95,10 +95,10 @@ This is used to group data of the same type together, and to choose a
             pages.append(page)
 
             if page_name != "index":
-                page.meta["site_path"] = os.path.join(directory.meta["site_path"], page_name)
+                page.meta["site_path"] = os.path.join(node.meta["site_path"], page_name)
                 node.add_page(page, src=src, path=structure.Path(page_name, "index.html"))
             else:
-                page.meta["site_path"] = directory.meta["site_path"]
+                page.meta["site_path"] = node.meta["site_path"]
                 node.add_page(page, path=structure.Path(("index.html",)))
 
         for fname in taken:
