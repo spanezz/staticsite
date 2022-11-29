@@ -6,7 +6,6 @@ from staticsite.metadata import Metadata
 from collections import defaultdict
 import heapq
 import functools
-import os
 import logging
 
 if TYPE_CHECKING:
@@ -77,13 +76,16 @@ element.
                 continue
             meta.update(fm_meta)
 
-            page = TaxonomyPage(self.site, src=src, meta=meta, name=name)
+            page = node.create_page(
+                page_cls=TaxonomyPage,
+                src=src,
+                meta=meta,
+                name=name,
+                path=structure.Path((name,)),
+                build_as=structure.Path(("index.html",)))
+
             self.taxonomies[page.name] = page
             pages.append(page)
-
-            page.meta["site_path"] = os.path.join(node.meta["site_path"], name)
-            node.add_page(page, src=src, path=structure.Path((name,)))
-            page.build_as("index.html")
 
         for fname in taken:
             del files[fname]
@@ -208,11 +210,17 @@ class TaxonomyPage(Page):
             category_meta["name"] = category
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
+            category_meta["created_from"] = self
 
-            category_page = CategoryPage.create_from(self, meta=category_meta, name=category)
+            category_page = self.node.create_page(
+                page_cls=CategoryPage,
+                meta=category_meta,
+                name=category,
+                path=structure.Path((category,)),
+                build_as=structure.Path(("index.html",)),
+            )
+
             self.categories[category] = category_page
-            self.node.add_page(category_page, path=structure.Path((category,)))
-            category_page.build_as("index.html")
 
         # Replace category names with category pages in each categorized page
         for page in self.site.structure.pages_by_metadata[self.name]:
