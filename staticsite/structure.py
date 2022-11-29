@@ -100,6 +100,7 @@ class Node:
                 return node.create_page(page_cls=page_cls, src=src, path=path.tail, build_as=build_as, **kw)
 
         # Create the page, with some dependency injection
+        kw.setdefault("meta", self.meta)
         page = page_cls(site=self.site, src=src, **kw)
         self.add_page(page, src=src)
         if build_as:
