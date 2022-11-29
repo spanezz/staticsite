@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from staticsite import metadata
 from staticsite.feature import Feature
 from staticsite.page import Page
+
+if TYPE_CHECKING:
+    from staticsite.site import Site
 
 log = logging.getLogger("aliases")
 
@@ -36,7 +40,7 @@ existing links when moving a page to a different location.
                 continue
 
             for alias in aliases:
-                page = AliasPage.create_from(page, alias=alias)
+                page = AliasPage.create_from(page, meta=page.meta.derive(), alias=alias)
                 # TODO: mount on `alias`
 
 
@@ -47,8 +51,8 @@ class AliasPage(Page):
     # Default template to use for this type of page
     TEMPLATE: str
 
-    def __init__(self, *, alias: str, **kw):
-        super().__init__(**kw)
+    def __init__(self, site: Site, *, alias: str, **kw):
+        super().__init__(site, **kw)
         self.meta.setdefault("template", "redirect.html")
 
 

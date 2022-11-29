@@ -29,7 +29,6 @@ class Asset(Page):
         meta["date"] = site.localized_timestamp(src.stat.st_mtime)
         meta["title"] = name
         meta["site_path"] = site_path
-        meta["build_path"] = site_path.lstrip("/")
         meta["asset"] = True
         meta["draft"] = False
         meta["indexed"] = False

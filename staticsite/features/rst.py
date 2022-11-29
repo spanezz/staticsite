@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, Tuple, TYPE_CHECKING, Optional, Any
-from staticsite import Page, Feature
+from staticsite import Page, Feature, structure
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 import docutils.io
@@ -13,7 +13,7 @@ import io
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import scan, file, structure
+    from staticsite import scan, file
     from staticsite.metadata import Meta
 
 log = logging.getLogger("rst")
@@ -169,12 +169,10 @@ class RestructuredText(Feature):
 
             if fname not in ("index.rst", "README.rst"):
                 page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname[:-4])
-                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-                node.add_page(page, src=src, name=fname[:-4])
+                node.add_page(page, src=src, path=structure.Path((fname[:-4], "index.html")))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-                node.add_page(page)
+                node.add_page(page, src=src, path=structure.Path("index.html"))
 
         for fname in taken:
             del files[fname]

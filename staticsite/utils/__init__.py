@@ -56,10 +56,10 @@ def timings(fmtstr, *args, **kw):
     The log entry is passed an extra command at the beginning with the elapsed
     time in floating point seconds.
     """
-    start = time.perf_counter()
+    start = time.perf_counter_ns()
     yield
-    end = time.perf_counter()
-    log.info(fmtstr, end - start, *args, extra=kw)
+    end = time.perf_counter_ns()
+    log.info(fmtstr, (end - start) / 1_000_000_000, *args, extra=kw)
 
 
 def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, Dict]:

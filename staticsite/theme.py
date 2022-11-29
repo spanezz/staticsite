@@ -306,6 +306,7 @@ class Theme:
             self.site.scan_tree(
                 src=File.with_stat(name, root),
                 meta=fmeta,
+                root=site_path,
             )
 
         # Load assets from theme directories
@@ -313,6 +314,7 @@ class Theme:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
                 meta=root_meta,
+                root=site_path,
             )
 
     def precompile_metadata_templates(self, values: dict[str, Any]):

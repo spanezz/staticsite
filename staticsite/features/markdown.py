@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, Tuple, Optional, Dict, Set, TYPE_CHECKING, Any
-from staticsite import Page, Feature
+from staticsite import Page, Feature, structure
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
@@ -15,7 +15,7 @@ import markdown
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan, structure
+    from staticsite import file, scan
 
 log = logging.getLogger("markdown")
 
@@ -239,12 +239,10 @@ class MarkdownPages(Feature):
 
             if fname not in ("index.md", "README.md"):
                 page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname[:-3])
-                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-                node.add_page(page, src=src, name=fname[:-3])
+                node.add_page(page, src=src, path=structure.Path((fname[:-3], "index.html")))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-                node.add_page(page)
+                node.add_page(page, src=src, path=structure.Path("index.html"))
 
         for fname in taken:
             del files[fname]

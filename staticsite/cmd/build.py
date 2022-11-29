@@ -1,12 +1,14 @@
 from __future__ import annotations
+
+import locale
+import logging
 import os
 import time
-import locale
-from collections import defaultdict
-from .command import SiteCommand, Fail
-from staticsite.render import File
-from staticsite.utils import timings
-import logging
+from collections import Counter
+
+from .. import structure, utils
+from .command import Fail, SiteCommand
+from ..render import File
 
 log = logging.getLogger("build")
 
@@ -45,13 +47,13 @@ class Builder:
             log.warn("Cannot set locale to %s: %s", lname, e)
 
         # Scan the target directory to take note of existing contents
-        with timings("Scanned old content in %fs"):
+        with utils.timings("Scanned old content in %fs"):
             self.existing_paths = {}
             if os.path.exists(self.output_root):
                 for f in File.scan(self.output_root, follow_symlinks=False, ignore_hidden=False):
                     self.existing_paths[f.abspath] = f
 
-        with timings("Built site in %fs"):
+        with utils.timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
             # if cpu_count > 1:
             #     self.write_multi_process(cpu_count)
@@ -72,7 +74,7 @@ class Builder:
             #     sys   0m0.468s
             self.write_single_process()
 
-        with timings("Removed old content in %fs"):
+        with utils.timings("Removed old content in %fs"):
             # Delete all files not written by us
             dirs = set()
             for path in self.existing_paths:
@@ -122,36 +124,73 @@ class Builder:
 #             pids.discard(pid)
 
     def write_single_process(self):
-        sums, counts = self.write_pages(self.site.structure.pages.values())
+        os.makedirs(self.output_root, exist_ok=True)
+        with utils.open_dir_fd(self.output_root) as dir_fd:
+            sums, counts = self.write_subtree(self.site.structure.root, dir_fd=dir_fd)
         for type in sorted(sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)", type, counts[type], sums[type], counts[type]/sums[type] * 60)
 
-    def write_pages(self, pages):
-        sums = defaultdict(float)
-        counts = defaultdict(int)
+    def write_subtree(self, node: structure.Node, dir_fd: int) -> tuple[Counter, Counter]:
+        # print(node.compute_build_path(), repr(node.page))
+        sums = Counter()
+        counts = Counter()
 
-        # group by type
-        # This is not really needed, and we can render in any order, but this
-        # way we can easily collect rendering timings by page type
-        by_type = defaultdict(list)
-        for page in pages:
-            by_type[page.TYPE].append(page)
+        # TODO: enumerate dir contents, and remove the bits we do not need
 
-        # Render collecting timing statistics
-        for type, pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
-            start = time.perf_counter()
-            for page in pgs:
-                relpath = page.build_path
-                rendered = page.render()
-                fullpath = self.output_abspath(relpath)
-                dst = self.existing_paths.pop(fullpath, None)
-                if dst is None:
-                    dst = File.from_abspath(self.output_root, fullpath)
-                rendered.write(dst)
-                self.existing_paths.pop(dst, None)
-            end = time.perf_counter()
-            sums[type] = end - start
-            counts[type] = len(pgs)
+        if node.page:
+            if node.sub:
+                # print("NODE", node.compute_build_path(), "has both page and sub")
+                name = "index.html"
+            else:
+                name = node.name
+            # TODO: render page
+            start = time.perf_counter_ns()
+            rendered = node.page.render()
+            end = time.perf_counter_ns()
+            rendered.write(name, dir_fd=dir_fd)
+            # with dirfd_open(node.name, "wb")
+            #
+            #     dst = self.existing_paths.pop(fullpath, None)
+            #     if dst is None:
+            #         dst = File.from_abspath(self.output_root, fullpath)
+            #     rendered.write(dst)
+            #     self.existing_paths.pop(dst, None)
+            sums[node.page.TYPE] += end - start
+            counts[node.page.TYPE] += 1
+
+        if node.sub:
+            for name, sub in node.sub.items():
+                try:
+                    os.mkdir(name, dir_fd=dir_fd)
+                except FileExistsError:
+                    pass
+                with utils.open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
+                    sub_sums, sub_counts = self.write_subtree(sub, subdir_fd)
+                    sums += sub_sums
+                    counts += sub_counts
+
+        # # group by type
+        # # This is not really needed, and we can render in any order, but this
+        # # way we can easily collect rendering timings by page type
+        # by_type = defaultdict(list)
+        # for page in pages:
+        #     by_type[page.TYPE].append(page)
+
+        # # Render collecting timing statistics
+        # for type, pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
+        #     start = time.perf_counter()
+        #     for page in pgs:
+        #         relpath = page.build_path
+        #         rendered = page.render()
+        #         fullpath = self.output_abspath(relpath)
+        #         dst = self.existing_paths.pop(fullpath, None)
+        #         if dst is None:
+        #             dst = File.from_abspath(self.output_root, fullpath)
+        #         rendered.write(dst)
+        #         self.existing_paths.pop(dst, None)
+        #     end = time.perf_counter()
+        #     sums[type] = end - start
+        #     counts[type] = len(pgs)
         return sums, counts
 
     def output_abspath(self, relpath):

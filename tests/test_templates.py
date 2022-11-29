@@ -116,6 +116,7 @@ class TestTemplates(TestCase):
                     "relpath": "index.md",
                     "abspath": os.path.join(site.content_root, "index.md"),
                 },
+                "build_path": "",
                 "meta": {
                     "author": "Test User",
                     "copyright": '© 2019 Test User',
@@ -127,7 +128,6 @@ class TestTemplates(TestCase):
                     'site_name': 'Test site',
                     'site_path': '/',
                     'site_url': 'https://www.example.org',
-                    "build_path": "index.html",
                     'template': 'page.html',
                     'title': 'Test site',
                     'related': {},
@@ -143,6 +143,7 @@ class TestTemplates(TestCase):
                     "relpath": "page.html",
                     "abspath": os.path.join(site.content_root, "page.html"),
                 },
+                "build_path": "page.html",
                 "meta": {
                     "author": "Test User",
                     "copyright": '© 2019 Test User',
@@ -154,7 +155,6 @@ class TestTemplates(TestCase):
                     'site_name': 'Test site',
                     'site_path': '/page.html',
                     'site_url': 'https://www.example.org',
-                    "build_path": "page.html",
                     'template': 'compiled:page.html',
                     'title': 'Test site',
                     'related': {},

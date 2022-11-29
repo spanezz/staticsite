@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from staticsite import Page, Feature
+from staticsite import Page, Feature, structure
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.page_filter import PageFilter
@@ -14,7 +14,7 @@ from collections import defaultdict
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import scan, file, structure
+    from staticsite import scan, file
     from staticsite.metadata import Meta
 
 log = logging.getLogger("data")
@@ -96,12 +96,10 @@ This is used to group data of the same type together, and to choose a
 
             if page_name != "index":
                 page.meta["site_path"] = os.path.join(directory.meta["site_path"], page_name)
-                page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-                node.add_page(page, src=src, name=page_name)
+                node.add_page(page, src=src, path=structure.Path(page_name, "index.html"))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                page.self.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-                node.add_page(page)
+                node.add_page(page, path=structure.Path("index.html"))
 
         for fname in taken:
             del files[fname]

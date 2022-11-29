@@ -5,6 +5,7 @@ import os
 import json
 import logging
 from collections import defaultdict
+from staticsite import structure
 from staticsite.metadata import Metadata
 from staticsite.feature import Feature
 from staticsite.features.data import DataPage
@@ -13,7 +14,7 @@ from staticsite.features.links.index import LinkIndexPage
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
-    from staticsite import Page, structure, scan, file
+    from staticsite import Page, scan, file
     from staticsite.metadata import Meta
 
 log = logging.getLogger("links")
@@ -133,8 +134,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
             pages.append(page)
 
             page.meta["site_path"] = os.path.join(directory.meta["site_path"], name)
-            page.meta["build_path"] = page.meta["site_path"]
-            node.add_page(page, src=src, name=name)
+            node.add_page(page, src=src, path=structure.Path(name))
 
             self.indices.append(page)
 

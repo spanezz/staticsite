@@ -23,7 +23,6 @@ class LinkIndexPage(Page):
         # Reference to the Feature with the aggregated link collection
         self.feature_links = links
 
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
         self.meta.setdefault("template", "data-links.html")
         self.meta.setdefault("nav_title", name.capitalize())
         self.meta.setdefault("title", "All links shared in the site")
@@ -41,17 +40,19 @@ class LinkIndexPage(Page):
     def analyze(self):
         pages = []
         for tag, links in self.feature_links.by_tag.items():
-            meta = dict(self.meta)
-            meta["site_path"] = os.path.join(meta["site_path"], tag + "-links")
+            meta = self.meta.derive()
+            site_path = os.path.join(self.meta["site_path"], tag + "-links")
+            meta["site_path"] = site_path
             if meta["site_path"] in self.site.structure.pages:
                 continue
             meta["data_type"] = "links"
             meta["title"] = f"{tag} links"
             meta["links"] = links
-            page = LinksTagPage.create_from(self, meta, links=links)
+            page = LinksTagPage.create_from(self, meta=meta, links=links)
             self.by_tag[tag] = page
-            page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-            self.site.structure.add_generated_page(page, page.build_path)
+            self.site.structure.add_generated_page(
+                    page,
+                    os.path.join(site_path, "index.html"))
             pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories

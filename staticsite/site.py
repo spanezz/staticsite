@@ -11,8 +11,7 @@ from .cache import Caches, DisabledCaches
 from .utils import lazy, timings
 from . import metadata
 from .metadata import Metadata, Meta
-from .structure import Structure
-from . import scan
+from . import scan, structure
 from .file import File
 import logging
 
@@ -47,7 +46,7 @@ class Site:
         self.metadata = metadata.Registry(self)
 
         # Structure of pages in the site
-        self.structure = Structure(self)
+        self.structure = structure.Structure(self)
 
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
@@ -337,14 +336,17 @@ It defaults to true at least for [Markdown](markdown.md),
         self.theme.scan_assets(meta=self.meta)
         self.stage_content_directory_scanned = True
 
-    def scan_tree(self, src: File, meta: Meta):
+    def scan_tree(self, src: File, meta: Meta, root: Optional[str] = None):
         """
         Scan the contents of the given directory, mounting them under the given
         site_path
         """
-        # site_path: str = "", asset: bool = False):
-        # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-        scan.scan_tree(self, src, meta)
+        if root is None:
+            node = self.structure.root
+        else:
+            path = structure.Path.from_string(root)
+            node = self.structure.root.at_path(path)
+        scan.scan_tree(self, src, meta, node=node)
 
     def load_content(self):
         """

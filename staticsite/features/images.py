@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict
-from staticsite import Page, Feature
+from staticsite import Page, Feature, structure
 from staticsite.render import RenderedFile
 from staticsite.utils.images import ImageScanner
 from staticsite.metadata import Metadata
@@ -10,7 +10,7 @@ import mimetypes
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan, structure
+    from staticsite import file, scan
     from staticsite.metadata import Meta
 
 log = logging.getLogger("images")
@@ -84,7 +84,7 @@ extension), that image is used.
 
             page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
             page.meta["build_path"] = page.meta["site_path"]
-            node.add_page(page, src=src, name=fname)
+            node.add_page(page, src=src, path=structure.Path(fname))
 
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
@@ -108,7 +108,6 @@ extension), that image is used.
                     base, ext = os.path.splitext(site_path)
                     site_path = f"{base}-{name}{ext}"
                     scaled.meta["site_path"] = site_path
-                    scaled.meta["build_path"] = site_path
                     self.site.structure.add_generated_page(scaled, site_path)
 
             self.by_related_site_path[related_site_path] = page
@@ -136,11 +135,12 @@ class RenderedScaledImage(RenderedElement):
         self.width = width
         self.height = height
 
-    def write(self, dst: file.File):
+    def write(self, name: str, dir_fd: int):
         import PIL
         with PIL.Image.open(self.src.abspath) as img:
             img = img.resize((self.width, self.height))
-            img.save(dst.abspath)
+            with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
+                img.save(out)
 
     def content(self):
         with open(self.src.abspath, "rb") as fd:

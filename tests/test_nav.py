@@ -23,6 +23,7 @@ class TestNav(TestCase):
                     "relpath": "dir1/dir2/dir3/page.md",
                     "abspath": os.path.join(site.content_root, "dir1/dir2/dir3/page.md"),
                 },
+                "build_path": "dir1/dir2/dir3/page/index.html",
                 "meta": {
                     "author": "Test User",
                     "copyright": '© 2019 Test User',
@@ -35,7 +36,6 @@ class TestNav(TestCase):
                     'site_name': 'Test site',
                     'site_path': '/dir1/dir2/dir3/page',
                     'site_url': 'https://www.example.org',
-                    "build_path": "dir1/dir2/dir3/page/index.html",
                     'template': 'page.html',
                     'title': 'Test site',
                     'related': {},

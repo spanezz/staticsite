@@ -34,12 +34,14 @@ def with_dir_fd(f):
     return wrapper
 
 
-def scan_tree(site: Site, src: file.File, site_meta: Meta):
+def scan_tree(site: Site, src: file.File, site_meta: Meta, node: Optional[structure.Node] = None):
     """
     Recursively scan a source tree
     """
-    # Add src to the root node if it was missing
-    node = site.structure.root
+    if node is None:
+        node = site.structure.root
+
+    # Add src to the node if it was missing
     if node.src is None:
         node.src = src
 

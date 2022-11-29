@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING, Optional, Any
+from staticsite import structure
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.utils import front_matter
@@ -10,7 +11,7 @@ import os
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan, structure
+    from staticsite import file, scan
     from staticsite.metadata import Meta
 
 log = logging.getLogger("jinja2")
@@ -92,16 +93,14 @@ class J2Pages(Feature):
             taken.append(fname)
             pages.append(page)
 
-            dirname, basename = os.path.split(src.relpath)
-            dst_basename = basename.replace(".j2", "")
-            page.meta["build_path"] = os.path.join(dirname, dst_basename)
-
             if fname != "index.html":
                 page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
-                node.add_page(page, src=src, name=fname)
+                # Is this still needed?
+                fname = fname.replace(".j2", "")
+                node.add_page(page, src=src, path=structure.Path(fname))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                node.add_page(page)
+                node.add_page(page, path=structure.Path("index.html"))
 
         for fname in taken:
             del files[fname]

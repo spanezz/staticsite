@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("structure")
 
 
-re_pathsep = re.compile(re.escape(os.pathsep) + "+")
+re_pathsep = re.compile(re.escape(os.sep) + "+")
 
 
 class Path(tuple[str]):
@@ -43,7 +43,7 @@ class Path(tuple[str]):
         """
         Split a string into a path
         """
-        return cls(re_pathsep.split(path.strip(os.pathsep)))
+        return cls(re_pathsep.split(path.strip(os.sep)))
 
 
 class Node:
@@ -69,17 +69,28 @@ class Node:
         # Subdirectories
         self.sub: Optional[dict[str, Node]] = None
 
-    def add_page(self, page: Page, *, src: Optional[file.File] = None, name: Optional[str] = None):
+    def compute_build_path(self) -> str:
+        """
+        Compute the build path for this node
+        """
+        if self.parent is None:
+            return self.name
+        else:
+            return os.path.join(self.parent.compute_build_path(), self.name)
+
+    def add_page(self, page: Page, *, src: Optional[file.File] = None, path: Optional[Path] = None):
         """
         Add a page as a subnode of this one, or as the page of this one if name is None
         """
         if self.site.is_page_ignored(page):
             return
 
-        if name is None:
+        if path is None:
             self._attach_page(page)
         else:
-            self.child(name, src=src)._attach_page(page)
+            node = self.at_path(path)
+            node.src = src
+            node._attach_page(page)
 
     def add_asset(self, *, src: file.File, name: str, parent_meta: Optional[Meta] = None) -> Asset:
         """
@@ -116,6 +127,15 @@ class Node:
         node = Node(site=self.site, name=name, parent=self, src=src)
         self.sub[name] = node
         return node
+
+    def at_path(self, path: Path) -> Node:
+        """
+        Return the subnode at the given path, creating it if missing
+        """
+        if not path:
+            return self
+        else:
+            return self.child(path.head).at_path(path.tail)
 
     def add_generated_page(self, page: Page, path: Path):
         """

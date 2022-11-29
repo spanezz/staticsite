@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict, Iterable, Optional, Any
-from staticsite import Page
+from staticsite import Page, structure
 from staticsite.feature import Feature
 from staticsite.metadata import Metadata
 from collections import defaultdict
@@ -10,7 +10,7 @@ import os
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan, structure
+    from staticsite import file, scan
     from staticsite.metadata import Meta
 
 log = logging.getLogger("taxonomy")
@@ -82,8 +82,7 @@ element.
             pages.append(page)
 
             page.meta["site_path"] = os.path.join(directory.meta["site_path"], name)
-            page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-            node.add_page(page, src=src, name=name)
+            node.add_page(page, src=src, path=structure.Path((name, "index.html")))
 
         for fname in taken:
             del files[fname]
@@ -212,8 +211,9 @@ class TaxonomyPage(Page):
 
             category_page = CategoryPage.create_from(self, meta=category_meta, name=category)
             self.categories[category] = category_page
-            category_page.meta["build_path"] = os.path.join(category_page.meta["site_path"], "index.html")
-            self.site.structure.add_generated_page(category_page, category_page.build_path)
+            self.site.structure.add_generated_page(
+                    category_page,
+                    os.path.join(category_page.meta["site_path"], "index.html"))
 
         # Replace category names with category pages in each categorized page
         for page in self.site.structure.pages_by_metadata[self.name]:

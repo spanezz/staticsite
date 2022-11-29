@@ -88,7 +88,8 @@ class Page:
         """
         Accessor to support the migration away from meta['build_path']
         """
-        return self.meta["build_path"]
+        # return self.meta["build_path"]
+        return self.node.compute_build_path()
 
     def add_related(self, name: str, page: "Page"):
         """
@@ -130,13 +131,6 @@ class Page:
         site_path = self.meta.get("site_path")
         if site_path is None:
             raise PageMissesFieldError(self, "site_path")
-
-        # Make sure build_path exists and is relative
-        build_path = self.meta.get("build_path")
-        if build_path is None:
-            raise PageMissesFieldError(self, "build_path")
-        if build_path.startswith("/"):
-            self.meta["build_path"] = build_path.lstrip("/")
 
     @lazy
     def page_template(self):
@@ -396,6 +390,7 @@ class Page:
         res = {
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
+            "build_path": self.build_path,
         }
         if self.src:
             res["src"] = {

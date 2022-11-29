@@ -222,7 +222,8 @@ class MetadataTemplateInherited(Metadata):
             meta.values[self.name] = None
             return None
 
-        rendered = markupsafe.Markup(template.render(meta=meta))
+        # TODO: remove the page compatibility context entry
+        rendered = markupsafe.Markup(template.render(meta=meta, page={"meta": meta}))
         meta.values[self.name] = rendered
         return rendered
 
