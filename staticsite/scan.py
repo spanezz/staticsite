@@ -167,7 +167,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         if title is not None:
             directory.meta["site_name"] = title
         else:
-            directory.meta["site_name"] = os.path.basename(directory.src.relpath)
+            directory.meta["site_name"] = os.path.basename(directory.src.abspath)
 
     site.theme.precompile_metadata_templates(directory.meta)
 
