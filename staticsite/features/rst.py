@@ -164,14 +164,20 @@ class RestructuredText(Feature):
 
             meta.update(fm_meta)
 
-            page = RstPage(self.site, src=src, meta=meta, feature=self, doctree_scan=doctree_scan)
-            pages.append(page)
-
             if fname in ("index.rst", "README.rst"):
-                node.add_page(page, src=src)
+                path = structure.Path()
             else:
-                node.add_page(page, src=src, path=structure.Path((fname[:-4],)))
-            page.build_as("index.html")
+                path = structure.Path((fname[:-4],))
+
+            page = node.create_page(
+                    page_cls=RstPage,
+                    src=src,
+                    meta=meta,
+                    feature=self,
+                    doctree_scan=doctree_scan,
+                    path=path,
+                    build_as=structure.Path(("index.html",)))
+            pages.append(page)
 
         for fname in taken:
             del files[fname]

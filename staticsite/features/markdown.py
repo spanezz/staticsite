@@ -234,14 +234,20 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            page = MarkdownPage(self.site, src=src, meta=meta, feature=self, body=body)
-            pages.append(page)
-
             if fname in ("index.md", "README.md"):
-                node.add_page(page, src=src)
+                path = structure.Path()
             else:
-                node.add_page(page, src=src, path=structure.Path((fname[:-3],)))
-            page.build_as("index.html")
+                path = structure.Path((fname[:-3],))
+
+            page = node.create_page(
+                    page_cls=MarkdownPage,
+                    src=src,
+                    meta=meta,
+                    feature=self,
+                    body=body,
+                    path=path,
+                    build_as=structure.Path(("index.html",)))
+            pages.append(page)
 
         for fname in taken:
             del files[fname]

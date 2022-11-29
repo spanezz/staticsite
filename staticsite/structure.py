@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Generator, Optional, Type
 
 from .metadata import Meta
 
@@ -82,6 +83,29 @@ class Node:
         else:
             return os.path.join(self.parent.compute_path(), self.name)
 
+    def create_page(
+            self, *,
+            page_cls: Type[Page],
+            src: Optional[file.File] = None,
+            path: Optional[Path] = None,
+            build_as: Optional[Path] = None,
+            **kw):
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        # TODO: skip drafts
+        if path:
+            # If a subpath is requested, delegate to subnodes
+            with self.tentative_child(path.head) as node:
+                return node.create_page(page_cls=page_cls, src=src, path=path.tail, build_as=build_as, **kw)
+
+        # Create the page, with some dependency injection
+        page = page_cls(site=self.site, src=src, **kw)
+        self.add_page(page, src=src)
+        if build_as:
+            page.build_as(*build_as)
+        return page
+
     def add_page(self, page: Page, *, src: Optional[file.File] = None, path: Optional[Path] = None):
         """
         Add a page as a subnode of this one, or as the page of this one if name is None
@@ -116,6 +140,30 @@ class Node:
         page.build_node = self
         self.page = page
         self.site.structure.index(page)
+
+    @contextlib.contextmanager
+    def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:
+        """
+        Add a child, removing it if an exception is raised
+        """
+        if self.sub and (node := self.sub.get(name)):
+            if src and not node.src:
+                node.src = src
+            yield node
+            return
+
+        try:
+            if self.sub is None:
+                self.sub = {}
+
+            node = Node(site=self.site, name=name, parent=self, src=src, meta=self.meta.derive())
+            self.sub[name] = node
+            yield node
+        except Exception:
+            # Rollback the addition
+            self.sub.pop(name, None)
+            if not self.sub:
+                self.sub = None
 
     def child(self, name: str, *, src: Optional[file.File] = None) -> Node:
         """

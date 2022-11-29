@@ -16,10 +16,6 @@ if TYPE_CHECKING:
 log = logging.getLogger("jinja2")
 
 
-class IgnorePage(Exception):
-    pass
-
-
 def load_front_matter(template: jinja2.Template) -> dict[str, Any]:
     """
     Load front matter from a jinja2 template
@@ -85,20 +81,33 @@ class J2Pages(Feature):
                 continue
 
             try:
-                page = J2Page(self.site, src=src, meta=meta, feature=self)
-            except IgnorePage:
+                template = self.site.theme.jinja2.get_template("content:" + src.relpath)
+            except Exception:
+                log.exception("%s: cannot load template", src.relpath)
                 continue
 
-            taken.append(fname)
-            pages.append(page)
+            front_matter = load_front_matter(template)
+            if front_matter:
+                meta.update(front_matter)
 
             if fname == "index.html":
-                node.add_page(page, src=src)
-                page.build_as("index.html")
+                path = structure.Path()
+                build_as = structure.Path(("index.html",))
             else:
                 # Is this still needed?
                 fname = fname.replace(".j2", "")
-                node.add_page(page, src=src, path=structure.Path((fname,)))
+                path = structure.Path((fname,))
+                build_as = structure.Path()
+
+            page = node.create_page(
+                    page_cls=J2Page,
+                    src=src,
+                    meta=meta,
+                    template=template,
+                    path=path,
+                    build_as=build_as)
+            pages.append(page)
+            taken.append(fname)
 
         for fname in taken:
             del files[fname]
@@ -164,21 +173,11 @@ class RenderPartialTemplateMixin:
 class J2Page(RenderPartialTemplateMixin, Page):
     TYPE = "jinja2"
 
-    def __init__(self, *args, feature: J2Pages, **kw):
+    def __init__(self, *args, template: jinja2.Template, **kw):
         super().__init__(*args, **kw)
 
         # Indexed by default
         self.meta.setdefault("indexed", True)
-
-        try:
-            template = self.site.theme.jinja2.get_template("content:" + self.src.relpath)
-        except Exception:
-            log.exception("%s: cannot load template", self.src.relpath)
-            raise IgnorePage
-
-        front_matter = load_front_matter(template)
-        if front_matter:
-            self.meta.update(front_matter)
 
         self.meta["template"] = template
 
