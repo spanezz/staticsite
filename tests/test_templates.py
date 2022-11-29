@@ -116,7 +116,7 @@ class TestTemplates(TestCase):
                     "relpath": "index.md",
                     "abspath": os.path.join(site.content_root, "index.md"),
                 },
-                "build_path": "",
+                "build_path": "index.html",
                 "meta": {
                     "author": "Test User",
                     "copyright": '© 2019 Test User',

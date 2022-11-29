@@ -24,6 +24,7 @@ class TestSite(TestCase):
                     "relpath": "about.md",
                     "abspath": os.path.join(site.content_root, "about.md"),
                 },
+                "build_path": "about/index.html",
                 "meta": {
                     "date": '2019-06-01 12:30:00+02:00',
                     "draft": False,
@@ -35,7 +36,6 @@ class TestSite(TestCase):
                     'site_name': 'My example blog',
                     'site_path': '/about',
                     'site_url': 'https://www.example.org',
-                    "build_path": "about/index.html",
                     'template': 'page.html',
                     'title': 'About',
                     'nav': ['MarkdownPage(/about)'],
@@ -50,6 +50,7 @@ class TestSite(TestCase):
                     "relpath": "index.md",
                     "abspath": os.path.join(site.content_root, "index.md"),
                 },
+                "build_path": "index.html",
                 "meta": {
                     "date": '2019-12-30 17:30:00+01:00',
                     "draft": False,
@@ -66,7 +67,6 @@ class TestSite(TestCase):
                     'site_name': 'My example blog',
                     'site_path': '/',
                     'site_url': 'https://www.example.org',
-                    "build_path": "index.html",
                     'template': 'blog.html',
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(/about)'],

@@ -16,6 +16,7 @@ class TestSite(TestCase):
                     "relpath": "blog/index.html",
                     "abspath": os.path.join(site.content_root, "blog/index.html"),
                 },
+                "build_path": "blog/index.rss",
                 "meta": {
                     "date": '2016-04-16 10:23:00+02:00',
                     "draft": False,
@@ -32,7 +33,6 @@ class TestSite(TestCase):
                     'site_name': 'Example web site',
                     'site_path': '/blog/index.rss',
                     'site_url': 'https://www.example.org',
-                    "build_path": "blog/index.rss",
                     'template': 'syndication.rss',
                     'title': 'Example blog feed',
                     'related': {},
