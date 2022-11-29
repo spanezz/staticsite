@@ -21,6 +21,13 @@ log = logging.getLogger("structure")
 re_pathsep = re.compile(re.escape(os.sep) + "+")
 
 
+class SkipPage(Exception):
+    """
+    Exception raised when a page should not be added to the site
+    """
+    pass
+
+
 class Path(tuple[str]):
     """
     Path in the site, split into components
@@ -83,43 +90,40 @@ class Node:
         else:
             return os.path.join(self.parent.compute_path(), self.name)
 
-    def create_page(
+    def create_page(self, **kw):
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        # TODO: move site.is_page_ignored here?
+        try:
+            return self._create_page(**kw)
+        except SkipPage:
+            return None
+
+    def _create_page(
             self, *,
             page_cls: Type[Page],
             src: Optional[file.File] = None,
             path: Optional[Path] = None,
             build_as: Optional[Path] = None,
             **kw):
-        """
-        Create a page of the given type, attaching it at the given path
-        """
-        # TODO: skip drafts
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
                 return node.create_page(page_cls=page_cls, src=src, path=path.tail, build_as=build_as, **kw)
 
         # Create the page, with some dependency injection
-        kw.setdefault("meta", self.meta)
+        if "meta" not in kw:
+            kw["meta"] = self.meta.derive()
         page = page_cls(site=self.site, src=src, **kw)
-        self.add_page(page, src=src)
+        if self.site.is_page_ignored(page):
+            raise SkipPage()
+        if self.src is None:
+            self.src = src
+        self._attach_page(page)
         if build_as:
             page.build_as(*build_as)
         return page
-
-    def add_page(self, page: Page, *, src: Optional[file.File] = None, path: Optional[Path] = None):
-        """
-        Add a page as a subnode of this one, or as the page of this one if name is None
-        """
-        if self.site.is_page_ignored(page):
-            return
-
-        if path is None:
-            self._attach_page(page)
-        else:
-            node = self.at_path(path)
-            node.src = src
-            node._attach_page(page)
 
     def add_asset(self, *, src: file.File, name: str, parent_meta: Optional[Meta] = None) -> Asset:
         """
