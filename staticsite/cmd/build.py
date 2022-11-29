@@ -139,7 +139,7 @@ class Builder:
 
         if node.page:
             if node.sub:
-                # print("NODE", node.compute_build_path(), "has both page and sub")
+                log.warning("Node %r has both page and sub", node)
                 name = "index.html"
             else:
                 name = node.name
@@ -159,13 +159,19 @@ class Builder:
             counts[node.page.TYPE] += 1
 
         if node.sub:
-            for name, sub in node.sub.items():
+            if node.name:
                 try:
-                    os.mkdir(name, dir_fd=dir_fd)
+                    os.mkdir(node.name, dir_fd=dir_fd)
                 except FileExistsError:
                     pass
-                with utils.open_dir_fd(name, dir_fd=dir_fd) as subdir_fd:
-                    sub_sums, sub_counts = self.write_subtree(sub, subdir_fd)
+                with utils.open_dir_fd(node.name, dir_fd=dir_fd) as subdir_fd:
+                    for name, sub in node.sub.items():
+                        sub_sums, sub_counts = self.write_subtree(sub, subdir_fd)
+                        sums += sub_sums
+                        counts += sub_counts
+            else:
+                for name, sub in node.sub.items():
+                    sub_sums, sub_counts = self.write_subtree(sub, dir_fd)
                     sums += sub_sums
                     counts += sub_counts
 
