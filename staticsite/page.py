@@ -92,13 +92,6 @@ class Page:
         # return self.meta["build_path"]
         return self.build_node.compute_path()
 
-    def build_as(self, *args: tuple[str]):
-        """
-        Do not build this page as self.node, but as a subnode of it using the given path components
-        """
-        self.build_node = self.node.at_path(structure.Path(args))
-        self.build_node.page = self
-
     def add_related(self, name: str, page: "Page"):
         """
         Set the page as meta.related.name

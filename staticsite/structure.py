@@ -122,7 +122,8 @@ class Node:
             self.src = src
         self._attach_page(page)
         if build_as:
-            page.build_as(*build_as)
+            page.build_node = self.at_path(build_as)
+            page.build_node.page = page
         return page
 
     def add_asset(self, *, src: file.File, name: str, parent_meta: Optional[Meta] = None) -> Asset:
