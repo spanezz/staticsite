@@ -83,6 +83,13 @@ class Page:
         warnings.warn("use page.meta.get('created_from') instead of page.created_from", DeprecationWarning)
         return self.meta.get("created_from")
 
+    @property
+    def build_path(self) -> str:
+        """
+        Accessor to support the migration away from meta['build_path']
+        """
+        return self.meta["build_path"]
+
     def add_related(self, name: str, page: "Page"):
         """
         Set the page as meta.related.name
@@ -337,12 +344,6 @@ class Page:
 
     def check(self, checker):
         pass
-
-    def target_relpaths(self):
-        res = [self.meta["build_path"]]
-        for relpath in self.meta.get("aliases", ()):
-            res.append(os.path.join(relpath, "index.html"))
-        return res
 
     def __str__(self):
         return self.meta["site_path"]

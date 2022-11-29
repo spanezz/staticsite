@@ -141,7 +141,7 @@ class Builder:
         for type, pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
             start = time.perf_counter()
             for page in pgs:
-                relpath = page.meta["build_path"]
+                relpath = page.build_path
                 rendered = page.render()
                 fullpath = self.output_abspath(relpath)
                 dst = self.existing_paths.pop(fullpath, None)

@@ -51,7 +51,7 @@ class LinkIndexPage(Page):
             page = LinksTagPage.create_from(self, meta, links=links)
             self.by_tag[tag] = page
             page.meta["build_path"] = os.path.join(page.meta["site_path"], "index.html")
-            self.site.structure.add_generated_page(page, page.meta["build_path"])
+            self.site.structure.add_generated_page(page, page.build_path)
             pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories
