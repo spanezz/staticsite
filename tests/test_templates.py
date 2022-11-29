@@ -135,9 +135,7 @@ class TestTemplates(TestCase):
                 "type": "markdown",
             })
 
-            rendered = index.render()
-            self.assertCountEqual(rendered.keys(), ["index.html"])
-            rendered = rendered["index.html"].content()
+            rendered = index.render().content()
             self.assertIn(b"Test site", rendered)
 
             self.assertEqual(page.to_dict(), {
