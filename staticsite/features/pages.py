@@ -31,17 +31,18 @@ See [Selecting pages](page-filter.md) for details.
     def analyze(self):
         # Expand pages expressions
         for page in self.site.structure.pages_by_metadata["pages"]:
-            pages = page.meta["pages"]
-            if isinstance(pages, str):
-                pages = {"path": pages}
-            elif not isinstance(pages, dict):
+            query = page.meta["pages"]
+            if isinstance(query, str):
+                query = {"path": query}
+            elif not isinstance(query, dict):
                 # Skip pages that already have a populated pages list
                 continue
             # print("FILTER", pages)
 
             # Replace the dict with the expanded list of pages
             # Do not include self in the result list
-            pages = [p for p in page.find_pages(**pages) if p != page]
+            pages = [p for p in page.find_pages(**query) if p != page]
+            # print(f"pages {page=!r}, {query=!r}, {pages=}")
             page.meta["pages"] = pages
             if pages:
                 max_date = max(p.meta["date"] for p in pages)

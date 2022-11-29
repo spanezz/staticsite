@@ -217,6 +217,8 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             page_name, ext = os.path.splitext(page.build_node.name)
 
+            # print(f"Syndication {page=!r}, {pages=}")
+
             # RSS feed
             rss_page_meta = meta.derive()
             rss_page_meta["index"] = meta["index"]

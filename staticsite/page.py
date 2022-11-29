@@ -167,16 +167,13 @@ class Page:
         this page
         """
         if root is None:
-            if (parent_node := self.node.parent) is not None:
-                if parent_node.src is not None:
-                    if parent_node.src.relpath:
-                        root = parent_node.src.relpath
-                        # print("ROOT FROM PARENT src")
-                else:
-                    root = parent_node.compute_path()
-                    # print("ROOT FROM PARENT build_path")
+            if self.node.src is not None:
+                if self.node.src.relpath:
+                    root = self.node.src.relpath
+            else:
+                root = self.node.compute_path()
 
-        # print("FIND_PAGES UNDER", root)
+        # print(f"find_pages {root=}, {path=!r}")
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)

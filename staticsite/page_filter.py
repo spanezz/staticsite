@@ -87,6 +87,8 @@ class PageFilter:
 
         self.limit = limit
 
+        # print(f"PageFilter({path=!r}, {root=!r}, {self.re_path=!r}, {self.taxonomy_filters=} ya")
+
     def filter(self, all_pages: Iterable[Page]) -> List[Page]:
         pages = []
 
@@ -102,6 +104,7 @@ class PageFilter:
                         continue
                     page_path = page_path[len(self.root):]
                 if not self.re_path.match(page_path):
+                    # print(f"  {page=!r} {page_path=!r} did not match {self.re_path=}")
                     continue
             if self.sort_meta is not None and self.sort_meta not in page.meta:
                 continue
