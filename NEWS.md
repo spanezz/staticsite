@@ -4,6 +4,10 @@
 
 * New template filter `next_month` that given a date returns the date of the
   beginning of the following month
+* ``page`` is not available anymore in templates within the `front_matter` of
+  pages. Use `{{meta.…}}` instead of `{{page.meta.…}}`. `name` and
+  `created_from` have been moved to `meta` to make them available. This avoids
+  requiring a Page object in order to create its metadata.
 
 # New in version 1.6
 

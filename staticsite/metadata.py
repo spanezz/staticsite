@@ -222,7 +222,7 @@ class MetadataTemplateInherited(Metadata):
             meta.values[self.name] = None
             return None
 
-        rendered = markupsafe.Markup(template.render(page={"meta": meta}))
+        rendered = markupsafe.Markup(template.render(meta=meta))
         meta.values[self.name] = rendered
         return rendered
 

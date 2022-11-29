@@ -134,7 +134,7 @@ override this with `/prefix` in the content root.
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
 
-It defaults to false, or true if `page.meta.date` is in the future.
+It defaults to false, or true if `meta.date` is in the future.
 """))
 
         self.register_metadata(metadata.MetadataInherited("author", doc="""
@@ -153,7 +153,7 @@ The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
 in it.
 
-If missing, defaults to `"© {{page.meta.date.year}} {{page.meta.author}}"`
+If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
 """))
         self.register_metadata(metadata.MetadataTemplateInherited("title", template="template_title", doc="""
 The page title.
@@ -293,7 +293,7 @@ It defaults to true at least for [Markdown](markdown.md),
         Build directory metadata based on site settings
         """
         meta = Meta(self.metadata)
-        meta["template_copyright"] = "© {{page.meta.date.year}} {{page.meta.author}}"
+        meta["template_copyright"] = "© {{meta.date.year}} {{meta.author}}"
         if self.settings.SITE_URL:
             meta["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:

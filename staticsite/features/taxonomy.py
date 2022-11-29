@@ -136,7 +136,7 @@ class TaxonomyPage(Page):
         # Metadata for category pages
         self.category_meta = self.meta.get("category", {})
         self.category_meta.setdefault("template", "blog.html")
-        self.category_meta.setdefault("template_title", "{{page.name}}")
+        self.category_meta.setdefault("template_title", "{{meta.name}}")
 
         synd = self.category_meta.get("syndication")
         if synd is None or synd is True:
@@ -154,7 +154,7 @@ class TaxonomyPage(Page):
                 archive = None
 
             if archive is not None:
-                archive.setdefault("template_title", "{{page.created_from.name}} archive")
+                archive.setdefault("template_title", "{{meta.created_from.name}} archive")
                 self.site.theme.precompile_metadata_templates(archive)
 
         self.site.theme.precompile_metadata_templates(self.category_meta)
@@ -205,6 +205,7 @@ class TaxonomyPage(Page):
             category_meta = self.meta.derive()
             category_meta.update(self.category_meta)
             category_meta["taxonomy"] = self
+            category_meta["name"] = category
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
             category_meta["site_path"] = os.path.join(self.meta["site_path"], category)
