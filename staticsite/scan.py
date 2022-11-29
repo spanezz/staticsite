@@ -177,7 +177,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
         # Handle assets right away
         if res.get("asset"):
-            node.add_asset(src=src, name=fname, parent_meta=node.meta)
+            node.add_asset(src=src, name=fname)
         else:
             files_meta[fname] = (res, src)
 
@@ -195,7 +195,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     for fname, (file_meta, src) in files_meta.items():
         if src.stat and stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
-            node.add_asset(src=src, name=fname, parent_meta=node.meta)
+            node.add_asset(src=src, name=fname)
     # Recurse into subdirectories
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
@@ -229,7 +229,7 @@ def scan_assets(*, site: Site, directory: Directory, node: structure.Node):
             continue
         if stat.S_ISREG(src.stat.st_mode):
             log.debug("Loading static file %s", src.relpath)
-            node.add_asset(src=src, name=fname, parent_meta=node.meta)
+            node.add_asset(src=src, name=fname)
 
     # Recurse into subdirectories
     for name, src in directory.subdirs.items():

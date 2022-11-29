@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from staticsite import metadata
+from staticsite import metadata, structure
 from staticsite.feature import Feature
 from staticsite.page import Page
 
@@ -42,8 +42,12 @@ existing links when moving a page to a different location.
             for alias in aliases:
                 meta = page.meta.derive()
                 meta["created_from"] = page
-                alias_page = AliasPage(site=self.site, src=page.src, meta=meta, alias=alias)
-                # TODO: mount on `alias`
+                self.site.structure.root.create_page(
+                        page_cls=AliasPage,
+                        src=page.src,
+                        meta=meta,
+                        alias=alias,
+                        path=structure.Path.from_string(alias))
 
 
 class AliasPage(Page):

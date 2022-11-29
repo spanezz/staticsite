@@ -115,37 +115,26 @@ class Node:
         # Create the page, with some dependency injection
         if "meta" not in kw:
             kw["meta"] = self.meta.derive()
-        page = page_cls(site=self.site, src=src, **kw)
+        page = page_cls(site=self.site, src=src, node=self, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
         if self.src is None:
             self.src = src
-        self._attach_page(page)
+        self.page = page
+        self.site.structure.index(page)
         if build_as:
             page.build_node = self.at_path(build_as)
             page.build_node.page = page
         return page
 
-    def add_asset(self, *, src: file.File, name: str, parent_meta: Optional[Meta] = None) -> Asset:
+    def add_asset(self, *, src: file.File, name: str) -> Asset:
         """
         Add an Asset as a subnode of this one
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        if parent_meta is None:
-            parent_meta = self.page.meta
-        page = Asset.create(site=self.site, src=src, parent_meta=parent_meta, name=name)
-        self.child(name, src=src)._attach_page(page)
-        return page
-
-    def _attach_page(self, page: Page):
-        """
-        Attach a page to this node
-        """
-        page.node = self
-        page.build_node = self
-        self.page = page
-        self.site.structure.index(page)
+        return self.child(name, src=src).create_page(
+                page_cls=Asset, src=src, meta=self.meta.derive(), name=name)
 
     @contextlib.contextmanager
     def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:
