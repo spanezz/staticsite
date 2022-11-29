@@ -3,7 +3,11 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
+import markupsafe
+
 if TYPE_CHECKING:
+    import jinja2
+
     from .page import Page
     from .site import Site
 
@@ -113,7 +117,7 @@ class Metadata:
     def get_notes(self):
         return ()
 
-    def derive(self, src_meta: Meta, dst: dict[str, Any]):
+    def derive(self, meta: Meta):
         """
         Copy this metadata from src_meta to dst_meta, if needed
         """
@@ -166,10 +170,12 @@ class MetadataInherited(Metadata):
 
     def get_notes(self):
         yield from super().get_notes()
-        yield "Inherited from directory indices."
+        yield "Inherited from parent pages"
 
-    def derive(self, src_meta: Meta, dst: dict[str, Any]):
-        dst[self.name] = val = src_meta.get(self.name)
+    def derive(self, meta: Meta):
+        if meta.parent is None:
+            return None
+        meta.values[self.name] = val = meta.parent.get(self.name)
         return val
 
 
@@ -178,49 +184,47 @@ class MetadataTemplateInherited(Metadata):
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
     """
-    def __init__(self, *args, template_for: Optional[str] = None, **kw):
+    def __init__(self, *args, template: str, **kw):
         """
         :arg template_for: set to the name of another field, it documents that
                            this metadata is a template version of another
                            metadata
         """
         super().__init__(*args, **kw)
-        self.template_for: Optional[str] = template_for
+        self.template: str = template
         self.type = "jinja2"
 
     def get_notes(self):
         yield from super().get_notes()
-        yield "Inherited from directory indices."
-        yield f"Template for {self.template_for}"
+        yield "Inherited from parent pages"
+        yield f"Template: {self.template}"
 
-    def derive(self, src_meta: Meta, dst: dict[str, Any]):
-        if (val := src_meta.get(self.name)) is None:
-            dst[self.name] = None
-        elif isinstance(val, str):
-            dst[self.name] = self.site.theme.jinja2.from_string(val)
-        else:
-            dst[self.name] = val
-        return val
-
-    def on_load(self, page: Page):
+    def lookup_template(self, meta: Meta) -> Optional[jinja2.Template]:
         """
-        Hook for inheriting metadata entries from a parent page
+        Recursively find a template in meta or its parents
         """
-        import markupsafe
+        if (val := meta.values.get(self.template)):
+            if isinstance(val, str):
+                compiled = self.site.theme.jinja2.from_string(val)
+                # Replace with a compiled version, to need to compile it only
+                # once
+                meta.values[self.template] = compiled
+                return compiled
+            else:
+                return val
+        if meta.parent is None:
+            return None
+        return self.lookup_template(meta.parent)
 
-        # If template_for exists, no need to render anything
-        if self.template_for in page.meta:
-            return
+    def derive(self, meta: Meta):
+        # Find the template to render this element
+        if (template := self.lookup_template(meta)) is None:
+            meta.values[self.name] = None
+            return None
 
-        # Find template in page or in parent dir
-        src = page.meta.get(self.name)
-        if src is None:
-            return
-
-        if isinstance(src, str):
-            src = self.site.theme.jinja2.from_string(src)
-
-        page.meta[self.template_for] = markupsafe.Markup(page.render_template(src))
+        rendered = markupsafe.Markup(template.render(page={"meta": meta}))
+        meta.values[self.name] = rendered
+        return rendered
 
 
 class MetadataDate(Metadata):
@@ -228,14 +232,14 @@ class MetadataDate(Metadata):
     Make sure, on page load, that the element is a valid aware datetime object
     """
     def on_load(self, page: Page):
-        date = page.meta.get(self.name)
+        date = page.meta.values.get(self.name)
         if date is None:
             if page.src is not None and page.src.stat is not None:
-                page.meta[self.name] = self.site.localized_timestamp(page.src.stat.st_mtime)
+                page.meta.values[self.name] = self.site.localized_timestamp(page.src.stat.st_mtime)
             else:
-                page.meta[self.name] = self.site.generation_time
+                page.meta.values[self.name] = self.site.generation_time
         else:
-            page.meta[self.name] = self.site.clean_date(date)
+            page.meta.values[self.name] = self.site.clean_date(date)
 
 
 class MetadataIndexed(Metadata):
@@ -305,7 +309,7 @@ class Meta:
             if self.parent is None:
                 # There is no parent to inherit this from
                 raise KeyError(key)
-            if (val := derive(self.parent, self.values)) is None:
+            if (val := derive(self)) is None:
                 # Derivation returned a missing
                 raise KeyError(key)
             return val
@@ -329,7 +333,7 @@ class Meta:
             if self.parent is None:
                 # There is no parent to inherit this from
                 return False
-            if derive(self.parent, self.values) is None:
+            if derive(self) is None:
                 # Derivation returned a missing
                 return False
             return True
@@ -349,7 +353,7 @@ class Meta:
             if self.parent is None:
                 # There is no parent to inherit this from
                 return default
-            if (val := derive(self.parent, self.values)) is None:
+            if (val := derive(self)) is None:
                 # Derivation returned a missing
                 return default
             return val
@@ -382,3 +386,16 @@ class Meta:
         Create a Meta element derived from this one
         """
         return Meta(self.registry, parent=self)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Return a dict with all the values of this Meta, including the inherited
+        ones
+        """
+        # Resolve all derived values
+        if self.parent is not None:
+            for name, func in self.registry.derive_functions.items():
+                if name not in self.values:
+                    func(self)
+
+        return {k: v for k, v in self.values.items() if v is not None}

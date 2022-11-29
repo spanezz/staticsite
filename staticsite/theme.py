@@ -323,11 +323,11 @@ class Theme:
         if self.metadata_templates is None:
             self.metadata_templates = [m for m in self.site.metadata.values() if m.type == "jinja2"]
         for metadata in self.metadata_templates:
-            val = meta.get(metadata.name)
+            val = meta.values.get(metadata.template)
             if val is None:
                 continue
             if isinstance(val, str):
-                meta[metadata.name] = self.jinja2.from_string(val)
+                meta.values[metadata.template] = self.jinja2.from_string(val)
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)

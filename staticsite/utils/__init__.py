@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Union, Any, List, Tuple, Set, Dict, Optional
 from .. import page
+from ..metadata import Meta
 import heapq
 import contextlib
 import functools
@@ -75,6 +76,8 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
         return f"{val.__class__.__name__}({val})"
     elif isinstance(val, dict):
         return {k: dump_meta(v) for k, v in val.items()}
+    elif isinstance(val, Meta):
+        return {k: dump_meta(v) for k, v in val.to_dict().items()}
     elif isinstance(val, (list, tuple, set)):
         return [dump_meta(v) for v in val]
     elif isinstance(val, jinja2.Template):

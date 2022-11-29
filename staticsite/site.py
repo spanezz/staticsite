@@ -144,10 +144,10 @@ It defaults to false, or true if `page.meta.date` is in the future.
 
             If not found, it defaults to the current user's name.
         """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_copyright", template_for="copyright",
+        self.register_metadata(metadata.MetadataTemplateInherited("copyright", template="template_copyright",
                                doc="""
-If set instead of `copyright`, it is a jinja2 template used to generate the
-copyright information.
+If `template_copyright` is set instead of `copyright`, it is a jinja2 template
+used to generate the copyright information.
 
 The template context will have `page` available, with the current page. The
 result of the template will not be further escaped, so you can use HTML markup
@@ -155,17 +155,14 @@ in it.
 
 If missing, defaults to `"© {{page.meta.date.year}} {{page.meta.author}}"`
 """))
-        self.register_metadata(metadata.MetadataInherited("copyright", doc="""
-            A string with the copyright information for this page.
-        """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_title", template_for="title", doc="""
-If set instead of `title`, it is a jinja2 template used to generate the title.
-The template context will have `page` available, with the current page. The
-result of the template will not be further escaped, so you can use HTML markup
-in it.
-"""))
-        self.register_metadata(metadata.MetadataInherited("title", doc="""
+        self.register_metadata(metadata.MetadataTemplateInherited("title", template="template_title", doc="""
 The page title.
+
+If `template_title` is set instead of `title`, it is a jinja2 template used to
+generate the title. The template context will have `page` available, with the
+current page. The result of the template will not be further escaped, so you
+can use HTML markup
+in it.
 
 If omitted:
 
@@ -176,15 +173,14 @@ If omitted:
    inherited.
  * if still no title can be found, the site name is used as a default.
 """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_description", template_for="description",
+        self.register_metadata(metadata.MetadataTemplateInherited("description", template="template_description",
                                doc="""
-If set instead of `description`, it is a jinja2 template used to generate the
-description. The template context will have `page` available, with the current
-page. The result of the template will not be further escaped, so you can use
-HTML markup in it.
-"""))
-        self.register_metadata(metadata.MetadataInherited("description", doc="""
 The page description. If omitted, the page will have no description.
+
+If `template_description` is set instead of `description`, it is a jinja2
+template used to generate the description. The template context will have
+`page` available, with the current page. The result of the template will not be
+further escaped, so you can use HTML markup in it.
 """))
 
         self.register_metadata(Metadata("build_path", doc="""
