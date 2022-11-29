@@ -217,15 +217,17 @@ class MetadataTemplateInherited(Metadata):
         return self.lookup_template(meta.parent)
 
     def derive(self, meta: Meta):
-        # Find the template to render this element
-        if (template := self.lookup_template(meta)) is None:
-            meta.values[self.name] = None
-            return None
+        # If a template exists, render without looking for a parent element
+        if (template := self.lookup_template(meta)) is not None:
+            val = markupsafe.Markup(template.render(meta=meta, page={"meta": meta}))
+            meta.values[self.name] = val
+            return val
 
-        # TODO: remove the page compatibility context entry
-        rendered = markupsafe.Markup(template.render(meta=meta, page={"meta": meta}))
-        meta.values[self.name] = rendered
-        return rendered
+        # Else fallback to plain inheritance
+        if meta.parent is None:
+            return None
+        meta.values[self.name] = val = meta.parent.get(self.name)
+        return val
 
 
 class MetadataDate(Metadata):
