@@ -1,19 +1,22 @@
 from __future__ import annotations
-from typing import Optional, Union, TYPE_CHECKING
-import os
+
 import datetime
-import pytz
-import dateutil.parser
+import logging
+import os
 import re
 import warnings
-from .settings import Settings
+from functools import cached_property
+from typing import TYPE_CHECKING, Optional, Union
+
+import dateutil.parser
+import pytz
+
+from . import metadata, scan, structure
 from .cache import Caches, DisabledCaches
-from .utils import lazy, timings
-from . import metadata
-from .metadata import Metadata, Meta
-from . import scan, structure
 from .file import File
-import logging
+from .metadata import Meta, Metadata
+from .settings import Settings
+from .utils import timings
 
 if TYPE_CHECKING:
     from .page import Page
@@ -252,7 +255,7 @@ It defaults to true at least for [Markdown](markdown.md),
             log.warn("register_metadata called after content directory has been scanned")
         self.metadata.add(metadata)
 
-    @lazy
+    @cached_property
     def archetypes(self) -> "archetypes.Archetypes":
         """
         Archetypes defined in the site

@@ -4,7 +4,6 @@ from .. import page
 from ..metadata import Meta
 import heapq
 import contextlib
-import functools
 import time
 import logging
 import os
@@ -86,29 +85,6 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
         return dump_meta(val.to_dict())
     else:
         return str(val)
-
-
-class lazy:
-    """
-    Mark a function as a lazy property.
-
-    The first time the property is run, it is replaced by the value it
-    computed, and turned into a normal member.
-    """
-    # from: https://stackoverflow.com/questions/3012421/python-memoising-deferred-lookup-property-decorator
-    # see also: https://docs.python.org/3/howto/descriptor.html
-
-    def __init__(self, fget):
-        self.fget = fget
-        functools.update_wrapper(self, fget)
-
-    def __get__(self, obj, cls=None):
-        if obj is None:
-            return self
-
-        value = self.fget(obj)
-        setattr(obj, self.fget.__name__, value)
-        return value
 
 
 @contextlib.contextmanager

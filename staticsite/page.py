@@ -1,20 +1,23 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any, Optional, Union, List
-import os
+
 import logging
+import os
 import warnings
+from functools import cached_property
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from urllib.parse import urlparse, urlunparse
-from .utils import lazy
-from .render import RenderedString
-from . import structure
+
 import jinja2
 import markupsafe
 
+from . import structure
+from .render import RenderedString
+
 if TYPE_CHECKING:
-    from .render import RenderedElement
-    from .site import Site
     from .file import File
     from .metadata import Meta
+    from .render import RenderedElement
+    from .site import Site
 
 log = logging.getLogger("page")
 
@@ -143,7 +146,7 @@ class Page:
         if "site_url" not in self.meta:
             raise PageMissesFieldError(self, "site_url")
 
-    @lazy
+    @cached_property
     def page_template(self):
         template = self.meta["template"]
         if isinstance(template, jinja2.Template):
