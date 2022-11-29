@@ -213,6 +213,7 @@ class TaxonomyPage(Page):
             category_meta["created_from"] = self
 
             category_page = self.node.create_page(
+                src=self.src,
                 page_cls=CategoryPage,
                 meta=category_meta,
                 name=category,

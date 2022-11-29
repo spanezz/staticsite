@@ -54,6 +54,7 @@ class LinkIndexPage(Page):
 
             page = sub.create_page(
                     page_cls=LinksTagPage,
+                    src=self.src,
                     meta=meta,
                     links=links)
             self.by_tag[tag] = page
