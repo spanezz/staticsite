@@ -298,8 +298,23 @@ class Meta:
         self.parent = parent
         self.values: dict[str, Any] = {}
 
+    def _deduplicated_repr(self, seen: set[str]):
+        values = {}
+        for k, v in self.values.items():
+            if k in seen:
+                continue
+            seen.add(k)
+            if isinstance(v, Meta):
+                values[k] = "<Meta>"
+            else:
+                values[k] = v
+        if self.parent is not None:
+            return f"({values!r}, parent={self.parent._deduplicated_repr(seen)})"
+        else:
+            return f"{values!r}"
+
     def __repr__(self):
-        return f"{self.values=!r},{self.parent=!r}"
+        return self._deduplicated_repr(set())
 
     def __getitem__(self, key: str) -> Any:
         """
