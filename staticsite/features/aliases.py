@@ -40,7 +40,9 @@ existing links when moving a page to a different location.
                 continue
 
             for alias in aliases:
-                page = AliasPage.create_from(page, meta=page.meta.derive(), alias=alias)
+                meta = page.meta.derive()
+                meta["created_from"] = page
+                alias_page = AliasPage(site=self.site, src=page.src, meta=meta, alias=alias)
                 # TODO: mount on `alias`
 
 

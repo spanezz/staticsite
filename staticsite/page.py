@@ -68,17 +68,6 @@ class Page:
         # True if this page can render a short version of itself
         self.content_has_split = False
 
-    @classmethod
-    def create_from(cls, page: "Page", meta: Meta, **kw):
-        """
-        Generate this page derived from an existing one
-        """
-        # If page is the root dir, it has dir set to None, and we can use it as dir
-        new_meta = page.meta.derive()
-        new_meta.update(meta.values)
-        new_meta["created_from"] = page
-        return cls(page.site, src=page.src, meta=new_meta, created_from=page, **kw)
-
     @property
     def created_from(self) -> Optional[Page]:
         """
