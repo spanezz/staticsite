@@ -1,9 +1,16 @@
 from __future__ import annotations
-from typing import Optional, Any, Tuple, Callable, List, Iterable, Union, FrozenSet
+
 import fnmatch
+import os
 import re
-from .page import Page
+from typing import (TYPE_CHECKING, Any, Callable, FrozenSet, Iterable,
+                    Optional, Union)
+
 from . import site
+from .page import Page
+
+if TYPE_CHECKING:
+    from . import structure
 
 
 def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
@@ -24,7 +31,7 @@ def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
     return re.compile(fnmatch.translate(pattern))
 
 
-def sort_args(sort: Optional[str]) -> Tuple[Optional[str], bool, Optional[Callable[[Page], Any]]]:
+def sort_args(sort: Optional[str]) -> tuple[Optional[str], bool, Optional[Callable[[Page], Any]]]:
     """
     Parse a page sort string, returning a tuple of:
     * which page metadata is used for sorting, or None if sorting is not based
@@ -66,10 +73,10 @@ class PageFilter:
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
-            root: Optional[str] = None,
+            root: Optional[structure.Node] = None,
             **kw):
         self.site = site
-        self.root = root + "/" if root is not None else None
+        self.root = root
 
         if path is not None:
             self.re_path = compile_page_match(path)
@@ -78,7 +85,7 @@ class PageFilter:
 
         self.sort_meta, self.sort_reverse, self.sort_key = sort_args(sort)
 
-        self.taxonomy_filters: List[Tuple[str, FrozenSet[str]]] = []
+        self.taxonomy_filters: list[tuple[str, FrozenSet[str]]] = []
         for taxonomy in self.site.features["taxonomy"].taxonomies.values():
             t_filter = kw.get(taxonomy.name)
             if t_filter is None:
@@ -87,25 +94,33 @@ class PageFilter:
 
         self.limit = limit
 
-        # print(f"PageFilter({path=!r}, {root=!r}, {self.re_path=!r}, {self.taxonomy_filters=} ya")
+        # print(f"PageFilter({path=!r}, {self.root=!r}, {self.re_path=!r}, {self.taxonomy_filters=} ya")
 
-    def filter(self, all_pages: Iterable[Page]) -> List[Page]:
+    def filter(self, all_pages: Iterable[Page]) -> list[Page]:
+        # print("PageFilter.filter")
         pages = []
 
         for page in all_pages:
             if not page.meta["indexed"]:
                 continue
+            if self.root and not self.root.contains(page):
+                continue
             if self.re_path is not None:
                 if page.src is None:
                     continue
-                page_path = page.src.relpath
-                if self.root is not None:
-                    if not page_path.startswith(self.root):
-                        continue
-                    page_path = page_path[len(self.root):]
+                if self.root:
+                    if self.root.src:
+                        page_path = os.path.relpath(page.src.relpath, start=self.root.src.relpath)
+                    else:
+                        page_path = os.path.relpath(page.src.relpath, start=self.root.compute_path())
+                else:
+                    page_path = page.src.relpath
+                # print(f"  {page=!r} {page.src=} {page_path}")
                 if not self.re_path.match(page_path):
                     # print(f"  {page=!r} {page_path=!r} did not match {self.re_path=}")
                     continue
+                # else:
+                    # print(f"  {page=!r} {page_path=!r} matched {self.re_path=}")
             if self.sort_meta is not None and self.sort_meta not in page.meta:
                 continue
             fail_taxonomies = False

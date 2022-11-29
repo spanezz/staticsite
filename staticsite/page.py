@@ -170,11 +170,10 @@ class Page:
         this page
         """
         if root is None:
-            if self.node.src is not None:
-                if self.node.src.relpath:
-                    root = self.node.src.relpath
+            if self.directory_index:
+                root = self.node
             else:
-                root = self.node.compute_path()
+                root = self.node.parent
 
         # print(f"find_pages {root=}, {path=!r}")
 

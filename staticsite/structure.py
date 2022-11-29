@@ -185,6 +185,18 @@ class Node:
         else:
             return self.child(path.head).at_path(path.tail)
 
+    def contains(self, page: Page) -> bool:
+        """
+        Check if page is contained in or under this node
+        """
+        # Walk the parent chain of page.node to see if we find self
+        node = page.node
+        while node is not None:
+            if node == self:
+                return True
+            node = node.parent
+        return False
+
 
 class Structure:
     """
