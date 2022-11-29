@@ -90,7 +90,7 @@ This is used to group data of the same type together, and to choose a
             page_name = fname[:-len(mo.group(0))]
             meta.update(fm_meta)
 
-            if page_name == "index":
+            if (directory_index := page_name == "index"):
                 path = structure.Path()
             else:
                 path = structure.Path((page_name,))
@@ -99,6 +99,7 @@ This is used to group data of the same type together, and to choose a
                 page_cls=self.page_class_by_type.get(data_type, DataPage),
                 src=src,
                 meta=meta,
+                directory_index=directory_index,
                 path=path,
                 build_as=structure.Path(("index.html",)))
             pages.append(page)

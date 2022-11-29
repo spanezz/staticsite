@@ -52,7 +52,7 @@ class Page:
             meta: Meta,
             node: structure.Node,
             src: Optional[File] = None,
-            created_from: Optional["Page"] = None):
+            directory_index: bool = False):
         # Site for this page
         self.site = site
         # structure.Node where this page is installed in the rendered structure
@@ -65,6 +65,9 @@ class Page:
         # A dictionary with the page metadata. See the README for documentation
         # about its contents.
         self.meta: Meta = meta
+        # Set to True if this page is a directory index. This affects the root
+        # of page lookups relative to this page
+        self.directory_index = directory_index
 
         # True if this page can render a short version of itself
         self.content_has_split = False

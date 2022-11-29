@@ -164,7 +164,7 @@ class RestructuredText(Feature):
 
             meta.update(fm_meta)
 
-            if fname in ("index.rst", "README.rst"):
+            if (directory_index := fname in ("index.rst", "README.rst")):
                 path = structure.Path()
             else:
                 path = structure.Path((fname[:-4],))
@@ -175,6 +175,7 @@ class RestructuredText(Feature):
                     meta=meta,
                     feature=self,
                     doctree_scan=doctree_scan,
+                    directory_index=directory_index,
                     path=path,
                     build_as=structure.Path(("index.html",)))
             pages.append(page)

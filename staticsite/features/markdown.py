@@ -234,7 +234,7 @@ class MarkdownPages(Feature):
 
             meta.update(fm_meta)
 
-            if fname in ("index.md", "README.md"):
+            if (directory_index := fname in ("index.md", "README.md")):
                 path = structure.Path()
             else:
                 path = structure.Path((fname[:-3],))
@@ -245,6 +245,7 @@ class MarkdownPages(Feature):
                     meta=meta,
                     feature=self,
                     body=body,
+                    directory_index=directory_index,
                     path=path,
                     build_as=structure.Path(("index.html",)))
             pages.append(page)

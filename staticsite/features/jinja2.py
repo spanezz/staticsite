@@ -90,7 +90,7 @@ class J2Pages(Feature):
             if front_matter:
                 meta.update(front_matter)
 
-            if fname == "index.html":
+            if (directory_index := fname == "index.html"):
                 path = structure.Path()
                 build_as = structure.Path(("index.html",))
             else:
@@ -104,6 +104,7 @@ class J2Pages(Feature):
                     src=src,
                     meta=meta,
                     template=template,
+                    directory_index=directory_index,
                     path=path,
                     build_as=build_as)
             pages.append(page)
