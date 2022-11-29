@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional, Union, Sequence, Dict, Set
+from typing import List, Optional, Union, Sequence, Dict, Set, Any
 import jinja2
 import markupsafe
 import os
@@ -315,7 +315,7 @@ class Theme:
                 meta=root_meta,
             )
 
-    def precompile_metadata_templates(self, meta: Meta):
+    def precompile_metadata_templates(self, values: dict[str, Any]):
         """
         Precompile all the elements of the given metadata that are jinja2
         template strings
@@ -323,11 +323,11 @@ class Theme:
         if self.metadata_templates is None:
             self.metadata_templates = [m for m in self.site.metadata.values() if m.type == "jinja2"]
         for metadata in self.metadata_templates:
-            val = meta.values.get(metadata.template)
+            val = values.get(metadata.template)
             if val is None:
                 continue
             if isinstance(val, str):
-                meta.values[metadata.template] = self.jinja2.from_string(val)
+                values[metadata.template] = self.jinja2.from_string(val)
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)
