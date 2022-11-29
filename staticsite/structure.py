@@ -212,7 +212,7 @@ class Structure:
             # elif old.TYPE == "dir" and page.TYPE not in ("dir", "asset"):
             #     pass
             else:
-                log.warn("%s: replacing page %s", page, old)
+                log.warn("%r: replacing page %r", page, old)
         self.pages[site_path] = page
 
         # Mount page by src.relpath

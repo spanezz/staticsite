@@ -97,10 +97,10 @@ class J2Pages(Feature):
                 page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
                 # Is this still needed?
                 fname = fname.replace(".j2", "")
-                node.add_page(page, src=src, path=structure.Path(fname))
+                node.add_page(page, src=src, path=structure.Path((fname,)))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                node.add_page(page, path=structure.Path("index.html"))
+                node.add_page(page, path=structure.Path(("index.html",)))
 
         for fname in taken:
             del files[fname]

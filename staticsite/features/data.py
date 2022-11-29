@@ -99,7 +99,7 @@ This is used to group data of the same type together, and to choose a
                 node.add_page(page, src=src, path=structure.Path(page_name, "index.html"))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                node.add_page(page, path=structure.Path("index.html"))
+                node.add_page(page, path=structure.Path(("index.html",)))
 
         for fname in taken:
             del files[fname]

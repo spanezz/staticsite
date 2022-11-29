@@ -84,7 +84,7 @@ extension), that image is used.
 
             page.meta["site_path"] = os.path.join(directory.meta["site_path"], fname)
             page.meta["build_path"] = page.meta["site_path"]
-            node.add_page(page, src=src, path=structure.Path(fname))
+            node.add_page(page, src=src, path=structure.Path((fname,)))
 
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")

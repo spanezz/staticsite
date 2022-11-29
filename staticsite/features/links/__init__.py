@@ -134,7 +134,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
             pages.append(page)
 
             page.meta["site_path"] = os.path.join(directory.meta["site_path"], name)
-            node.add_page(page, src=src, path=structure.Path(name))
+            node.add_page(page, src=src, path=structure.Path((name,)))
 
             self.indices.append(page)
 

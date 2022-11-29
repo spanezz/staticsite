@@ -134,7 +134,6 @@ Base URL for the site, used to generate an absolute URL to the page.
 
 ### `site_path`
 
-
 Where a content directory appears in the site.
 
 By default, is is the `site_path` of the parent directory, plus the directory

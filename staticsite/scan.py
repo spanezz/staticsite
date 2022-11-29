@@ -193,7 +193,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         if not files_meta:
             break
 
-    if node.page is None:
+    if not node.sub or "index.html" not in node.sub:
         dirindex.Dir.create(node, directory)
 
     # Use everything else as an asset

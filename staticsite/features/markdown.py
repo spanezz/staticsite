@@ -242,7 +242,7 @@ class MarkdownPages(Feature):
                 node.add_page(page, src=src, path=structure.Path((fname[:-3], "index.html")))
             else:
                 page.meta["site_path"] = directory.meta["site_path"]
-                node.add_page(page, src=src, path=structure.Path("index.html"))
+                node.add_page(page, src=src, path=structure.Path(("index.html",)))
 
         for fname in taken:
             del files[fname]
