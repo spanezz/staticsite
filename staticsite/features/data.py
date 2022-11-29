@@ -90,15 +90,18 @@ This is used to group data of the same type together, and to choose a
             page_name = fname[:-len(mo.group(0))]
             meta.update(fm_meta)
 
-            cls = self.page_class_by_type.get(data_type, DataPage)
-            page = cls(self.site, src=src, meta=meta)
-            pages.append(page)
-
             if page_name == "index":
-                node.add_page(page, src=src)
+                path = structure.Path()
             else:
-                node.add_page(page, src=src, path=structure.Path((page_name,)))
-            page.build_as("index.html")
+                path = structure.Path((page_name,))
+
+            page = node.create_page(
+                page_cls=self.page_class_by_type.get(data_type, DataPage),
+                src=src,
+                meta=meta,
+                path=path,
+                build_as=structure.Path(("index.html",)))
+            pages.append(page)
 
         for fname in taken:
             del files[fname]

@@ -90,10 +90,13 @@ extension), that image is used.
             img_meta = self.scanner.scan(src, mimetype)
             meta.update(img_meta)
 
-            page = Image(self.site, src=src, meta=meta, mimetype=mimetype)
+            page = node.create_page(
+                page_cls=Image,
+                src=src,
+                meta=meta,
+                mimetype=mimetype,
+                path=structure.Path((fname,)))
             pages.append(page)
-
-            node.add_page(page, src=src, path=structure.Path((fname,)))
 
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
@@ -110,12 +113,20 @@ extension), that image is used.
                     rel_meta.pop("width", None)
                     rel_meta.pop("height", None)
                     rel_meta.update(info)
-                    scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
-                    pages.append(scaled)
+                    rel_meta["created_from"] = page
 
                     base, ext = os.path.splitext(fname)
                     scaled_fname = f"{base}-{name}{ext}"
-                    node.add_page(scaled, src=src, path=structure.Path((scaled_fname,)))
+
+                    scaled = node.create_page(
+                        page_cls=ScaledImage,
+                        meta=rel_meta,
+                        src=src,
+                        mimetype=mimetype,
+                        name=name,
+                        info=info,
+                        path=structure.Path((scaled_fname,)))
+                    pages.append(scaled)
 
             self.nodes_with_images.add(node)
 
