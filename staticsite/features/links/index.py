@@ -50,10 +50,13 @@ class LinkIndexPage(Page):
             meta["data_type"] = "links"
             meta["title"] = f"{tag} links"
             meta["links"] = links
-            page = LinksTagPage.create_from(self, meta=meta, links=links)
-            self.by_tag[tag] = page
+            meta["created_from"] = self
 
-            sub.add_page(page)
+            page = sub.create_page(
+                    page_cls=LinksTagPage,
+                    meta=meta,
+                    links=links)
+            self.by_tag[tag] = page
             pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories

@@ -129,10 +129,14 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
                 continue
             meta.update(fm_meta)
 
-            page = LinkIndexPage(self.site, src=src, meta=meta, name=name, links=self)
+            page = node.create_page(
+                    page_cls=LinkIndexPage,
+                    src=src,
+                    meta=meta,
+                    name=name,
+                    links=self,
+                    path=structure.Path((name,)))
             pages.append(page)
-
-            node.add_page(page, src=src, path=structure.Path((name,)))
 
             self.indices.append(page)
 
