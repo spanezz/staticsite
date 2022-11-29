@@ -80,7 +80,6 @@ class SyndicationFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.structure.tracked_metadata.add("syndication")
         self.site.features["rst"].yaml_tags.add("syndication")
         self.site.register_metadata(Metadata("syndication", structure=True, doc="""
 Defines syndication for the contents of this page.
@@ -117,6 +116,8 @@ syndication:
     template: archive.html
 ```
 """))
+        self.site.structure.add_tracked_metadata("syndication")
+
         self.site.register_metadata(MetadataSyndicated("syndicated", doc="""
 Set to true if the page can be included in a syndication, else to false.
 

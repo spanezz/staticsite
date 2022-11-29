@@ -35,8 +35,6 @@ class TaxonomyFeature(Feature):
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
     def register_taxonomy_name(self, name):
-        self.known_taxonomies.add(name)
-        self.site.structure.tracked_metadata.add(name)
         # Note that if we want to make the tags inheritable, we need to
         # interface with 'rst' (or 'rst' to interface with us) because rst
         # needs to know which metadata items are taxonomies in order to parse
@@ -49,6 +47,8 @@ List of categories for the `{name}` taxonomy.
 Setting this as a simple string is the same as setting it as a list of one
 element.
 """))
+        self.known_taxonomies.add(name)
+        self.site.structure.add_tracked_metadata(name)
 
     def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
         for fname in directory.files.keys():

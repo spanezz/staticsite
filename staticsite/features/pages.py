@@ -12,7 +12,6 @@ class PagesFeature(Feature):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.structure.tracked_metadata.add("pages")
         self.site.register_metadata(Metadata("pages", structure=True, doc="""
 The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
@@ -27,6 +26,7 @@ in the site, with the `path`, and taxonomy names arguments similar to the
 
 See [Selecting pages](page-filter.md) for details.
 """))
+        self.site.structure.add_tracked_metadata("pages")
 
     def analyze(self):
         # Expand pages expressions

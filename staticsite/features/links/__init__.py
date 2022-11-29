@@ -86,7 +86,6 @@ class Links(Feature):
         self.data.register_page_class("links", LinksPage)
 
         # Collect 'links' metadata
-        self.site.structure.tracked_metadata.add("links")
         self.site.register_metadata(MetadataLinks("links", doc="""
 Extra metadata for external links.
 
@@ -100,6 +99,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
 * `related`: List[Dict[str, str]]: other related links, as a list of dicts with
   `title` and `url` keys
 """))
+        self.site.structure.add_tracked_metadata("links")
 
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []

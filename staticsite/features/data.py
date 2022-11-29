@@ -43,7 +43,6 @@ class DataPages(Feature):
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
-        self.site.structure.tracked_metadata.add("data_type")
 
         self.site.register_metadata(Metadata("data_type", doc="""
 Type of data for this file.
@@ -51,6 +50,7 @@ Type of data for this file.
 This is used to group data of the same type together, and to choose a
 `data-[data_type].html` rendering template.
 """))
+        self.site.structure.add_tracked_metadata("data_type")
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls

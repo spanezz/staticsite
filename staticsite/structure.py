@@ -154,6 +154,22 @@ class Structure:
         # Site pages indexed by src.relpath
         self.pages_by_src_relpath: dict[str, Page] = {}
 
+    def add_tracked_metadata(self, name: str):
+        """
+        Mark the given metadata name so that we track pages that have it.
+
+        Reindex existing pages, if any
+        """
+        if name in self.tracked_metadata:
+            return
+
+        self.tracked_metadata.add(name)
+
+        # Redo indexing for existing pages
+        for page in self.pages.values():
+            if name in page.meta:
+                self.pages_by_metadata[name].append(page)
+
     def add_generated_page(self, page: Page, site_path: str):
         """
         Add a generated page at the given path
