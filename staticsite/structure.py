@@ -113,6 +113,7 @@ class Node:
             meta_values: Optional[dict[str, Any]] = None,
             created_from: Optional[Page] = None,
             **kw):
+        from . import dirindex
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
@@ -127,7 +128,7 @@ class Node:
             meta = created_from.meta.derive()
             if src is None:
                 src = created_from.src
-        elif directory_index:
+        elif directory_index and page_cls != dirindex.Dir:
             meta = self.meta
         else:
             meta = self.meta.derive()
@@ -154,6 +155,18 @@ class Node:
         # Import here to avoid cyclical imports
         from .asset import Asset
         return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name)
+
+    def add_directory_index(self):
+        """
+        Add a directory index to this node
+        """
+        from . import dirindex
+        return self.create_page(
+            page_cls=dirindex.Dir,
+            name=self.name,
+            directory_index=True,
+            src=self.src,
+            build_as=Path(("index.html",)))
 
     @contextlib.contextmanager
     def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:

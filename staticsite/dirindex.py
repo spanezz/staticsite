@@ -3,11 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from . import structure
 from .page import Page
 
 if TYPE_CHECKING:
-    from . import file, scan
+    from . import file
     from .site import Site
 
 log = logging.getLogger("dir")
@@ -50,12 +49,3 @@ class Dir(Page):
             self.dir = self
         self.meta["parent"] = self.dir
         self.meta["pages"] = pages
-
-    @classmethod
-    def create(cls, node: structure.Node, directory: scan.Directory):
-        return node.create_page(
-            page_cls=cls,
-            name=node.name,
-            directory_index=True,
-            src=directory.src,
-            build_as=structure.Path(("index.html",)))

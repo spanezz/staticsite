@@ -8,7 +8,7 @@ import re
 import stat
 from typing import TYPE_CHECKING, Any, Optional
 
-from . import dirindex, file, structure
+from . import file, structure
 from .metadata import Meta
 from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
@@ -193,7 +193,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
     dir_index: Optional[Page] = None
     if not node.sub or "index.html" not in node.sub:
-        dir_index = dirindex.Dir.create(node, directory)
+        dir_index = node.add_directory_index()
 
     # Use everything else as an asset
     # TODO: move into an asset feature?
