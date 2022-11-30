@@ -57,6 +57,7 @@ class TestSite(TestCase):
                     "draft": False,
                     'author': "Test User",
                     'copyright': '© 2019 Test User',
+                    'template_copyright': 'compiled:None',
                     'indexed': True,
                     'syndicated': True,
                     'syndication': {'atom_page': 'AtomPage(index.atom)',
@@ -97,6 +98,8 @@ class TestSite(TestCase):
                     "draft": False,
                     'author': "Test User",
                     'copyright': '© 2019 Test User',
+                    'created_from': 'MarkdownPage()',
+                    'index': 'MarkdownPage()',
                     'indexed': False,
                     'syndicated': False,
                     'pages': ['MarkdownPage(posts/example)'],
@@ -121,6 +124,7 @@ class TestSite(TestCase):
                 'site_path': 'index.rss',
                 "build_path": "index.rss",
                 "meta": {
+                    'created_from': 'MarkdownPage()',
                     "date": '2019-12-30 17:30:00+01:00',
                     "draft": False,
                     'index': 'MarkdownPage()',
@@ -129,6 +133,7 @@ class TestSite(TestCase):
                     'indexed': False,
                     'syndicated': False,
                     'pages': ['MarkdownPage(posts/example)'],
+                    'rss_page': 'RSSPage(index.rss)',
                     'site_name': 'My example blog',
                     'site_url': 'https://www.example.org',
                     'template': 'syndication.rss',
@@ -139,9 +144,7 @@ class TestSite(TestCase):
                 "type": "rss",
             })
             # A feed page renders images, all of a split page, absolute site urls
-            rendered = site.pages["index.rss"].render()
-            self.assertCountEqual(rendered.keys(), ["index.rss"])
-            rendered = rendered["index.rss"].content()
+            rendered = site.pages["index.rss"].render().content()
             self.assertIn(b"src=&#39;https://www.example.org/posts/example-small.jpg", rendered)
             self.assertIn(b"This is the rest of the blog post", rendered)
 
@@ -182,6 +185,7 @@ class TestSite(TestCase):
                 'site_path': 'posts/example-small.jpg',
                 "build_path": "posts/example-small.jpg",
                 "meta": {
+                    'created_from': 'Image(posts/example.jpg)',
                     "date": '2019-06-01 12:30:00+02:00',
                     "draft": False,
                     'author': "Test User",
@@ -208,6 +212,7 @@ class TestSite(TestCase):
                 'site_path': 'posts/example-thumbnail.jpg',
                 "build_path": "posts/example-thumbnail.jpg",
                 "meta": {
+                    'created_from': 'Image(posts/example.jpg)',
                     "date": '2019-06-01 12:30:00+02:00',
                     "draft": False,
                     'author': "Test User",

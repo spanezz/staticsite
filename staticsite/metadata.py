@@ -411,9 +411,8 @@ class Meta:
         ones
         """
         # Resolve all derived values
-        if self.parent is not None:
-            for name, func in self.registry.derive_functions.items():
-                if name not in self.values:
-                    func(self)
+        for name, func in self.registry.derive_functions.items():
+            if name not in self.values:
+                func(self)
 
         return {k: v for k, v in self.values.items() if v is not None}
