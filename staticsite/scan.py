@@ -16,6 +16,7 @@ from .metadata import Meta
 if TYPE_CHECKING:
     from . import structure
     from .site import Site
+    from .page import Page
 
 log = logging.getLogger("scan")
 
@@ -187,8 +188,9 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         if not files_meta:
             break
 
+    dir_index: Optional[Page] = None
     if not node.sub or "index.html" not in node.sub:
-        dirindex.Dir.create(node, directory)
+        dir_index = dirindex.Dir.create(node, directory)
 
     # Use everything else as an asset
     # TODO: move into an asset feature?
@@ -208,6 +210,9 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         # Recursively descend into the directory
         with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:
             scan(site=site, directory=Directory(src, subdir_fd), node=dir_node)
+
+    if dir_index:
+        dir_index.analyze()
 
     # TODO: warn of contents not loaded at this point?
 

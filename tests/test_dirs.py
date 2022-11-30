@@ -31,8 +31,8 @@ class TestDirs(TestCase):
             # Check the contents of all dirs
             self.assertCountEqual(dir_root.meta["pages"], [site.pages["page_root"]])
             self.assertCountEqual(dir_root.subdirs, [dir_dir1])
-            self.assertIsNone(dir_root.dir)
-            self.assertIsNone(dir_root.meta["parent"])
+            self.assertEqual(dir_root.dir, dir_root)
+            self.assertEqual(dir_root.meta["parent"], dir_root)
             self.assertEqual(dir_root.meta["title"], "Test site")
 
             self.assertCountEqual(dir_dir1.meta["pages"], [site.pages["dir1/page_sub"]])

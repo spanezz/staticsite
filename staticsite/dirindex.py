@@ -20,7 +20,7 @@ class Dir(Page):
     TYPE = "dir"
 
     def __init__(self, site: Site, *, name: Optional[str] = None, **kw):
-        super().__init__(site, **kw)
+        super().__init__(site, directory_index=True, **kw)
         # Directory name
         self.name: Optional[str] = name
         # Subdirectory of this directory
@@ -28,8 +28,28 @@ class Dir(Page):
         # Files found in this directory
         self.files: dict[str, file.File] = {}
 
-        # Pages loaded from this directory
-        self.pages = []
+        if self.node != self.site.structure.root:
+            self.meta.setdefault("title", self.name)
+
+        # Parent directory
+        self.dir: Optional[Page] = None
+        self.subdirs: list[Page] = []
+
+    def analyze(self):
+        pages: list[Page] = []
+        for name, sub in self.node.sub.items():
+            if sub.page and sub.page != self:  # self is always a subpage because of build_as
+                if sub.page.directory_index:
+                    self.subdirs.append(sub.page)
+                else:
+                    pages.append(sub.page)
+
+        if self.node.parent and self.node.parent.page:
+            self.dir = self.node.parent.page
+        else:
+            self.dir = self
+        self.meta["parent"] = self.dir
+        self.meta["pages"] = pages
 
     @classmethod
     def create(cls, node: structure.Node, directory: scan.Directory):
