@@ -1,20 +1,22 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Any
-import jinja2
+
 import json
 import logging
 from collections import defaultdict
+from typing import TYPE_CHECKING, Any, List
+
+import jinja2
+
 from staticsite import structure
-from staticsite.metadata import Metadata
 from staticsite.feature import Feature
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
+from staticsite.metadata import Metadata
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
-    from staticsite import Page, scan, file
-    from staticsite.metadata import Meta
+    from staticsite import Page, file, scan
 
 log = logging.getLogger("links")
 
@@ -108,14 +110,14 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
         Handle .links pages that generate the browseable archive of annotated
         external links
         """
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             if not fname.endswith(".links"):
                 continue
             taken.append(fname)
@@ -127,12 +129,12 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
             except Exception:
                 log.exception("%s: cannot parse taxonomy information", src.relpath)
                 continue
-            meta.update(fm_meta)
+            meta_values.update(fm_meta)
 
             page = node.create_page(
                     page_cls=LinkIndexPage,
                     src=src,
-                    meta=meta,
+                    meta_values=meta_values,
                     name=name,
                     links=self,
                     path=structure.Path((name,)))

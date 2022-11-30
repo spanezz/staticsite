@@ -291,9 +291,9 @@ class Theme:
         Load static assets
         """
         site_path = os.path.join(self.site.structure.root.meta["site_path"], self.site.settings.STATIC_PATH)
-        root = self.site.structure.root.at_path(structure.Path.from_string(self.site.settings.STATIC_PATH))
-        root.meta["asset"] = True
-        root.meta["site_path"] = site_path
+        root_node = self.site.structure.root.at_path(structure.Path.from_string(self.site.settings.STATIC_PATH))
+        root_node.meta["asset"] = True
+        root_node.meta["site_path"] = site_path
 
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
@@ -301,20 +301,17 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            fmeta = root.derive()
-            fmeta["site_path"] = os.path.join(site_path, name)
             # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
                 src=File.with_stat(name, root),
-                meta=fmeta,
-                root=site_path,
+                root=root_node,
             )
 
         # Load assets from theme directories
         for path in self.theme_static_dirs:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
-                root=root,
+                root=root_node,
             )
 
     def precompile_metadata_templates(self, values: dict[str, Any]):

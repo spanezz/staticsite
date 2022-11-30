@@ -52,6 +52,7 @@ class AliasPage(Page):
     """
     Page rendering a redirect to another page
     """
+    TYPE = "alias"
     # Default template to use for this type of page
     TEMPLATE: str
 
