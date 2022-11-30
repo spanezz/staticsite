@@ -6,17 +6,16 @@ import logging
 import os
 import re
 import stat
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, Any, Optional
 
-from . import file, dirindex
+from . import dirindex, file, structure
+from .metadata import Meta
 from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
-from .metadata import Meta
 
 if TYPE_CHECKING:
-    from . import structure
-    from .site import Site
     from .page import Page
+    from .site import Site
 
 log = logging.getLogger("scan")
 
@@ -139,6 +138,8 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
             fmt, config = front_matter.read_whole(fd)
 
         take_dir_rules(dir_rules, file_rules, config)
+        if (site_path := config.pop("site_path", None)) is not None:
+            node = node.at_path(structure.Path.from_string(site_path))
         node.meta.update(config)
 
     # Let features add to node metadata
@@ -150,9 +151,6 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         if m is not None:
             take_dir_rules(dir_rules, file_rules, m)
             node.meta.update(m)
-
-    # Make sure site_path is absolute
-    node.meta["site_path"] = os.path.join("/", node.meta["site_path"])
 
     # If site_name is not defined, use the root page title or the content
     # directory name
@@ -202,7 +200,6 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
         dir_node = node.child(name, src=src)
-        dir_node.meta["site_path"] = os.path.join(node.meta["site_path"], name)
         for pattern, dmeta in dir_rules:
             if pattern.match(name):
                 dir_node.meta.update(dmeta)
@@ -240,7 +237,6 @@ def scan_assets(*, site: Site, directory: Directory, node: structure.Node):
     for name, src in directory.subdirs.items():
         # Compute metadata for this directory
         dir_node = node.child(name, src=src)
-        dir_node.meta["site_path"] = os.path.join(node.meta["site_path"], name)
 
         # Recursively descend into the directory
         with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:
