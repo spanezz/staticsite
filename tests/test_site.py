@@ -43,6 +43,11 @@ class TestBuild(TestCase):
                 build.settings.THEME_PATHS.insert(0, os.path.join(os.getcwd(), "themes"))
                 build.run()
 
+                site = build.site
+                page = site.pages["pages"]
+                self.assertEqual(page.body_start, ['Link: [Docs](doc/sub.md)', '', '[Back home](..)'])
+                self.assertIn(page, build.builder.render_log)
+
                 output = os.path.join(root, "web/pages/index.html")
                 with open(output, "rt", encoding="utf8") as fd:
                     content = fd.read()

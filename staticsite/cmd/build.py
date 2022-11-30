@@ -5,10 +5,14 @@ import logging
 import os
 import time
 from collections import Counter
+from typing import TYPE_CHECKING
 
 from .. import structure, utils
-from .command import Fail, SiteCommand
 from ..render import File
+from .command import Fail, SiteCommand
+
+if TYPE_CHECKING:
+    from ..page import Page
 
 log = logging.getLogger("build")
 
@@ -20,9 +24,9 @@ class Build(SiteCommand):
         super().__init__(*args, **kw)
 
     def run(self):
-        site = self.load_site()
-        builder = Builder(site)
-        builder.write()
+        self.site = self.load_site()
+        self.builder = Builder(self.site)
+        self.builder.write()
 
 
 class Builder:
@@ -34,6 +38,8 @@ class Builder:
                     " please use --output or set OUTPUT in settings.py or .staticsite.py")
         self.output_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
         self.existing_paths = {}
+        # Logs which pages have been rendered and to which path
+        self.render_log: list[Page] = []
 
     def write(self):
         """
@@ -137,16 +143,12 @@ class Builder:
 
         # TODO: enumerate dir contents, and remove the bits we do not need
 
-        if node.page:
-            if node.sub:
-                # log.warning("Node %r has both page and sub", node)
-                name = "index.html"
-            else:
-                name = node.name
+        if node.page and node == node.page.build_node:
             start = time.perf_counter_ns()
             rendered = node.page.render()
             end = time.perf_counter_ns()
-            rendered.write(name, dir_fd=dir_fd)
+            rendered.write(node.name, dir_fd=dir_fd)
+            self.render_log.append(node.page)
             # with dirfd_open(node.name, "wb")
             #
             #     dst = self.existing_paths.pop(fullpath, None)
