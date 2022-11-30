@@ -67,6 +67,7 @@ class TestSite(TestCase):
                     'pages': ['MarkdownPage(posts/example)'],
                     'site_name': 'My example blog',
                     'site_url': 'https://www.example.org',
+                    'site_path': '/',
                     'template': 'blog.html',
                     'title': 'My example blog',
                     'nav': ['MarkdownPage(about)'],

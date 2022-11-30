@@ -50,7 +50,7 @@ It defaults to `page.meta.title`, or to the series name for series pages.
                 except PageNotFoundError as e:
                     log.warn("%s: %s", page, e)
 
-            print(f"{page!r} nav={this_nav!r}")
+            # print(f"{page!r} nav={this_nav!r}")
 
             # Build list of target pages
             nav_pages.update(this_nav)

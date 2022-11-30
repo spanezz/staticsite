@@ -125,9 +125,6 @@ class Node:
         # Create the page, with some dependency injection
         if created_from:
             meta = created_from.meta.derive()
-            if meta_values is None:
-                meta_values = {}
-            meta_values["created_from"] = created_from
             if src is None:
                 src = created_from.src
         elif directory_index:
@@ -136,6 +133,8 @@ class Node:
             meta = self.meta.derive()
         if meta_values:
             meta.update(meta_values)
+        if created_from:
+            meta["created_from"] = created_from
         page = page_cls(site=self.site, src=src, node=self, directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
