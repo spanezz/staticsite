@@ -240,14 +240,14 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                     page_cls=AtomPage,
                     meta_values=meta_values,
                     path=structure.Path((f"{page_name}.{AtomPage.TYPE}",)))
-            page.meta["atom_page"] = atom_page
+            page.meta["atom_page"] = rss_page
             log.debug("%s: adding syndication page for %s", atom_page, page)
 
             # Archive page
             archive_meta_values: Optional[dict[str, Any]]
-            if (val := page.meta.get("archive")) is False:
+            if (val := meta_values.get("archive")) is False:
                 archive_meta_values = None
-            elif val is True:
+            elif val is None or val is True:
                 archive_meta_values = {}
             else:
                 archive_meta_values = dict(val)
@@ -268,7 +268,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             page.add_related("atom_feed", atom_page)
 
             # Add a link to the syndication to the pages listed in add_to
-            add_to = page.meta.get("add_to", True)
+            add_to = meta_values.get("add_to", True)
             if add_to is False:
                 pass
             elif add_to is True:

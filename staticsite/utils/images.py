@@ -1,17 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
+
+import json
+import logging
+import os
+import shlex
+import subprocess
+from typing import TYPE_CHECKING, Any, List
+
 import PIL
 import PIL.Image
-import subprocess
-import json
-import shlex
-import os
-import logging
 
 if TYPE_CHECKING:
     from staticsite import File
     from staticsite.cache import Cache
-    from ..metadata import Meta
 
 log = logging.getLogger("utils.images")
 
@@ -31,7 +32,7 @@ class ImageScanner:
     def __init__(self, cache: Cache):
         self.cache = cache
 
-    def scan(self, src: File, mimetype: str) -> Meta:
+    def scan(self, src: File, mimetype: str) -> dict[str, Any]:
         key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
         meta = self.cache.get(key)
         if meta is None:
@@ -39,7 +40,7 @@ class ImageScanner:
             self.cache.put(key, meta)
         return meta
 
-    def scan_file(self, pathname: str) -> Meta:
+    def scan_file(self, pathname: str) -> dict[str, Any]:
         import mimetypes
         mimetypes.init()
         base, ext = os.path.splitext(pathname)
@@ -48,7 +49,7 @@ class ImageScanner:
             return {}
         return self.read_meta(pathname, mimetype)
 
-    def read_meta(self, pathname: str, mimetype: str) -> Meta:
+    def read_meta(self, pathname: str, mimetype: str) -> dict[str, Any]:
         # We can take our time here, since results are cached
 
         if mimetype == "image/svg+xml":
@@ -66,7 +67,7 @@ class ImageScanner:
 
         return meta
 
-    def read_meta_exiftool(self, pathname: str) -> Meta:
+    def read_meta_exiftool(self, pathname: str) -> dict[str, Any]:
         meta = {}
 
         # It is important to use abspath here, as exiftool does not support the
@@ -113,7 +114,7 @@ class ImageScanner:
 
         return meta
 
-    def edit_meta_exiftool(self, pathname: str, changed: Meta, removed: List[str]):
+    def edit_meta_exiftool(self, pathname: str, changed: dict[str, Any], removed: List[str]):
         exif_args: List[str] = []
 
         if "title" in changed:

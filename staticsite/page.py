@@ -104,7 +104,7 @@ class Page:
         if related is None:
             self.meta["related"] = related = {}
         old = related.get(name)
-        if old is not None:
+        if old is not None and old != page:
             log.warn("%s: attempt to set related.%s to %r but it was already %r",
                      self, name, page, old)
             return

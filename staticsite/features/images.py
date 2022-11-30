@@ -108,11 +108,8 @@ extension), that image is used.
                         continue
                     if info["width"] >= width:
                         continue
-                    rel_meta = {}
+                    rel_meta = dict(info)
                     rel_meta["related"] = {}
-                    rel_meta["width"] = None
-                    rel_meta["height"] = None
-                    rel_meta.update(info)
 
                     base, ext = os.path.splitext(fname)
                     scaled_fname = f"{base}-{name}{ext}"
@@ -173,9 +170,10 @@ class ScaledImage(Page):
         self.meta["date"] = self.created_from.meta["date"]
 
         if "height" not in self.meta:
+            created_from = self.created_from
             self.meta["height"] = round(
-                    self.created_from.meta["height"] * (
-                        info["width"] / self.created_from.meta["width"]))
+                    created_from.meta["height"] * (
+                        info["width"] / created_from.meta["width"]))
 
         self.created_from.add_related(name, self)
 

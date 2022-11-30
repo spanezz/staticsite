@@ -116,7 +116,11 @@ class Node:
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
-                return node.create_page(page_cls=page_cls, src=src, path=path.tail, build_as=build_as, **kw)
+                return node.create_page(
+                        page_cls=page_cls, src=src, path=path.tail,
+                        build_as=build_as, directory_index=directory_index,
+                        meta_values=meta_values, created_from=created_from,
+                        **kw)
 
         # Create the page, with some dependency injection
         if created_from:
