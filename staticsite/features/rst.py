@@ -140,7 +140,7 @@ class RestructuredText(Feature):
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         # Update the list of yaml tags with information from site.metadata
         if not self.yaml_tags_filled:
             for meta in self.site.metadata.values():
@@ -150,7 +150,7 @@ class RestructuredText(Feature):
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             if not fname.endswith(".rst"):
                 continue
             taken.append(fname)
@@ -162,7 +162,7 @@ class RestructuredText(Feature):
                 log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
                 continue
 
-            meta.update(fm_meta)
+            meta_values.update(fm_meta)
 
             if (directory_index := fname in ("index.rst", "README.rst")):
                 path = structure.Path()
@@ -172,7 +172,7 @@ class RestructuredText(Feature):
             page = node.create_page(
                     page_cls=RstPage,
                     src=src,
-                    meta=meta,
+                    meta_values=meta_values,
                     feature=self,
                     doctree_scan=doctree_scan,
                     directory_index=directory_index,

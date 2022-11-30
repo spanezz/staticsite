@@ -1,47 +1,16 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from staticsite.page import Page, PageNotFoundError
-from staticsite.feature import Feature
-from staticsite import metadata
+
 import logging
+from typing import TYPE_CHECKING
+
+from staticsite import metadata
+from staticsite.feature import Feature
+from staticsite.page import PageNotFoundError
 
 if TYPE_CHECKING:
-    from staticsite.metadata import Meta
+    from staticsite.page import Page
 
 log = logging.getLogger("nav")
-
-
-class MetadataNav(metadata.MetadataInherited):
-    def __init__(self, *args, **kw):
-        kw.setdefault("structure", True)
-        super().__init__(*args, **kw)
-
-    # TODO: we lack a way to resolve the paths relative to the page that defined them
-
-    def on_load(self, page: Page):
-        if self.name in page.meta:
-            return
-
-        parent = page.created_from
-        if parent is None:
-            return
-
-        val = parent.meta.get(self.name)
-        if val is None:
-            return
-
-        res = []
-        for path in val:
-            if isinstance(path, str):
-                try:
-                    path = parent.resolve_path(path)
-                except PageNotFoundError:
-                    pass
-            res.append(path)
-
-        # print("INHERIT", self.name, "FOR", page, "FROM", parent, "AS", val, "->", res)
-
-        page.meta[self.name] = res
 
 
 class Nav(Feature):
@@ -52,11 +21,13 @@ class Nav(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.register_metadata(MetadataNav("nav", doc="""
+        self.site.register_metadata(metadata.MetadataInherited("nav", structure=True, doc="""
 List of page paths that are used for the navbar.
 """))
+        self.site.structure.add_tracked_metadata("nav")
+
         self.site.register_metadata(metadata.Metadata("nav_title", doc="""
-Title to use when this paged is linked in a navbar.
+Title to use when this page is linked in a navbar.
 
 It defaults to `page.meta.title`, or to the series name for series pages.
 
@@ -65,14 +36,13 @@ It defaults to `page.meta.title`, or to the series name for series pages.
 
     def analyze(self):
         # Expand pages expressions
-        nav_pages = set()
+        nav_pages: set[Page] = set()
 
-        for page in self.site.structure.pages.values():
-            nav = page.meta.get("nav")
-            if nav is None:
+        for page in self.site.structure.pages_by_metadata["syndication"]:
+            if (nav := page.meta.values.get("nav")) is None:
                 continue
 
-            # Resolve everything
+            # Resolve everything as pages
             this_nav = []
             for path in nav:
                 try:
@@ -80,10 +50,12 @@ It defaults to `page.meta.title`, or to the series name for series pages.
                 except PageNotFoundError as e:
                     log.warn("%s: %s", page, e)
 
+            print(f"{page!r} nav={this_nav!r}")
+
             # Build list of target pages
             nav_pages.update(this_nav)
 
-            page.meta["nav"] = this_nav
+            page.meta.values["nav"] = this_nav
 
         # Make sure nav_title is filled
         for page in nav_pages:

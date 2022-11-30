@@ -10,7 +10,6 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import file, scan
-    from staticsite.metadata import Meta
 
 log = logging.getLogger("taxonomy")
 
@@ -59,10 +58,10 @@ element.
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             if not fname.endswith(".taxonomy"):
                 continue
             taken.append(fname)
@@ -74,12 +73,12 @@ element.
             except Exception:
                 log.exception("%s: cannot parse taxonomy information", src.relpath)
                 continue
-            meta.update(fm_meta)
+            meta_values.update(fm_meta)
 
             page = node.create_page(
                 page_cls=TaxonomyPage,
                 src=src,
-                meta=meta,
+                meta_values=meta_values,
                 name=name,
                 path=structure.Path((name,)),
                 build_as=structure.Path(("index.html",)))
@@ -204,18 +203,16 @@ class TaxonomyPage(Page):
             pages.sort(key=lambda p: p.meta["date"])
 
             # Create category page
-            category_meta = self.meta.derive()
-            category_meta.update(self.category_meta)
+            category_meta = dict(self.category_meta)
             category_meta["taxonomy"] = self
             category_meta["name"] = category
             category_meta["pages"] = pages
             category_meta["date"] = pages[-1].meta["date"]
-            category_meta["created_from"] = self
 
             category_page = self.node.create_page(
-                src=self.src,
+                created_from=self,
                 page_cls=CategoryPage,
-                meta=category_meta,
+                meta_values=category_meta,
                 name=category,
                 path=structure.Path((category,)),
                 build_as=structure.Path(("index.html",)),

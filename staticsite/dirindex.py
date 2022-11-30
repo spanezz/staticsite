@@ -20,7 +20,7 @@ class Dir(Page):
     TYPE = "dir"
 
     def __init__(self, site: Site, *, name: Optional[str] = None, **kw):
-        super().__init__(site, directory_index=True, **kw)
+        super().__init__(site, **kw)
         # Directory name
         self.name: Optional[str] = name
         # Subdirectory of this directory
@@ -56,5 +56,6 @@ class Dir(Page):
         return node.create_page(
             page_cls=cls,
             name=node.name,
+            directory_index=True,
             src=directory.src,
             build_as=structure.Path(("index.html",)))

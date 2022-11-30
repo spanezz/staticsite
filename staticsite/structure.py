@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Generator, Optional, Type
+from typing import TYPE_CHECKING, Any, Generator, Optional, Type
 
 from .metadata import Meta
 
@@ -94,6 +94,9 @@ class Node:
         """
         Create a page of the given type, attaching it at the given path
         """
+        if "meta" in kw:
+            raise RuntimeError("do not pass meta to create_page")
+
         # TODO: move site.is_page_ignored here?
         try:
             return self._create_page(**kw)
@@ -106,6 +109,9 @@ class Node:
             src: Optional[file.File] = None,
             path: Optional[Path] = None,
             build_as: Optional[Path] = None,
+            directory_index: bool = False,
+            meta_values: Optional[dict[str, Any]] = None,
+            created_from: Optional[Page] = None,
             **kw):
         if path:
             # If a subpath is requested, delegate to subnodes
@@ -113,9 +119,20 @@ class Node:
                 return node.create_page(page_cls=page_cls, src=src, path=path.tail, build_as=build_as, **kw)
 
         # Create the page, with some dependency injection
-        if "meta" not in kw:
-            kw["meta"] = self.meta.derive()
-        page = page_cls(site=self.site, src=src, node=self, **kw)
+        if created_from:
+            meta = created_from.meta.derive()
+            if meta_values is None:
+                meta_values = {}
+            meta_values["created_from"] = created_from
+            if src is None:
+                src = created_from.src
+        elif directory_index:
+            meta = self.meta
+        else:
+            meta = self.meta.derive()
+        if meta_values:
+            meta.update(meta_values)
+        page = page_cls(site=self.site, src=src, node=self, directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
         if self.src is None:
@@ -133,8 +150,7 @@ class Node:
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.child(name, src=src).create_page(
-                page_cls=Asset, src=src, meta=self.meta.derive(), name=name)
+        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name)
 
     @contextlib.contextmanager
     def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:

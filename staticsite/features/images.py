@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from staticsite import Page, Feature, structure
 from staticsite.render import RenderedFile
 from staticsite.utils.images import ImageScanner
@@ -73,10 +73,10 @@ extension), that image is used.
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             base, ext = os.path.splitext(fname)
             mimetype = mimetypes.types_map.get(ext)
             if mimetype is None:
@@ -88,12 +88,12 @@ extension), that image is used.
             taken.append(fname)
 
             img_meta = self.scanner.scan(src, mimetype)
-            meta.update(img_meta)
+            meta_values.update(img_meta)
 
             page = node.create_page(
                 page_cls=Image,
                 src=src,
-                meta=meta,
+                meta_values=meta_values,
                 mimetype=mimetype,
                 path=structure.Path((fname,)))
             pages.append(page)
@@ -102,26 +102,25 @@ extension), that image is used.
             image_sizes = self.site.theme.meta.get("image_sizes")
             if image_sizes:
                 for name, info in image_sizes.items():
-                    width = meta.get("width")
+                    width = meta_values.get("width")
                     if width is None:
                         # SVG images, for example, don't have width
                         continue
                     if info["width"] >= width:
                         continue
-                    rel_meta = meta.derive()
+                    rel_meta = {}
                     rel_meta["related"] = {}
-                    rel_meta.pop("width", None)
-                    rel_meta.pop("height", None)
+                    rel_meta["width"] = None
+                    rel_meta["height"] = None
                     rel_meta.update(info)
-                    rel_meta["created_from"] = page
 
                     base, ext = os.path.splitext(fname)
                     scaled_fname = f"{base}-{name}{ext}"
 
                     scaled = node.create_page(
                         page_cls=ScaledImage,
-                        meta=rel_meta,
-                        src=src,
+                        created_from=page,
+                        meta_values=rel_meta,
                         mimetype=mimetype,
                         name=name,
                         info=info,

@@ -40,12 +40,10 @@ existing links when moving a page to a different location.
                 continue
 
             for alias in aliases:
-                meta = page.meta.derive()
-                meta["created_from"] = page
                 self.site.structure.root.create_page(
                         page_cls=AliasPage,
+                        created_from=page,
                         src=page.src,
-                        meta=meta,
                         alias=alias,
                         path=structure.Path.from_string(alias))
 

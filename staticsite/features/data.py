@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from staticsite import Page, Feature, structure
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
@@ -15,7 +15,6 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import scan, file
-    from staticsite.metadata import Meta
 
 log = logging.getLogger("data")
 
@@ -59,10 +58,10 @@ This is used to group data of the same type together, and to choose a
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken = []
         pages = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             mo = re_ext.search(fname)
             if not mo:
                 continue
@@ -88,7 +87,7 @@ This is used to group data of the same type together, and to choose a
                 continue
 
             page_name = fname[:-len(mo.group(0))]
-            meta.update(fm_meta)
+            meta_values.update(fm_meta)
 
             if (directory_index := page_name == "index"):
                 path = structure.Path()
@@ -98,7 +97,7 @@ This is used to group data of the same type together, and to choose a
             page = node.create_page(
                 page_cls=self.page_class_by_type.get(data_type, DataPage),
                 src=src,
-                meta=meta,
+                meta_values=meta_values,
                 directory_index=directory_index,
                 path=path,
                 build_as=structure.Path(("index.html",)))

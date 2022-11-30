@@ -142,6 +142,11 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
             node = node.at_path(structure.Path.from_string(site_path))
         node.meta.update(config)
 
+    # If .staticsite declared we're a directory of assets, bail out and
+    # delegate to scan_assets
+    if node.meta.get("asset"):
+        return scan_assets(site=site, directory=directory, node=node)
+
     # Let features add to node metadata
     #
     # This for example lets metadata of an index.md do the same work as a
@@ -167,9 +172,9 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     site.theme.precompile_metadata_templates(node.meta.values)
 
     # Compute metadata for files
-    files_meta: dict[str, tuple[Meta, file.File]] = {}
+    files_meta: dict[str, tuple[dict[str, Any], file.File]] = {}
     for fname, src in directory.files.items():
-        res: Meta = node.meta.derive()
+        res: dict[str, Any] = {}
         for pattern, meta in file_rules:
             if pattern.match(fname):
                 res.update(meta)

@@ -10,7 +10,6 @@ from . import site
 from . import toposort
 
 if TYPE_CHECKING:
-    from .metadata import Meta
     from . import structure
 
 log = logging.getLogger("feature")
@@ -75,7 +74,7 @@ class Feature:
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
         Load pages from the given Dir.
 

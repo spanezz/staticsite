@@ -46,16 +46,14 @@ class LinkIndexPage(Page):
                 # A page already exists
                 continue
 
-            meta = sub.meta.derive()
-            meta["data_type"] = "links"
-            meta["title"] = f"{tag} links"
-            meta["links"] = links
-            meta["created_from"] = self
-
             page = sub.create_page(
+                    created_from=self,
                     page_cls=LinksTagPage,
-                    src=self.src,
-                    meta=meta,
+                    meta_values={
+                        "data_type": "links",
+                        "title": f"{tag} links",
+                        "links": links,
+                    },
                     links=links)
             self.by_tag[tag] = page
             pages.append(page)

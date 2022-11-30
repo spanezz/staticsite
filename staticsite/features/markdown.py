@@ -4,7 +4,6 @@ from staticsite import Page, Feature, structure
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
 from staticsite.archetypes import Archetype
-from staticsite.metadata import Meta
 from urllib.parse import urlparse, urlunparse
 import jinja2
 import markupsafe
@@ -217,10 +216,10 @@ class MarkdownPages(Feature):
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             if not fname.endswith(".md"):
                 continue
             taken.append(fname)
@@ -232,17 +231,18 @@ class MarkdownPages(Feature):
                 log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
                 continue
 
-            meta.update(fm_meta)
+            meta_values.update(fm_meta)
 
             if (directory_index := fname in ("index.md", "README.md")):
                 path = structure.Path()
             else:
                 path = structure.Path((fname[:-3],))
 
+            # print("CREAT", fname, directory_index)
             page = node.create_page(
                     page_cls=MarkdownPage,
                     src=src,
-                    meta=meta,
+                    meta_values=meta_values,
                     feature=self,
                     body=body,
                     directory_index=directory_index,

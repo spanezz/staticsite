@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import Union, List, Optional
-import os
+
 import logging
-from staticsite import structure
-from staticsite.feature import Feature
-from staticsite.page import Page, PageNotFoundError
-from staticsite.metadata import Metadata, Meta
-from staticsite.utils import arrange
+import os
+from typing import Any, List, Optional, Union
+
 import jinja2
 
+from staticsite import structure
+from staticsite.feature import Feature
+from staticsite.metadata import Metadata
+from staticsite.page import Page, PageNotFoundError
+from staticsite.utils import arrange
 
 log = logging.getLogger("syndication")
 
@@ -196,26 +198,25 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             if meta_dict is None:
                 continue
             elif meta_dict is True:
-                meta = page.meta.derive()
+                meta_values = {}
             else:
                 # Make a shallow copy to prevent undesired side effects if multiple
                 # pages share the same syndication dict, as may be the case with
                 # taxonomies
-                meta = page.meta.derive()
-                meta.update(meta_dict)
+                meta_values = dict(meta_dict)
                 # print(f"  initial base metadata for feeds {meta=!r}")
 
             # Add the syndication link to the index page
-            page.meta["syndication"] = meta
+            page.meta["syndication"] = meta_values
 
             # Index page for the syndication
-            meta["index"] = page
+            meta_values["index"] = page
 
             # Pages involved in the syndication
             pages = page.meta.get("pages", [])
-            meta["pages"] = self.prepare_syndication_list(pages)
+            meta_values["pages"] = self.prepare_syndication_list(pages)
 
-            self.site.theme.precompile_metadata_templates(meta.values)
+            self.site.theme.precompile_metadata_templates(meta_values)
 
             # print(f"  final base metadata for feeds {meta=!r}")
 
@@ -224,67 +225,54 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             # print(f"Syndication {page=!r}, {pages=}")
 
             # RSS feed
-            rss_page_meta = meta.derive()
-            rss_page_meta["index"] = meta["index"]
-            rss_page_meta["pages"] = meta["pages"]
-            rss_page_meta["created_from"] = page
             rss_page = page.node.create_page(
-                    src=page.src,
+                    created_from=page,
                     page_cls=RSSPage,
-                    meta=rss_page_meta,
+                    meta_values=meta_values,
                     path=structure.Path((f"{page_name}.{RSSPage.TYPE}",)))
-            meta["rss_page"] = rss_page
+            page.meta["rss_page"] = rss_page
             log.debug("%s: adding syndication page for %s", rss_page, page)
             # print(f"  rss_page {rss_page.meta=!r}")
 
             # Atom feed
-            atom_page_meta = meta.derive()
-            atom_page_meta["index"] = meta["index"]
-            atom_page_meta["pages"] = meta["pages"]
-            atom_page_meta["created_from"] = page
             atom_page = page.node.create_page(
-                    src=page.src,
+                    created_from=page,
                     page_cls=AtomPage,
-                    meta=atom_page_meta,
+                    meta_values=meta_values,
                     path=structure.Path((f"{page_name}.{AtomPage.TYPE}",)))
-            meta["atom_page"] = atom_page
+            page.meta["atom_page"] = atom_page
             log.debug("%s: adding syndication page for %s", atom_page, page)
 
             # Archive page
-            archive_meta: Optional[Meta] = None
-            archive_meta_extra = meta.get("archive")
-            if archive_meta_extra is None or archive_meta_extra is True:
-                archive_meta = meta.derive()
-            elif archive_meta is False:
-                archive_meta = None
+            archive_meta_values: Optional[dict[str, Any]]
+            if (val := page.meta.get("archive")) is False:
+                archive_meta_values = None
+            elif val is True:
+                archive_meta_values = {}
             else:
-                archive_meta = meta.derive()
-                archive_meta.update(archive_meta_extra)
+                archive_meta_values = dict(val)
 
-            if archive_meta is not None:
-                archive_meta["pages"] = meta["pages"]
-                archive_meta["index"] = meta["index"]
-                archive_meta["created_from"] = page
+            if archive_meta_values is not None:
+                archive_meta_values["pages"] = pages
+                archive_meta_values["index"] = page
                 archive_page = page.node.create_page(
-                        src=page.src,
+                        created_from=page,
                         page_cls=ArchivePage,
-                        meta=archive_meta,
+                        meta_values=archive_meta_values,
                         path=structure.Path(("archive",)),
                         build_as=structure.Path(("index.html",)))
                 archive_page.add_related("rss_feed", rss_page)
                 archive_page.add_related("atom_feed", atom_page)
-            else:
-                archive_page = None
 
             page.add_related("rss_feed", rss_page)
             page.add_related("atom_feed", atom_page)
 
             # Add a link to the syndication to the pages listed in add_to
-            add_to = meta.get("add_to", True)
+            add_to = page.meta.get("add_to", True)
             if add_to is False:
                 pass
             elif add_to is True:
-                for dest in meta["pages"]:
+                for dest in pages:
                     dest.add_related("rss_feed", rss_page)
                     dest.add_related("atom_feed", atom_page)
             else:

@@ -11,7 +11,6 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import file, scan
-    from staticsite.metadata import Meta
 
 log = logging.getLogger("jinja2")
 
@@ -66,13 +65,13 @@ class J2Pages(Feature):
             self,
             node: structure.Node,
             directory: scan.Directory,
-            files: dict[str, tuple[Meta, file.File]]) -> list[Page]:
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta, src) in files.items():
+        for fname, (meta_values, src) in files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:
                 if pattern.match(fname):
@@ -88,7 +87,7 @@ class J2Pages(Feature):
 
             front_matter = load_front_matter(template)
             if front_matter:
-                meta.update(front_matter)
+                meta_values.update(front_matter)
 
             if (directory_index := fname == "index.html"):
                 path = structure.Path()
@@ -102,7 +101,7 @@ class J2Pages(Feature):
             page = node.create_page(
                     page_cls=J2Page,
                     src=src,
-                    meta=meta,
+                    meta_values=meta_values,
                     template=template,
                     directory_index=directory_index,
                     path=path,
