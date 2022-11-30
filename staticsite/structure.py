@@ -252,7 +252,7 @@ class Structure:
 
         # Redo indexing for existing pages
         for page in self.pages.values():
-            if name in page.meta:
+            if name in page.meta.values:
                 self.pages_by_metadata[name].append(page)
 
     def index(self, page: Page):

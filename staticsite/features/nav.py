@@ -38,7 +38,7 @@ It defaults to `page.meta.title`, or to the series name for series pages.
         # Expand pages expressions
         nav_pages: set[Page] = set()
 
-        for page in self.site.structure.pages_by_metadata["syndication"]:
+        for page in self.site.structure.pages_by_metadata["nav"]:
             if (nav := page.meta.values.get("nav")) is None:
                 continue
 
