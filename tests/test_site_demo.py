@@ -19,6 +19,7 @@ class TestSite(TestCase):
                 'site_path': 'blog/index.rss',
                 "build_path": "blog/index.rss",
                 "meta": {
+                    'atom_page': 'AtomPage(blog/index.atom)',
                     "date": '2016-04-16 10:23:00+02:00',
                     "draft": False,
                     'index': 'J2Page(blog)',
@@ -32,6 +33,7 @@ class TestSite(TestCase):
                               'MarkdownPage(blog/2016/example-series2)',
                               'MarkdownPage(blog/2016/example-series1)',
                               'MarkdownPage(blog/2016/example)'],
+                    'rss_page': 'RSSPage(blog/index.rss)',
                     'site_name': 'Example web site',
                     'site_url': 'https://www.example.org',
                     'template': 'syndication.rss',
