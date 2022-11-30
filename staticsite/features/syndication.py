@@ -192,6 +192,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             # and is added as 'syndication' to all the pages that get the feed
             # links
             meta_dict = page.meta.get("syndication")
+            # print(f"Syndication.analyze {page=!r} page.meta.syndication={meta_dict!r}")
             if meta_dict is None:
                 continue
             elif meta_dict is True:
@@ -202,6 +203,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                 # taxonomies
                 meta = page.meta.derive()
                 meta.update(meta_dict)
+                # print(f"  initial base metadata for feeds {meta=!r}")
 
             # Add the syndication link to the index page
             page.meta["syndication"] = meta
@@ -214,6 +216,8 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             meta["pages"] = self.prepare_syndication_list(pages)
 
             self.site.theme.precompile_metadata_templates(meta.values)
+
+            # print(f"  final base metadata for feeds {meta=!r}")
 
             page_name, ext = os.path.splitext(page.build_node.name)
 
@@ -231,6 +235,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                     path=structure.Path((f"{page_name}.{RSSPage.TYPE}",)))
             meta["rss_page"] = rss_page
             log.debug("%s: adding syndication page for %s", rss_page, page)
+            # print(f"  rss_page {rss_page.meta=!r}")
 
             # Atom feed
             atom_page_meta = meta.derive()
