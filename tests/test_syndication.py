@@ -165,22 +165,23 @@ static char * bottom_active_xpm[] = {
                 "archive",
                 "blog",
                 "blog/post",
+                "blog/images",
                 "blog/images/photo.xpm",
             ])
 
-            post = site.pages["/"]
-            rendered = post.render()["index.html"].buf
+            post = site.pages[""]
+            rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
 
-            post = site.pages["/blog/post"]
-            rendered = post.render()["blog/post/index.html"].buf
+            post = site.pages["blog/post"]
+            rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "/blog/images")
 
-            rss = site.pages["/index.rss"]
-            rendered = rss.render()["index.rss"].buf
+            rss = site.pages["index.rss"]
+            rendered = rss.render().buf
             mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
