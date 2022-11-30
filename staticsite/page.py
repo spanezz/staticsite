@@ -192,6 +192,8 @@ class Page:
         if isinstance(target, Page):
             return target
 
+        # print(f"{self=!r} resolve_path {target=!r})")
+
         # Absolute URLs are resolved as is
         if target.startswith("/"):
             target_relpath = os.path.normpath(target).strip("/")
@@ -222,6 +224,8 @@ class Page:
         # Relative urls are tried based on all path components of this page,
         # from the bottom up
 
+        # print("  relative path")
+
         # First using the source paths
         if self.src is not None:
             if (dir_path := os.path.dirname(self.src.relpath)):
@@ -230,13 +234,16 @@ class Page:
                 root = "/"
 
             target_relpath = os.path.normpath(os.path.join(root, target))
+            # print(f"  {target_relpath=} search in {self.site.structure.pages_by_src_relpath.keys()}")
             res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
             if res is not None:
                 return res
 
         # Finally, using the site paths
-        root = self.site_path
-        target_relpath = os.path.normpath(os.path.join(root, target))
+        target_relpath = os.path.normpath(os.path.join(self.site_path, target))
+        if target_relpath == ".":
+            target_relpath = ""
+        # print(f"  site path {target_relpath=!r}")
         res = self.site.structure.pages.get(target_relpath)
         if res is not None:
             return res
