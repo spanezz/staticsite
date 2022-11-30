@@ -407,6 +407,7 @@ class Theme:
         Generate a URL for a page, specified by path or with the page itself
         """
         cur_page = context.get("page")
+        # print(f"Theme.jinja2_url_for {cur_page=!r}")
         if cur_page is None:
             log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
             return ""

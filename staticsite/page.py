@@ -192,7 +192,7 @@ class Page:
         if isinstance(target, Page):
             return target
 
-        # print(f"{self=!r} resolve_path {target=!r})")
+        # print(f"Page.resolve_path {self=!r}, {target=!r})")
 
         # Absolute URLs are resolved as is
         if target.startswith("/"):
@@ -224,10 +224,10 @@ class Page:
         # Relative urls are tried based on all path components of this page,
         # from the bottom up
 
-        # print("  relative path")
-
         # First using the source paths
         if self.src is not None:
+            # print("Page.resolve_path relative path with src")
+
             if (dir_path := os.path.dirname(self.src.relpath)):
                 root = os.path.join("/", dir_path)
             else:
@@ -238,6 +238,8 @@ class Page:
             res = self.site.structure.pages_by_src_relpath.get(target_relpath.lstrip("/"))
             if res is not None:
                 return res
+
+        # print("Page.resolve_path relative path without src")
 
         # Finally, using the site paths
         target_relpath = os.path.normpath(os.path.join(self.site_path, target))
@@ -287,12 +289,15 @@ class Page:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
+        # print(f"Page.url_for {self=!r}, {target=!r}")
         page: "Page"
 
         if isinstance(target, str):
             page = self.resolve_path(target)
         else:
             page = target
+
+        # print(f"Page.url_for {self=!r}, {target=!r}, {page=!r}")
 
         # If the destination has a different site_url, generate an absolute url
         if self.meta["site_url"] != page.meta["site_url"]:

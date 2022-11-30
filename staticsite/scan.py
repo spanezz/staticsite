@@ -139,7 +139,9 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
         take_dir_rules(dir_rules, file_rules, config)
         if (site_path := config.pop("site_path", None)) is not None:
+            node.src = None
             node = node.at_path(structure.Path.from_string(site_path))
+            node.src = directory.src
         node.meta.update(config)
 
     # If .staticsite declared we're a directory of assets, bail out and
