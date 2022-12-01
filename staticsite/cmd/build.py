@@ -91,6 +91,7 @@ class RenderDirectory:
             # There was a file at this location: delete it
             self.old_files.discard(name)
             os.unlink(name, dir_fd=self.dir_fd)
+            os.mkdir(name, dir_fd=self.dir_fd)
         else:
             # There was nothing: create the directory
             os.mkdir(name, dir_fd=self.dir_fd)
