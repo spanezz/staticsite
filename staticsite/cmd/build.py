@@ -57,12 +57,12 @@ class RenderDirectory:
         # TODO: do also stat() to be able to skip rendering of needed
         self.old_dirs: set[str] = set()
         self.old_files: set[str] = set()
-        for entries in os.scandir(dir_fd):
+        with os.scandir(dir_fd) as entries:
             for de in entries:
                 if de.is_dir():
-                    self.old_dirs.append(de.name)
+                    self.old_dirs.add(de.name)
                 else:
-                    self.old_files.append(de.name)
+                    self.old_files.add(de.name)
 
     @classmethod
     @contextlib.contextmanager
