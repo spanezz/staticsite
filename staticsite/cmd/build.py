@@ -10,7 +10,6 @@ from collections import Counter
 from typing import TYPE_CHECKING, Generator
 
 from .. import structure, utils
-from ..render import File
 from .command import Fail, SiteCommand
 
 if TYPE_CHECKING:
@@ -49,7 +48,8 @@ class RenderDirectory:
     """
     A directory where contents are being rendered
     """
-    def __init__(self, relpath: str, dir_fd: int):
+    def __init__(self, root: str, relpath: str, dir_fd: int):
+        self.root = root
         self.relpath = relpath
         self.dir_fd = dir_fd
 
@@ -72,13 +72,13 @@ class RenderDirectory:
         """
         os.makedirs(root, exist_ok=True)
         with utils.open_dir_fd(root) as dir_fd:
-            yield cls("", dir_fd)
+            yield cls(root, "", dir_fd)
 
     @contextlib.contextmanager
     def subdir(self, name: str) -> Generator[RenderDirectory, None, None]:
         subpath = os.path.join(self.relpath, name)
         with utils.open_dir_fd(name, dir_fd=self.dir_fd) as subdir_fd:
-            yield RenderDirectory(subpath, subdir_fd)
+            yield RenderDirectory(self.root, subpath, subdir_fd)
 
     def prepare_subdir(self, name: str):
         """
@@ -103,11 +103,21 @@ class RenderDirectory:
             # There is a directory instead: remove it
             self.old_dirs.discard(name)
             # FIXME: from Python 3.11, rmtree supports dir_fd
-            with utils.open_dir_fd(name, dir_fd=self.dir_fd) as subdir_fd:
-                shutil.rmtree(subdir_fd)
+            shutil.rmtree(os.path.join(self.root, self.relpath, name))
         elif name in self.old_files:
             # There is a file at this location: it will be overwritten
             self.old_files.discard(name)
+
+    def cleanup_leftovers(self):
+        """
+        Remove previously existing files and directories that have disappeared
+        in the current version of the site
+        """
+        for name in self.old_dirs:
+            # FIXME: from Python 3.11, rmtree supports dir_fd
+            shutil.rmtree(os.path.join(self.root, self.relpath, name))
+        for name in self.old_files:
+            os.unlink(name, dir_fd=self.dir_fd)
 
 
 class Builder:
@@ -118,7 +128,6 @@ class Builder:
                     "No output directory configured:"
                     " please use --output or set OUTPUT in settings.py or .staticsite.py")
         self.build_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
-        self.existing_paths = {}
         # Logs which pages have been rendered and to which path
         self.build_log: dict[str, Page] = {}
 
@@ -132,13 +141,6 @@ class Builder:
             locale.setlocale(locale.LC_ALL, lname)
         except locale.Error as e:
             log.warn("Cannot set locale to %s: %s", lname, e)
-
-        # Scan the target directory to take note of existing contents
-        with utils.timings("Scanned old content in %fs"):
-            self.existing_paths = {}
-            if os.path.exists(self.build_root):
-                for f in File.scan(self.build_root, follow_symlinks=False, ignore_hidden=False):
-                    self.existing_paths[f.abspath] = f
 
         with utils.timings("Built site in %fs"):
             # cpu_count = os.cpu_count()
@@ -160,29 +162,6 @@ class Builder:
             #     user  0m5.760s
             #     sys   0m0.468s
             self.write_single_process()
-
-        with utils.timings("Removed old content in %fs"):
-            # Delete all files not written by us
-            dirs = set()
-            for path in self.existing_paths:
-                os.unlink(path)
-                dirs.add(os.path.dirname(path))
-                log.debug("%s: removed old file", path)
-
-            # Delete leftover empty directories
-            while dirs:
-                parents = set()
-                for path in dirs:
-                    try:
-                        os.rmdir(path)
-                    except OSError:
-                        pass
-                    else:
-                        log.debug("%s: removed old directory", path)
-                        parent = os.path.dirname(path)
-                        if parent.startswith(self.build_root):
-                            parents.add(parent)
-                dirs = parents
 
 #     def write_multi_process(self, child_count):
 #         log.info("Generating pages using %d child processes", child_count)
@@ -246,30 +225,7 @@ class Builder:
                         rendered.write(name, dir_fd=render_dir.dir_fd)
                         self.build_log[os.path.join(render_dir.relpath, name)] = sub.page
 
-        # TODO: tell render_dir to remove leftover dirs/files
-
-        # # group by type
-        # # This is not really needed, and we can render in any order, but this
-        # # way we can easily collect rendering timings by page type
-        # by_type = defaultdict(list)
-        # for page in pages:
-        #     by_type[page.TYPE].append(page)
-
-        # # Render collecting timing statistics
-        # for type, pgs in sorted(by_type.items(), key=lambda x: x[0][0]):
-        #     start = time.perf_counter()
-        #     for page in pgs:
-        #         relpath = page.build_path
-        #         rendered = page.render()
-        #         fullpath = self.output_abspath(relpath)
-        #         dst = self.existing_paths.pop(fullpath, None)
-        #         if dst is None:
-        #             dst = File.from_abspath(self.build_root, fullpath)
-        #         rendered.write(dst)
-        #         self.existing_paths.pop(dst, None)
-        #     end = time.perf_counter()
-        #     sums[type] = end - start
-        #     counts[type] = len(pgs)
+        render_dir.cleanup_leftovers()
 
     def output_abspath(self, relpath):
         abspath = os.path.join(self.build_root, relpath)
