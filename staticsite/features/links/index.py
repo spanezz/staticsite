@@ -76,6 +76,7 @@ class LinksTagPage(Page):
         links = kw.pop("links", None)
         super().__init__(*args, **kw)
         self.meta["syndicated"] = False
+        self.meta.setdefault("template", "data-links.html")
         if links is None:
             self.links = LinkCollection([Link(link) for link in self.meta["links"]])
         else:
