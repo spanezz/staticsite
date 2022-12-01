@@ -80,6 +80,7 @@ element.
                 src=src,
                 meta_values=meta_values,
                 name=name,
+                directory_index=True,
                 path=structure.Path((name,)),
                 build_as=structure.Path(("index.html",)))
 

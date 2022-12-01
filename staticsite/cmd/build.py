@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import contextlib
 import locale
 import logging
 import os
+import shutil
 import time
 from collections import Counter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 from .. import structure, utils
 from ..render import File
@@ -27,6 +29,84 @@ class Build(SiteCommand):
         self.site = self.load_site()
         self.builder = Builder(self.site)
         self.builder.write()
+
+
+class RenderStats:
+    def __init__(self):
+        self.sums = Counter()
+        self.counts = Counter()
+
+    @contextlib.contextmanager
+    def collect(self, page: Page):
+        start = time.perf_counter_ns()
+        yield
+        end = time.perf_counter_ns()
+        self.sums[page.TYPE] += end - start
+        self.counts[page.TYPE] += 1
+
+
+class RenderDirectory:
+    """
+    A directory where contents are being rendered
+    """
+    def __init__(self, abspath: str, dir_fd: int):
+        self.abspath = abspath
+        self.dir_fd = dir_fd
+
+        # Scan directory contents
+        # TODO: do also stat() to be able to skip rendering of needed
+        self.old_dirs: set[str] = set()
+        self.old_files: set[str] = set()
+        for entries in os.scandir(dir_fd):
+            for de in entries:
+                if de.is_dir():
+                    self.old_dirs.append(de.name)
+                else:
+                    self.old_files.append(de.name)
+
+    @classmethod
+    @contextlib.contextmanager
+    def open(cls, abspath: str) -> Generator[RenderDirectory, None, None]:
+        """
+        Start rendering in the given output root directory
+        """
+        os.makedirs(abspath, exist_ok=True)
+        with utils.open_dir_fd(abspath) as dir_fd:
+            yield cls(abspath, dir_fd)
+
+    @contextlib.contextmanager
+    def subdir(self, name: str) -> Generator[RenderDirectory, None, None]:
+        subpath = os.path.join(self.abspath, name)
+        with utils.open_dir_fd(name, dir_fd=self.dir_fd) as subdir_fd:
+            yield RenderDirectory(subpath, subdir_fd)
+
+    def prepare_subdir(self, name: str):
+        """
+        Prepare for rendering a subdirectory
+        """
+        if name in self.old_dirs:
+            # Directory already existed: reuse it
+            self.old_dirs.discard(name)
+        elif name in self.old_files:
+            # There was a file at this location: delete it
+            self.old_files.discard(name)
+            os.unlink(name, dir_fd=self.dir_fd)
+        else:
+            # There was nothing: create the directory
+            os.mkdir(name, dir_fd=self.dir_fd)
+
+    def prepare_file(self, name: str):
+        """
+        Prepare for rendering a file
+        """
+        if name in self.old_dirs:
+            # There is a directory instead: remove it
+            self.old_dirs.discard(name)
+            # FIXME: from Python 3.11, rmtree supports dir_fd
+            shutil.rmtree(os.path.join(self.abspath, name))
+        elif name in self.old_files:
+            # There is a file at this location: it will be overwritten
+            self.old_files.discard(name)
 
 
 class Builder:
@@ -130,25 +210,25 @@ class Builder:
 #             pids.discard(pid)
 
     def write_single_process(self):
+        stats = RenderStats()
         os.makedirs(self.output_root, exist_ok=True)
-        with utils.open_dir_fd(self.output_root) as dir_fd:
-            sums, counts = self.write_subtree(self.site.structure.root, dir_fd=dir_fd)
-        for type in sorted(sums.keys()):
-            log.info("%s: %d in %.3fs (%.1f per minute)", type, counts[type], sums[type], counts[type]/sums[type] * 60)
+        with RenderDirectory.open(self.output_root) as render_dir:
+            self.write_subtree(self.site.structure.root, render_dir, stats=stats)
+        for type in sorted(stats.sums.keys()):
+            log.info("%s: %d in %.3fs (%.1f per minute)",
+                     type, stats.counts[type], stats.sums[type], stats.counts[type] / stats.sums[type] * 60)
 
-    def write_subtree(self, node: structure.Node, dir_fd: int) -> tuple[Counter, Counter]:
-        # print(node.compute_path(), repr(node.page))
-        sums = Counter()
-        counts = Counter()
-
-        # TODO: enumerate dir contents, and remove the bits we do not need
-
+    def write_subtree(self, node: structure.Node, render_dir: RenderDirectory, stats: RenderStats):
+        """
+        Recursively render the given node in the given render directory
+        """
+        # If this is the build node for a page, render it
         if node.page and node == node.page.build_node:
-            start = time.perf_counter_ns()
-            rendered = node.page.render()
-            end = time.perf_counter_ns()
-            rendered.write(node.name, dir_fd=dir_fd)
-            self.render_log.append(node.page)
+            render_dir.prepare_file(node.name)
+            with stats.collect(node.page):
+                rendered = node.page.render()
+                rendered.write(node.name, dir_fd=render_dir.dir_fd)
+                self.render_log.append(node.page)
             # with dirfd_open(node.name, "wb")
             #
             #     dst = self.existing_paths.pop(fullpath, None)
@@ -156,25 +236,23 @@ class Builder:
             #         dst = File.from_abspath(self.output_root, fullpath)
             #     rendered.write(dst)
             #     self.existing_paths.pop(dst, None)
-            sums[node.page.TYPE] += end - start
-            counts[node.page.TYPE] += 1
 
         if node.sub:
-            if node.name:
-                try:
-                    os.mkdir(node.name, dir_fd=dir_fd)
-                except FileExistsError:
-                    pass
-                with utils.open_dir_fd(node.name, dir_fd=dir_fd) as subdir_fd:
-                    for name, sub in node.sub.items():
-                        sub_sums, sub_counts = self.write_subtree(sub, subdir_fd)
-                        sums += sub_sums
-                        counts += sub_counts
-            else:
-                for name, sub in node.sub.items():
-                    sub_sums, sub_counts = self.write_subtree(sub, dir_fd)
-                    sums += sub_sums
-                    counts += sub_counts
+            for name, sub in node.sub.items():
+                if sub.page is None or sub.sub is not None:
+                    # Subdir
+                    render_dir.prepare_subdir(name)
+                    with render_dir.subdir(name) as subdir:
+                        self.write_subtree(sub, subdir, stats)
+                else:
+                    # Page
+                    render_dir.prepare_file(name)
+                    with stats.collect(sub.page):
+                        rendered = sub.page.render()
+                        rendered.write(name, dir_fd=render_dir.dir_fd)
+                        self.render_log.append(sub.page)
+
+        # TODO: tell render_dir to remove leftover dirs/files
 
         # # group by type
         # # This is not really needed, and we can render in any order, but this
@@ -198,7 +276,6 @@ class Builder:
         #     end = time.perf_counter()
         #     sums[type] = end - start
         #     counts[type] = len(pgs)
-        return sums, counts
 
     def output_abspath(self, relpath):
         abspath = os.path.join(self.output_root, relpath)
