@@ -196,6 +196,7 @@ class Page:
 
         # Absolute URLs are resolved as is
         if target.startswith("/"):
+            # print("Page.resolve_path  target is absolute url")
             target_relpath = os.path.normpath(target).strip("/")
 
             # Try by source path
@@ -226,7 +227,7 @@ class Page:
 
         # First using the source paths
         if self.src is not None:
-            # print("Page.resolve_path relative path with src")
+            # print("Page.resolve_path  relative path with src")
 
             if (dir_path := os.path.dirname(self.src.relpath)):
                 root = os.path.join("/", dir_path)
@@ -239,16 +240,17 @@ class Page:
             if res is not None:
                 return res
 
-        # print("Page.resolve_path relative path without src")
+        # print("Page.resolve_path  relative path without src")
 
         # Finally, using the site paths
-        target_relpath = os.path.normpath(os.path.join(self.site_path, target))
-        if target_relpath == ".":
-            target_relpath = ""
-        # print(f"  site path {target_relpath=!r}")
-        res = self.site.structure.pages.get(target_relpath)
-        if res is not None:
-            return res
+        if self.directory_index:
+            start_node = self.node
+        else:
+            start_node = self.node.parent
+        target_node = start_node.lookup(structure.Path.from_string(target))
+        # print(f"Page.resolve_path   {target_node=}")
+        if target_node and target_node.page is not None:
+            return target_node.page
 
         raise PageNotFoundError(f"cannot resolve `{target!r}` relative to `{self!r}`")
 

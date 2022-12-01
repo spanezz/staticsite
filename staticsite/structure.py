@@ -81,6 +81,28 @@ class Node:
         # Subdirectories
         self.sub: Optional[dict[str, Node]] = None
 
+    def lookup(self, path: Path) -> Optional[Node]:
+        """
+        Return the subnode at the given relative path, or None if it does not
+        exist.
+
+        Path elements of "." and ".." are supported
+        """
+        if not path:
+            return self
+        if path.head == ".":
+            # Probably not worth trying to avoid a recursion step here, since
+            # this should not be a common occurrence
+            return self.lookup(path.tail)
+        elif path.head == "..":
+            if self.parent is None:
+                return None
+            else:
+                return self.parent.lookup(path.tail)
+        elif (sub := self.sub.get(path.head)):
+            return sub.lookup(path.tail)
+        return None
+
     def compute_path(self) -> str:
         """
         Compute the build path for this node
