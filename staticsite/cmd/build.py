@@ -200,7 +200,7 @@ class Builder:
                      type,
                      stats.counts[type],
                      stats.sums[type] / 1_000_000_000,
-                     stats.counts[type] / stats.sums[type] * 60 / 1_000_000_000)
+                     stats.counts[type] / stats.sums[type] * 60 * 1_000_000_000)
 
     def write_subtree(self, node: structure.Node, render_dir: RenderDirectory, stats: RenderStats):
         """
