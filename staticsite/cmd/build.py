@@ -197,7 +197,10 @@ class Builder:
             self.write_subtree(self.site.structure.root, render_dir, stats=stats)
         for type in sorted(stats.sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)",
-                     type, stats.counts[type], stats.sums[type], stats.counts[type] / stats.sums[type] * 60)
+                     type,
+                     stats.counts[type],
+                     stats.sums[type] / 1_000_000_000,
+                     stats.counts[type] / stats.sums[type] * 60 / 1_000_000_000)
 
     def write_subtree(self, node: structure.Node, render_dir: RenderDirectory, stats: RenderStats):
         """
