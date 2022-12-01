@@ -25,7 +25,7 @@ class AliasesFeature(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.site.features["rst"].yaml_tags.add("aliases")
-        self.site.register_metadata(metadata.MetadataInherited("aliases", structure=True, doc="""
+        self.site.register_metadata(metadata.Metadata("aliases", structure=True, doc="""
 Relative paths in the destination directory where the page should also show up.
 [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
 existing links when moving a page to a different location.
