@@ -23,6 +23,7 @@ class TestAliases(TestCase):
             self.assertEqual(alias1.node.compute_path(), "alias")
             self.assertEqual(alias1.build_node.compute_path(), "alias/index.html")
             self.assertEqual(alias1.meta["template"], "redirect.html")
+            self.assertEqual(alias1.meta["page"], page)
 
             self.assertEqual(alias2.node.compute_path(), "test/alias")
             self.assertEqual(alias2.build_node.compute_path(), "test/alias/index.html")

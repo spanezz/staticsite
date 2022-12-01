@@ -8,6 +8,10 @@
   pages. Use `{{meta.…}}` instead of `{{page.meta.…}}`. `name` and
   `created_from` have been moved to `meta` to make them available. This avoids
   requiring a Page object in order to create its metadata.
+* Alias handling has been refactored, and they are now rendered as first-class
+  pages. In its template, what was `{{url_for(page)}}` to refer to the defining
+  page, now needs to be `{{url_for(page.meta.page)}}`. The `render.html`
+  template has been changed accordingly.
 
 # New in version 1.6
 
