@@ -29,7 +29,7 @@ class RenderedElement:
         Open a file contained in the directory pointed to by dir_fd
         """
         def _file_opener(fname, flags):
-            return os.open(fname, flags, dir_fd=dir_fd)
+            return os.open(fname, flags, mode=0o666, dir_fd=dir_fd)
         return io.open(name, *args, opener=_file_opener, **kw)
 
 
