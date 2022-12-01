@@ -143,7 +143,7 @@ def testsite(files: Dict[str, Union[str, bytes, Dict]] = None, **kw):
 
 
 @contextmanager
-def example_site_dir(name="demo"):
+def example_site_dir(name="demo") -> str:
     """
     Create a copy of the example site in a temporary directory
     """
@@ -156,7 +156,7 @@ def example_site_dir(name="demo"):
 
 
 @contextmanager
-def example_site(name="demo", **kw):
+def example_site(name="demo", **kw) -> staticsite.Site:
     stat_override = StatOverride(kw)
 
     with assert_no_logs():
@@ -218,3 +218,65 @@ class Args:
 
     def __getattr__(self, k):
         return self._args.get(k, None)
+
+
+class SiteTestMixin:
+    site_name: str
+    site_settings: dict[str, Any] = {}
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        from staticsite.cmd.build import Builder
+
+        cls.build_root_tmpdir = tempfile.TemporaryDirectory()
+        cls.build_root = cls.build_root_tmpdir.__enter__()
+
+        cls.example_site = example_site(name=cls.site_name, **cls.site_settings)
+        cls.site = cls.example_site.__enter__()
+        cls.site.settings.OUTPUT = cls.build_root
+
+        builder = Builder(cls.site)
+        builder.write()
+        cls.build_root = builder.build_root
+        cls.build_log = builder.build_log
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.example_site.__exit__(None, None, None)
+        cls.build_root_tmpdir.__exit__(None, None, None)
+        super().tearDownClass()
+
+    def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
+        page = self.site.pages[sitepath]
+        self.assertEqual(page.src.relpath, srcpath)
+
+        rendered = self.build_log.get(dstpath)
+        if rendered is None:
+            for path, pg in self.build_log.items():
+                if pg == page:
+                    self.fail(f"{dstpath!r} not found in render log; {srcpath!r} was rendered as {path!r} instead")
+                    break
+            else:
+                self.fail(f"{dstpath!r} not found in render log")
+
+        if rendered != page:
+            for path, pg in self.build_log.items():
+                if pg == page:
+                    self.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}."
+                              " {srcpath!r} was rendered as {path!r} instead")
+                    break
+            else:
+                self.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}")
+
+        if os.path.isdir(os.path.join(self.build_root, dstpath)):
+            self.fail(f"{dstpath!r} rendered as a directory")
+
+        if sample is not None:
+            if isinstance(sample, bytes):
+                args = {"mode": "rb"}
+            else:
+                args = {"mode": "rt", "encoding": "utf-8"}
+            with open(os.path.join(self.build_root, dstpath), **args) as fd:
+                if sample not in fd.read():
+                    self.fail(f"{dstpath!r} does not contain {sample!r}")
