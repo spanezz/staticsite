@@ -299,11 +299,10 @@ class Structure:
         old = self.pages.get(site_path)
         if old is not None:
             if old.TYPE == "asset" and page.TYPE == "asset":
+                # First one wins, to allow overriding of assets in theme
                 pass
-            # elif old.TYPE == "dir" and page.TYPE not in ("dir", "asset"):
-            #     pass
             else:
-                log.warn("%r: replacing page %r", page, old)
+                log.warn("%s: page %r replaces page %r", site_path, page, old)
         self.pages[site_path] = page
 
         # Mount page by src.relpath
