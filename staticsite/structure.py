@@ -148,6 +148,9 @@ class Node:
                         as_path=as_path,
                         **kw)
 
+        if directory_index and not as_path:
+            print("directory_index is True and as_path is False")
+
         # Create the page, with some dependency injection
         if created_from:
             meta = created_from.meta.derive()
