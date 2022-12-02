@@ -129,6 +129,7 @@ class Node:
             self, *,
             page_cls: Type[Page],
             src: Optional[file.File] = None,
+            dst: Optional[str] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
             meta_values: Optional[dict[str, Any]] = None,
@@ -142,7 +143,7 @@ class Node:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
                 return node.create_page(
-                        page_cls=page_cls, src=src, path=path.tail,
+                        page_cls=page_cls, src=src, dst=dst, path=path.tail,
                         meta_values=meta_values, created_from=created_from,
                         as_path=as_path,
                         **kw)
@@ -165,11 +166,17 @@ class Node:
             raise SkipPage()
         if self.src is None:
             self.src = src
+
         self.page = page
         self.site.structure.index(page)
         if as_path:
+            if dst is not None:
+                print("as_path is True and dst is not None")
             page.build_node = self.child("index.html")
             page.build_node.page = page
+        else:
+            if dst != self.name:
+                print(f"as_path is False and {dst=!r} != {self.name=!r}")
         return page
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:
@@ -178,7 +185,7 @@ class Node:
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name, as_path=False)
+        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name, as_path=False, dst=name)
 
     def add_directory_index(self):
         """

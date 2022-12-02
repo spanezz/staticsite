@@ -96,6 +96,7 @@ extension), that image is used.
                 meta_values=meta_values,
                 mimetype=mimetype,
                 as_path=False,
+                dst=fname,
                 path=structure.Path((fname,)))
             pages.append(page)
 
@@ -123,6 +124,7 @@ extension), that image is used.
                         name=name,
                         info=info,
                         as_path=False,
+                        dst=scaled_fname,
                         path=structure.Path((scaled_fname,)))
                     pages.append(scaled)
 
