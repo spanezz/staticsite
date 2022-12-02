@@ -246,7 +246,6 @@ class MarkdownPages(Feature):
                     feature=self,
                     body=body,
                     directory_index=directory_index,
-                    as_path=True,
                     path=path)
             pages.append(page)
 

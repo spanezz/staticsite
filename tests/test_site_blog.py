@@ -99,10 +99,6 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         self.assertIn(b"srcset='/posts/example", rendered)
 
         self.assertEqual(self.site.pages["archive"].to_dict(), {
-            "src": {
-                "relpath": "index.md",
-                "abspath": os.path.join(self.site.content_root, "index.md"),
-            },
             'site_path': 'archive',
             "build_path": "archive/index.html",
             "meta": {
@@ -129,10 +125,6 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         })
 
         self.assertEqual(self.site.pages["index.rss"].to_dict(), {
-            "src": {
-                "relpath": "index.md",
-                "abspath": os.path.join(self.site.content_root, "index.md"),
-            },
             'site_path': 'index.rss',
             "build_path": "index.rss",
             "meta": {

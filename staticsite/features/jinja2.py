@@ -91,13 +91,11 @@ class J2Pages(Feature):
 
             if (directory_index := fname == "index.html"):
                 path = structure.Path()
-                as_path = True
                 dst = None
             else:
                 # Is this still needed?
                 fname = fname.replace(".j2", "")
                 path = structure.Path((fname,))
-                as_path = False
                 dst = fname
 
             page = node.create_page(
@@ -107,7 +105,6 @@ class J2Pages(Feature):
                     meta_values=meta_values,
                     template=template,
                     directory_index=directory_index,
-                    as_path=as_path,
                     path=path)
             pages.append(page)
             taken.append(fname)

@@ -95,7 +95,6 @@ extension), that image is used.
                 src=src,
                 meta_values=meta_values,
                 mimetype=mimetype,
-                as_path=False,
                 dst=fname,
                 path=structure.Path((fname,)))
             pages.append(page)
@@ -118,12 +117,12 @@ extension), that image is used.
 
                     scaled = node.create_page(
                         page_cls=ScaledImage,
+                        src=src,
                         created_from=page,
                         meta_values=rel_meta,
                         mimetype=mimetype,
                         name=name,
                         info=info,
-                        as_path=False,
                         dst=scaled_fname,
                         path=structure.Path((scaled_fname,)))
                     pages.append(scaled)

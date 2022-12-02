@@ -63,10 +63,6 @@ class TestDemo(test_utils.SiteTestMixin, TestCase):
         self.assertEqual(page.meta["title"], "Latest posts for tag <strong>example</strong>")
 
         self.assertEqual(self.site.pages["blog/index.rss"].to_dict(), {
-            "src": {
-                "relpath": "blog/index.html",
-                "abspath": os.path.join(self.site.content_root, "blog/index.html"),
-            },
             'site_path': 'blog/index.rss',
             "build_path": "blog/index.rss",
             "meta": {

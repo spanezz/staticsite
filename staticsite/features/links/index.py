@@ -55,8 +55,7 @@ class LinkIndexPage(Page):
                         "links": links,
                     },
                     links=links,
-                    directory_index=True,
-                    as_path=True)
+                    directory_index=True)
             self.by_tag[tag] = page
             pages.append(page)
 

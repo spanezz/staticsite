@@ -129,14 +129,12 @@ class Node:
             self, *,
             page_cls: Type[Page],
             src: Optional[file.File] = None,
+            # If present, present on the web as a file instead of a path
             dst: Optional[str] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
             meta_values: Optional[dict[str, Any]] = None,
             created_from: Optional[Page] = None,
-            # If True, show as path (i.e. name/index.html), if False as file
-            # (i.e. name.jpg)
-            as_path: bool,
             **kw):
         from . import dirindex
         if path:
@@ -145,17 +143,17 @@ class Node:
                 return node.create_page(
                         page_cls=page_cls, src=src, dst=dst, path=path.tail,
                         meta_values=meta_values, created_from=created_from,
-                        as_path=as_path,
                         **kw)
 
-        if directory_index and not as_path:
-            print("directory_index is True and as_path is False")
+        if directory_index and dst:
+            print("directory_index is True and dst is set")
 
         # Build metadata for the page
         if created_from:
             meta = created_from.meta.derive()
-            if src:
-                print(f"{created_from=!r} and {src=!r}")
+            # Invalid invariant: scaled images have src
+            # if src:
+            #     print(f"{created_from=!r} and {src=!r}")
         elif directory_index and page_cls != dirindex.Dir:
             meta = self.meta
         else:
@@ -174,7 +172,7 @@ class Node:
 
         self.page = page
         self.site.structure.index(page)
-        if as_path:
+        if not dst:
             if dst is not None:
                 print("as_path is True and dst is not None")
             page.build_node = self.child("index.html")
@@ -190,7 +188,7 @@ class Node:
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name, as_path=False, dst=name)
+        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name, dst=name)
 
     def add_directory_index(self):
         """
@@ -201,7 +199,6 @@ class Node:
             page_cls=dirindex.Dir,
             name=self.name,
             directory_index=True,
-            as_path=True,
             src=self.src)
 
     @contextlib.contextmanager

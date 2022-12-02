@@ -81,7 +81,6 @@ element.
                 meta_values=meta_values,
                 name=name,
                 directory_index=True,
-                as_path=True,
                 path=structure.Path((name,)))
 
             self.taxonomies[page.name] = page
@@ -215,7 +214,6 @@ class TaxonomyPage(Page):
                 page_cls=CategoryPage,
                 meta_values=category_meta,
                 name=category,
-                as_path=True,
                 path=structure.Path((category,))
             )
 

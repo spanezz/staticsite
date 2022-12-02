@@ -176,7 +176,6 @@ class RestructuredText(Feature):
                     feature=self,
                     doctree_scan=doctree_scan,
                     directory_index=directory_index,
-                    as_path=True,
                     path=path)
             pages.append(page)
 
