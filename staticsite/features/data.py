@@ -100,8 +100,7 @@ This is used to group data of the same type together, and to choose a
                 meta_values=meta_values,
                 directory_index=directory_index,
                 as_path=True,
-                path=path,
-                build_as=structure.Path(("index.html",)))
+                path=path)
             pages.append(page)
 
         for fname in taken:

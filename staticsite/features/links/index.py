@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import logging
-from staticsite import Page, structure
+from staticsite import Page
 from .data import Link, LinkCollection
 
 if TYPE_CHECKING:
@@ -56,8 +56,7 @@ class LinkIndexPage(Page):
                     },
                     links=links,
                     directory_index=True,
-                    as_path=True,
-                    build_as=structure.Path(("index.html",)))
+                    as_path=True)
             self.by_tag[tag] = page
             pages.append(page)
 

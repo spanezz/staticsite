@@ -265,8 +265,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                         page_cls=ArchivePage,
                         meta_values=archive_meta_values,
                         as_path=True,
-                        path=structure.Path(("archive",)),
-                        build_as=structure.Path(("index.html",)))
+                        path=structure.Path(("archive",)))
                 archive_page.add_related("rss_feed", rss_page)
                 archive_page.add_related("atom_feed", atom_page)
 

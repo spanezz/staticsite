@@ -82,8 +82,7 @@ element.
                 name=name,
                 directory_index=True,
                 as_path=True,
-                path=structure.Path((name,)),
-                build_as=structure.Path(("index.html",)))
+                path=structure.Path((name,)))
 
             self.taxonomies[page.name] = page
             pages.append(page)
@@ -217,8 +216,7 @@ class TaxonomyPage(Page):
                 meta_values=category_meta,
                 name=category,
                 as_path=True,
-                path=structure.Path((category,)),
-                build_as=structure.Path(("index.html",)),
+                path=structure.Path((category,))
             )
 
             self.categories[category] = category_page

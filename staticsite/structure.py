@@ -130,7 +130,6 @@ class Node:
             page_cls: Type[Page],
             src: Optional[file.File] = None,
             path: Optional[Path] = None,
-            build_as: Optional[Path] = None,
             directory_index: bool = False,
             meta_values: Optional[dict[str, Any]] = None,
             created_from: Optional[Page] = None,
@@ -144,7 +143,6 @@ class Node:
             with self.tentative_child(path.head) as node:
                 return node.create_page(
                         page_cls=page_cls, src=src, path=path.tail,
-                        build_as=build_as, directory_index=directory_index,
                         meta_values=meta_values, created_from=created_from,
                         as_path=as_path,
                         **kw)
@@ -192,8 +190,7 @@ class Node:
             name=self.name,
             directory_index=True,
             as_path=True,
-            src=self.src,
-            build_as=Path(("index.html",)))
+            src=self.src)
 
     @contextlib.contextmanager
     def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:
