@@ -151,6 +151,9 @@ class Node:
         if directory_index and dst:
             print("directory_index is True and dst is set")
 
+        if dst and dst != self.name:
+            print(f"{dst=!r} {self.name=!r}")
+
         # Build metadata for the page
         if created_from:
             meta = created_from.meta.derive()
