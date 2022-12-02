@@ -43,7 +43,6 @@ existing links when moving a page to a different location.
                 self.site.structure.root.create_page(
                         page_cls=AliasPage,
                         created_from=page,
-                        src=page.src,
                         alias=alias,
                         meta_values={"page": page},
                         directory_index=True,

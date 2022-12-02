@@ -151,11 +151,11 @@ class Node:
         if directory_index and not as_path:
             print("directory_index is True and as_path is False")
 
-        # Create the page, with some dependency injection
+        # Build metadata for the page
         if created_from:
             meta = created_from.meta.derive()
-            if src is None:
-                src = created_from.src
+            if src:
+                print(f"{created_from=!r} and {src=!r}")
         elif directory_index and page_cls != dirindex.Dir:
             meta = self.meta
         else:
@@ -164,6 +164,8 @@ class Node:
             meta.update(meta_values)
         if created_from:
             meta["created_from"] = created_from
+
+        # Create the page
         page = page_cls(site=self.site, src=src, node=self, directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
