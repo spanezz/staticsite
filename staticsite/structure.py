@@ -119,6 +119,9 @@ class Node:
         if "meta" in kw:
             raise RuntimeError("do not pass meta to create_page")
 
+        if kw.get("dst") is None and not kw.get("directory_index") and ("path" not in kw or not kw["path"]):
+            print(f"{self.compute_path()}: empty path for {kw['page_cls']}")
+
         # TODO: move site.is_page_ignored here?
         try:
             return self._create_page(**kw)
@@ -140,7 +143,7 @@ class Node:
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
-                return node.create_page(
+                return node._create_page(
                         page_cls=page_cls, src=src, dst=dst, path=path.tail,
                         meta_values=meta_values, created_from=created_from,
                         **kw)
