@@ -169,8 +169,8 @@ class Node:
             self.src = src
         self.page = page
         self.site.structure.index(page)
-        if build_as:
-            page.build_node = self.at_path(build_as)
+        if as_path:
+            page.build_node = self.child("index.html")
             page.build_node.page = page
         return page
 
