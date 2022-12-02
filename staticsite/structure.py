@@ -154,7 +154,7 @@ class Node:
         # Build metadata for the page
         if created_from:
             meta = created_from.meta.derive()
-            # Invalid invariant: scaled images have src
+            # Invalid invariant: scaled images do have src
             # if src:
             #     print(f"{created_from=!r} and {src=!r}")
         elif directory_index and page_cls != dirindex.Dir:
@@ -167,7 +167,9 @@ class Node:
             meta["created_from"] = created_from
 
         # Create the page
-        page = page_cls(site=self.site, src=src, node=self, directory_index=directory_index, meta=meta, **kw)
+        page = page_cls(
+            site=self.site, src=src, dst=dst or "index.html", node=self,
+            directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
         if self.src is None:
