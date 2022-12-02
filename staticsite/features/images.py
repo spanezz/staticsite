@@ -150,6 +150,9 @@ class RenderedScaledImage(RenderedElement):
         self.height = height
 
     def write(self, name: str, dir_fd: int):
+        # if os.access(name, dir_fd=dir_fd, mode=os.W_OK):
+        #     return
+        # TODO: if target exists and mtime is ok, keep it
         import PIL
         with PIL.Image.open(self.src.abspath) as img:
             img = img.resize((self.width, self.height))

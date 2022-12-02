@@ -96,7 +96,7 @@ class J2Pages(Feature):
                 # Is this still needed?
                 fname = fname.replace(".j2", "")
                 path = structure.Path((fname,))
-                build_as = structure.Path()
+                build_as = None
 
             page = node.create_page(
                     page_cls=J2Page,
