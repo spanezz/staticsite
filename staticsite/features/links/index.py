@@ -56,6 +56,7 @@ class LinkIndexPage(Page):
                     },
                     links=links,
                     directory_index=True,
+                    as_path=True,
                     build_as=structure.Path(("index.html",)))
             self.by_tag[tag] = page
             pages.append(page)

@@ -137,6 +137,7 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
                     meta_values=meta_values,
                     name=name,
                     links=self,
+                    as_path=True,
                     path=structure.Path((name,)))
             pages.append(page)
 

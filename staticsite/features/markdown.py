@@ -246,6 +246,7 @@ class MarkdownPages(Feature):
                     feature=self,
                     body=body,
                     directory_index=directory_index,
+                    as_path=True,
                     path=path,
                     build_as=structure.Path(("index.html",)))
             pages.append(page)

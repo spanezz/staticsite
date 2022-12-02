@@ -47,6 +47,7 @@ existing links when moving a page to a different location.
                         alias=alias,
                         meta_values={"page": page},
                         directory_index=True,
+                        as_path=True,
                         path=structure.Path.from_string(alias),
                         build_as=structure.Path(("index.html",)))
 

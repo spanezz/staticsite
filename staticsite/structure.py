@@ -134,6 +134,9 @@ class Node:
             directory_index: bool = False,
             meta_values: Optional[dict[str, Any]] = None,
             created_from: Optional[Page] = None,
+            # If True, show as path (i.e. name/index.html), if False as file
+            # (i.e. name.jpg)
+            as_path: bool,
             **kw):
         from . import dirindex
         if path:
@@ -143,6 +146,7 @@ class Node:
                         page_cls=page_cls, src=src, path=path.tail,
                         build_as=build_as, directory_index=directory_index,
                         meta_values=meta_values, created_from=created_from,
+                        as_path=as_path,
                         **kw)
 
         # Create the page, with some dependency injection
@@ -176,7 +180,7 @@ class Node:
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name)
+        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name, as_path=False)
 
     def add_directory_index(self):
         """
@@ -187,6 +191,7 @@ class Node:
             page_cls=dirindex.Dir,
             name=self.name,
             directory_index=True,
+            as_path=True,
             src=self.src,
             build_as=Path(("index.html",)))
 
