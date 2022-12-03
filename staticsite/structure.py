@@ -287,6 +287,7 @@ class Node:
             self.src = src
 
         dest_node.page = page
+        dest_node.src = src
         self.site.structure.index(page)
         return page
 
