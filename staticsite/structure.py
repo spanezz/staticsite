@@ -160,17 +160,17 @@ class Node:
         else:
             return os.path.join(self.parent.compute_path(), self.name)
 
-    def create_page(self, path: Optional[Path] = None, dst: Optional[str] = None, **kw):
+    def create_page(self, path: Optional[Path] = None, dst: Optional[str] = None, directory_index: bool = False, **kw):
         """
         Create a page of the given type, attaching it at the given path
         """
         if "meta" in kw:
             raise RuntimeError("do not pass meta to create_page")
 
-        if kw.get("directory_index") and dst:
+        if directory_index and dst:
             raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
 
-        if dst is None and not kw.get("directory_index") and not path:
+        if dst is None and not directory_index and not path:
             print(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
         # TODO: move site.is_page_ignored here?
@@ -182,7 +182,7 @@ class Node:
                     path = Path(path + (dst,))
                 return self._create_leaf_page(dst=dst, path=path, **kw)
             else:
-                return self._create_index_page(path=path, **kw)
+                return self._create_index_page(path=path, directory_index=directory_index, **kw)
         except SkipPage:
             return None
 
@@ -269,7 +269,6 @@ class Node:
             src: Optional[file.File] = None,
             dst: str,
             path: Optional[Path] = None,
-            directory_index: bool = False,
             meta_values: Optional[dict[str, Any]] = None,
             created_from: Optional[Page] = None,
             **kw):
@@ -285,7 +284,7 @@ class Node:
             print(f"{dst=!r} {self.name=!r}")
 
         meta = self._build_page_meta(
-                page_cls=page_cls, directory_index=directory_index,
+                page_cls=page_cls, directory_index=False,
                 meta_values=meta_values, created_from=created_from)
 
         # if self.name == "" and not dst and directory_index:
@@ -297,16 +296,13 @@ class Node:
         #     else:
         #         # Add as file in this node
 
-        if directory_index:
-            search_root_node = self
-        else:
-            search_root_node = self.parent
+        search_root_node = self.parent
 
         # Create the page
         page = page_cls(
             site=self.site, src=src, dst=dst or "index.html", node=self,
             search_root_node=search_root_node,
-            directory_index=directory_index, meta=meta, **kw)
+            directory_index=False, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
         if self.src is None:
