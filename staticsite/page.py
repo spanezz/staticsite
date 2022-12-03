@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
@@ -98,7 +99,7 @@ class Page:
         """
         Accessor to support the migration away from meta['build_path']
         """
-        # return self.meta["build_path"]
+        # return os.path.join(self.node.compute_path(), self.dst)
         return self.build_node.compute_path()
 
     def add_related(self, name: str, page: "Page"):
