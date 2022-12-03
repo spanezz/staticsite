@@ -180,9 +180,9 @@ class Node:
                     path = Path((dst,))
                 else:
                     path = Path(path + (dst,))
-                return self._create_page(dst=dst, path=path, **kw)
+                return self._create_leaf_page(dst=dst, path=path, **kw)
             else:
-                return self._create_page(dst=dst, path=path, **kw)
+                return self._create_index_page(path=path, **kw)
         except SkipPage:
             return None
 
@@ -208,12 +208,10 @@ class Node:
             meta["created_from"] = created_from
         return meta
 
-    def _create_page(
+    def _create_index_page(
             self, *,
             page_cls: Type[Page],
             src: Optional[file.File] = None,
-            # If present, present on the web as a file instead of a path
-            dst: Optional[str] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
             meta_values: Optional[dict[str, Any]] = None,
@@ -222,12 +220,68 @@ class Node:
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
-                return node._create_page(
+                return node._create_index_page(
+                        page_cls=page_cls, src=src, path=path.tail,
+                        meta_values=meta_values, created_from=created_from,
+                        **kw)
+
+        meta = self._build_page_meta(
+                page_cls=page_cls, directory_index=directory_index,
+                meta_values=meta_values, created_from=created_from)
+
+        # if self.name == "" and not dst and directory_index:
+        #     # Root node special case: add as index.html in this node
+        # else:
+        #     # Subtree
+        #     if not dst:
+        #         # Add as index.html in subnode
+        #     else:
+        #         # Add as file in this node
+
+        if directory_index:
+            search_root_node = self
+        else:
+            search_root_node = self.parent
+
+        # Create the page
+        page = page_cls(
+            site=self.site, src=src, dst="index.html", node=self,
+            search_root_node=search_root_node,
+            directory_index=directory_index, meta=meta, **kw)
+        if self.site.is_page_ignored(page):
+            raise SkipPage()
+        if self.src is None:
+            self.src = src
+
+        # TODO: Move under 'if not dst'
+        self.page = page
+        self.site.structure.index(page)
+        # if page.directory_index is False:
+        #     print(f"{page=!r} dst is not set but page is not a directory index")
+
+        page.build_node = self.child("index.html")
+        page.build_node.page = page
+        return page
+
+    def _create_leaf_page(
+            self, *,
+            page_cls: Type[Page],
+            src: Optional[file.File] = None,
+            dst: str,
+            path: Optional[Path] = None,
+            directory_index: bool = False,
+            meta_values: Optional[dict[str, Any]] = None,
+            created_from: Optional[Page] = None,
+            **kw):
+        if path:
+            # If a subpath is requested, delegate to subnodes
+            with self.tentative_child(path.head) as node:
+                return node._create_leaf_page(
                         page_cls=page_cls, src=src, dst=dst, path=path.tail,
                         meta_values=meta_values, created_from=created_from,
                         **kw)
 
-        if dst and dst != self.name:
+        if dst != self.name:
             print(f"{dst=!r} {self.name=!r}")
 
         meta = self._build_page_meta(
@@ -258,18 +312,8 @@ class Node:
         if self.src is None:
             self.src = src
 
-        # TODO: Move under 'if not dst'
         self.page = page
         self.site.structure.index(page)
-        if not dst:
-            # if page.directory_index is False:
-            #     print(f"{page=!r} dst is not set but page is not a directory index")
-
-            page.build_node = self.child("index.html")
-            page.build_node.page = page
-        else:
-            if dst != self.name:
-                print(f"as_path is False and {dst=!r} != {self.name=!r}")
         return page
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:
