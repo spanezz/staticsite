@@ -20,7 +20,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
     def test_meta(self):
         self.maxDiff = None
 
-        site_paths = [path for path in self.site.pages.keys() if not path.startswith("static/")]
+        site_paths = [p.site_path for p in self.site.iter_pages(static=False)]
         self.assertCountEqual(site_paths, [
             "", "index.rss", "index.atom", "archive",
             "about",

@@ -29,7 +29,7 @@ class Hello(Feature):
         # Add a 'hello' metadata element to all pages
         # This runs after 'taxonomies' and 'dirs', so it also annotates the
         # pages they generate
-        for page in self.site.pages.values():
+        for page in self.site.iter_pages(static=False):
             page.meta.setdefault("hello", "Hello " + page.meta.get("title", "page"))
 
     def add_site_commands(self, subparsers):
@@ -44,8 +44,11 @@ class HelloCmd(FeatureCommand):
     NAME = "hello"
 
     def run(self):
+        count = 0
+        for page in self.site.iter_pages(static=False):
+            count += 1
         print(f"Hello from {self.site.settings.SITE_NAME}!")
-        print("I contain {} pages.".format(len(self.site.pages)))
+        print(f"I contain {count} pages.")
 
 
 #  FEATURES dict defines which features are activated and with which name.

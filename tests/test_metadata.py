@@ -29,8 +29,7 @@ title: Test1 title
         }
 
         with test_utils.testsite(files) as site:
-            # self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
+            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
                 "", "test.html", "test1.html"
             ])
 
@@ -93,7 +92,7 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
+            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
                 "", "test.md", "test1",
             ])
 
@@ -124,7 +123,7 @@ title: Test1 title
             site.load()
             site.analyze()
 
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
+            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
                 "", "test",
                 "examples/test1.md",
                 "examples/subdir/test2.md",

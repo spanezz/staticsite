@@ -105,7 +105,7 @@ class TestTemplates(TestCase):
         }
 
         with test_utils.testsite(files) as site:
-            self.assertCountEqual([k for k in site.pages.keys() if not k.startswith("static/")], [
+            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
                 "", "page.html"
             ])
 

@@ -158,7 +158,7 @@ static char * bottom_active_xpm[] = {
         }
 
         with test_utils.testsite(files) as site:
-            self.assertCountEqual([x for x in site.pages.keys() if not x.startswith("static/")], [
+            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
                 "",
                 "index.rss",
                 "index.atom",
