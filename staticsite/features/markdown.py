@@ -83,7 +83,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         site_path = self.substituted.get(parsed.path)
         if site_path is not None:
             try:
-                return self.page.site.structure.pages[site_path], parsed
+                return self.page.site.find_page(site_path), parsed
             except KeyError:
                 log.warn("%s: url %s resolved via cache to %s which does not exist in the site. Cache out of date?",
                          self.page, url, site_path)

@@ -185,7 +185,7 @@ class Page:
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)
-        return f.filter(self.site.structure.pages.values())
+        return f.filter(self.site.iter_pages())
 
     def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
         """

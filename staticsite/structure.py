@@ -258,6 +258,13 @@ class Node:
         if self.src is None:
             self.src = src
 
+        if self.page is not None:
+            if self.page.TYPE == "asset" and page.TYPE == "asset":
+                # First one wins, to allow overriding of assets in theme
+                pass
+            else:
+                log.warn("%s: page %r replaces page %r", self.compute_path(), page, self.page)
+
         # TODO: Move under 'if not dst'
         self.page = page
         self.site.structure.index(page)
@@ -303,6 +310,13 @@ class Node:
             raise SkipPage()
         if self.src is None:
             self.src = src
+
+        if dest_node.page is not None:
+            if dest_node.page.TYPE == "asset" and page.TYPE == "asset":
+                # First one wins, to allow overriding of assets in theme
+                pass
+            else:
+                log.warn("%s: page %r replaces page %r", dest_node.compute_path(), page, dest_node.page)
 
         dest_node.page = page
         dest_node.src = src

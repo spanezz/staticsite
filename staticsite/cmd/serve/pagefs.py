@@ -23,7 +23,7 @@ class PageFS:
         self.paths = {}
 
         if site:
-            for page in site.structure.pages.values():
+            for page in site.iter_pages():
                 self.add_page(page, page.build_path)
 
     def add_page(self, page: Page, build_path: str = None):

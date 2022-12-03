@@ -28,7 +28,8 @@ Features can add to this. For example, [syndication](syndication.md) can add
 
     def analyze(self):
         # Expand pages expressions
-        for page in self.site.structure.pages.values():
+        # TODO: redo this using a tracked metadata
+        for page in self.site.iter_pages(static=False):
             related = page.meta.get("related", None)
             if related is None:
                 page.meta[self.name] = related = {}
