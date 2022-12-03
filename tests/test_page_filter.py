@@ -6,7 +6,7 @@ from staticsite.page_filter import PageFilter
 
 def select(site, *args, **kw):
     f = PageFilter(site, *args, **kw)
-    return [p.site_path for p in f.filter(site.pages.values())]
+    return [p.site_path for p in f.filter(site.structure.pages.values())]
 
 
 class TestPageFilter(TestCase):

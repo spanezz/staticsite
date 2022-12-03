@@ -227,14 +227,6 @@ It defaults to true at least for [Markdown](markdown.md),
         yield from self.structure.root.iter_pages(prune=prune)
 
     @property
-    def pages(self):
-        """
-        Compatibility accessor for structure.pages
-        """
-        warnings.warn("use site.structure.pages instead of site.pages", DeprecationWarning)
-        return self.structure.pages
-
-    @property
     def pages_by_metadata(self):
         """
         Compatibility accessor for structure.pages_by_metadata
@@ -405,7 +397,7 @@ It defaults to true at least for [Markdown](markdown.md),
             log.warn("analyze called before loading site contents")
 
         # Run metadata on_analyze functions
-        for page in self.structure.pages.values():
+        for page in self.iter_pages(static=False):
             if page.meta.get("asset", False):
                 continue
             self.metadata.on_analyze(page)
