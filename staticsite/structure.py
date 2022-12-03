@@ -167,11 +167,11 @@ class Node:
         if "meta" in kw:
             raise RuntimeError("do not pass meta to create_page")
 
+        if kw.get("directory_index") and dst:
+            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
+
         if dst is None and not kw.get("directory_index") and not path:
             print(f"{self.compute_path()}: empty path for {kw['page_cls']}")
-
-        if kw.get("directory_index") and dst:
-            print("directory_index is True and dst is set")
 
         # TODO: move site.is_page_ignored here?
         try:
