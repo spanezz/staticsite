@@ -271,15 +271,15 @@ class Node:
                 page_cls=page_cls, directory_index=False,
                 meta_values=meta_values, created_from=created_from)
 
-        search_root_node = self.parent
-
         dest_node = self.child(dst)
 
         # Create the page
         page = page_cls(
             site=self.site, src=src, dst=dst,
+            # TODO: switch to just self once we get rid of structure.pages:
+            # this is only needed to get a good site_path there
             node=dest_node,
-            search_root_node=search_root_node,
+            search_root_node=self,
             directory_index=False, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
