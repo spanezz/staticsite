@@ -93,17 +93,17 @@ class Page:
         Accessor to support the migration away from meta['build_path']
         """
         # return self.meta["build_path"]
-        return self.node.compute_path()
+        if self.leaf:
+            return os.path.join(self.node.compute_path(), self.dst)
+        else:
+            return self.node.compute_path()
 
     @property
     def build_path(self) -> str:
         """
         Accessor to support the migration away from meta['build_path']
         """
-        if self.leaf:
-            return os.path.join(self.node.compute_path())
-        else:
-            return os.path.join(self.node.compute_path(), self.dst)
+        return os.path.join(self.node.compute_path(), self.dst)
 
     def add_related(self, name: str, page: "Page"):
         """

@@ -294,14 +294,12 @@ class Node:
                 page_cls=page_cls, directory_index=False,
                 meta_values=meta_values, created_from=created_from)
 
-        dest_node = self.child(dst)
-
         # Create the page
         page = page_cls(
             site=self.site, src=src, dst=dst,
             # TODO: switch to just self once we get rid of structure.pages:
             # this is only needed to get a good site_path there
-            node=dest_node,
+            node=self,
             search_root_node=self,
             leaf=True,
             directory_index=False, meta=meta, **kw)
@@ -310,12 +308,12 @@ class Node:
         if self.src is None:
             self.src = src
 
-        if dest_node.page is not None:
-            if dest_node.page.TYPE == "asset" and page.TYPE == "asset":
+        if (old := self.build_pages.get(dst)):
+            if old.TYPE == "asset" and page.TYPE == "asset":
                 # First one wins, to allow overriding of assets in theme
                 pass
             else:
-                log.warn("%s: page %r replaces page %r", dest_node.compute_path(), page, dest_node.page)
+                log.warn("%s: page %r replaces page %r", self.compute_path(), page, old)
 
         self.build_pages[dst] = page
         self.site.structure.index(page)
