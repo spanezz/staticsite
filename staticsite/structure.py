@@ -176,10 +176,6 @@ class Node:
         # TODO: move site.is_page_ignored here?
         try:
             if dst:
-                if not path:
-                    path = Path((dst,))
-                else:
-                    path = Path(path + (dst,))
                 return self._create_leaf_page(dst=dst, path=path, **kw)
             else:
                 return self._create_index_page(path=path, directory_index=directory_index, **kw)
@@ -280,9 +276,6 @@ class Node:
                         meta_values=meta_values, created_from=created_from,
                         **kw)
 
-        if dst != self.name:
-            print(f"{dst=!r} {self.name=!r}")
-
         meta = self._build_page_meta(
                 page_cls=page_cls, directory_index=False,
                 meta_values=meta_values, created_from=created_from)
@@ -298,9 +291,12 @@ class Node:
 
         search_root_node = self.parent
 
+        dest_node = self.child(dst)
+
         # Create the page
         page = page_cls(
-            site=self.site, src=src, dst=dst or "index.html", node=self,
+            site=self.site, src=src, dst=dst,
+            node=dest_node,
             search_root_node=search_root_node,
             directory_index=False, meta=meta, **kw)
         if self.site.is_page_ignored(page):
@@ -308,7 +304,7 @@ class Node:
         if self.src is None:
             self.src = src
 
-        self.page = page
+        dest_node.page = page
         self.site.structure.index(page)
         return page
 
