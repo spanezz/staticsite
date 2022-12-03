@@ -225,15 +225,6 @@ It defaults to true at least for [Markdown](markdown.md),
         return self.structure.pages_by_metadata
 
     @property
-    def pages_by_src_relpath(self):
-        """
-        Compatibility accessor for structure.pages_by_src_relpath
-        """
-        warnings.warn(
-            "use site.structure.pages_by_src_relpath instead of site.pages_by_src_relpath", DeprecationWarning)
-        return self.structure.pages_by_src_relpath
-
-    @property
     def tracked_metadata(self):
         """
         Compatibility accessor for structure.tracked_metadata

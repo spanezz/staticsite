@@ -354,9 +354,6 @@ class Structure:
         # Metadata for which we add pages to pages_by_metadata
         self.tracked_metadata: set[str] = set()
 
-        # Site pages indexed by src.relpath
-        self.pages_by_src_relpath: dict[str, Page] = {}
-
     def add_tracked_metadata(self, name: str):
         """
         Mark the given metadata name so that we track pages that have it.
@@ -387,11 +384,6 @@ class Structure:
             else:
                 log.warn("%s: page %r replaces page %r", site_path, page, old)
         self.pages[site_path] = page
-
-        # Mount page by src.relpath
-        # Skip pages derived from other pages, or they would overwrite them
-        if page.src is not None and not page.created_from:
-            self.pages_by_src_relpath[page.src.relpath] = page
 
         # Also group pages by tracked metadata
         for tracked in self.tracked_metadata:
