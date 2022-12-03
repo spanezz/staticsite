@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Generator, Optional, Type
+from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Type
 
 from .metadata import Meta
 
@@ -82,6 +82,18 @@ class Node:
         self.build_pages: dict[str, Page] = {}
         # Subdirectories
         self.sub: Optional[dict[str, Node]] = None
+
+    def iter_pages(self, prune: Sequence[Node] = ()) -> Generator[Page, None, None]:
+        """
+        Iterate all pages in this subtree
+        """
+        # Avoid nodes in prune
+        if self in prune:
+            return
+        yield from self.build_pages.values()
+        if self.sub:
+            for node in self.sub.values():
+                yield from node.iter_pages(prune)
 
     def lookup(self, path: Path) -> Optional[Node]:
         """

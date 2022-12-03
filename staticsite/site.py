@@ -6,7 +6,7 @@ import os
 import re
 import warnings
 from functools import cached_property
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Generator, Optional, Union
 
 import dateutil.parser
 import pytz
@@ -213,6 +213,18 @@ It defaults to true at least for [Markdown](markdown.md),
         Find a page by absolute path in the site
         """
         return self.structure.root.lookup_page(structure.Path.from_string(path))
+
+    def iter_pages(self, static: bool = True) -> Generator[Page, None, None]:
+        """
+        Iterate all pages in the site
+        """
+        if static:
+            prune = ()
+        else:
+            prune = (
+                self.structure.root.lookup(structure.Path.from_string(self.settings.STATIC_PATH)),
+            )
+        yield from self.structure.root.iter_pages(prune=prune)
 
     @property
     def pages(self):
