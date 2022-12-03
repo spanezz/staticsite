@@ -64,7 +64,6 @@ class Node:
             site: Site,
             name: str, *,
             meta: Meta,
-            src: Optional[file.File] = None,
             parent: Optional[Node] = None):
         # Pointer to the root structure
         self.site = site
@@ -74,8 +73,6 @@ class Node:
         self.parent: Optional[Node] = parent
         # Metadata for this directory
         self.meta = meta
-        # Set if node corresponds to a source directory in the file system
-        self.src: Optional[file.File] = src
         # Index page for this directory, if present
         self.page: Optional[Page] = None
         # Pages to be rendered at this location
@@ -255,8 +252,6 @@ class Node:
             directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
-        if self.src is None:
-            self.src = src
 
         if self.page is not None:
             if self.page.TYPE == "asset" and page.TYPE == "asset":
@@ -305,8 +300,6 @@ class Node:
             directory_index=False, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
-        if self.src is None:
-            self.src = src
 
         if (old := self.build_pages.get(dst)):
             if old.TYPE == "asset" and page.TYPE == "asset":
@@ -327,7 +320,7 @@ class Node:
         from .asset import Asset
         return self.create_page(page_cls=Asset, src=src, name=name, dst=name)
 
-    def add_directory_index(self):
+    def add_directory_index(self, src: file.File):
         """
         Add a directory index to this node
         """
@@ -336,7 +329,7 @@ class Node:
             page_cls=dirindex.Dir,
             name=self.name,
             directory_index=True,
-            src=self.src)
+            src=src)
 
     @contextlib.contextmanager
     def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:
@@ -344,8 +337,6 @@ class Node:
         Add a child, removing it if an exception is raised
         """
         if self.sub and (node := self.sub.get(name)):
-            if src and not node.src:
-                node.src = src
             yield node
             return
 
@@ -353,7 +344,7 @@ class Node:
             if self.sub is None:
                 self.sub = {}
 
-            node = Node(site=self.site, name=name, parent=self, src=src, meta=self.meta.derive())
+            node = Node(site=self.site, name=name, parent=self, meta=self.meta.derive())
             self.sub[name] = node
             yield node
         except Exception:
@@ -370,11 +361,9 @@ class Node:
             self.sub = {}
 
         if (node := self.sub.get(name)):
-            if src and not node.src:
-                node.src = src
             return node
 
-        node = Node(site=self.site, name=name, parent=self, src=src, meta=self.meta.derive())
+        node = Node(site=self.site, name=name, parent=self, meta=self.meta.derive())
         self.sub[name] = node
         return node
 

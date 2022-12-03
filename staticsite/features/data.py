@@ -128,8 +128,8 @@ This is used to group data of the same type together, and to choose a
 
     @jinja2.pass_context
     def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
-        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
-        return page_filter.filter(self.by_type.get(type, []))
+        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, allow=self.by_type.get(type, []), **kw)
+        return page_filter.filter()
 
 
 def parse_data(fd, fmt):

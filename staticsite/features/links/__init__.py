@@ -160,7 +160,8 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
 
     @jinja2.pass_context
     def links_merged(self, context, path=None, limit=None, sort=None, link_tags=None, **kw):
-        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, **kw)
+        page_filter = PageFilter(
+                self.site, path=path, limit=limit, sort=sort, allow=self.data.by_type.get("links", ()), **kw)
 
         # Build link tag filter
         if link_tags is not None:
@@ -171,10 +172,10 @@ It is a list of dicts of metadata, one for each link. In each dict, these keys a
 
         links = LinkCollection()
         if link_tags is None:
-            for page in page_filter.filter(self.data.by_type.get("links", ())):
+            for page in page_filter.filter():
                 links.merge(page.links)
         else:
-            for page in page_filter.filter(self.data.by_type.get("links", ())):
+            for page in page_filter.filter():
                 for link in page.links:
                     if link_tags is not None and not link_tags.issubset(link.tags):
                         continue

@@ -90,7 +90,7 @@ class Edit(SiteCommand):
 
         # Build a list of all findable pages, present on disk, sorted with the newest first
         f = PageFilter(site, **filter_args)
-        pages = [page for page in f.filter(site.iter_pages())
+        pages = [page for page in f.filter()
                  if page.src.stat is not None and match_page(page)]
 
         if len(pages) == 0:

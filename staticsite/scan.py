@@ -41,10 +41,6 @@ def scan_tree(site: Site, src: file.File, node: Optional[structure.Node] = None)
     if node is None:
         node = site.structure.root
 
-    # Add src to the node if it was missing
-    if node.src is None:
-        node.src = src
-
     with open_dir_fd(src.abspath) as dir_fd:
         scan(site=site, directory=Directory(src, dir_fd), node=node)
 
@@ -139,9 +135,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
         take_dir_rules(dir_rules, file_rules, config)
         if (site_path := config.pop("site_path", None)) is not None:
-            node.src = None
             node = node.at_path(structure.Path.from_string(site_path))
-            node.src = directory.src
         node.meta.update(config)
 
     # If .staticsite declared we're a directory of assets, bail out and
@@ -195,7 +189,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
 
     dir_index: Optional[Page] = None
     if not node.page:
-        dir_index = node.add_directory_index()
+        dir_index = node.add_directory_index(directory.src)
 
     # Use everything else as an asset
     # TODO: move into an asset feature?

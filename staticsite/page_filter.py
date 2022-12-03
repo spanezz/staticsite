@@ -3,8 +3,8 @@ from __future__ import annotations
 import fnmatch
 import os
 import re
-from typing import (TYPE_CHECKING, Any, Callable, FrozenSet, Iterable,
-                    Optional, Union)
+from typing import (TYPE_CHECKING, Any, Callable, FrozenSet, Generator,
+                    Optional, Sequence, Union)
 
 from . import site
 from .page import Page
@@ -74,6 +74,7 @@ class PageFilter:
             limit: Optional[int] = None,
             sort: Optional[str] = None,
             root: Optional[structure.Node] = None,
+            allow: Optional[Sequence[Page]] = None,
             **kw):
         self.site = site
         self.root = root
@@ -94,42 +95,15 @@ class PageFilter:
 
         self.limit = limit
 
-        # print(f"PageFilter({path=!r}, {self.root=!r}, {self.re_path=!r}, {self.taxonomy_filters=} ya")
+        self.allow = allow
 
-    def filter(self, all_pages: Iterable[Page]) -> list[Page]:
+        # print(f"PageFilter({path=!r}, {self.root.compute_path()=!r}, {self.re_path=!r}, {self.taxonomy_filters=}")
+
+    def filter(self):
         # print("PageFilter.filter")
         pages = []
 
-        for page in all_pages:
-            if not page.meta["indexed"]:
-                continue
-            if self.root and not self.root.contains(page):
-                continue
-            if self.re_path is not None:
-                if page.src is None:
-                    continue
-                if self.root:
-                    if self.root.src:
-                        page_path = os.path.relpath(page.src.relpath, start=self.root.src.relpath)
-                    else:
-                        page_path = os.path.relpath(page.src.relpath, start=self.root.compute_path())
-                else:
-                    page_path = page.src.relpath
-                # print(f"  {page=!r} {page.src=} {page_path}")
-                if not self.re_path.match(page_path):
-                    # print(f"  {page=!r} {page_path=!r} did not match {self.re_path=}")
-                    continue
-                # else:
-                    # print(f"  {page=!r} {page_path=!r} matched {self.re_path=}")
-            if self.sort_meta is not None and self.sort_meta not in page.meta:
-                continue
-            fail_taxonomies = False
-            for name, t_filter in self.taxonomy_filters:
-                page_tags = frozenset(t.name for t in page.meta.get(name, ()))
-                if not t_filter.issubset(page_tags):
-                    fail_taxonomies = True
-            if fail_taxonomies:
-                continue
+        for page in self._filter(self.root or self.site.structure.root, relpath=""):
             pages.append(page)
 
         if self.sort_key is not None:
@@ -139,3 +113,40 @@ class PageFilter:
             pages = pages[:self.limit]
 
         return pages
+
+    def _filter(self, root: structure.Node, relpath: str) -> Generator[Page, None, None]:
+
+        for name, page in root.build_pages.items():
+            if not page.meta["indexed"]:
+                continue
+            if self.allow is not None and page not in self.allow:
+                continue
+            if self.sort_meta is not None and self.sort_meta not in page.meta:
+                continue
+
+            # Taxonomy_filters
+            fail_taxonomies = False
+            for name, t_filter in self.taxonomy_filters:
+                page_tags = frozenset(t.name for t in page.meta.get(name, ()))
+                if not t_filter.issubset(page_tags):
+                    fail_taxonomies = True
+            if fail_taxonomies:
+                continue
+
+            # print(f"_filter {page=!r} {relpath=!r} {page.dst}")
+
+            if self.re_path is not None:
+                if self.re_path.match(os.path.join(relpath, name)):
+                    pass
+                elif page.src and self.re_path.match(
+                        (os.path.join(relpath, os.path.basename(page.src.relpath)))):
+                    pass
+                else:
+                    # print(f"  {page=!r} {page.src=} did not match")
+                    continue
+
+            yield page
+
+        if root.sub:
+            for node in root.sub.values():
+                yield from self._filter(node, relpath=os.path.join(relpath, node.name))
