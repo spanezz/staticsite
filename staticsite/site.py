@@ -208,6 +208,12 @@ It defaults to true at least for [Markdown](markdown.md),
 [reStructuredText](rst.rst), and [data](data.md) pages.
 """))
 
+    def find_page(self, path: str):
+        """
+        Find a page by absolute path in the site
+        """
+        return self.structure.root.lookup_page(structure.Path.from_string(path))
+
     @property
     def pages(self):
         """

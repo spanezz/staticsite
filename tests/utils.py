@@ -248,7 +248,7 @@ class SiteTestMixin:
         super().tearDownClass()
 
     def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
-        page = self.site.pages[sitepath]
+        page = self.site.find_page(sitepath)
         self.assertEqual(page.src.relpath, srcpath)
 
         rendered = self.build_log.get(dstpath)

@@ -24,12 +24,12 @@ Example blog post in reStructuredText
         }
 
         with test_utils.testsite(files) as site:
-            tags = site.pages["taxonomies/tags"]
+            tags = site.find_page("taxonomies/tags")
             tag_example = tags.categories["example"]
             tag_another = tags.categories["another tag"]
 
             # We have a root dir index and dir indices for all subdirs
-            page = site.pages[""]
+            page = site.find_page("")
             self.assertEqual(page.TYPE, "rst")
             self.assertCountEqual(page.meta.pop("tags"), [tag_example, tag_another])
             self.assertEqual(page.to_dict(), {

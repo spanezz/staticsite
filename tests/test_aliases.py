@@ -13,9 +13,9 @@ class TestAliases(TestCase):
             site.load()
             site.analyze()
 
-            page = site.pages["page"]
-            alias1 = site.pages["alias"]
-            alias2 = site.pages["test/alias"]
+            page = site.find_page("page")
+            alias1 = site.find_page("alias")
+            alias2 = site.find_page("test/alias")
 
             self.assertEqual(page.node.compute_path(), "page")
             self.assertEqual(page.build_node.compute_path(), "page/index.html")

@@ -18,8 +18,8 @@ class TestTags(TestCase):
             site.load()
             site.analyze()
 
-            tags = site.pages["taxonomies/tags"]
-            page1 = site.pages["page1"]
+            tags = site.find_page("taxonomies/tags")
+            page1 = site.find_page("page1")
 
             self.assertEqual(tags.categories["a"].meta["pages"], [page1])
             self.assertEqual(tags.categories["b"].meta["pages"], [page1])
@@ -41,9 +41,9 @@ tags: [cat]
             site.load()
             site.analyze()
 
-            tags = site.pages["taxonomies/tags"]
+            tags = site.find_page("taxonomies/tags")
             cat = tags.categories["cat"]
-            page = site.pages["page"]
+            page = site.find_page("page")
 
             self.assertEqual(cat.meta["pages"], [page])
             self.assertEqual(page.meta["tags"], [cat])

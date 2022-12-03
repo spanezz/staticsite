@@ -35,12 +35,12 @@ text
 """
 
         with test_utils.testsite(files) as site:
-            blog = site.pages["blog"]
-            post1 = site.pages["blog/post1"]
-            post2 = site.pages["blog/post2"]
-            widget = site.pages["blog/widget"]
-            rss = site.pages["blog/index.rss"]
-            atom = site.pages["blog/index.atom"]
+            blog = site.find_page("blog")
+            post1 = site.find_page("blog/post1")
+            post2 = site.find_page("blog/post2")
+            widget = site.find_page("blog/widget")
+            rss = site.find_page("blog/index.rss")
+            atom = site.find_page("blog/index.atom")
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
@@ -73,12 +73,12 @@ syndication:
 text
 """
         with test_utils.testsite(files) as site:
-            blog = site.pages["blog"]
-            post1 = site.pages["blog/post1"]
-            post2 = site.pages["blog/post2"]
-            widget = site.pages["blog/widget"]
-            rss = site.pages["blog/index.rss"]
-            atom = site.pages["blog/index.atom"]
+            blog = site.find_page("blog")
+            post1 = site.find_page("blog/post1")
+            post2 = site.find_page("blog/post2")
+            widget = site.find_page("blog/widget")
+            rss = site.find_page("blog/index.rss")
+            atom = site.find_page("blog/index.atom")
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
@@ -105,12 +105,12 @@ text
 """
 
         with test_utils.testsite(files) as site:
-            blog = site.pages["blog"]
-            post1 = site.pages["blog/post1"]
-            post2 = site.pages["blog/post2"]
-            widget = site.pages["blog/widget"]
-            rss = site.pages["blog/index.rss"]
-            atom = site.pages["blog/index.atom"]
+            blog = site.find_page("blog")
+            post1 = site.find_page("blog/post1")
+            post2 = site.find_page("blog/post2")
+            widget = site.find_page("blog/widget")
+            rss = site.find_page("blog/index.rss")
+            atom = site.find_page("blog/index.atom")
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2])
@@ -169,19 +169,19 @@ static char * bottom_active_xpm[] = {
                 "blog/images/photo.xpm",
             ])
 
-            post = site.pages[""]
+            post = site.find_page("")
             rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
 
-            post = site.pages["blog/post"]
+            post = site.find_page("blog/post")
             rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "/blog/images")
 
-            rss = site.pages["index.rss"]
+            rss = site.find_page("index.rss")
             rendered = rss.render().buf
             mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")

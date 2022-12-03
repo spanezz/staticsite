@@ -17,7 +17,7 @@ class TestNav(TestCase):
         }
 
         with test_utils.testsite(files) as site:
-            page = site.pages["dir1/dir2/dir3/page"]
+            page = site.find_page("dir1/dir2/dir3/page")
             self.assertEqual(page.to_dict(), {
                 "src": {
                     "relpath": "dir1/dir2/dir3/page.md",

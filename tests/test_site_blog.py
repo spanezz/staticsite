@@ -28,10 +28,10 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "posts/example.jpg", "posts/example-small.jpg", "posts/example-thumbnail.jpg",
         ])
 
-        page = self.site.pages["about"]
+        page = self.site.find_page("about")
         self.assertEqual(page.meta["title"], "About")
 
-        self.assertEqual(self.site.pages["about"].to_dict(), {
+        self.assertEqual(self.site.find_page("about").to_dict(), {
             "src": {
                 "relpath": "about.md",
                 "abspath": os.path.join(self.site.content_root, "about.md"),
@@ -57,7 +57,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "markdown",
         })
 
-        self.assertEqual(self.site.pages[""].to_dict(), {
+        self.assertEqual(self.site.find_page("").to_dict(), {
             "src": {
                 "relpath": "index.md",
                 "abspath": os.path.join(self.site.content_root, "index.md"),
@@ -94,11 +94,11 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         })
         # A blog page renders images, relative links, only the beginning of
         # split pages
-        rendered = self.site.pages[""].render().content()
+        rendered = self.site.find_page("").render().content()
         self.assertNotIn(b"This is the rest of the blog post", rendered)
         self.assertIn(b"srcset='/posts/example", rendered)
 
-        self.assertEqual(self.site.pages["archive"].to_dict(), {
+        self.assertEqual(self.site.find_page("archive").to_dict(), {
             'site_path': 'archive',
             "build_path": "archive/index.html",
             "meta": {
@@ -124,7 +124,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "archive",
         })
 
-        self.assertEqual(self.site.pages["index.rss"].to_dict(), {
+        self.assertEqual(self.site.find_page("index.rss").to_dict(), {
             'site_path': 'index.rss',
             "build_path": "index.rss",
             "meta": {
@@ -149,11 +149,11 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "rss",
         })
         # A feed page renders images, all of a split page, absolute site urls
-        rendered = self.site.pages["index.rss"].render().content()
+        rendered = self.site.find_page("index.rss").render().content()
         self.assertIn(b"src=&#39;https://www.example.org/posts/example-small.jpg", rendered)
         self.assertIn(b"This is the rest of the blog post", rendered)
 
-        self.assertEqual(self.site.pages["posts/example.jpg"].to_dict(), {
+        self.assertEqual(self.site.find_page("posts/example.jpg").to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
@@ -182,7 +182,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "image",
         })
 
-        self.assertEqual(self.site.pages["posts/example-small.jpg"].to_dict(), {
+        self.assertEqual(self.site.find_page("posts/example-small.jpg").to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
@@ -209,7 +209,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "image",
         })
 
-        self.assertEqual(self.site.pages["posts/example-thumbnail.jpg"].to_dict(), {
+        self.assertEqual(self.site.find_page("posts/example-thumbnail.jpg").to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),

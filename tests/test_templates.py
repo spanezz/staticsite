@@ -109,8 +109,8 @@ class TestTemplates(TestCase):
                 "", "page.html"
             ])
 
-            index = site.pages[""]
-            page = site.pages["page.html"]
+            index = site.find_page("")
+            page = site.find_page("page.html")
 
             self.assertEqual(index.to_dict(), {
                 "src": {

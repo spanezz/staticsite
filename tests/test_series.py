@@ -28,15 +28,15 @@ class TestSeries(TestCase):
             site.load()
             site.analyze()
 
-            seriesa1 = site.pages["seriesa1"]
-            seriesa2 = site.pages["seriesa2"]
-            seriesa3 = site.pages["seriesa3"]
-            seriesa4 = site.pages["seriesa4"]
-            seriesb1 = site.pages["seriesb1"]
-            seriesb2 = site.pages["seriesb2"]
-            seriesc1 = site.pages["seriesc1"]
-            noseries = site.pages["noseries"]
-            series = site.pages["series"]
+            seriesa1 = site.find_page("seriesa1")
+            seriesa2 = site.find_page("seriesa2")
+            seriesa3 = site.find_page("seriesa3")
+            seriesa4 = site.find_page("seriesa4")
+            seriesb1 = site.find_page("seriesb1")
+            seriesb2 = site.find_page("seriesb2")
+            seriesc1 = site.find_page("seriesc1")
+            noseries = site.find_page("noseries")
+            series = site.find_page("series")
 
             # Check that series have been built (check in tags)
             self.assertIn("seriesa", series.categories)
