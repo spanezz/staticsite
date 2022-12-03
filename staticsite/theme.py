@@ -402,7 +402,7 @@ class Theme:
             return ""
 
     @jinja2.pass_context
-    def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False) -> str:
+    def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False, static=False) -> str:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
@@ -413,7 +413,7 @@ class Theme:
             return ""
 
         try:
-            return cur_page.url_for(arg, absolute=absolute)
+            return cur_page.url_for(arg, absolute=absolute, static=static)
         except PageNotFoundError as e:
             log.warn("%s:%s: %s", cur_page, context.name, e)
             return ""

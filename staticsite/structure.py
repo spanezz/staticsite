@@ -78,6 +78,8 @@ class Node:
         self.src: Optional[file.File] = src
         # Index page for this directory, if present
         self.page: Optional[Page] = None
+        # # Pages to be rendered at this location
+        # self.build_pages: dict[str, Page] = {}
         # Subdirectories
         self.sub: Optional[dict[str, Node]] = None
 
@@ -101,6 +103,52 @@ class Node:
                 return self.parent.lookup(path.tail)
         elif (sub := self.sub.get(path.head)):
             return sub.lookup(path.tail)
+        return None
+
+    def lookup_page(self, path: Path) -> Optional[Page]:
+        """
+        Find a page by following path from this node
+
+        The final path component can match:
+        * a node name
+        * the basename of a page's src_relpath
+        * the rendered file name
+        """
+        # print(f"Node.lookup_page: {self.name=!r}, {self.page=!r}, {path=!r},"
+        #       f" sub={self.sub.keys() if self.sub else 'None'}")
+
+        if not path:
+            return self.page
+
+        if path.head == "..":
+            return self.parent.lookup_page(path.tail)
+        elif path.head in (".", ""):
+            # Probably not worth trying to avoid a recursion step here, since
+            # this should not be a common occurrence
+            return self.lookup_page(path.tail)
+
+        if len(path) > 1:
+            if not self.sub:
+                return None
+            elif (subnode := self.sub.get(path.head)):
+                # print(f"Node.lookup_page: descend into {subnode.name!r} with {path.tail=!r}")
+                return subnode.lookup_page(path.tail)
+            else:
+                return None
+
+        # Match subnode name
+        if self.sub and (subnode := self.sub.get(path.head)) and subnode.page:
+            return subnode.page
+
+        # Match basename of src.relpath in subpages
+        # TODO: to be reimplemented after leaf pages are in a separate dict
+        if self.sub:
+            for subnode in self.sub.values():
+                if (page := subnode.page) and (src := page.src) and os.path.basename(src.relpath) == path.head:
+                    return page
+                if (page := subnode.page) and (dst := page.dst) and dst == path.head:
+                    return page
+
         return None
 
     def compute_path(self) -> str:
@@ -169,20 +217,36 @@ class Node:
         if created_from:
             meta["created_from"] = created_from
 
+        # if self.name == "" and not dst and directory_index:
+        #     # Root node special case: add as index.html in this node
+        # else:
+        #     # Subtree
+        #     if not dst:
+        #         # Add as index.html in subnode
+        #     else:
+        #         # Add as file in this node
+        if directory_index:
+            search_root_node = self
+        else:
+            search_root_node = self.parent
+
         # Create the page
         page = page_cls(
             site=self.site, src=src, dst=dst or "index.html", node=self,
+            search_root_node=search_root_node,
             directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
         if self.src is None:
             self.src = src
 
+        # Move under 'if not dst'
         self.page = page
         self.site.structure.index(page)
         if not dst:
-            if dst is not None:
-                print("as_path is True and dst is not None")
+            # if page.directory_index is False:
+            #     print(f"{page=!r} dst is not set but page is not a directory index")
+
             page.build_node = self.child("index.html")
             page.build_node.page = page
         else:

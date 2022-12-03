@@ -12,6 +12,9 @@
   pages. In its template, what was `{{url_for(page)}}` to refer to the defining
   page, now needs to be `{{url_for(page.meta.page)}}`. The `render.html`
   template has been changed accordingly.
+* `url_for` in templates now requires `static=True` to refer to static assets,
+  whose location may change based on `settings.STATIC_PATH`. Default templates
+  have been fixed accordingly
 
 # New in version 1.6
 
