@@ -207,27 +207,20 @@ class Builder:
         Recursively render the given node in the given render directory
         """
         # If this is the build node for a page, render it
-        if node.page and node == node.page.build_node:
-            render_dir.prepare_file(node.name)
-            with stats.collect(node.page):
-                rendered = node.page.render()
-                rendered.write(node.name, dir_fd=render_dir.dir_fd)
-                self.build_log[os.path.join(render_dir.relpath, node.name)] = node.page
+        for name, page in node.build_pages.items():
+            render_dir.prepare_file(name)
+            with stats.collect(page):
+                rendered = page.render()
+                rendered.write(name, dir_fd=render_dir.dir_fd)
+                self.build_log[os.path.join(render_dir.relpath, name)] = page
 
         if node.sub:
             for name, sub in node.sub.items():
-                if sub.page is None or sub.sub is not None:
+                if sub.page and not sub.page.leaf:
                     # Subdir
                     render_dir.prepare_subdir(name)
                     with render_dir.subdir(name) as subdir:
                         self.write_subtree(sub, subdir, stats)
-                else:
-                    # Page
-                    render_dir.prepare_file(name)
-                    with stats.collect(sub.page):
-                        rendered = sub.page.render()
-                        rendered.write(name, dir_fd=render_dir.dir_fd)
-                        self.build_log[os.path.join(render_dir.relpath, name)] = sub.page
 
         render_dir.cleanup_leftovers()
 

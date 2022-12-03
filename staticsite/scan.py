@@ -194,7 +194,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
             break
 
     dir_index: Optional[Page] = None
-    if not node.sub or "index.html" not in node.sub:
+    if not node.page:
         dir_index = node.add_directory_index()
 
     # Use everything else as an asset

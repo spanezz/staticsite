@@ -143,7 +143,7 @@ class Node:
             if not self.sub:
                 return None
             elif (subnode := self.sub.get(path.head)):
-                # print(f"Node.lookup_page: descend into {subnode.name!r} with {path.tail=!r}")
+                # print(f"Node.lookup_page:  descend into {subnode.name!r} with {path.tail=!r}")
                 return subnode.lookup_page(path.tail)
             else:
                 return None
@@ -152,13 +152,18 @@ class Node:
         if self.sub and (subnode := self.sub.get(path.head)) and subnode.page:
             return subnode.page
 
+        # Match subpage names and basename of src.relpath in subpages
+        for name, page in self.build_pages.items():
+            # print(f"Node.lookup_page:  build_pages[{name!r}] = {page!r} {page.src=!r}")
+            if name == path.head:
+                return page
+            if page.src and path.head == os.path.basename(page.src.relpath):
+                return page
+
         # Match basename of src.relpath in subpages
-        # TODO: to be reimplemented after leaf pages are in a separate dict
         if self.sub:
             for subnode in self.sub.values():
                 if (page := subnode.page) and (src := page.src) and os.path.basename(src.relpath) == path.head:
-                    return page
-                if (page := subnode.page) and (dst := page.dst) and dst == path.head:
                     return page
 
         return None
@@ -246,6 +251,7 @@ class Node:
         page = page_cls(
             site=self.site, src=src, dst="index.html", node=self,
             search_root_node=search_root_node,
+            leaf=False,
             directory_index=directory_index, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
@@ -258,8 +264,7 @@ class Node:
         # if page.directory_index is False:
         #     print(f"{page=!r} dst is not set but page is not a directory index")
 
-        page.build_node = self.child("index.html")
-        page.build_node.page = page
+        self.build_pages["index.html"] = page
         return page
 
     def _create_leaf_page(
@@ -292,6 +297,7 @@ class Node:
             # this is only needed to get a good site_path there
             node=dest_node,
             search_root_node=self,
+            leaf=True,
             directory_index=False, meta=meta, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
@@ -300,6 +306,7 @@ class Node:
 
         dest_node.page = page
         dest_node.src = src
+        self.build_pages[dst] = page
         self.site.structure.index(page)
         return page
 
