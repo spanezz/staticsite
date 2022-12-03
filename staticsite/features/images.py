@@ -95,8 +95,7 @@ extension), that image is used.
                 src=src,
                 meta_values=meta_values,
                 mimetype=mimetype,
-                dst=fname,
-                path=structure.Path((fname,)))
+                dst=fname)
             pages.append(page)
 
             # Look at theme's image_sizes and generate ScaledImage pages
@@ -123,8 +122,7 @@ extension), that image is used.
                         mimetype=mimetype,
                         name=name,
                         info=info,
-                        dst=scaled_fname,
-                        path=structure.Path((scaled_fname,)))
+                        dst=scaled_fname)
                     pages.append(scaled)
 
             self.nodes_with_images.add(node)

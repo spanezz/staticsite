@@ -229,8 +229,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                     created_from=page,
                     page_cls=RSSPage,
                     meta_values=meta_values,
-                    dst=f"{page_name}.{RSSPage.TYPE}",
-                    path=structure.Path((f"{page_name}.{RSSPage.TYPE}",)))
+                    dst=f"{page_name}.{RSSPage.TYPE}")
             rss_page.meta["rss_page"] = rss_page
             meta_values["rss_page"] = rss_page
             log.debug("%s: adding syndication page for %s", rss_page, page)
@@ -241,8 +240,7 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
                     created_from=page,
                     page_cls=AtomPage,
                     meta_values=meta_values,
-                    dst=f"{page_name}.{AtomPage.TYPE}",
-                    path=structure.Path((f"{page_name}.{AtomPage.TYPE}",)))
+                    dst=f"{page_name}.{AtomPage.TYPE}")
             rss_page.meta["atom_page"] = atom_page
             atom_page.meta["atom_page"] = atom_page
             meta_values["atom_page"] = atom_page

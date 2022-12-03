@@ -78,8 +78,8 @@ class Node:
         self.src: Optional[file.File] = src
         # Index page for this directory, if present
         self.page: Optional[Page] = None
-        # # Pages to be rendered at this location
-        # self.build_pages: dict[str, Page] = {}
+        # Pages to be rendered at this location
+        self.build_pages: dict[str, Page] = {}
         # Subdirectories
         self.sub: Optional[dict[str, Node]] = None
 
@@ -160,19 +160,29 @@ class Node:
         else:
             return os.path.join(self.parent.compute_path(), self.name)
 
-    def create_page(self, **kw):
+    def create_page(self, path: Optional[Path] = None, dst: Optional[str] = None, **kw):
         """
         Create a page of the given type, attaching it at the given path
         """
         if "meta" in kw:
             raise RuntimeError("do not pass meta to create_page")
 
-        if kw.get("dst") is None and not kw.get("directory_index") and ("path" not in kw or not kw["path"]):
+        if dst is None and not kw.get("directory_index") and not path:
             print(f"{self.compute_path()}: empty path for {kw['page_cls']}")
+
+        if kw.get("directory_index") and dst:
+            print("directory_index is True and dst is set")
 
         # TODO: move site.is_page_ignored here?
         try:
-            return self._create_page(**kw)
+            if dst:
+                if not path:
+                    path = Path((dst,))
+                else:
+                    path = Path(path + (dst,))
+                return self._create_page(dst=dst, path=path, **kw)
+            else:
+                return self._create_page(dst=dst, path=path, **kw)
         except SkipPage:
             return None
 
@@ -195,9 +205,6 @@ class Node:
                         page_cls=page_cls, src=src, dst=dst, path=path.tail,
                         meta_values=meta_values, created_from=created_from,
                         **kw)
-
-        if directory_index and dst:
-            print("directory_index is True and dst is set")
 
         if dst and dst != self.name:
             print(f"{dst=!r} {self.name=!r}")
@@ -225,6 +232,7 @@ class Node:
         #         # Add as index.html in subnode
         #     else:
         #         # Add as file in this node
+
         if directory_index:
             search_root_node = self
         else:
@@ -240,7 +248,7 @@ class Node:
         if self.src is None:
             self.src = src
 
-        # Move under 'if not dst'
+        # TODO: Move under 'if not dst'
         self.page = page
         self.site.structure.index(page)
         if not dst:
@@ -260,7 +268,7 @@ class Node:
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.child(name, src=src).create_page(page_cls=Asset, src=src, name=name, dst=name)
+        return self.create_page(page_cls=Asset, src=src, name=name, dst=name)
 
     def add_directory_index(self):
         """
