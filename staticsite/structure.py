@@ -265,7 +265,6 @@ class Node:
             else:
                 log.warn("%s: page %r replaces page %r", self.compute_path(), page, self.page)
 
-        # TODO: Move under 'if not dst'
         self.page = page
         self.site.structure.index(page)
         # if page.directory_index is False:
@@ -318,8 +317,6 @@ class Node:
             else:
                 log.warn("%s: page %r replaces page %r", dest_node.compute_path(), page, dest_node.page)
 
-        dest_node.page = page
-        dest_node.src = src
         self.build_pages[dst] = page
         self.site.structure.index(page)
         return page

@@ -28,8 +28,15 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "posts/example.jpg", "posts/example-small.jpg", "posts/example-thumbnail.jpg",
         ])
 
+        index = self.site.find_page("")
         page = self.site.find_page("about")
         self.assertEqual(page.meta["title"], "About")
+
+        self.assertEqual(index.get_img_attributes("posts/example.jpg"), {
+            'alt': 'This is an example image',
+            'src': '/posts/example.jpg',
+            'srcset': '/posts/example-small.jpg 480w, /posts/example-thumbnail.jpg 128w, /posts/example.jpg 500w',
+        })
 
         self.assertEqual(self.site.find_page("about").to_dict(), {
             "src": {

@@ -29,17 +29,18 @@ class MetadataImage(Metadata):
                 return
             if parent not in self.images.nodes_with_images:
                 return
+            # print(f"MetadataImage.on_analyze {page=!r} val is None, {page.node.name=!r}")
             # Look for sibling pages that are images, that share the file name
             # without extension
             prefix = page.node.name + "."
-            for name, subnode in parent.sub.items():
+            for name, imgpage in parent.build_pages.items():
+                # print(f"MetadataImage.on_analyze  {name=} {page=!r} {prefix=!r}")
                 if not name.startswith(prefix):
                     continue
-                if not subnode.page:
+                if not isinstance(imgpage, Image):
                     continue
-                if not isinstance(subnode.page, Image):
-                    continue
-                page.meta[self.name] = subnode.page
+                # print("MetadataImage.on_analyze  accepted")
+                page.meta[self.name] = imgpage
                 break
         elif isinstance(val, str):
             val = page.resolve_path(val)

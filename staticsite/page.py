@@ -279,7 +279,8 @@ class Page:
     def get_img_attributes(
             self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
         """
-        Get <img> attributes into the given dict
+        Given a path to an image page, return a dict with <img> attributes that
+        can be used to refer to it
         """
         img = self.resolve_path(image)
 
