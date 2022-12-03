@@ -188,7 +188,7 @@ class Node:
             raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
 
         if dst is None and not directory_index and not path:
-            print(f"{self.compute_path()}: empty path for {kw['page_cls']}")
+            raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
         # TODO: move site.is_page_ignored here?
         try:
