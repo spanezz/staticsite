@@ -25,7 +25,7 @@ class MetadataImage(Metadata):
     def on_analyze(self, page: Page):
         val = page.meta.get(self.name)
         if val is None:
-            if (parent := page.node.parent) is None:
+            if (parent := page.search_root_node) is None:
                 return
             if parent not in self.images.nodes_with_images:
                 return
