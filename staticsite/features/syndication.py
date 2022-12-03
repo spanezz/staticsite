@@ -220,7 +220,10 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
 
             # print(f"  final base metadata for feeds {meta=!r}")
 
-            page_name, ext = os.path.splitext(page.build_node.name)
+            if page.dst:
+                page_name, ext = os.path.splitext(page.dst)
+            else:
+                page_name, ext = os.path.splitext(page.node.name)
 
             # print(f"Syndication {page=!r}, {pages=}")
 
