@@ -225,15 +225,6 @@ class Node:
                 page_cls=page_cls, directory_index=directory_index,
                 meta_values=meta_values, created_from=created_from)
 
-        # if self.name == "" and not dst and directory_index:
-        #     # Root node special case: add as index.html in this node
-        # else:
-        #     # Subtree
-        #     if not dst:
-        #         # Add as index.html in subnode
-        #     else:
-        #         # Add as file in this node
-
         if directory_index:
             search_root_node = self
         else:
@@ -279,15 +270,6 @@ class Node:
         meta = self._build_page_meta(
                 page_cls=page_cls, directory_index=False,
                 meta_values=meta_values, created_from=created_from)
-
-        # if self.name == "" and not dst and directory_index:
-        #     # Root node special case: add as index.html in this node
-        # else:
-        #     # Subtree
-        #     if not dst:
-        #         # Add as index.html in subnode
-        #     else:
-        #         # Add as file in this node
 
         search_root_node = self.parent
 
