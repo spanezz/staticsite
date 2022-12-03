@@ -186,30 +186,13 @@ class Node:
         except SkipPage:
             return None
 
-    def _create_page(
-            self, *,
-            page_cls: Type[Page],
-            src: Optional[file.File] = None,
-            # If present, present on the web as a file instead of a path
-            dst: Optional[str] = None,
-            path: Optional[Path] = None,
-            directory_index: bool = False,
-            meta_values: Optional[dict[str, Any]] = None,
-            created_from: Optional[Page] = None,
-            **kw):
+    def _build_page_meta(
+            self, page_cls: Type[Page], directory_index: bool,
+            meta_values: Optional[dict[str, Any]], created_from: Optional[Page]):
+        """
+        Build metadata for a page to be created
+        """
         from . import dirindex
-        if path:
-            # If a subpath is requested, delegate to subnodes
-            with self.tentative_child(path.head) as node:
-                return node._create_page(
-                        page_cls=page_cls, src=src, dst=dst, path=path.tail,
-                        meta_values=meta_values, created_from=created_from,
-                        **kw)
-
-        if dst and dst != self.name:
-            print(f"{dst=!r} {self.name=!r}")
-
-        # Build metadata for the page
         if created_from:
             meta = created_from.meta.derive()
             # Invalid invariant: scaled images do have src
@@ -223,6 +206,33 @@ class Node:
             meta.update(meta_values)
         if created_from:
             meta["created_from"] = created_from
+        return meta
+
+    def _create_page(
+            self, *,
+            page_cls: Type[Page],
+            src: Optional[file.File] = None,
+            # If present, present on the web as a file instead of a path
+            dst: Optional[str] = None,
+            path: Optional[Path] = None,
+            directory_index: bool = False,
+            meta_values: Optional[dict[str, Any]] = None,
+            created_from: Optional[Page] = None,
+            **kw):
+        if path:
+            # If a subpath is requested, delegate to subnodes
+            with self.tentative_child(path.head) as node:
+                return node._create_page(
+                        page_cls=page_cls, src=src, dst=dst, path=path.tail,
+                        meta_values=meta_values, created_from=created_from,
+                        **kw)
+
+        if dst and dst != self.name:
+            print(f"{dst=!r} {self.name=!r}")
+
+        meta = self._build_page_meta(
+                page_cls=page_cls, directory_index=directory_index,
+                meta_values=meta_values, created_from=created_from)
 
         # if self.name == "" and not dst and directory_index:
         #     # Root node special case: add as index.html in this node
