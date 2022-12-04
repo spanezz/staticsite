@@ -49,8 +49,9 @@ class Page:
 
     def __init__(
             self, site: Site, *,
-            meta: Meta,
+            meta_values: dict[str, Any],
             node: structure.Node,
+            created_from: Optional[Page] = None,
             search_root_node: structure.Node,
             src: Optional[File] = None,
             dst: str,
@@ -68,7 +69,18 @@ class Page:
         self.dst: str = dst
         # A dictionary with the page metadata. See the README for documentation
         # about its contents.
-        self.meta: Meta = meta
+        self.meta: Meta
+        if created_from:
+            meta = created_from.meta.derive()
+            # Invalid invariant: scaled images do have src
+            # if src:
+            #     print(f"{created_from=!r} and {src=!r}")
+            meta["created_from"] = created_from
+        else:
+            meta = node.meta.derive()
+        if meta_values:
+            meta.update(meta_values)
+        self.meta = meta
         # Set to True if this page is a directory index. This affects the root
         # of page lookups relative to this page
         self.directory_index: bool = directory_index

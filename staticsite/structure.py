@@ -196,28 +196,6 @@ class Node:
         except SkipPage:
             return None
 
-    def _build_page_meta(
-            self, page_cls: Type[Page], directory_index: bool,
-            meta_values: Optional[dict[str, Any]], created_from: Optional[Page]):
-        """
-        Build metadata for a page to be created
-        """
-        from . import dirindex
-        if created_from:
-            meta = created_from.meta.derive()
-            # Invalid invariant: scaled images do have src
-            # if src:
-            #     print(f"{created_from=!r} and {src=!r}")
-        elif directory_index and page_cls != dirindex.Dir:
-            meta = self.meta
-        else:
-            meta = self.meta.derive()
-        if meta_values:
-            meta.update(meta_values)
-        if created_from:
-            meta["created_from"] = created_from
-        return meta
-
     def _create_index_page(
             self, *,
             page_cls: Type[Page],
@@ -235,10 +213,6 @@ class Node:
                         meta_values=meta_values, created_from=created_from,
                         **kw)
 
-        meta = self._build_page_meta(
-                page_cls=page_cls, directory_index=directory_index,
-                meta_values=meta_values, created_from=created_from)
-
         if directory_index:
             search_root_node = self
         else:
@@ -248,8 +222,9 @@ class Node:
         page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst="index.html", node=self,
             search_root_node=search_root_node,
+            created_from=created_from,
             leaf=False,
-            directory_index=directory_index, meta=meta, **kw)
+            directory_index=directory_index, meta_values=meta_values, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
 
@@ -285,19 +260,16 @@ class Node:
                         meta_values=meta_values, created_from=created_from,
                         **kw)
 
-        meta = self._build_page_meta(
-                page_cls=page_cls, directory_index=False,
-                meta_values=meta_values, created_from=created_from)
-
         # Create the page
         page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst=dst,
             # TODO: switch to just self once we get rid of structure.pages:
             # this is only needed to get a good site_path there
             node=self,
+            created_from=created_from,
             search_root_node=self,
             leaf=True,
-            directory_index=False, meta=meta, **kw)
+            directory_index=False, meta_values=meta_values, **kw)
         if self.site.is_page_ignored(page):
             raise SkipPage()
 
