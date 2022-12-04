@@ -79,6 +79,9 @@ class Page:
         # True if this page can render a short version of itself
         self.content_has_split = False
 
+        # External links found when rendering the page
+        self.rendered_external_links: set[str] = set()
+
     @property
     def created_from(self) -> Optional[Page]:
         """

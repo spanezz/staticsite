@@ -186,10 +186,7 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         rendered = self.markdown.convert("\n".join(body))
 
-        # rendered = self.site.metadata.on_contents_rendered(
-        #         page, rendered,
-        #         render_type=render_type,
-        #         external_links=self.link_resolver.external_links)
+        page.rendered_external_links.update(self.link_resolver.external_links)
 
         self.render_cache.put(cache_key, {
             "mtime": page.src.stat.st_mtime,
