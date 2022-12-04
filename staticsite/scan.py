@@ -9,7 +9,6 @@ import stat
 from typing import TYPE_CHECKING, Any, Optional
 
 from . import file, structure
-from .metadata import Meta
 from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
 
@@ -97,8 +96,8 @@ class Directory:
 
 
 def take_dir_rules(
-        dir_rules: list[tuple[re.Pattern, Meta]],
-        file_rules: list[tuple[re.Pattern, Meta]],
+        dir_rules: list[tuple[re.Pattern, dict[str, Any]]],
+        file_rules: list[tuple[re.Pattern, dict[str, Any]]],
         data: dict[str, Any]):
     """
     Acquire dir and file rules from meta, removing them from it
@@ -121,9 +120,9 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
     Scan for pages and assets
     """
     # Rules for assigning metadata to subdirectories
-    dir_rules: list[tuple[re.Pattern, Meta]] = []
+    dir_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
     # Rules for assigning metadata to files
-    file_rules: list[tuple[re.Pattern, Meta]] = []
+    file_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
 
     # Load dir metadata from .staticsite
     if directory.dircfg is not None:

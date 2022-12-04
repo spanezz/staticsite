@@ -11,7 +11,6 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import file, scan
-    from staticsite.metadata import Meta
 
 log = logging.getLogger("images")
 
@@ -169,7 +168,7 @@ class RenderedScaledImage(RenderedElement):
 class ScaledImage(Page):
     TYPE = "image"
 
-    def __init__(self, *args, mimetype: str = None, name: str = None, info: Meta = None, **kw):
+    def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):
         super().__init__(*args, **kw)
         self.name = name
         self.meta["date"] = self.created_from.meta["date"]

@@ -14,7 +14,6 @@ import logging
 
 if TYPE_CHECKING:
     from staticsite import scan, file
-    from staticsite.metadata import Meta
 
 log = logging.getLogger("rst")
 
@@ -184,7 +183,7 @@ class RestructuredText(Feature):
 
         return pages
 
-    def load_file_meta(self, directory: scan.Directory, fname: str) -> Tuple[Meta, DoctreeScan]:
+    def load_file_meta(self, directory: scan.Directory, fname: str) -> Tuple[dict[str, Any], DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
         with directory.open(fname, "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd)
