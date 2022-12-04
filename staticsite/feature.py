@@ -117,13 +117,29 @@ class Features:
         self.site = site
 
         # Registry of feature classes by name, built during loading
-        self.feature_classes: Dict[str, Type[Feature]] = {}
+        self.feature_classes: dict[str, Type[Feature]] = {}
 
         # Feature implementation registry
-        self.features: Dict[str, Feature] = {}
+        self.features: dict[str, Feature] = {}
+
+        # Mixins provided by features to add to Page classes
+        self.page_mixins: list[Type] = []
+
+        # Cached final page classes indexed by original page class
+        self.page_classes: dict[Type[Page], Type[Page]] = {}
 
         # Features sorted by topological order
         self.sorted = None
+
+    def get_page_class(self, cls: Type[Page]) -> Type[Page]:
+        """
+        Given a base Page class, return its version with added mixins
+        """
+        if (final := self.page_classes.get(cls)):
+            return final
+        final = type(cls.__name__, tuple(self.page_mixins) + (cls,), {})
+        self.page_classes[cls] = final
+        return final
 
     def ordered(self):
         return self.sorted

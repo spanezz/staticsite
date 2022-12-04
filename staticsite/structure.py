@@ -245,7 +245,7 @@ class Node:
             search_root_node = self.parent
 
         # Create the page
-        page = page_cls(
+        page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst="index.html", node=self,
             search_root_node=search_root_node,
             leaf=False,
@@ -290,7 +290,7 @@ class Node:
                 meta_values=meta_values, created_from=created_from)
 
         # Create the page
-        page = page_cls(
+        page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst=dst,
             # TODO: switch to just self once we get rid of structure.pages:
             # this is only needed to get a good site_path there
