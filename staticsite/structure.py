@@ -63,7 +63,6 @@ class Node:
             self,
             site: Site,
             name: str, *,
-            meta: Meta,
             parent: Optional[Node] = None):
         # Pointer to the root structure
         self.site = site
@@ -72,7 +71,11 @@ class Node:
         # Parent node, or None if this is the root
         self.parent: Optional[Node] = parent
         # Metadata for this directory
-        self.meta = meta
+        self.meta: Meta
+        if parent is None:
+            self.meta = Meta(site.metadata)
+        else:
+            self.meta = parent.meta.derive()
         # Index page for this directory, if present
         self.page: Optional[Page] = None
         # Pages to be rendered at this location
@@ -316,7 +319,7 @@ class Node:
             if self.sub is None:
                 self.sub = {}
 
-            node = Node(site=self.site, name=name, parent=self, meta=self.meta.derive())
+            node = Node(site=self.site, name=name, parent=self)
             self.sub[name] = node
             yield node
         except Exception:
@@ -335,7 +338,7 @@ class Node:
         if (node := self.sub.get(name)):
             return node
 
-        node = Node(site=self.site, name=name, parent=self, meta=self.meta.derive())
+        node = Node(site=self.site, name=name, parent=self)
         self.sub[name] = node
         return node
 
@@ -369,7 +372,7 @@ class Structure:
         self.site = site
 
         # Root directory of the site
-        self.root = Node(site, "", meta=Meta(site.metadata))
+        self.root = Node(site, "")
 
         # Site pages indexed by site_path
         self.pages: dict[str, Page] = {}
