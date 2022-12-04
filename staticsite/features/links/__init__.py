@@ -21,20 +21,18 @@ if TYPE_CHECKING:
 log = logging.getLogger("links")
 
 
-class MetadataLinks(Metadata):
-    """
-    Annotate rendered contents with link information
-    """
-    def on_contents_rendered(self, page: Page, rendered: str, **kw):
-        render_type = kw.get("render_type", "s")
-        external_links = kw.get("external_links", ())
-        if render_type in ("hb", "s") and external_links:
+class LinksPageMixin:
+    @jinja2.pass_context
+    def html_body(self, context, **kw) -> str:
+        rendered = super().html_body(context, **kw)
+
+        if self.rendered_external_links:
             feature = self.site.features["links"]
             links = feature.links
             if feature.indices:
                 tag_indices = feature.indices[0].by_tag
                 data = {}
-                for url in external_links:
+                for url in self.rendered_external_links:
                     info = links.get(url)
                     if info is None:
                         continue
@@ -46,7 +44,7 @@ class MetadataLinks(Metadata):
                         tag_dicts = []
                         for tag in tags:
                             dest = tag_indices[tag]
-                            tag_dicts.append({"tag": tag, "url": page.url_for(dest)})
+                            tag_dicts.append({"tag": tag, "url": self.url_for(dest)})
                         info["tags"] = tag_dicts
 
                     data[url] = info
@@ -55,6 +53,7 @@ class MetadataLinks(Metadata):
                     f"{json.dumps(data)}"
                     "</script>\n"
                 )
+
         return rendered
 
 
@@ -79,6 +78,7 @@ class Links(Feature):
         super().__init__(*args, **kw)
         self.j2_globals["links_merged"] = self.links_merged
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
+        self.page_mixins.append(LinksPageMixin)
 
         # Shortcut to access the Data feature
         self.data = self.site.features["data"]
@@ -88,7 +88,7 @@ class Links(Feature):
         self.data.register_page_class("links", LinksPage)
 
         # Collect 'links' metadata
-        self.site.register_metadata(MetadataLinks("links", doc="""
+        self.site.register_metadata(Metadata("links", doc="""
 Extra metadata for external links.
 
 It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:

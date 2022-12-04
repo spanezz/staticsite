@@ -33,9 +33,6 @@ class Registry:
         # the analyze pass
         self.on_analyze_functions: list[Callable[Page], None] = []
 
-        # Functions called to tweak page content rendered from markdown/rst
-        self.on_contents_rendered_functions: list[Callable[Page, str], str] = []
-
     def add(self, metadata: "Metadata"):
         metadata.site = self.site
         self.registry[metadata.name] = metadata
@@ -52,10 +49,6 @@ class Registry:
             if not getattr(on_analyze, "skip", False):
                 self.on_analyze_functions.append(on_analyze)
 
-        if (on_contents_rendered := getattr(metadata, "on_contents_rendered", None)):
-            if not getattr(on_contents_rendered, "skip", False):
-                self.on_contents_rendered_functions.append(on_contents_rendered)
-
     def on_load(self, page: Page):
         """
         Run on_load functions on the page
@@ -69,14 +62,6 @@ class Registry:
         """
         for f in self.on_analyze_functions:
             f(page)
-
-    def on_contents_rendered(self, page: Page, rendered: str, **kw) -> str:
-        """
-        Run on_contents_rendered functions on the page
-        """
-        for f in self.on_contents_rendered_functions:
-            rendered = f(page, rendered, **kw)
-        return rendered
 
     def __getitem__(self, key: str) -> "Metadata":
         return self.registry[key]
@@ -151,15 +136,6 @@ class Metadata:
 
     # Mark as a noop to avoid calling it for each page unless overridden
     on_analyze.skip = True
-
-    def on_contents_rendered(self, page: Page, rendered: str, **kw) -> str:
-        """
-        Hook to potentially annotate page contents rendered from markdown/rst
-        before it is passed to Jinja2
-        """
-        return rendered
-
-    on_contents_rendered.skip = True
 
 
 class MetadataInherited(Metadata):

@@ -44,6 +44,8 @@ class Feature:
         self.j2_globals: Dict[str, Callable] = {}
         # Feature-provided jinja2 filters
         self.j2_filters: Dict[str, Callable] = {}
+        # Feature-provided page mixins
+        self.page_mixins = []
 
     def __str__(self):
         return self.name
@@ -202,6 +204,7 @@ class Features:
             feature = cls(cls.NAME, self.site)
             self.features[cls.NAME] = feature
             self.sorted.append(feature)
+            self.page_mixins += feature.page_mixins
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
 
