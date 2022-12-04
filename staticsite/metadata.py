@@ -29,10 +29,6 @@ class Registry:
         # Functions called on a page to cleanup metadata on page load
         self.on_load_functions: list[Callable[Page], None] = []
 
-        # Functions called on a page to cleanup metadata at the beginning of
-        # the analyze pass
-        self.on_analyze_functions: list[Callable[Page], None] = []
-
     def add(self, metadata: "Metadata"):
         metadata.site = self.site
         self.registry[metadata.name] = metadata
@@ -45,22 +41,11 @@ class Registry:
             if not getattr(on_load, "skip", False):
                 self.on_load_functions.append(on_load)
 
-        if (on_analyze := getattr(metadata, "on_analyze", None)):
-            if not getattr(on_analyze, "skip", False):
-                self.on_analyze_functions.append(on_analyze)
-
     def on_load(self, page: Page):
         """
         Run on_load functions on the page
         """
         for f in self.on_load_functions:
-            f(page)
-
-    def on_analyze(self, page: Page):
-        """
-        Run on_analyze functions on the page
-        """
-        for f in self.on_analyze_functions:
             f(page)
 
     def __getitem__(self, key: str) -> "Metadata":
@@ -123,19 +108,6 @@ class Metadata:
 
     # Mark as a noop to avoid calling it for each page unless overridden
     on_load.skip = True
-
-    def on_analyze(self, page: Page):
-        """
-        Hook for the metadata at the start of the analyze pass.
-
-        Hooks are run in the order they have been registered, which follows
-        feature dependency order, meaning that hooks for one feature can
-        depends on hooks for previous features to have been run
-        """
-        pass
-
-    # Mark as a noop to avoid calling it for each page unless overridden
-    on_analyze.skip = True
 
 
 class MetadataInherited(Metadata):

@@ -139,6 +139,7 @@ class Features:
         """
         if (final := self.page_classes.get(cls)):
             return final
+        # TODO: skip adding mixins to Asset pages?
         final = type(cls.__name__, tuple(self.page_mixins) + (cls,), {})
         self.page_classes[cls] = final
         return final

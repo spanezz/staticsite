@@ -396,12 +396,6 @@ It defaults to true at least for [Markdown](markdown.md),
         if not self.stage_content_directory_loaded:
             log.warn("analyze called before loading site contents")
 
-        # Run metadata on_analyze functions
-        for page in self.iter_pages(static=False):
-            if page.meta.get("asset", False):
-                continue
-            self.metadata.on_analyze(page)
-
         self.structure.analyze()
 
         # Call analyze hook on features

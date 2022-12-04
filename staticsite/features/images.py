@@ -1,13 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
-from staticsite import Page, Feature, structure
-from staticsite.render import RenderedFile
-from staticsite.utils.images import ImageScanner
-from staticsite.metadata import Metadata
-from staticsite.render import RenderedElement
-import os
-import mimetypes
+
+import itertools
 import logging
+import mimetypes
+import os
+from typing import TYPE_CHECKING, Any
+
+from staticsite import Feature, Page, structure
+from staticsite.metadata import Metadata
+from staticsite.render import RenderedElement, RenderedFile
+from staticsite.utils.images import ImageScanner
 
 if TYPE_CHECKING:
     from staticsite import file, scan
@@ -15,35 +17,11 @@ if TYPE_CHECKING:
 log = logging.getLogger("images")
 
 
-class MetadataImage(Metadata):
-    def __init__(self, images: "Images", *args, **kw):
-        super().__init__(*args, **kw)
-        # Store a reference to the Images feature
-        self.images = images
-
-    def on_analyze(self, page: Page):
-        val = page.meta.get(self.name)
-        if val is None:
-            if (parent := page.search_root_node) is None:
-                return
-            if parent not in self.images.nodes_with_images:
-                return
-            # print(f"MetadataImage.on_analyze {page=!r} val is None, {page.node.name=!r}")
-            # Look for sibling pages that are images, that share the file name
-            # without extension
-            prefix = page.node.name + "."
-            for name, imgpage in parent.build_pages.items():
-                # print(f"MetadataImage.on_analyze  {name=} {page=!r} {prefix=!r}")
-                if not name.startswith(prefix):
-                    continue
-                if not isinstance(imgpage, Image):
-                    continue
-                # print("MetadataImage.on_analyze  accepted")
-                page.meta[self.name] = imgpage
-                break
-        elif isinstance(val, str):
-            val = page.resolve_path(val)
-            page.meta[self.name] = val
+def basename_no_ext(pathname: str) -> str:
+    """
+    Return the basename of pathname, without extension
+    """
+    return os.path.splitext(os.path.basename(pathname))[0]
 
 
 class Images(Feature):
@@ -56,7 +34,7 @@ class Images(Feature):
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
-        self.site.register_metadata(MetadataImage(self, "image", doc="""
+        self.site.register_metadata(Metadata("image", doc="""
 Image used for this post.
 
 It is set to a path to an image file relative to the current page.
@@ -66,8 +44,9 @@ During the analyze phase, it is resolved to the corresponding [image page](image
 If not set, and an image exists with the same name as the page (besides the
 extension), that image is used.
 """))
+        self.site.structure.add_tracked_metadata("image")
         # Nodes that contain images
-        self.nodes_with_images: set[structure.Node] = set()
+        self.images: set[Image] = set()
 
     def load_dir(
             self,
@@ -125,12 +104,46 @@ extension), that image is used.
                         dst=scaled_fname)
                     pages.append(scaled)
 
-            self.nodes_with_images.add(node)
+            self.images.add(page)
 
         for fname in taken:
             del files[fname]
 
         return pages
+
+    def analyze(self):
+        # Resolve image from strings to Image pages
+        for page in self.site.structure.pages_by_metadata["image"]:
+            val = page.meta.get(self.name)
+            if isinstance(val, str):
+                val = page.resolve_path(val)
+                # TODO: warn if val is not an Image page?
+                page.meta[self.name] = val
+
+        # If an image exists with the same basename as a page, auto-add an
+        # "image" metadata to it
+        for image in self.images:
+            name = basename_no_ext(image.src.relpath)
+            # print(f"Images.analyze {image=!r} {image.node.name=!r} {image.node.page=!r}")
+            pages = image.node.build_pages.values()
+            if image.node.sub is not None:
+                pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
+
+            # Find pages matching this image's name
+            for page in pages:
+                # print(f"Images.analyze  check {page=!r} {page.src=!r}")
+                if not (src := page.src):
+                    # Don't associate to generated pages
+                    continue
+                if (page.src.relpath == image.src.relpath):
+                    # Don't associate to variants of this image
+                    continue
+                if basename_no_ext(src.relpath) == name:
+                    # Don't add if already set
+                    if not page.meta.get("image") and basename_no_ext(src.relpath) == name:
+                        # print("Images.analyze  add")
+                        page.meta["image"] = image
+                    break
 
 
 class Image(Page):
