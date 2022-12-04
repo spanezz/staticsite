@@ -45,7 +45,6 @@ existing links when moving a page to a different location.
                         created_from=page,
                         alias=alias,
                         meta_values={"page": page},
-                        directory_index=True,
                         path=structure.Path.from_string(alias))
 
 
