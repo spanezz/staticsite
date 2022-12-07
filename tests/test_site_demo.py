@@ -84,6 +84,7 @@ class TestDemo(test_utils.SiteTestMixin, TestCase):
                 'site_name': 'Example web site',
                 'site_url': 'https://www.example.org',
                 'template': 'syndication.rss',
+                'template_copyright': 'compiled:None',
                 'title': 'Example blog feed',
                 'related': {},
             },

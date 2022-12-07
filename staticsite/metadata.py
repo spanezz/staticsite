@@ -441,23 +441,8 @@ class PageAndNodeFields(metaclass=FieldsMetaclass):
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
     """)
-    template = MetadataDefault("template", default="page.html", doc="""
-        Template used to render the page. Defaults to `page.html`, although specific
-        pages of some features can default to other template names.
-
-        Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-    """)
     site_url = MetadataInherited("site_url", doc="""
         Base URL for the site, used to generate an absolute URL to the page.
-    """)
-    site_path = Metadata("site_path", doc="""
-        Where a content directory appears in the site.
-
-        By default, is is the `site_path` of the parent directory, plus the directory
-        name.
-
-        If you are publishing the site at `/prefix` instead of the root of the domain,
-        override this with `/prefix` in the content root.
     """)
     author = MetadataInherited("author", doc="""
         A string with the name of the author for this page.
@@ -561,8 +546,9 @@ class SiteElement(metaclass=FieldsMetaclass):
         else:
             self.meta = parent.meta.derive()
 
-        if meta_values is not None:
-            self.meta.update(meta_values)
+        if meta_values:
+            self.meta.values.update(meta_values)
+            # self.update_meta(meta_values)
 
         # Call fields to fill in computed fields
         for field in self._fields.values():

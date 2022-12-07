@@ -6,6 +6,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Type
 
+from . import metadata
 from .metadata import PageAndNodeFields, SiteElement
 
 if TYPE_CHECKING:
@@ -58,6 +59,16 @@ class Node(PageAndNodeFields, SiteElement):
     """
     One node in the rendered directory hierarchy of the site
     """
+    site_path = metadata.Metadata("site_path", doc="""
+        Where a content directory appears in the site.
+
+        By default, is is the `site_path` of the parent directory, plus the directory
+        name.
+
+        If you are publishing the site at `/prefix` instead of the root of the domain,
+        override this with `/prefix` in the content root.
+    """)
+
     def __init__(
             self,
             site: Site,

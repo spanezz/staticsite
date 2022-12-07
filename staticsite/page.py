@@ -10,7 +10,7 @@ from urllib.parse import urlparse, urlunparse
 import jinja2
 import markupsafe
 
-from . import structure
+from . import metadata, structure
 from .metadata import PageAndNodeFields, SiteElement
 from .render import RenderedString
 
@@ -46,6 +46,13 @@ class Page(PageAndNodeFields, SiteElement):
     """
     # Page type
     TYPE: str
+
+    template = metadata.MetadataDefault("template", default="page.html", doc="""
+        Template used to render the page. Defaults to `page.html`, although specific
+        pages of some features can default to other template names.
+
+        Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+    """)
 
     def __init__(
             self, site: Site, *,

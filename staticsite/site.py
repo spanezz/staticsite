@@ -6,7 +6,7 @@ import os
 import re
 import warnings
 from functools import cached_property
-from typing import TYPE_CHECKING, Generator, Optional, Union
+from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 
 import dateutil.parser
 import pytz
@@ -14,7 +14,7 @@ import pytz
 from . import metadata, scan, structure
 from .cache import Caches, DisabledCaches
 from .file import File
-from .metadata import Meta, Metadata
+from .metadata import Metadata
 from .settings import Settings
 from .utils import timings
 
@@ -178,29 +178,32 @@ class Site:
 
         self.theme.load()
 
-    def _settings_to_meta(self, meta: Meta):
+    def _settings_to_meta(self) -> dict[str, Any]:
         """
         Build directory metadata based on site settings
         """
-        meta["template_copyright"] = "© {{meta.date.year}} {{meta.author}}"
+        res = {
+            "template_copyright": "© {{meta.date.year}} {{meta.author}}",
+        }
         if self.settings.SITE_URL:
-            meta["site_url"] = self.settings.SITE_URL
+            res["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            meta["site_path"] = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
+            res["site_path"] = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
         else:
-            meta["site_path"] = "/"
+            res["site_path"] = "/"
         if self.settings.SITE_NAME:
-            meta["site_name"] = self.settings.SITE_NAME
+            res["site_name"] = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
-            meta["author"] = self.settings.SITE_AUTHOR
+            res["author"] = self.settings.SITE_AUTHOR
         else:
             import getpass
             import pwd
             user = getpass.getuser()
             pw = pwd.getpwnam(user)
-            meta["author"] = pw.pw_gecos.split(",")[0]
+            res["author"] = pw.pw_gecos.split(",")[0]
 
-        log.debug("Initial settings: %r", meta)
+        log.debug("Initial settings: %r", res)
+        return res
 
     def scan_content(self):
         """
@@ -214,7 +217,7 @@ class Site:
             log.info("%s: content tree does not exist", self.content_root)
             return
 
-        self._settings_to_meta(self.structure.root.meta)
+        self.structure.root.update_meta(self._settings_to_meta())
         src = File.with_stat("", os.path.abspath(self.content_root))
         self.scan_tree(src)
         # Here we may have loaded more site-wide metadata from the root's index
