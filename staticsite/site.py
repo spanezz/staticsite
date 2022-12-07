@@ -102,7 +102,7 @@ class Site:
         """
         Find a page by absolute path in the site
         """
-        return self.structure.root.lookup_page(structure.Path.from_string(path))
+        return self.structure.root.resolve_path(path)
 
     def iter_pages(self, static: bool = True) -> Generator[Page, None, None]:
         """
@@ -217,6 +217,7 @@ class Site:
             log.info("%s: content tree does not exist", self.content_root)
             return
 
+        self.structure.root = self.features.get_node_class()(self, "")
         self.structure.root.update_meta(self._settings_to_meta())
         src = File.with_stat("", os.path.abspath(self.content_root))
         self.scan_tree(src)

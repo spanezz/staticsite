@@ -333,13 +333,19 @@ class Page(PageAndNodeFields, SiteElement):
         pass
 
     def __str__(self):
-        return self.site_path
+        if hasattr(self, "src"):
+            return self.site_path
+        else:
+            return self.TYPE
 
     def __repr__(self):
-        if self.src:
-            return f"{self.TYPE}:{self.src.relpath}"
+        if hasattr(self, "src"):
+            if self.src:
+                return f"{self.TYPE}:{self.src.relpath}"
+            else:
+                return f"{self.TYPE}:auto:{self.site_path}"
         else:
-            return f"{self.TYPE}:auto:{self.site_path}"
+            return self.TYPE
 
     def prepare_render(self):
         """
@@ -400,6 +406,7 @@ class Page(PageAndNodeFields, SiteElement):
 
     def to_dict(self):
         from .utils import dump_meta
+        self.prepare_render()
         res = {
             "meta": dump_meta(self.meta),
             "type": self.TYPE,

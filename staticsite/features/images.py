@@ -186,6 +186,8 @@ class ScaledImage(Page):
         self.name = name
         created_from = self.meta["created_from"]
         self.meta["date"] = created_from.meta["date"]
+        if (title := created_from.meta.get("title")):
+            self.meta["title"] = title
 
         if "height" not in self.meta:
             self.meta["height"] = round(

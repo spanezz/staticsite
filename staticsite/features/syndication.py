@@ -289,8 +289,8 @@ class SyndicationPage(Page):
     TEMPLATE: str
 
     def __init__(self, *args, **kw):
-        kw["meta_values"].setdefault("template", self.TEMPLATE)
         super().__init__(*args, **kw)
+        self.meta["template"] = self.TEMPLATE
 
         if self.meta["pages"]:
             self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])

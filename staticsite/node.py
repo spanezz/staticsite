@@ -4,7 +4,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Type, Union
 
 from . import metadata
 from .metadata import PageAndNodeFields, SiteElement
@@ -119,6 +119,25 @@ class Node(PageAndNodeFields, SiteElement):
         elif (sub := self.sub.get(path.head)):
             return sub.lookup(path.tail)
         return None
+
+    def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
+        """
+        Return a Page from the site, given a source or site path relative to
+        this page.
+
+        The path is resolved relative to this node, and if not found, relative
+        to the parent node, and so on until the top.
+        """
+        from .page import Page
+        if isinstance(target, Page):
+            return target
+        if target.startswith("/"):
+            root = self.site.structure.root
+            if static:
+                root = root.lookup(Path.from_string(self.site.settings.STATIC_PATH))
+            return root.lookup_page(Path.from_string(target))
+        else:
+            return self.lookup_page(Path.from_string(target))
 
     def lookup_page(self, path: Path) -> Optional[Page]:
         """
@@ -322,7 +341,7 @@ class Node(PageAndNodeFields, SiteElement):
             if self.sub is None:
                 self.sub = {}
 
-            node = Node(site=self.site, name=name, parent=self)
+            node = self.__class__(site=self.site, name=name, parent=self)
             self.sub[name] = node
             yield node
         except Exception:
@@ -341,7 +360,7 @@ class Node(PageAndNodeFields, SiteElement):
         if (node := self.sub.get(name)):
             return node
 
-        node = Node(site=self.site, name=name, parent=self)
+        node = self.__class__(site=self.site, name=name, parent=self)
         self.sub[name] = node
         return node
 

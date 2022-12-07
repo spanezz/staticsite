@@ -5,6 +5,7 @@ import logging
 import sys
 import warnings
 from .page import Page
+from .node import Node
 from . import scan, file
 from . import site
 from . import toposort
@@ -44,6 +45,8 @@ class Feature:
         self.j2_globals: Dict[str, Callable] = {}
         # Feature-provided jinja2 filters
         self.j2_filters: Dict[str, Callable] = {}
+        # Feature-provided node mixins
+        self.node_mixins = []
         # Feature-provided page mixins
         self.page_mixins = []
 
@@ -124,14 +127,28 @@ class Features:
         # Feature implementation registry
         self.features: dict[str, Feature] = {}
 
+        # Mixins provided by features to add to Node classes
+        self.node_mixins: list[Type] = []
+
         # Mixins provided by features to add to Page classes
         self.page_mixins: list[Type] = []
+
+        # Cached final node class
+        self.node_class: Optional[Type[Node]] = None
 
         # Cached final page classes indexed by original page class
         self.page_classes: dict[Type[Page], Type[Page]] = {}
 
         # Features sorted by topological order
         self.sorted = None
+
+    def get_node_class(self) -> Type[Node]:
+        """
+        Return the Node class to use for this site
+        """
+        if self.node_class is None:
+            self.node_class = type("Node", tuple(self.node_mixins) + (Node,), {})
+        return self.node_class
 
     def get_page_class(self, cls: Type[Page]) -> Type[Page]:
         """
@@ -205,6 +222,7 @@ class Features:
             feature = cls(cls.NAME, self.site)
             self.features[cls.NAME] = feature
             self.sorted.append(feature)
+            self.node_mixins += feature.node_mixins
             self.page_mixins += feature.page_mixins
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])

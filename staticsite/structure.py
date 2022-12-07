@@ -4,11 +4,11 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from .node import Node
 # TODO: remove this, which is here only for compatibility
 from .node import Path  # noqa
 
 if TYPE_CHECKING:
+    from .node import Node
     from .page import Page
     from .site import Site
 
@@ -23,7 +23,7 @@ class Structure:
         self.site = site
 
         # Root directory of the site
-        self.root = Node(site, "")
+        self.root: Node
 
         # Site pages indexed by site_path
         self.pages: dict[str, Page] = {}

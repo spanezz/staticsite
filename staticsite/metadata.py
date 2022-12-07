@@ -98,7 +98,7 @@ class Metadata:
     """
 
     def __init__(
-            self, name,
+            self, name: Optional[str] = None,
             structure: bool = False,
             doc: str = ""):
         """
@@ -547,8 +547,11 @@ class SiteElement(metaclass=FieldsMetaclass):
             self.meta = parent.meta.derive()
 
         if meta_values:
-            self.meta.values.update(meta_values)
-            # self.update_meta(meta_values)
+            # TODO: switch to update_meta only, when we can map all metadata used by features
+            self.update_meta(meta_values)
+            for k, v in meta_values.items():
+                if k not in self.meta.values:
+                    self.meta.values[k] = v
 
         # Call fields to fill in computed fields
         for field in self._fields.values():

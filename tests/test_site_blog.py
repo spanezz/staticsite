@@ -27,7 +27,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "posts/example.jpg", "posts/example-small.jpg", "posts/example-thumbnail.jpg",
         ])
 
-        index, page, archive = self.mocksite.page("", "about", "archive", prepare_render=True)
+        index, page, archive = self.mocksite.page("", "about", "archive")
         self.assertEqual(page.meta["title"], "About")
 
         self.assertEqual(index.get_img_attributes("posts/example.jpg"), {
@@ -54,6 +54,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'page.html',
+                'template_copyright': 'compiled:None',
                 'title': 'About',
                 'nav': ['MarkdownPage(about)'],
                 'nav_title': 'About',
@@ -70,23 +71,22 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             'site_path': '',
             "build_path": "index.html",
             "meta": {
-                "date": '2019-12-30 17:30:00+01:00',
+                "date": '2020-02-01 17:00:00+01:00',
                 "draft": False,
                 'author': "Test User",
-                'copyright': '© 2019 Test User',
-                'template_copyright': 'compiled:None',
+                'copyright': '© 2020 Test User',
                 'indexed': True,
                 'syndicated': True,
                 'syndication': {'atom_page': 'AtomPage(index.atom)',
                                 'index': 'MarkdownPage()',
                                 'pages': ['MarkdownPage(posts/example)'],
                                 'rss_page': 'RSSPage(index.rss)'},
-                'syndication_date': '2019-06-01 12:30:00+02:00',
+                'syndication_date': '2020-02-01 17:00:00+01:00',
                 'pages': ['MarkdownPage(posts/example)'],
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
-                'site_path': '/',
                 'template': 'blog.html',
+                'template_copyright': 'compiled:None',
                 'title': 'My example blog',
                 'nav': ['MarkdownPage(about)'],
                 'related': {
@@ -119,6 +119,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'archive.html',
+                'template_copyright': 'compiled:None',
                 'title': 'My example blog',
                 'nav': ['MarkdownPage(about)'],
                 'related': {
@@ -129,7 +130,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "archive",
         })
 
-        self.assertEqual(self.site.find_page("index.rss").to_dict(), {
+        self.assertEqual(self.page("index.rss").to_dict(), {
             'site_path': 'index.rss',
             "build_path": "index.rss",
             "meta": {
@@ -147,6 +148,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'syndication.rss',
+                'template_copyright': 'compiled:None',
                 'title': 'My example blog',
                 'nav': ['MarkdownPage(about)'],
                 'related': {},
@@ -158,7 +160,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         self.assertIn(b"src=&#39;https://www.example.org/posts/example-small.jpg", rendered)
         self.assertIn(b"This is the rest of the blog post", rendered)
 
-        self.assertEqual(self.site.find_page("posts/example.jpg").to_dict(), {
+        self.assertEqual(self.page("posts/example.jpg").to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
@@ -176,6 +178,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'site_url': 'https://www.example.org',
                 'template': 'page.html',
                 'title': 'This is an example image',
+                'template_copyright': 'compiled:None',
                 'width': 500,
                 'height': 477,
                 'nav': ['MarkdownPage(about)'],
@@ -187,7 +190,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "image",
         })
 
-        self.assertEqual(self.site.find_page("posts/example-small.jpg").to_dict(), {
+        self.assertEqual(self.page("posts/example-small.jpg").to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
@@ -205,6 +208,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'page.html',
+                'template_copyright': 'compiled:None',
                 'title': 'This is an example image',
                 'width': 480,
                 'height': 458,
@@ -214,7 +218,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "image",
         })
 
-        self.assertEqual(self.site.find_page("posts/example-thumbnail.jpg").to_dict(), {
+        self.assertEqual(self.page("posts/example-thumbnail.jpg").to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
@@ -232,6 +236,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'page.html',
+                'template_copyright': 'compiled:None',
                 'title': 'This is an example image',
                 'width': 128,
                 'height': 122,
