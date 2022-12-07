@@ -71,7 +71,8 @@ class Node(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
         # Parent node, or None if this is the root
         self.parent: Optional[Node] = parent
         # Metadata for this directory
-        self.meta: Meta = self.create_meta(site, parent=parent)
+        self.meta: Meta
+        self.create_meta(site, parent=parent)
         # Index page for this directory, if present
         self.page: Optional[Page] = None
         # Pages to be rendered at this location

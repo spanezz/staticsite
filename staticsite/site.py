@@ -110,11 +110,6 @@ A python datetime object, timezone aware. If the date is in the future when
 If missing, the modification time of the file is used.
 """))
 
-        self.register_metadata(metadata.MetadataInherited("site_name", doc="""
-Name of the site. If missing, it defaults to the title of the toplevel index
-page. If missing, it defaults to the name of the content directory.
-"""))
-
         self.register_metadata(metadata.MetadataInherited("site_url", doc="""
 Base URL for the site, used to generate an absolute URL to the page.
 """))

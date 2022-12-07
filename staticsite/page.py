@@ -75,10 +75,10 @@ class Page(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
             # Invalid invariant: scaled images do have src
             # if src:
             #     print(f"{created_from=!r} and {src=!r}")
-            self.meta = self.create_meta(site, parent=created_from, meta_values=meta_values)
+            self.create_meta(site, parent=created_from, meta_values=meta_values)
             self.meta["created_from"] = created_from
         else:
-            self.meta = self.create_meta(site, parent=node, meta_values=meta_values)
+            self.create_meta(site, parent=node, meta_values=meta_values)
         # Set to True if this page is a directory index. This affects the root
         # of page lookups relative to this page
         self.directory_index: bool = directory_index

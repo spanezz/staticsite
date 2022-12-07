@@ -30,7 +30,7 @@ class FieldsMetaclass(type):
             if isinstance(val, Metadata):
                 # Store its description in the Model _meta
                 _fields[field_name] = val
-                val.set_name(field_name)
+                # val.set_name(field_name)
             else:
                 # Leave untouched
                 continue
@@ -118,10 +118,18 @@ class Metadata:
     def get_notes(self):
         return ()
 
+    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+        """
+        Compute values for the meta element of a newly created MetaMixin
+        """
+        # By default, nothing to do
+        pass
+
     def derive(self, meta: Meta):
         """
         Copy this metadata from src_meta to dst_meta, if needed
         """
+        # By default, nothing to do
         pass
 
     # Mark as a noop to avoid calling it for each page unless overridden
@@ -150,6 +158,12 @@ class MetadataInherited(Metadata):
     def get_notes(self):
         yield from super().get_notes()
         yield "Inherited from parent pages"
+
+    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+        if parent is None:
+            return
+        if self.name not in obj.meta and self.name in parent.meta:
+            obj.meta[self.name] = parent.meta[self.name]
 
     def derive(self, meta: Meta):
         if meta.parent is None:
@@ -397,7 +411,7 @@ class Meta:
         return {k: v for k, v in self.values.items() if v is not None}
 
 
-class PageAndNodeFields:
+class PageAndNodeFields(metaclass=FieldsMetaclass):
     site_name = MetadataInherited("site_name", doc="""
 Name of the site. If missing, it defaults to the title of the toplevel index
 page. If missing, it defaults to the name of the content directory.
@@ -414,9 +428,11 @@ class MetaMixin:
             site: Site, parent: Optional[MetaMixin],
             meta_values: Optional[dict[str, Any]] = None) -> Meta:
         if parent is None:
-            meta = Meta(site.metadata)
+            self.meta = Meta(site.metadata)
         else:
-            meta = parent.meta.derive()
+            self.meta = parent.meta.derive()
         if meta_values is not None:
-            meta.update(meta_values)
-        return meta
+            self.meta.update(meta_values)
+        # TODO: update with _fields
+        for field in self._fields.values():
+            field.fill_new(self, parent)
