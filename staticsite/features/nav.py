@@ -40,7 +40,7 @@ class MetadataNav(metadata.MetadataInherited):
         """
         # Create a NavData element from the value set
         if (val := values.get(self.name)):
-            obj.meta.values[self.name] = NavData(obj, val)
+            obj.meta[self.name] = NavData(obj, val)
 
     # def prepare_to_render(self, obj: metadata.SiteElement):
     #     """

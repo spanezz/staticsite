@@ -43,7 +43,7 @@ class MetadataTemplate(metadata.Metadata):
     """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if self.name not in obj.meta and (val := getattr(obj, "TEMPLATE", None)):
-            obj.meta.values[self.name] = val
+            obj.meta[self.name] = val
 
 
 class Page(SiteElement):

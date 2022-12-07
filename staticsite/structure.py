@@ -46,8 +46,9 @@ class Structure:
         self.tracked_metadata.add(name)
 
         # Redo indexing for existing pages
+        # TODO: this should not be needed anymore now that we do 2 stage loading
         for page in self.pages.values():
-            if name in page.meta.values:
+            if name in page.meta:
                 self.pages_by_metadata[name].append(page)
 
     def index(self, page: Page):
@@ -67,7 +68,7 @@ class Structure:
 
         # Also group pages by tracked metadata
         for tracked in self.tracked_metadata:
-            if tracked in page.meta.values:
+            if tracked in page.meta:
                 self.pages_by_metadata[tracked].append(page)
 
     def analyze(self):

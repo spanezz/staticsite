@@ -87,7 +87,7 @@ class Metadata:
         """
         # By default, plain assignment
         if self.name in values:
-            obj.meta.values[self.name] = values[self.name]
+            obj.meta[self.name] = values[self.name]
 
 
 class MetadataInherited(Metadata):
@@ -129,9 +129,9 @@ class MetadataTemplateInherited(Metadata):
 
     def set_template(self, obj: SiteElement, tpl: Union[str, jinja2.Template]):
         if isinstance(tpl, str):
-            obj.meta.values[self.template] = obj.site.theme.jinja2.from_string(tpl)
+            obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
         else:
-            obj.meta.values[self.template] = tpl
+            obj.meta[self.template] = tpl
 
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (tpl := obj.meta.get(self.template)):
@@ -151,7 +151,7 @@ class MetadataTemplateInherited(Metadata):
             # If a template exists, render
             # TODO: remove meta= and make it compatibile again with stable staticsite
             val = markupsafe.Markup(template.render(meta=obj.meta, page=obj))
-            obj.meta.values[self.name] = val
+            obj.meta[self.name] = val
             return val
 
     def set(self, obj: SiteElement, values: dict[str, Any]):
@@ -159,9 +159,9 @@ class MetadataTemplateInherited(Metadata):
         # Also copy the template name
         if self.template in values:
             if isinstance(tpl := values[self.template], str):
-                obj.meta.values[self.template] = obj.site.theme.jinja2.from_string(tpl)
+                obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
             else:
-                obj.meta.values[self.template] = tpl
+                obj.meta[self.template] = tpl
 
 
 class MetadataDate(Metadata):
@@ -169,14 +169,14 @@ class MetadataDate(Metadata):
     Make sure, on page load, that the element is a valid aware datetime object
     """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (date := obj.meta.values.get(self.name)):
-            obj.meta.values[self.name] = obj.site.clean_date(date)
-        elif parent and (date := parent.meta.values.get(self.name)):
-            obj.meta.values[self.name] = obj.site.clean_date(date)
+        if (date := obj.meta.get(self.name)):
+            obj.meta[self.name] = obj.site.clean_date(date)
+        elif parent and (date := parent.meta.get(self.name)):
+            obj.meta[self.name] = obj.site.clean_date(date)
         elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
-            obj.meta.values[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
+            obj.meta[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
         else:
-            obj.meta.values[self.name] = obj.site.generation_time
+            obj.meta[self.name] = obj.site.generation_time
 
 
 class MetadataIndexed(Metadata):
@@ -197,11 +197,11 @@ class MetadataDraft(Metadata):
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         # if obj.__class__.__name__ not in ("Asset", "Node"):
         #     print(f"MetadataDraft {obj.__class__=} {obj.meta=} {obj.site.generation_time=}"
-        #           f" {obj.meta.values['date'] > obj.site.generation_time}")
+        #           f" {obj.meta['date'] > obj.site.generation_time}")
         if (value := obj.meta.get(self.name)) is None:
-            obj.meta.values[self.name] = obj.meta.values["date"] > obj.site.generation_time
+            obj.meta[self.name] = obj.meta["date"] > obj.site.generation_time
         elif not isinstance(value, bool):
-            obj.meta.values[self.name] = bool(value)
+            obj.meta[self.name] = bool(value)
 
 
 class MetadataDefault(Metadata):
@@ -214,7 +214,7 @@ class MetadataDefault(Metadata):
 
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if self.name not in obj.meta:
-            obj.meta.values[self.name] = self.default
+            obj.meta[self.name] = self.default
 
 
 class Meta:
@@ -407,19 +407,14 @@ It defaults to false, or true if `meta.date` is in the future.
         # Pointer to the root structure
         self.site = site
         # The entry's metadata
-        self.meta: Meta
-
-        if parent is None:
-            self.meta = Meta()
-        else:
-            self.meta = parent.meta.derive()
+        self.meta: dict[str, Any] = {}
 
         if meta_values:
-            # TODO: switch to update_meta only, when we can map all metadata used by features
             self.update_meta(meta_values)
+            # TODO: remove this and leave only update_meta only, when we can map all metadata used by features
             for k, v in meta_values.items():
-                if k not in self.meta.values:
-                    self.meta.values[k] = v
+                if k not in self.meta:
+                    self.meta[k] = v
 
         # Call fields to fill in computed fields
         for field in self._fields.values():
