@@ -84,7 +84,7 @@ class Node(PageAndNodeFields, SiteElement):
         # Pages to be rendered at this location
         self.build_pages: dict[str, Page] = {}
         # Subdirectories
-        self.sub: Optional[dict[str, Node]] = None
+        self.sub: dict[str, Node] = {}
 
     def iter_pages(self, prune: Sequence[Node] = ()) -> Generator[Page, None, None]:
         """
@@ -94,9 +94,8 @@ class Node(PageAndNodeFields, SiteElement):
         if self in prune:
             return
         yield from self.build_pages.values()
-        if self.sub:
-            for node in self.sub.values():
-                yield from node.iter_pages(prune)
+        for node in self.sub.values():
+            yield from node.iter_pages(prune)
 
     def lookup(self, path: Path) -> Optional[Node]:
         """
@@ -183,10 +182,9 @@ class Node(PageAndNodeFields, SiteElement):
                 return page
 
         # Match basename of src.relpath in subpages
-        if self.sub:
-            for subnode in self.sub.values():
-                if (page := subnode.page) and (src := page.src) and os.path.basename(src.relpath) == path.head:
-                    return page
+        for subnode in self.sub.values():
+            if (page := subnode.page) and (src := page.src) and os.path.basename(src.relpath) == path.head:
+                return page
 
         return None
 
@@ -333,30 +331,22 @@ class Node(PageAndNodeFields, SiteElement):
         """
         Add a child, removing it if an exception is raised
         """
-        if self.sub and (node := self.sub.get(name)):
+        if (node := self.sub.get(name)):
             yield node
             return
 
         try:
-            if self.sub is None:
-                self.sub = {}
-
             node = self.__class__(site=self.site, name=name, parent=self)
             self.sub[name] = node
             yield node
         except Exception:
             # Rollback the addition
             self.sub.pop(name, None)
-            if not self.sub:
-                self.sub = None
 
     def child(self, name: str, *, src: Optional[file.File] = None) -> Node:
         """
         Return the given subnode, creating it if missing
         """
-        if self.sub is None:
-            self.sub = {}
-
         if (node := self.sub.get(name)):
             return node
 

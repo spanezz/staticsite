@@ -40,13 +40,12 @@ class Dir(Page):
 
     def analyze(self):
         pages: list[Page] = []
-        if self.node.sub:
-            for name, sub in self.node.sub.items():
-                if sub.page and sub.page != self:  # self is always a subpage because of build_as
-                    if sub.page.directory_index:
-                        self.subdirs.append(sub.page)
-                    else:
-                        pages.append(sub.page)
+        for name, sub in self.node.sub.items():
+            if sub.page and sub.page != self:  # self is always a subpage because of build_as
+                if sub.page.directory_index:
+                    self.subdirs.append(sub.page)
+                else:
+                    pages.append(sub.page)
         for name, page in self.node.build_pages.items():
             if page != self and page.leaf and page.meta["indexed"]:
                 pages.append(sub.page)

@@ -126,8 +126,7 @@ extension), that image is used.
             name = basename_no_ext(image.src.relpath)
             # print(f"Images.analyze {image=!r} {image.node.name=!r} {image.node.page=!r}")
             pages = image.node.build_pages.values()
-            if image.node.sub is not None:
-                pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
+            pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
 
             # Find pages matching this image's name
             for page in pages:
