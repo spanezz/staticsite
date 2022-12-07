@@ -263,14 +263,11 @@ class MetadataDraft(Metadata):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def on_load(self, page: Page):
-        draft = page.meta.get(self.name)
-        if draft is None:
-            page.meta["draft"] = page.meta["date"] > self.site.generation_time
-        elif isinstance(draft, bool):
-            pass
-        else:
-            page.meta["draft"] = bool(page.meta["draft"])
+    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+        if (value := obj.meta.get(self.name)) is None:
+            obj.meta.values[self.name] = obj.meta.values["date"] > obj.site.generation_time
+        elif not isinstance(value, bool):
+            obj.meta.values[self.name] = bool(value)
 
 
 class MetadataDefault(Metadata):
@@ -482,6 +479,13 @@ class PageAndNodeFields(metaclass=FieldsMetaclass):
         It defaults to true at least for [Markdown](markdown.md),
         [reStructuredText](rst.rst), and [data](data.md) pages.
     """)
+
+    draft = MetadataDraft("draft", doc="""
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `meta.date` is in the future.
+""")
 
 
 class MetaMixin:

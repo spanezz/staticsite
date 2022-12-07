@@ -94,12 +94,6 @@ class Site:
 
         # Register well-known metadata
 
-        self.register_metadata(metadata.MetadataDraft("draft", doc="""
-If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
-
-It defaults to false, or true if `meta.date` is in the future.
-"""))
         self.register_metadata(metadata.MetadataTemplateInherited("copyright", template="template_copyright",
                                doc="""
 If `template_copyright` is set instead of `copyright`, it is a jinja2 template
