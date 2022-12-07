@@ -246,19 +246,6 @@ def datafile_abspath(relpath):
     return os.path.join(test_root, "data", relpath)
 
 
-@contextmanager
-def example_site_dir(name="demo") -> str:
-    """
-    Create a copy of the example site in a temporary directory
-    """
-    import shutil
-    src = os.path.join(os.getcwd(), "example", name)
-    with tempfile.TemporaryDirectory() as root:
-        dst = os.path.join(root, "site")
-        shutil.copytree(src, dst)
-        yield dst
-
-
 class TracebackHandler(logging.Handler):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
