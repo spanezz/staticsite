@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import pytz
 
 from .. import page
-from ..metadata import Meta
 
 log = logging.getLogger("utils")
 
@@ -80,8 +79,6 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
         return f"{val.__class__.__name__}({val})"
     elif isinstance(val, dict):
         return {k: dump_meta(v) for k, v in val.items()}
-    elif isinstance(val, Meta):
-        return {k: dump_meta(v) for k, v in val.to_dict().items()}
     elif isinstance(val, (list, tuple, set)):
         return [dump_meta(v) for v in val]
     elif isinstance(val, jinja2.Template):
