@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 import dateutil.parser
 import pytz
 
-from . import metadata, structure, fstree
+from . import structure, fstree
 from .cache import Caches, DisabledCaches
 from .file import File
 from .metadata import Metadata
@@ -58,9 +58,6 @@ class Site:
             self.generation_time = generation_time.astimezone(self.timezone)
         else:
             self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
-
-        # Repository of metadata descriptions
-        self.metadata = metadata.Registry(self)
 
         # Filesystem trees scanned by the site
         self.fstrees: dict[str, fstree.Tree] = {}

@@ -151,9 +151,6 @@ class Page(SiteElement):
         Raises PageValidationError or one of its subclasses of the page should
         not be added to the site.
         """
-        # Run metadata on load functions
-        self.site.metadata.on_load(self)
-
         # TODO: move more of this to on_load functions?
 
         # Check the existence of other mandatory fields
