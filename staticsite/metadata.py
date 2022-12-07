@@ -148,10 +148,6 @@ class MetadataTemplateInherited(Metadata):
             return
 
         if (template := obj.meta.get(self.template)) is not None:
-            if isinstance(template, str):
-                # TODO: reenable this to debug, then remove this compilation step
-                # print(f"Template {template!r} in {obj!r} is a string")
-                template = obj.site.theme.jinja2.from_string(template)
             # If a template exists, render
             # TODO: remove meta= and make it compatibile again with stable staticsite
             val = markupsafe.Markup(template.render(meta=obj.meta, page=obj))
