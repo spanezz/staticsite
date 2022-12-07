@@ -135,7 +135,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         take_dir_rules(dir_rules, file_rules, config)
         if (site_path := config.pop("site_path", None)) is not None:
             node = node.at_path(structure.Path.from_string(site_path))
-        node.meta.update(config)
+        node.update_meta(config)
 
     # If .staticsite declared we're a directory of assets, bail out and
     # delegate to scan_assets
@@ -150,7 +150,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         m = feature.load_dir_meta(directory)
         if m is not None:
             take_dir_rules(dir_rules, file_rules, m)
-            node.meta.update(m)
+            node.update_meta(m)
 
     # If site_name is not defined, use the root page title or the content
     # directory name
@@ -202,7 +202,7 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         dir_node = node.child(name, src=src)
         for pattern, dmeta in dir_rules:
             if pattern.match(name):
-                dir_node.meta.update(dmeta)
+                dir_node.update_meta(dmeta)
 
         # Recursively descend into the directory
         with open_dir_fd(name, dir_fd=directory.dir_fd) as subdir_fd:

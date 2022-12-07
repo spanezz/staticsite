@@ -131,6 +131,14 @@ class Metadata:
         """
         pass
 
+    def set(self, obj: SiteElement, values: dict[str, Any]):
+        """
+        Set metadata values in obj from values
+        """
+        # By default, plain assignment
+        if self.name in values:
+            obj.meta.values[self.name] = values[self.name]
+
     def derive(self, meta: Meta):
         """
         Copy this metadata from src_meta to dst_meta, if needed
@@ -219,11 +227,24 @@ class MetadataTemplateInherited(Metadata):
             return
 
         if (template := obj.meta.get(self.template)) is not None:
+            if isinstance(template, str):
+                # TODO: reenable this to debug, then remove this compilation step
+                # print(f"Template {template!r} in {obj!r} is a string")
+                template = obj.site.theme.jinja2.from_string(template)
             # If a template exists, render
             # TODO: remove meta= and make it compatibile again with stable staticsite
             val = markupsafe.Markup(template.render(meta=obj.meta, page=obj))
             obj.meta.values[self.name] = val
             return val
+
+    def set(self, obj: SiteElement, values: dict[str, Any]):
+        super().set(obj, values)
+        # Also copy the template name
+        if self.template in values:
+            if isinstance(tpl := values[self.template], str):
+                obj.meta.values[self.template] = obj.site.theme.jinja2.from_string(tpl)
+            else:
+                obj.meta.values[self.template] = tpl
 
     def lookup_template(self, meta: Meta) -> Optional[jinja2.Template]:
         """
@@ -594,3 +615,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         # Call fields to fill in computed fields
         for field in self._fields.values():
             field.fill_new(self, parent)
+
+    def update_meta(self, values: dict[str, Any]):
+        for field in self._fields.values():
+            field.set(self, values)

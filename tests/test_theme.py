@@ -91,7 +91,7 @@ class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(url_for("page1", page=page, absolute=True), "https://www.example.org/prefix/page1")
 
 
-class TestMarkdownFilter(TestCase):
+class TestMarkdownFilter(test_utils.MockSiteTestMixin, TestCase):
     def test_markdown(self):
         files = {
             "index.html": "",
