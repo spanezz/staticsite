@@ -244,10 +244,9 @@ class RstPage(Page):
     TYPE = "rst"
 
     def __init__(self, *args, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
-        super().__init__(*args, **kw)
-
         # Indexed by default
-        self.meta.setdefault("indexed", True)
+        kw["meta_values"].setdefault("indexed", True)
+        super().__init__(*args, **kw)
 
         # Shared RestructuredText environment
         self.rst = feature

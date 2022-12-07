@@ -77,7 +77,7 @@ class PageFilter:
             allow: Optional[Sequence[Page]] = None,
             **kw):
         self.site = site
-        self.root = root
+        self.root = root or site.structure.root
 
         if path is not None:
             self.re_path = compile_page_match(path)
@@ -117,6 +117,7 @@ class PageFilter:
     def _filter(self, root: structure.Node, relpath: str) -> Generator[Page, None, None]:
 
         for name, page in root.build_pages.items():
+            # print(f"_filter {page=!r} indexed={page.meta['indexed']}")
             if not page.meta["indexed"]:
                 continue
             if self.allow is not None and page not in self.allow:

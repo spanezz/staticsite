@@ -344,10 +344,9 @@ class MarkdownPage(Page):
     re_divider = re.compile(r"^____+$")
 
     def __init__(self, *args, feature: MarkdownPages, body: List[str], **kw):
-        super().__init__(*args, **kw)
-
         # Indexed by default
-        self.meta.setdefault("indexed", True)
+        kw["meta_values"].setdefault("indexed", True)
+        super().__init__(*args, **kw)
 
         # Shared markdown environment
         self.mdpages = feature

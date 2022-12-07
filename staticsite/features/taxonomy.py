@@ -122,10 +122,10 @@ class TaxonomyPage(Page):
     TYPE = "taxonomy"
 
     def __init__(self, *args, name: str, **kw):
+        meta_values = kw["meta_values"]
+        meta_values.setdefault("template", "taxonomy.html")
+        meta_values.setdefault("nav_title", name.capitalize())
         super().__init__(*args, **kw)
-
-        self.meta.setdefault("template", "taxonomy.html")
-        self.meta.setdefault("nav_title", name.capitalize())
 
         # Taxonomy name (e.g. "tags")
         self.name = name

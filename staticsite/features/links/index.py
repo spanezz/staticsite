@@ -1,7 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import logging
+from typing import TYPE_CHECKING
+
 from staticsite import Page
+
 from .data import Link, LinkCollection
 
 if TYPE_CHECKING:
@@ -18,13 +21,13 @@ class LinkIndexPage(Page):
     TYPE = "links_index"
 
     def __init__(self, *args, name: str, links: Links, **kw):
+        meta_values = kw["meta_values"]
+        meta_values.setdefault("template", "data-links.html")
+        meta_values.setdefault("nav_title", name.capitalize())
+        meta_values.setdefault("title", "All links shared in the site")
         super().__init__(*args, **kw)
         # Reference to the Feature with the aggregated link collection
         self.feature_links = links
-
-        self.meta.setdefault("template", "data-links.html")
-        self.meta.setdefault("nav_title", name.capitalize())
-        self.meta.setdefault("title", "All links shared in the site")
 
         self.by_tag: dict[str, "LinksTagPage"] = {}
 
@@ -73,9 +76,9 @@ class LinksTagPage(Page):
 
     def __init__(self, *args, **kw):
         links = kw.pop("links", None)
+        kw["meta_values"].setdefault("template", "data-links.html")
         super().__init__(*args, **kw)
         self.meta["syndicated"] = False
-        self.meta.setdefault("template", "data-links.html")
         if links is None:
             self.links = LinkCollection([Link(link) for link in self.meta["links"]])
         else:
