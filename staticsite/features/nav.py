@@ -103,6 +103,7 @@ class Nav(Feature):
         # Make sure nav_title is filled
         for page in nav_pages:
             if "nav_title" not in page.meta:
+                page.prepare_render()
                 page.meta["nav_title"] = page.meta["title"]
 
 

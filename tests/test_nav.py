@@ -38,6 +38,7 @@ class TestNav(test_utils.MockSiteTestMixin, TestCase):
                     'site_name': 'Test site',
                     'site_url': 'https://www.example.org',
                     'template': 'page.html',
+                    'template_copyright': 'compiled:None',
                     'title': 'Test site',
                     'related': {},
                 },
