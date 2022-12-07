@@ -94,45 +94,6 @@ class Site:
 
         # Register well-known metadata
 
-        self.register_metadata(metadata.MetadataTemplateInherited("copyright", template="template_copyright",
-                               doc="""
-If `template_copyright` is set instead of `copyright`, it is a jinja2 template
-used to generate the copyright information.
-
-The template context will have `page` available, with the current page. The
-result of the template will not be further escaped, so you can use HTML markup
-in it.
-
-If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
-"""))
-        self.register_metadata(metadata.MetadataTemplateInherited("title", template="template_title", doc="""
-The page title.
-
-If `template_title` is set instead of `title`, it is a jinja2 template used to
-generate the title. The template context will have `page` available, with the
-current page. The result of the template will not be further escaped, so you
-can use HTML markup
-in it.
-
-If omitted:
-
- * the first title found in the page contents is used.
- * in the case of jinaj2 template pages, the contents of `{% block title %}`,
-   if present, is rendered and used.
- * if the page has no title, the title of directory indices above this page is
-   inherited.
- * if still no title can be found, the site name is used as a default.
-"""))
-        self.register_metadata(metadata.MetadataTemplateInherited("description", template="template_description",
-                               doc="""
-The page description. If omitted, the page will have no description.
-
-If `template_description` is set instead of `description`, it is a jinja2
-template used to generate the description. The template context will have
-`page` available, with the current page. The result of the template will not be
-further escaped, so you can use HTML markup in it.
-"""))
-
     def find_page(self, path: str):
         """
         Find a page by absolute path in the site

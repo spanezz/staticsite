@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import markupsafe
 
@@ -191,6 +191,31 @@ class MetadataTemplateInherited(Metadata):
         yield from super().get_notes()
         yield "Inherited from parent pages"
         yield f"Template: {self.template}"
+
+    def set_template(self, obj: MetaMixin, tpl: Union[str, jinja2.Template]):
+        if isinstance(tpl, str):
+            obj.meta.values[self.template] = obj.site.theme.jinja2.from_string(tpl)
+        else:
+            obj.meta.values[self.template] = tpl
+
+    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+        # Inherit template
+        if parent is not None:
+            if self.template not in obj.meta and (tpl := parent.meta.values.get(self.template)):
+                self.set_template(obj, tpl)
+
+        if self.name in obj.meta:
+            return
+
+        # TODO: do the rendering before the page is rendered, not at instantiation time
+        if (template := obj.meta.get(self.template)) is not None:
+            # If a template exists, render
+            val = markupsafe.Markup(template.render(meta=obj.meta, page={"meta": obj.meta}))
+            obj.meta.values[self.name] = val
+            return val
+        elif parent is not None and self.name in parent.meta:
+            # Else fallback to plain inheritance
+            obj.meta.values[self.name] = parent.meta[self.name]
 
     def lookup_template(self, meta: Meta) -> Optional[jinja2.Template]:
         """
@@ -461,6 +486,45 @@ class PageAndNodeFields(metaclass=FieldsMetaclass):
         --draft` to also consider draft pages.
 
         If missing, the modification time of the file is used.
+    """)
+
+    copyright = MetadataTemplateInherited("copyright", template="template_copyright", doc="""
+        If `template_copyright` is set instead of `copyright`, it is a jinja2 template
+        used to generate the copyright information.
+
+        The template context will have `page` available, with the current page. The
+        result of the template will not be further escaped, so you can use HTML markup
+        in it.
+
+        If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
+    """)
+
+    title = MetadataTemplateInherited("title", template="template_title", doc="""
+        The page title.
+
+        If `template_title` is set instead of `title`, it is a jinja2 template used to
+        generate the title. The template context will have `page` available, with the
+        current page. The result of the template will not be further escaped, so you
+        can use HTML markup
+        in it.
+
+        If omitted:
+
+         * the first title found in the page contents is used.
+         * in the case of jinaj2 template pages, the contents of `{% block title %}`,
+           if present, is rendered and used.
+         * if the page has no title, the title of directory indices above this page is
+           inherited.
+         * if still no title can be found, the site name is used as a default.
+    """)
+
+    description = MetadataTemplateInherited("description", template="template_description", doc="""
+        The page description. If omitted, the page will have no description.
+
+        If `template_description` is set instead of `description`, it is a jinja2
+        template used to generate the description. The template context will have
+        `page` available, with the current page. The result of the template will not be
+        further escaped, so you can use HTML markup in it.
     """)
 
     asset = MetadataInherited("asset", doc="""
