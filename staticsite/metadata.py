@@ -118,9 +118,9 @@ class Metadata:
     def get_notes(self):
         return ()
 
-    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         """
-        Compute values for the meta element of a newly created MetaMixin
+        Compute values for the meta element of a newly created SiteElement
         """
         # By default, nothing to do
         pass
@@ -159,7 +159,7 @@ class MetadataInherited(Metadata):
         yield from super().get_notes()
         yield "Inherited from parent pages"
 
-    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if parent is None:
             return
         if self.name not in obj.meta and self.name in parent.meta:
@@ -192,13 +192,13 @@ class MetadataTemplateInherited(Metadata):
         yield "Inherited from parent pages"
         yield f"Template: {self.template}"
 
-    def set_template(self, obj: MetaMixin, tpl: Union[str, jinja2.Template]):
+    def set_template(self, obj: SiteElement, tpl: Union[str, jinja2.Template]):
         if isinstance(tpl, str):
             obj.meta.values[self.template] = obj.site.theme.jinja2.from_string(tpl)
         else:
             obj.meta.values[self.template] = tpl
 
-    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         # Inherit template
         if parent is not None:
             if self.template not in obj.meta and (tpl := parent.meta.values.get(self.template)):
@@ -252,7 +252,7 @@ class MetadataDate(Metadata):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (date := obj.meta.values.get(self.name)):
             obj.meta.values[self.name] = obj.site.clean_date(date)
         elif parent and (date := parent.meta.values.get(self.name)):
@@ -288,7 +288,7 @@ class MetadataDraft(Metadata):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (value := obj.meta.get(self.name)) is None:
             obj.meta.values[self.name] = obj.meta.values["date"] > obj.site.generation_time
         elif not isinstance(value, bool):
@@ -303,7 +303,7 @@ class MetadataDefault(Metadata):
         super().__init__(name, **kw)
         self.default = default
 
-    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if self.name not in obj.meta:
             obj.meta.values[self.name] = self.default
 
@@ -552,21 +552,29 @@ It defaults to false, or true if `meta.date` is in the future.
 """)
 
 
-class MetaMixin:
+class SiteElement(metaclass=FieldsMetaclass):
     """
     Functionality to expose a `meta` member giving dict-like access to Metadata
     fields
     """
-    def create_meta(
+    def __init__(
             self,
-            site: Site, parent: Optional[MetaMixin],
-            meta_values: Optional[dict[str, Any]] = None) -> Meta:
+            site: Site, *,
+            parent: Optional[SiteElement] = None,
+            meta_values: Optional[dict[str, Any]] = None):
+        # Pointer to the root structure
+        self.site = site
+        # The entry's metadata
+        self.meta: Meta
+
         if parent is None:
             self.meta = Meta(site.metadata)
         else:
             self.meta = parent.meta.derive()
+
         if meta_values is not None:
             self.meta.update(meta_values)
-        # TODO: update with _fields
+
+        # Call fields to fill in computed fields
         for field in self._fields.values():
             field.fill_new(self, parent)

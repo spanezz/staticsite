@@ -11,12 +11,11 @@ import jinja2
 import markupsafe
 
 from . import structure
-from .metadata import FieldsMetaclass, PageAndNodeFields, MetaMixin
+from .metadata import PageAndNodeFields, SiteElement
 from .render import RenderedString
 
 if TYPE_CHECKING:
     from .file import File
-    from .metadata import Meta
     from .render import RenderedElement
     from .site import Site
 
@@ -38,7 +37,7 @@ class PageMissesFieldError(PageValidationError):
         super().__init__(page, f"missing required field meta.{field}")
 
 
-class Page(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
+class Page(PageAndNodeFields, SiteElement):
     """
     A source page in the site.
 
@@ -58,8 +57,7 @@ class Page(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
             dst: str,
             leaf: bool,
             directory_index: bool = False):
-        # Site for this page
-        self.site = site
+        super().__init__(site, parent=created_from or node, meta_values=meta_values)
         # structure.Node where this page is installed in the rendered structure
         self.node: structure.Node = node
         # Node to use as initial node for find_pages
@@ -68,17 +66,8 @@ class Page(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
         self.src = src
         # Name of the file used to render this page on build
         self.dst: str = dst
-        # A dictionary with the page metadata. See the README for documentation
-        # about its contents.
-        self.meta: Meta
         if created_from:
-            # Invalid invariant: scaled images do have src
-            # if src:
-            #     print(f"{created_from=!r} and {src=!r}")
-            self.create_meta(site, parent=created_from, meta_values=meta_values)
             self.meta["created_from"] = created_from
-        else:
-            self.create_meta(site, parent=node, meta_values=meta_values)
         # Set to True if this page is a directory index. This affects the root
         # of page lookups relative to this page
         self.directory_index: bool = directory_index
