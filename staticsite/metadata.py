@@ -232,8 +232,7 @@ class Meta:
     You can use something like False or the empty string as alternatives for
     None
     """
-    def __init__(self, parent: Optional[Meta] = None):
-        self.parent = parent
+    def __init__(self):
         self.values: dict[str, Any] = {}
 
     def _deduplicated_repr(self, seen: set[str]):
@@ -246,10 +245,7 @@ class Meta:
                 values[k] = "<Meta>"
             else:
                 values[k] = v
-        if self.parent is not None:
-            return f"({values!r}, parent={self.parent._deduplicated_repr(seen)})"
-        else:
-            return f"{values!r}"
+        return f"{values!r}"
 
     def __repr__(self):
         return self._deduplicated_repr(set())
@@ -303,7 +299,7 @@ class Meta:
         """
         Create a Meta element derived from this one
         """
-        return Meta(parent=self)
+        return Meta()
 
     def to_dict(self) -> dict[str, Any]:
         """
