@@ -187,7 +187,7 @@ date: 2010-01-01 00:00:00
         sitedef.settings.TIMEZONE = "UTC"
 
         with self.site(sitedef) as mocksite:
-            j2page, mdpage, datapage = mocksite.find_page("", "page", "page1")
+            j2page, mdpage, datapage = mocksite.page("", "page", "page1")
 
             self.assertEqual(j2page.to_dict(), {
                 "src": {

@@ -4,9 +4,10 @@ import contextlib
 import datetime
 import logging
 import os
+import shutil
 import stat
 import tempfile
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from typing import Any, Dict, Optional, Sequence, Union
 from unittest import TestCase, mock
 
@@ -21,71 +22,44 @@ MockFiles = dict[str, Union[str, bytes, dict]]
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-class MockSite:
+class MockSiteBase:
     """
-    Define a mock site for testing
+    Common code for different ways of setting up mock sites
     """
-    def __init__(self, files: MockFiles, auto_load_site: bool = True):
-        self.files = files
+    def __init__(self, auto_load_site: bool = True, settings: Optional[dict[str, Any]] = None):
+        # Set to False if you only want to populate the workdir
+        self.auto_load_site = auto_load_site
         self.site: Optional[staticsite.Site] = None
         self.stack = contextlib.ExitStack()
         self.root: Optional[str] = None
         self.test_case: Optional[TestCase] = None
+        self.settings = Settings()
+
+        self.settings.CACHE_REBUILDS = False
+        self.settings.THEME_PATHS = [os.path.join(project_root, "themes")]
+        self.settings.TIMEZONE = "Europe/Rome"
+
+        if settings is not None:
+            for k, v in settings.items():
+                setattr(self.settings, k, v)
 
         # Timestamp used for mock files and site generation time
         # date +%s --date="2019-06-01 12:30"
-        self.generation_time = 1559385000
+        self.generation_time: Optional[int] = 1559385000
 
-        self.settings = Settings()
-        # Default settings for testing
-        self.settings.SITE_NAME = "Test site"
-        self.settings.SITE_URL = "https://www.example.org"
-        self.settings.SITE_AUTHOR = "Test User"
-        self.settings.TIMEZONE = "Europe/Rome"
-        self.settings.CACHE_REBUILDS = False
-        self.settings.THEME_PATHS = [os.path.join(project_root, "themes")]
-
-        # Set to False if you only want to populate the workdir
-        self.auto_load_site = auto_load_site
+        self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
 
     def populate_workdir(self):
-        self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
-        self.settings.PROJECT_ROOT = self.root
-
-        for relpath, content in self.files.items():
-            abspath = os.path.join(self.root, relpath)
-            os.makedirs(os.path.dirname(abspath), exist_ok=True)
-            if isinstance(content, str):
-                with open(abspath, "wt") as fd:
-                    fd.write(content)
-                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
-            elif isinstance(content, bytes):
-                with open(abspath, "wb") as fd:
-                    fd.write(content)
-                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
-            elif isinstance(content, dict):
-                with open(abspath, "wt") as fd:
-                    fd.write(front_matter.write(content, style="json"))
-                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
-            else:
-                raise TypeError("content should be a str or bytes")
+        raise NotImplementedError(f"{self.__class__.__name__}.populate_workdir not implemented")
 
     def load_site(self):
         self.site = staticsite.Site(
                 self.settings,
-                generation_time=datetime.datetime.fromtimestamp(self.generation_time, pytz.utc))
+                generation_time=(
+                    datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
+                    if self.generation_time else None))
         self.site.load()
         self.site.analyze()
-
-    def __enter__(self) -> "MockSite":
-        self.populate_workdir()
-        if self.auto_load_site:
-            self.load_site()
-        return self
-
-    def __exit__(self, *args):
-        self.site = None
-        self.stack.__exit__(*args)
 
     def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
         """
@@ -107,6 +81,71 @@ class MockSite:
         Check that the list of pages in the site matches the given paths
         """
         self.test_case.assertCountEqual([p.site_path for p in self.site.iter_pages(static=False)], paths)
+
+    def __enter__(self) -> "MockSite":
+        self.populate_workdir()
+        if self.auto_load_site:
+            self.load_site()
+        return self
+
+    def __exit__(self, *args):
+        self.site = None
+        self.stack.__exit__(*args)
+
+
+class MockSite(MockSiteBase):
+    """
+    Define a mock site for testing
+    """
+    def __init__(self, files: MockFiles, **kw):
+        super().__init__(**kw)
+        self.files = files
+
+        # Default settings for testing
+        self.settings.SITE_NAME = "Test site"
+        self.settings.SITE_URL = "https://www.example.org"
+        self.settings.SITE_AUTHOR = "Test User"
+
+    def populate_workdir(self):
+        self.settings.PROJECT_ROOT = self.root
+
+        for relpath, content in self.files.items():
+            abspath = os.path.join(self.root, relpath)
+            os.makedirs(os.path.dirname(abspath), exist_ok=True)
+            if isinstance(content, str):
+                with open(abspath, "wt") as fd:
+                    fd.write(content)
+                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
+            elif isinstance(content, bytes):
+                with open(abspath, "wb") as fd:
+                    fd.write(content)
+                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
+            elif isinstance(content, dict):
+                with open(abspath, "wt") as fd:
+                    fd.write(front_matter.write(content, style="json"))
+                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
+            else:
+                raise TypeError("content should be a str or bytes")
+
+
+class ExampleSite(MockSiteBase):
+    def __init__(self, name: str, **kw):
+        super().__init__(**kw)
+        self.name = name
+
+    def populate_workdir(self):
+        src = os.path.join(project_root, "example", self.name)
+        # dst = os.path.join(self.workdir, "site")
+        os.rmdir(self.root)
+        shutil.copytree(src, self.root)
+
+        settings_path = os.path.join(self.root, "settings.py")
+        if os.path.exists(settings_path):
+            self.settings.load(settings_path)
+        if self.settings.PROJECT_ROOT is None:
+            self.settings.PROJECT_ROOT = self.root
+        if self.settings.SITE_URL is None:
+            self.settings.SITE_URL = "http://localhost"
 
 
 class MockSiteTestMixin:
@@ -220,35 +259,6 @@ def example_site_dir(name="demo") -> str:
         yield dst
 
 
-@contextmanager
-def example_site(name="demo", **kw) -> staticsite.Site:
-    stat_override = StatOverride(kw)
-
-    with assert_no_logs():
-        with example_site_dir(name) as root:
-            src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-            settings = Settings()
-            settings_path = os.path.join(root, "settings.py")
-            if os.path.exists(settings_path):
-                settings.load(settings_path)
-            if settings.PROJECT_ROOT is None:
-                settings.PROJECT_ROOT = root
-            settings.CACHE_REBUILDS = False
-            settings.THEME_PATHS = [os.path.join(src_root, "themes")]
-            for k, v in kw.items():
-                setattr(settings, k, v)
-            if settings.TIMEZONE is None:
-                settings.TIMEZONE = "Europe/Rome"
-            if settings.SITE_URL is None:
-                settings.SITE_URL = "http://localhost"
-
-            site = staticsite.Site(settings=settings)
-            with stat_override(site):
-                site.load()
-                site.analyze()
-            yield site
-
-
 class TracebackHandler(logging.Handler):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -294,11 +304,12 @@ class SiteTestMixin:
         super().setUpClass()
         from staticsite.cmd.build import Builder
 
-        cls.build_root_tmpdir = tempfile.TemporaryDirectory()
-        cls.build_root = cls.build_root_tmpdir.__enter__()
+        cls.stack = ExitStack()
 
-        cls.example_site = example_site(name=cls.site_name, **cls.site_settings)
-        cls.site = cls.example_site.__enter__()
+        cls.build_root = cls.stack.enter_context(tempfile.TemporaryDirectory())
+
+        cls.example_site = cls.stack.enter_context(ExampleSite(name=cls.site_name, settings=cls.site_settings))
+        cls.site = cls.example_site.site
         cls.site.settings.OUTPUT = cls.build_root
 
         builder = Builder(cls.site)
@@ -309,8 +320,28 @@ class SiteTestMixin:
     @classmethod
     def tearDownClass(cls):
         cls.example_site.__exit__(None, None, None)
-        cls.build_root_tmpdir.__exit__(None, None, None)
+        cls.stack.__exit__(None, None, None)
         super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.example_site.test_case = self
+
+    def tearDown(self):
+        self.example_site.test_case = None
+        super().tearDown()
+
+    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
+        """
+        Ensure the site has the given page, by path, and return it
+        """
+        return self.example_site.page(*paths)
+
+    def assertPagePaths(self, paths: Sequence[str]):
+        """
+        Check that the list of pages in the site matches the given paths
+        """
+        return self.example_site.assertPagePaths(paths)
 
     def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
         page = self.site.find_page(sitepath)

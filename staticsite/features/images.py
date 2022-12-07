@@ -184,10 +184,10 @@ class ScaledImage(Page):
     def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):
         super().__init__(*args, **kw)
         self.name = name
-        self.meta["date"] = self.created_from.meta["date"]
+        created_from = self.meta["created_from"]
+        self.meta["date"] = created_from.meta["date"]
 
         if "height" not in self.meta:
-            created_from = self.created_from
             self.meta["height"] = round(
                     created_from.meta["height"] * (
                         info["width"] / created_from.meta["width"]))
