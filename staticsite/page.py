@@ -78,6 +78,9 @@ class Page(PageAndNodeFields, SiteElement):
         # True if this page can render a short version of itself
         self.content_has_split = False
 
+        # Set to true after pre-rendering hooks have been called
+        self.ready_to_render: bool = False
+
         # External links found when rendering the page
         self.rendered_external_links: set[str] = set()
 
@@ -134,10 +137,6 @@ class Page(PageAndNodeFields, SiteElement):
         self.site.metadata.on_load(self)
 
         # TODO: move more of this to on_load functions?
-
-        # title must exist
-        if "title" not in self.meta:
-            self.meta["title"] = self.meta["site_name"]
 
         # Check the existence of other mandatory fields
         if "site_url" not in self.meta:
@@ -335,11 +334,31 @@ class Page(PageAndNodeFields, SiteElement):
         else:
             return f"{self.TYPE}:auto:{self.site_path}"
 
+    def prepare_render(self):
+        """
+        Prepare for rendering.
+
+        This is idempotent, and can be called multiple times
+        """
+        if self.ready_to_render:
+            return
+        self.ready_to_render = True
+
+        # Call prepare_to_render hooks in fields
+        for field in self._fields.values():
+            field.prepare_to_render(self)
+
+        # title must exist
+        # TODO: move this to a Metadata field
+        if "title" not in self.meta:
+            self.meta["title"] = self.meta["site_name"]
+
     @jinja2.pass_context
     def html_full(self, context, **kw) -> str:
         """
         Render the full page, from the <html> tag downwards.
         """
+        self.prepare_render()
         context = dict(context)
         context["render_style"] = "full"
         context.update(kw)

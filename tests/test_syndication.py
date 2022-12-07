@@ -20,7 +20,7 @@ date: 2016-04-17 10:00
 }
 
 
-class TestSyndication(TestCase):
+class TestSyndication(test_utils.MockSiteTestMixin, TestCase):
     def test_simple(self):
         files = dict(BASE_FILES)
         files["blog.md"] = """---
@@ -33,14 +33,9 @@ syndication: yes
 
 text
 """
-
-        with test_utils.testsite(files) as site:
-            blog = site.find_page("blog")
-            post1 = site.find_page("blog/post1")
-            post2 = site.find_page("blog/post2")
-            widget = site.find_page("blog/widget")
-            rss = site.find_page("blog/index.rss")
-            atom = site.find_page("blog/index.atom")
+        with self.site(files) as mocksite:
+            blog, post1, post2, widget, rss, atom = mocksite.page(
+                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
@@ -72,13 +67,9 @@ syndication:
 
 text
 """
-        with test_utils.testsite(files) as site:
-            blog = site.find_page("blog")
-            post1 = site.find_page("blog/post1")
-            post2 = site.find_page("blog/post2")
-            widget = site.find_page("blog/widget")
-            rss = site.find_page("blog/index.rss")
-            atom = site.find_page("blog/index.atom")
+        with self.site(files) as mocksite:
+            blog, post1, post2, widget, rss, atom = mocksite.page(
+                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2, post1])
@@ -103,14 +94,9 @@ syndication:
 
 text
 """
-
-        with test_utils.testsite(files) as site:
-            blog = site.find_page("blog")
-            post1 = site.find_page("blog/post1")
-            post2 = site.find_page("blog/post2")
-            widget = site.find_page("blog/widget")
-            rss = site.find_page("blog/index.rss")
-            atom = site.find_page("blog/index.atom")
+        with self.site(files) as mocksite:
+            blog, post1, post2, widget, rss, atom = mocksite.page(
+                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
             synd = blog.meta["syndication"]
             self.assertEqual(synd["pages"], [post2])
@@ -129,7 +115,7 @@ text
         self.maxDiff = None
         files = {
             "index.md": """---
-date: 2020-01-01 12:00:00+02:00
+date: 2019-01-01 12:00:00+02:00
 syndication: yes
 pages: "blog/*"
 template: blog.html
@@ -138,7 +124,7 @@ template: blog.html
 # Blog
 """,
             "blog/post.md": """---
-date: 2020-01-01 12:00:00+02:00
+date: 2019-01-01 12:00:00+02:00
 ---
 
 # Title
@@ -156,9 +142,8 @@ static char * bottom_active_xpm[] = {
 "@@@@@@@@@@@@@@@@@@@@@@@@"};
 """,
         }
-
-        with test_utils.testsite(files) as site:
-            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
                 "",
                 "index.rss",
                 "index.atom",
@@ -167,21 +152,21 @@ static char * bottom_active_xpm[] = {
                 "blog/post",
                 "blog/images",
                 "blog/images/photo.xpm",
-            ])
+            ))
 
-            post = site.find_page("")
+            post = mocksite.page("")
             rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
 
-            post = site.find_page("blog/post")
+            post = mocksite.page("blog/post")
             rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "/blog/images")
 
-            rss = site.find_page("index.rss")
+            rss = mocksite.page("index.rss")
             rendered = rss.render().buf
             mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")

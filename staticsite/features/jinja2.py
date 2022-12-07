@@ -124,6 +124,7 @@ class RenderPartialTemplateMixin:
 
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
+        self.prepare_render()
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
@@ -131,6 +132,7 @@ class RenderPartialTemplateMixin:
 
     @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
+        self.prepare_render()
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
@@ -138,6 +140,7 @@ class RenderPartialTemplateMixin:
 
     @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
+        self.prepare_render()
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""

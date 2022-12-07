@@ -30,7 +30,7 @@ class FieldsMetaclass(type):
             if isinstance(val, Metadata):
                 # Store its description in the Model _meta
                 _fields[field_name] = val
-                # val.set_name(field_name)
+                val.name = field_name
             else:
                 # Leave untouched
                 continue
@@ -125,6 +125,12 @@ class Metadata:
         # By default, nothing to do
         pass
 
+    def prepare_to_render(self, obj: SiteElement):
+        """
+        Compute values before the SiteElement gets rendered
+        """
+        pass
+
     def derive(self, meta: Meta):
         """
         Copy this metadata from src_meta to dst_meta, if needed
@@ -199,23 +205,25 @@ class MetadataTemplateInherited(Metadata):
             obj.meta.values[self.template] = tpl
 
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        # Inherit template
-        if parent is not None:
-            if self.template not in obj.meta and (tpl := parent.meta.values.get(self.template)):
-                self.set_template(obj, tpl)
+        if (tpl := obj.meta.get(self.template)):
+            # Make sure the current template value is a compiled template
+            if isinstance(tpl, str):
+                obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
+        elif parent is not None:
+            # Try to inherit template
+            if self.template not in obj.meta and (tpl := parent.meta.get(self.template)):
+                obj.meta[self.template] = tpl
 
+    def prepare_to_render(self, obj: SiteElement):
         if self.name in obj.meta:
             return
 
-        # TODO: do the rendering before the page is rendered, not at instantiation time
         if (template := obj.meta.get(self.template)) is not None:
             # If a template exists, render
-            val = markupsafe.Markup(template.render(meta=obj.meta, page={"meta": obj.meta}))
+            # TODO: remove meta= and make it compatibile again with stable staticsite
+            val = markupsafe.Markup(template.render(meta=obj.meta, page=obj))
             obj.meta.values[self.name] = val
             return val
-        elif parent is not None and self.name in parent.meta:
-            # Else fallback to plain inheritance
-            obj.meta.values[self.name] = parent.meta[self.name]
 
     def lookup_template(self, meta: Meta) -> Optional[jinja2.Template]:
         """
@@ -277,6 +285,12 @@ class MetadataIndexed(Metadata):
     """
     Make sure the field exists and is a bool, defaulting to False
     """
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
+        val = obj.meta.get(self.name, False)
+        if isinstance(val, str):
+            val = val.lower() in ("yes", "true", "1")
+        obj.meta[self.name] = val
+
     def on_load(self, page: Page):
         val = page.meta.get(self.name, False)
         if isinstance(val, str):
@@ -289,6 +303,8 @@ class MetadataDraft(Metadata):
     Make sure the draft exists and is a bool, computed according to the date
     """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
+        # if obj.__class__.__name__ not in ("Asset", "Node"):
+        #     print(f"MetadataDraft {obj.__class__=} {obj.meta=} {obj.site.generation_time=}")
         if (value := obj.meta.get(self.name)) is None:
             obj.meta.values[self.name] = obj.meta.values["date"] > obj.site.generation_time
         elif not isinstance(value, bool):

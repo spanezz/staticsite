@@ -1,16 +1,115 @@
 from __future__ import annotations
-from typing import Dict, Union, Any
+
+import contextlib
+import datetime
+import logging
 import os
 import stat
 import tempfile
-import logging
-import datetime
-import pytz
 from contextlib import contextmanager
+from typing import Any, Dict, Optional, Sequence, Union
+from unittest import TestCase, mock
+
+import pytz
+
 import staticsite
 from staticsite.settings import Settings
 from staticsite.utils import front_matter
-from unittest import mock
+
+MockFiles = dict[str, Union[str, bytes, dict]]
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+class MockSite:
+    """
+    Define a mock site for testing
+    """
+    def __init__(self, files: MockFiles):
+        self.files = files
+        self.site: Optional[staticsite.Site] = None
+        self.stack = contextlib.ExitStack()
+        self.root: Optional[str] = None
+        self.test_case: Optional[TestCase] = None
+
+        # Timestamp used for mock files and site generation time
+        # date +%s --date="2019-06-01 12:30"
+        self.generation_time = 1559385000
+
+        self.settings = Settings()
+        # Default settings for testing
+        self.settings.SITE_NAME = "Test site"
+        self.settings.SITE_URL = "https://www.example.org"
+        self.settings.SITE_AUTHOR = "Test User"
+        self.settings.TIMEZONE = "Europe/Rome"
+        self.settings.CACHE_REBUILDS = False
+        self.settings.THEME_PATHS = [os.path.join(project_root, "themes")]
+
+    def populate_workdir(self):
+        self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
+        self.settings.PROJECT_ROOT = self.root
+
+        for relpath, content in self.files.items():
+            abspath = os.path.join(self.root, relpath)
+            os.makedirs(os.path.dirname(abspath), exist_ok=True)
+            if isinstance(content, str):
+                with open(abspath, "wt") as fd:
+                    fd.write(content)
+                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
+            elif isinstance(content, bytes):
+                with open(abspath, "wb") as fd:
+                    fd.write(content)
+                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
+            elif isinstance(content, dict):
+                with open(abspath, "wt") as fd:
+                    fd.write(front_matter.write(content, style="json"))
+                    os.utime(fd.fileno(), (self.generation_time, self.generation_time))
+            else:
+                raise TypeError("content should be a str or bytes")
+
+    def __enter__(self) -> "MockSite":
+        self.populate_workdir()
+        self.site = staticsite.Site(
+                self.settings,
+                generation_time=datetime.datetime.fromtimestamp(self.generation_time, pytz.utc))
+        self.site.load()
+        self.site.analyze()
+        return self
+
+    def __exit__(self, *args):
+        self.site = None
+        self.stack.__exit__(*args)
+
+    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
+        """
+        Ensure the site has the given page, by path, and return it
+        """
+        res: list[staticsite.Page] = []
+        for path in paths:
+            page = self.site.find_page(path)
+            if page is None:
+                self.fail(f"Page {path!r} not found in site")
+            res.append(page)
+        if len(res) == 1:
+            return res[0]
+        else:
+            return tuple(res)
+
+    def assertPagePaths(self, paths: Sequence[str]):
+        """
+        Check that the list of pages in the site matches the given paths
+        """
+        self.test_case.assertCountEqual([p.site_path for p in self.site.iter_pages(static=False)], paths)
+
+
+class MockSiteTestMixin:
+    @contextmanager
+    def site(self, mocksite: Union[MockSite, MockFiles]):
+        if not isinstance(mocksite, MockSite):
+            mocksite = MockSite(mocksite)
+        mocksite.test_case = self
+        with mocksite:
+            yield mocksite
 
 
 @contextmanager

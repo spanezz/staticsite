@@ -8,7 +8,7 @@ class MockContext(dict):
         self.name = "test"
 
 
-class TestUrlFor(TestCase):
+class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
     """
     Test theme functions
     """
@@ -24,7 +24,9 @@ class TestUrlFor(TestCase):
             "dir/index.html": {},
         }
 
-        with test_utils.testsite(files) as site:
+        with self.site(files) as mocksite:
+            site = mocksite.site
+
             def url_for(dest, page=None, **kw):
                 if page:
                     context = MockContext(page=page)
@@ -32,7 +34,7 @@ class TestUrlFor(TestCase):
                     context = None
                 return site.theme.jinja2_url_for(context, dest, **kw)
 
-            page = site.find_page("")
+            page = mocksite.page("")
             self.assertEqual(url_for("page1.md", page=page), "/page1")
             self.assertEqual(url_for("page1", page=page), "/page1")
 
@@ -65,7 +67,9 @@ class TestUrlFor(TestCase):
             "dir/index.html": {},
         }
 
-        with test_utils.testsite(files) as site:
+        with self.site(files) as mocksite:
+            site = mocksite.site
+
             def url_for(dest, page=None, **kw):
                 if page:
                     context = MockContext(page=page)
@@ -73,7 +77,7 @@ class TestUrlFor(TestCase):
                     context = None
                 return site.theme.jinja2_url_for(context, dest, **kw)
 
-            page = site.find_page("prefix")
+            page = mocksite.page("prefix")
             self.assertEqual(url_for("page1.md", page=page), "/prefix/page1")
             self.assertEqual(url_for("page1", page=page), "/prefix/page1")
 
@@ -92,12 +96,10 @@ class TestMarkdownFilter(TestCase):
         files = {
             "index.html": "",
         }
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(PROJECT_ROOT=root)
-            site.load()
-            site.analyze()
+        with self.site(files) as mocksite:
+            site = mocksite.site
 
-            page = site.find_page("")
+            page = mocksite.page("")
 
             tpl = site.theme.jinja2.from_string(
                     "{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")

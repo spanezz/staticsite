@@ -31,7 +31,7 @@ class Site:
     This class tracks all resources associated with a site.
     """
 
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):
         from .feature import Features
 
         # Site settings
@@ -53,7 +53,11 @@ class Site:
             self.timezone = pytz.timezone(settings.TIMEZONE)
 
         # Current datetime
-        self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
+        self.generation_time: datetime.datetime
+        if generation_time is not None:
+            self.generation_time = generation_time.astimezone(self.timezone)
+        else:
+            self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
         # Repository of metadata descriptions
         self.metadata = metadata.Registry(self)

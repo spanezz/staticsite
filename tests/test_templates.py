@@ -16,7 +16,7 @@ class MockPage:
         return str(self.meta["site_path"])
 
 
-class TestTemplates(TestCase):
+class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
     def test_arrange(self):
         site = test_utils.Site()
         theme = Theme(site, "test", [{"root": ".", "name": "test"}])
@@ -104,7 +104,8 @@ class TestTemplates(TestCase):
             "page.html": "",
         }
 
-        with test_utils.testsite(files) as site:
+        with self.site(files) as mocksite:
+            site = mocksite.site
             self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
                 "", "page.html"
             ])
