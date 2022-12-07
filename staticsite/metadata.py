@@ -271,6 +271,10 @@ class MetadataDefault(Metadata):
         super().__init__(name, **kw)
         self.default = default
 
+    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+        if self.name not in obj.meta:
+            obj.meta[self.name] = self.default
+
     def on_load(self, page: Page):
         page.meta.setdefault(self.name, self.default)
 
@@ -415,6 +419,12 @@ class PageAndNodeFields(metaclass=FieldsMetaclass):
     site_name = MetadataInherited("site_name", doc="""
 Name of the site. If missing, it defaults to the title of the toplevel index
 page. If missing, it defaults to the name of the content directory.
+""")
+    template = MetadataDefault("template", default="page.html", doc="""
+Template used to render the page. Defaults to `page.html`, although specific
+pages of some features can default to other template names.
+
+Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
 """)
 
 

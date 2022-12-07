@@ -58,7 +58,7 @@ class AliasPage(Page):
 
     def __init__(self, site: Site, *, alias: str, **kw):
         super().__init__(site, **kw)
-        self.meta.setdefault("template", "redirect.html")
+        self.meta["template"] = "redirect.html"
 
 
 FEATURES = {

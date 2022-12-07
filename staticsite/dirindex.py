@@ -27,7 +27,7 @@ class Dir(Page):
         # Files found in this directory
         self.files: dict[str, file.File] = {}
 
-        self.meta.setdefault("template", "dir.html")
+        self.meta["template"] = "dir.html"
         self.meta["syndicated"] = False
         self.meta["indexed"] = False
 

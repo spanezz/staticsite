@@ -93,12 +93,6 @@ class Site:
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
 
         # Register well-known metadata
-        self.register_metadata(metadata.MetadataDefault("template", default="page.html", doc="""
-Template used to render the page. Defaults to `page.html`, although specific
-pages of some features can default to other template names.
-
-Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-"""))
 
         self.register_metadata(metadata.MetadataDate("date", doc="""
 Publication date for the page.
