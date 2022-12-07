@@ -3,7 +3,7 @@ import os
 from . import utils as test_utils
 
 
-class TestNav(TestCase):
+class TestNav(test_utils.MockSiteTestMixin, TestCase):
     """
     Test metadata collected on site load
     """
@@ -16,12 +16,13 @@ class TestNav(TestCase):
             "dir1/dir2/dir3/page.md": {},
         }
 
-        with test_utils.testsite(files) as site:
-            page = site.find_page("dir1/dir2/dir3/page")
+        with self.site(files) as mocksite:
+            page = mocksite.page("dir1/dir2/dir3/page")
+            page.prepare_render()
             self.assertEqual(page.to_dict(), {
                 "src": {
                     "relpath": "dir1/dir2/dir3/page.md",
-                    "abspath": os.path.join(site.content_root, "dir1/dir2/dir3/page.md"),
+                    "abspath": os.path.join(mocksite.site.content_root, "dir1/dir2/dir3/page.md"),
                 },
                 "build_path": "dir1/dir2/dir3/page/index.html",
                 'site_path': 'dir1/dir2/dir3/page',
