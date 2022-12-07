@@ -436,7 +436,12 @@ class Meta:
         return {k: v for k, v in self.values.items() if v is not None}
 
 
-class PageAndNodeFields(metaclass=FieldsMetaclass):
+class SiteElement(metaclass=FieldsMetaclass):
+    """
+    Functionality to expose a `meta` member giving dict-like access to Metadata
+    fields
+    """
+
     site_name = MetadataInherited("site_name", doc="""
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
@@ -525,12 +530,6 @@ unless draft mode is enabled.
 It defaults to false, or true if `meta.date` is in the future.
 """)
 
-
-class SiteElement(metaclass=FieldsMetaclass):
-    """
-    Functionality to expose a `meta` member giving dict-like access to Metadata
-    fields
-    """
     def __init__(
             self,
             site: Site, *,

@@ -9,7 +9,7 @@ import functools
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, fstree
 
 log = logging.getLogger("taxonomy")
 
@@ -48,7 +48,7 @@ element.
         self.known_taxonomies.add(name)
         self.site.structure.add_tracked_metadata(name)
 
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         for fname in directory.files.keys():
             if not fname.endswith(".taxonomy"):
                 continue
@@ -57,7 +57,7 @@ element.
     def load_dir(
             self,
             node: structure.Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
@@ -91,7 +91,7 @@ element.
 
         return pages
 
-    def load_file_meta(self, directory: scan.Directory, fname: str):
+    def load_file_meta(self, directory: fstree.Tree, fname: str):
         """
         Parse the taxonomy file to read its description
         """

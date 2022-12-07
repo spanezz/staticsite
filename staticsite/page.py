@@ -11,7 +11,7 @@ import jinja2
 import markupsafe
 
 from . import metadata, structure
-from .metadata import PageAndNodeFields, SiteElement
+from .metadata import SiteElement
 from .render import RenderedString
 
 if TYPE_CHECKING:
@@ -46,7 +46,7 @@ class MetadataTemplate(metadata.Metadata):
             obj.meta.values[self.name] = val
 
 
-class Page(PageAndNodeFields, SiteElement):
+class Page(SiteElement):
     """
     A source page in the site.
 

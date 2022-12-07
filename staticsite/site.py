@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 import dateutil.parser
 import pytz
 
-from . import metadata, scan, structure, fstree
+from . import metadata, structure, fstree
 from .cache import Caches, DisabledCaches
 from .file import File
 from .metadata import Metadata
@@ -230,6 +230,17 @@ class Site:
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
         self.structure.root.update_meta(tree.meta)
+
+        # If site_name is not defined, use the root page title or the content
+        # directory name
+        if "site_name" not in self.structure.root.meta:
+            # Default site name to the root page title, if site name has not been
+            # set yet
+            # TODO: template_title is not supported (yet?)
+            if (title := self.structure.root.meta.get("title")):
+                self.structure.root.meta["site_name"] = title
+            else:
+                self.structure.root.meta["site_name"] = os.path.basename(tree.src.abspath)
 
         # Scan asset trees from themes
         self.theme.scan_assets()

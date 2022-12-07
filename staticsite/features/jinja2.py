@@ -10,7 +10,7 @@ import markupsafe
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, fstree
 
 log = logging.getLogger("jinja2")
 
@@ -48,7 +48,7 @@ class J2Pages(Feature):
 
     See doc/reference/templates.md for details.
     """
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         # Load front matter from index.html
         if (index := directory.files.get("index.html")) is None:
             return None
@@ -64,7 +64,7 @@ class J2Pages(Feature):
     def load_dir(
             self,
             node: structure.Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]

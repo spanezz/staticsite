@@ -19,7 +19,7 @@ class TestPageFilter(test_utils.MockSiteTestMixin, TestCase):
             "blog/post2.md": {},
         }
         with self.site(files) as mocksite:
-            mocksite.assertPagePaths(("", "page", "taxonomies/tags", "blog", "blog.post1", "blog/post2"))
+            mocksite.assertPagePaths(("", "page", "taxonomies/tags", "blog", "blog/post1", "blog/post2", "taxonomies"))
 
             self.assertCountEqual(select(mocksite, path="blog/*"), [
                 "blog/post1",

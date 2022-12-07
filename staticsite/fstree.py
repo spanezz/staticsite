@@ -9,7 +9,6 @@ import stat
 from typing import TYPE_CHECKING, Any, Optional, TextIO
 
 from .file import File
-from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
 
 if TYPE_CHECKING:
@@ -44,6 +43,7 @@ class Tree:
         self.sub: dict[str, Tree] = {}
 
     def print(self, lead: str = "", file: Optional[TextIO] = None):
+        print(f"{lead}{self.meta=}", file=file)
         for name, src in self.files.items():
             print(f"{lead}→ {name}", file=file)
         for name, tree in self.sub.items():
@@ -127,6 +127,7 @@ class PageTree(Tree):
         Remove file and directory rules from the meta dict, and compile them
         for this Tree
         """
+        from .page_filter import compile_page_match
         # Compile directory matching rules
         dir_meta = meta.pop("dirs", None)
         if dir_meta is None:
@@ -183,9 +184,9 @@ class PageTree(Tree):
                     meta.update(dmeta)
 
             if meta.get("asset"):
-                self.sub[entry.name] = AssetTree(self.site, src)
+                self.sub[name] = AssetTree(self.site, src)
             else:
-                self.sub[entry.name] = PageTree(self.site, src)
+                self.sub[name] = PageTree(self.site, src)
 
     def populate_node(self, node: Node):
         # print(f"PageTree.populate_node {self.src.relpath=} {self.meta=}")

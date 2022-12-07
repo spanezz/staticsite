@@ -6,7 +6,7 @@ import sys
 import warnings
 from .page import Page
 from .node import Node
-from . import scan, file
+from . import fstree, file
 from . import site
 from . import toposort
 
@@ -65,7 +65,7 @@ class Feature:
         else:
             return self.__doc__.lstrip().splitlines()[0].strip()
 
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         """
         Hook to load extra directory metadata for the given sitedir.
 
@@ -78,7 +78,7 @@ class Feature:
     def load_dir(
             self,
             node: structure.Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
         Load pages from the given Dir.

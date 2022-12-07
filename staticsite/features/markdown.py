@@ -14,7 +14,7 @@ import markdown
 import logging
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, fstree
 
 log = logging.getLogger("markdown")
 
@@ -212,7 +212,7 @@ class MarkdownPages(Feature):
     def load_dir(
             self,
             node: structure.Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
@@ -251,7 +251,7 @@ class MarkdownPages(Feature):
 
         return pages
 
-    def load_dir_meta(self, directory: scan.Directory) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
@@ -266,7 +266,7 @@ class MarkdownPages(Feature):
         else:
             return meta
 
-    def load_file_meta(self, directory: scan.Directory, fname: str) -> tuple[dict[str, Any], list[str]]:
+    def load_file_meta(self, directory: fstree.Tree, fname: str) -> tuple[dict[str, Any], list[str]]:
         """
         Load metadata for a file.
 

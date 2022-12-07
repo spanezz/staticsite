@@ -7,7 +7,7 @@ import re
 from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, TextIO, Type, Union
 
 from . import metadata
-from .metadata import PageAndNodeFields, SiteElement
+from .metadata import SiteElement
 
 if TYPE_CHECKING:
     from . import file
@@ -55,7 +55,7 @@ class Path(tuple[str]):
         return cls(re_pathsep.split(path.strip(os.sep)))
 
 
-class Node(PageAndNodeFields, SiteElement):
+class Node(SiteElement):
     """
     One node in the rendered directory hierarchy of the site
     """
