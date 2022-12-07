@@ -216,8 +216,6 @@ If a page is syndicated and `syndication_date` is missing, it defaults to `date`
             pages = page.meta.get("pages", [])
             meta_values["pages"] = self.prepare_syndication_list(pages)
 
-            self.site.theme.precompile_metadata_templates(meta_values)
-
             # print(f"  final base metadata for feeds {meta=!r}")
 
             page_name, ext = os.path.splitext(page.dst)

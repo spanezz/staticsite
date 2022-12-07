@@ -28,11 +28,11 @@ class Loader:
         # Sequence of search paths to use to resolve theme names
         self.search_paths = search_paths
         # Configurations by name
-        self.configs: Dict[str, Meta] = {}
+        self.configs: Dict[str, dict[str, Any]] = {}
         # Dependency graph of themes
         self.deps: Dict[str, Set[str]] = defaultdict(set)
 
-    def load(self, name: str) -> List[Meta]:
+    def load(self, name: str) -> List[dict[str, Any]]:
         """
         Load the configuration of the given theme and all its dependencies.
 
@@ -43,7 +43,7 @@ class Loader:
         sorted_names = toposort.sort(self.deps)
         return [self.configs[name] for name in sorted_names]
 
-    def load_legacy(self, path: str) -> List[Meta]:
+    def load_legacy(self, path: str) -> List[dict[str, Any]]:
         """
         Same as load, but start with a path to an initial theme
         """
@@ -87,7 +87,7 @@ class Loader:
 
         raise ThemeNotFoundError(f"Theme {name!r} not found in {self.search_paths!r}")
 
-    def load_config(self, root: str, name: str) -> Meta:
+    def load_config(self, root: str, name: str) -> dict[str, Any]:
         """
         Load the configuration for the given named theme
         """
@@ -157,7 +157,7 @@ class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
 
 
 class Theme:
-    def __init__(self, site, name, configs: List[Meta]):
+    def __init__(self, site, name, configs: List[dict[str, Any]]):
         # Site object
         self.site = site
 
@@ -170,9 +170,6 @@ class Theme:
 
         # Jinja2 Environment
         self.jinja2 = None
-
-        # Cached list of metadata that are templates for other metadata
-        self.metadata_templates: Optional[List[Metadata]] = None
 
         # Compute template lookup paths
         self.template_lookup_paths: List[str] = []
@@ -204,7 +201,7 @@ class Theme:
 
         # Merge theme metadata
         meta_keys = frozenset(("image_sizes",))
-        self.meta: Meta = {}
+        self.meta: dict[str, Any] = {}
         for config in self.configs:
             for key in config.keys() & meta_keys:
                 self.meta[key] = config[key]
@@ -313,20 +310,6 @@ class Theme:
                 src=File.with_stat("", os.path.abspath(path)),
                 root=root_node,
             )
-
-    def precompile_metadata_templates(self, values: dict[str, Any]):
-        """
-        Precompile all the elements of the given metadata that are jinja2
-        template strings
-        """
-        if self.metadata_templates is None:
-            self.metadata_templates = [m for m in self.site.metadata.values() if m.type == "jinja2"]
-        for metadata in self.metadata_templates:
-            val = values.get(metadata.template)
-            if val is None:
-                continue
-            if isinstance(val, str):
-                values[metadata.template] = self.jinja2.from_string(val)
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)

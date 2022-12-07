@@ -156,9 +156,6 @@ class TaxonomyPage(Page):
 
             if archive is not None:
                 archive.setdefault("template_title", "{{meta.created_from.name}} archive")
-                self.site.theme.precompile_metadata_templates(archive)
-
-        self.site.theme.precompile_metadata_templates(self.category_meta)
 
     def to_dict(self):
         from staticsite.utils import dump_meta

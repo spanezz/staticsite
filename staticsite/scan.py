@@ -164,8 +164,6 @@ def scan_pages(*, site: Site, directory: Directory, node: structure.Node):
         else:
             node.meta["site_name"] = os.path.basename(directory.src.abspath)
 
-    site.theme.precompile_metadata_templates(node.meta.values)
-
     # Compute metadata for files
     files_meta: dict[str, tuple[dict[str, Any], file.File]] = {}
     for fname, src in directory.files.items():
