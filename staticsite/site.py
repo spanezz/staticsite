@@ -104,34 +104,12 @@ A python datetime object, timezone aware. If the date is in the future when
 If missing, the modification time of the file is used.
 """))
 
-        self.register_metadata(metadata.MetadataInherited("site_url", doc="""
-Base URL for the site, used to generate an absolute URL to the page.
-"""))
-
-        self.register_metadata(metadata.Metadata("site_path", doc="""
-Where a content directory appears in the site.
-
-By default, is is the `site_path` of the parent directory, plus the directory
-name.
-
-If you are publishing the site at `/prefix` instead of the root of the domain,
-override this with `/prefix` in the content root.
-"""))
-
         self.register_metadata(metadata.MetadataDraft("draft", doc="""
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
 
 It defaults to false, or true if `meta.date` is in the future.
 """))
-
-        self.register_metadata(metadata.MetadataInherited("author", doc="""
-            A string with the name of the author for this page.
-
-            SITE_AUTHOR is used as a default if found in settings.
-
-            If not found, it defaults to the current user's name.
-        """))
         self.register_metadata(metadata.MetadataTemplateInherited("copyright", template="template_copyright",
                                doc="""
 If `template_copyright` is set instead of `copyright`, it is a jinja2 template

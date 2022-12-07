@@ -417,15 +417,34 @@ class Meta:
 
 class PageAndNodeFields(metaclass=FieldsMetaclass):
     site_name = MetadataInherited("site_name", doc="""
-Name of the site. If missing, it defaults to the title of the toplevel index
-page. If missing, it defaults to the name of the content directory.
-""")
+        Name of the site. If missing, it defaults to the title of the toplevel index
+        page. If missing, it defaults to the name of the content directory.
+    """)
     template = MetadataDefault("template", default="page.html", doc="""
-Template used to render the page. Defaults to `page.html`, although specific
-pages of some features can default to other template names.
+        Template used to render the page. Defaults to `page.html`, although specific
+        pages of some features can default to other template names.
 
-Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-""")
+        Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+    """)
+    site_url = MetadataInherited("site_url", doc="""
+        Base URL for the site, used to generate an absolute URL to the page.
+    """)
+    site_path = Metadata("site_path", doc="""
+        Where a content directory appears in the site.
+
+        By default, is is the `site_path` of the parent directory, plus the directory
+        name.
+
+        If you are publishing the site at `/prefix` instead of the root of the domain,
+        override this with `/prefix` in the content root.
+    """)
+    author = MetadataInherited("author", doc="""
+        A string with the name of the author for this page.
+
+        SITE_AUTHOR is used as a default if found in settings.
+
+        If not found, it defaults to the current user's name.
+    """)
 
 
 class MetaMixin:
