@@ -4,7 +4,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, TextIO, Type, Union
 
 from . import metadata
 from .metadata import PageAndNodeFields, SiteElement
@@ -85,6 +85,16 @@ class Node(PageAndNodeFields, SiteElement):
         self.build_pages: dict[str, Page] = {}
         # Subdirectories
         self.sub: dict[str, Node] = {}
+
+    def print(self, lead: str = "", file: Optional[TextIO] = None):
+        if self.page:
+            print(f"{lead}{self.name!r} home: {self.page!r}", file=file)
+        else:
+            print(f"{lead}{self.name!r} (no home)", file=file)
+        for name, page in self.build_pages.items():
+            print(f"{lead}- {name} → {page!r}", file=file)
+        for name, node in self.sub.items():
+            node.print(lead + "+ ", file=file)
 
     def iter_pages(self, prune: Sequence[Node] = ()) -> Generator[Page, None, None]:
         """
@@ -327,7 +337,7 @@ class Node(PageAndNodeFields, SiteElement):
             src=src)
 
     @contextlib.contextmanager
-    def tentative_child(self, name: str, *, src: Optional[file.File] = None) -> Generator[Node, None, None]:
+    def tentative_child(self, name: str) -> Generator[Node, None, None]:
         """
         Add a child, removing it if an exception is raised
         """
@@ -343,7 +353,7 @@ class Node(PageAndNodeFields, SiteElement):
             # Rollback the addition
             self.sub.pop(name, None)
 
-    def child(self, name: str, *, src: Optional[file.File] = None) -> Node:
+    def child(self, name: str) -> Node:
         """
         Return the given subnode, creating it if missing
         """

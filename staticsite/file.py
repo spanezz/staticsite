@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import NamedTuple, Optional
-import os
+
 import logging
+import os
+from typing import NamedTuple, Optional
 
 log = logging.getLogger("contents")
 

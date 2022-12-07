@@ -1,14 +1,18 @@
 from __future__ import annotations
-from typing import Union, Any, List, Tuple, Set, Dict, Optional
-from .. import page
-from ..metadata import Meta
-import heapq
+
 import contextlib
-import time
+import datetime
+import heapq
+import io
 import logging
 import os
+import time
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
 import pytz
-import datetime
+
+from .. import page
+from ..metadata import Meta
 
 log = logging.getLogger("utils")
 
@@ -65,8 +69,9 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """
-    from .. import Page
     import jinja2
+
+    from .. import Page
     if val in (None, True, False) or isinstance(val, (int, float)):
         return val
     elif isinstance(val, str):
@@ -97,6 +102,15 @@ def open_dir_fd(path, dir_fd=None):
         yield res
     finally:
         os.close(res)
+
+
+def open_in_dir(name: str, *args, dir_fd: int, **kw):
+    """
+    Open a file contained in this directory
+    """
+    def _file_opener(fname, flags):
+        return os.open(fname, flags, dir_fd=dir_fd)
+    return io.open(name, *args, opener=_file_opener, **kw)
 
 
 def arrange(pages: List[page.Page], sort: str, limit: Optional[int] = None) -> List[page.Page]:

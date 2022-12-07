@@ -10,7 +10,7 @@ from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
 from .file import File
-from . import toposort, structure
+from . import toposort
 
 log = logging.getLogger("theme")
 
@@ -287,9 +287,10 @@ class Theme:
         Load static assets
         """
         site_path = os.path.join(self.site.structure.root.meta["site_path"], self.site.settings.STATIC_PATH)
-        root_node = self.site.structure.root.at_path(structure.Path.from_string(self.site.settings.STATIC_PATH))
-        root_node.meta["asset"] = True
-        root_node.meta["site_path"] = site_path
+        # root_node = self.site.structure.root.at_path(structure.Path.from_string(self.site.settings.STATIC_PATH))
+        # root_node.meta["asset"] = True
+        # root_node.meta["site_path"] = site_path
+        meta = {"asset": True, "site_path": site_path}
 
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
@@ -300,14 +301,14 @@ class Theme:
             # TODO: make this a child of the previously scanned static
             self.site.scan_tree(
                 src=File.with_stat(name, root),
-                root=root_node,
+                meta=meta,
             )
 
         # Load assets from theme directories
         for path in self.theme_static_dirs:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
-                root=root_node,
+                meta=meta,
             )
 
     def jinja2_basename(self, val: str) -> str:

@@ -19,6 +19,8 @@ class TestPageFilter(test_utils.MockSiteTestMixin, TestCase):
             "blog/post2.md": {},
         }
         with self.site(files) as mocksite:
+            mocksite.assertPagePaths(("", "page", "taxonomies/tags", "blog", "blog.post1", "blog/post2"))
+
             self.assertCountEqual(select(mocksite, path="blog/*"), [
                 "blog/post1",
                 "blog/post2",
@@ -42,6 +44,10 @@ class TestPageFilter(test_utils.MockSiteTestMixin, TestCase):
             "dir/dir/page4.md": {},
         }
         with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
+                "", "page", "dir", "dir/page1", "dir/page2", "dir/dir",
+                "dir/dir/page3", "dir/dir/page4"))
+
             page, page1, page2, page3, page4 = mocksite.page(
                     "page", "dir/page1", "dir/page2", "dir/dir/page3", "dir/dir/page4")
             self.assertCountEqual(page.meta["pages"], [page1, page2, page3, page4])

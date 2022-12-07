@@ -8,7 +8,7 @@ import re
 import stat
 from typing import TYPE_CHECKING, Any, Optional
 
-from . import file, structure
+from . import file, structure, fstree
 from .page_filter import compile_page_match
 from .utils import front_matter, open_dir_fd
 
@@ -40,8 +40,13 @@ def scan_tree(site: Site, src: file.File, node: Optional[structure.Node] = None)
     if node is None:
         node = site.structure.root
 
+    # TODO: make it AssetTree if we know we're assets
+    tree = fstree.PageTree(src)
     with open_dir_fd(src.abspath) as dir_fd:
-        scan(site=site, directory=Directory(src, dir_fd), node=node)
+        tree.scan(dir_fd)
+
+    # TODO: turn tree to nodes
+        # scan(site=site, directory=Directory(src, dir_fd), node=node)
 
 
 def scan(*, node: structure.Node, **kw):

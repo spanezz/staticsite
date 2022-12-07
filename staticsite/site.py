@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 import dateutil.parser
 import pytz
 
-from . import metadata, scan, structure
+from . import metadata, scan, structure, fstree
 from .cache import Caches, DisabledCaches
 from .file import File
 from .metadata import Metadata
@@ -61,6 +61,9 @@ class Site:
 
         # Repository of metadata descriptions
         self.metadata = metadata.Registry(self)
+
+        # Filesystem trees scanned by the site
+        self.fstrees: dict[str, fstree.Tree] = {}
 
         # Structure of pages in the site
         self.structure = structure.Structure(self)
@@ -217,25 +220,35 @@ class Site:
             log.info("%s: content tree does not exist", self.content_root)
             return
 
+        # Create root node
         self.structure.root = self.features.get_node_class()(self, "")
-        self.structure.root.update_meta(self._settings_to_meta())
+
+        # Scan the main content filesystem
         src = File.with_stat("", os.path.abspath(self.content_root))
-        self.scan_tree(src)
+        tree = self.scan_tree(src, self._settings_to_meta())
+
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
-        # if self.structure.root.page:
-        #     self.meta.update(self.structure.root.page.meta.values)
+        self.structure.root.update_meta(tree.meta)
+
+        # Scan asset trees from themes
         self.theme.scan_assets()
+
         self.stage_content_directory_scanned = True
 
-    def scan_tree(self, src: File, root: Optional[structure.Node] = None):
+    def scan_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:
         """
-        Scan the contents of the given directory, mounting them under the given
-        site_path
+        Scan the contents of the given directory, adding it to self.fstrees
         """
-        if root is None:
-            root = self.structure.root
-        scan.scan_tree(self, src, node=root)
+        if meta.get("asset"):
+            tree = fstree.AssetTree(self, src)
+        else:
+            tree = fstree.PageTree(self, src)
+        tree.meta.update(meta)
+        with tree.open_tree():
+            tree.scan()
+        self.fstrees[src.abspath] = tree
+        return tree
 
     def load_content(self):
         """
@@ -244,11 +257,29 @@ class Site:
         if not self.stage_content_directory_scanned:
             log.warn("load_content called before site features have been loaded")
 
-        # for root in self.content_roots:
-        #     with open_dir_fd(root.src.abspath) as dir_fd:
-        #         root.load(dir_fd)
+        # Turn scanned filesytem information into site structure
+        for abspath, tree in self.fstrees.items():
+            # print(f"* tree {tree.src.relpath}")
+            # tree.print()
+            # Create root node based on site_path
+            if (site_path := tree.meta.get("site_path")) and site_path.strip("/"):
+                # print(f"Site.load_content populate at {site_path} from {tree.src.abspath}")
+                node = self.structure.root.at_path(structure.Path.from_string(site_path))
+            else:
+                # print(f"Site.load_content populate at <root> from {tree.src.abspath}")
+                node = self.structure.root
+
+            # Populate node from tree
+            with tree.open_tree():
+                tree.populate_node(node)
+
+            # print("Populated as:")
+            # node.print()
 
         self.stage_content_directory_loaded = True
+
+        # print("Final site structure:")
+        # self.structure.root.print()
 
     def load(self):
         """
