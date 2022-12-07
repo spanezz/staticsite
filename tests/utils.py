@@ -88,7 +88,7 @@ class MockSite:
         for path in paths:
             page = self.site.find_page(path)
             if page is None:
-                self.fail(f"Page {path!r} not found in site")
+                self.test_case.fail(f"Page {path!r} not found in site")
             res.append(page)
         if len(res) == 1:
             return res[0]
@@ -223,22 +223,6 @@ def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
             else:
                 raise TypeError("content should be a str or bytes")
         yield root
-
-
-@contextmanager
-def testsite(files: Dict[str, Union[str, bytes, Dict]] = None, **kw):
-    """
-    Take a dict representing directory contents and build a Site for it
-    """
-    stat_override = StatOverride(kw)
-
-    with workdir(files) as root:
-        settings = test_settings(PROJECT_ROOT=root, **kw)
-        site = staticsite.Site(settings)
-        with stat_override(site):
-            site.load()
-            site.analyze()
-        yield site
 
 
 @contextmanager

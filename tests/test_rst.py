@@ -4,7 +4,7 @@ from . import utils as test_utils
 import os
 
 
-class TestRst(TestCase):
+class TestRst(test_utils.MockSiteTestMixin, TestCase):
     def test_simple(self):
         self.maxDiff = None
 
@@ -23,18 +23,15 @@ Example blog post in reStructuredText
 """,
         }
 
-        with test_utils.testsite(files) as site:
-            tags = site.find_page("taxonomies/tags")
-            tag_example = tags.categories["example"]
-            tag_another = tags.categories["another tag"]
+        with self.site(files) as mocksite:
+            page, tags, tag_example, tag_another = mocksite.page("", "taxonomies/tags", "example", "another tag")
 
             # We have a root dir index and dir indices for all subdirs
-            page = site.find_page("")
             self.assertEqual(page.TYPE, "rst")
             self.assertCountEqual(page.meta.pop("tags"), [tag_example, tag_another])
             self.assertEqual(page.to_dict(), {
                 "src": {
-                    "abspath": os.path.join(site.content_root, "index.rst"),
+                    "abspath": os.path.join(mocksite.site.content_root, "index.rst"),
                     "relpath": "index.rst",
                 },
                 "site_path": "",
