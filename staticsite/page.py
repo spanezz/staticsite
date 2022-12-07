@@ -11,6 +11,7 @@ import jinja2
 import markupsafe
 
 from . import structure
+from .metadata import FieldsMetaclass, PageAndNodeFields, MetaMixin
 from .render import RenderedString
 
 if TYPE_CHECKING:
@@ -37,7 +38,7 @@ class PageMissesFieldError(PageValidationError):
         super().__init__(page, f"missing required field meta.{field}")
 
 
-class Page:
+class Page(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
     """
     A source page in the site.
 
@@ -71,16 +72,13 @@ class Page:
         # about its contents.
         self.meta: Meta
         if created_from:
-            meta = created_from.meta.derive()
             # Invalid invariant: scaled images do have src
             # if src:
             #     print(f"{created_from=!r} and {src=!r}")
-            meta["created_from"] = created_from
+            self.meta = self.create_meta(site, parent=created_from, meta_values=meta_values)
+            self.meta["created_from"] = created_from
         else:
-            meta = node.meta.derive()
-        if meta_values:
-            meta.update(meta_values)
-        self.meta = meta
+            self.meta = self.create_meta(site, parent=node, meta_values=meta_values)
         # Set to True if this page is a directory index. This affects the root
         # of page lookups relative to this page
         self.directory_index: bool = directory_index

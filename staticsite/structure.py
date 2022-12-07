@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Type
 
-from .metadata import Meta
+from .metadata import FieldsMetaclass, Meta, PageAndNodeFields, MetaMixin
 
 if TYPE_CHECKING:
     from . import file
@@ -55,7 +55,7 @@ class Path(tuple[str]):
         return cls(re_pathsep.split(path.strip(os.sep)))
 
 
-class Node:
+class Node(PageAndNodeFields, MetaMixin, metaclass=FieldsMetaclass):
     """
     One node in the rendered directory hierarchy of the site
     """
@@ -71,11 +71,7 @@ class Node:
         # Parent node, or None if this is the root
         self.parent: Optional[Node] = parent
         # Metadata for this directory
-        self.meta: Meta
-        if parent is None:
-            self.meta = Meta(site.metadata)
-        else:
-            self.meta = parent.meta.derive()
+        self.meta: Meta = self.create_meta(site, parent=parent)
         # Index page for this directory, if present
         self.page: Optional[Page] = None
         # Pages to be rendered at this location

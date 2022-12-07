@@ -12,6 +12,37 @@ if TYPE_CHECKING:
     from .site import Site
 
 
+class FieldsMetaclass(type):
+    """
+    Allow a class to have a set of Field members, defining self-documenting
+    metadata elements
+    """
+    def __new__(cls, name, bases, dct):
+        _fields = {}
+
+        # Add fields from subclasses
+        for b in bases:
+            if (b_fields := getattr(b, "_fields", None)):
+                _fields.update(b_fields)
+
+        # Add fields from the class itself
+        for field_name, val in list(dct.items()):
+            if isinstance(val, Metadata):
+                # Store its description in the Model _meta
+                _fields[field_name] = val
+                val.set_name(field_name)
+            else:
+                # Leave untouched
+                continue
+
+            # Remove field_name from class variables
+            del dct[field_name]
+
+        res = super().__new__(cls, name, bases, dct)
+        res._fields = _fields
+        return res
+
+
 class Registry:
     """
     Metadata registry for a site
@@ -364,3 +395,28 @@ class Meta:
                 func(self)
 
         return {k: v for k, v in self.values.items() if v is not None}
+
+
+class PageAndNodeFields:
+    site_name = MetadataInherited("site_name", doc="""
+Name of the site. If missing, it defaults to the title of the toplevel index
+page. If missing, it defaults to the name of the content directory.
+""")
+
+
+class MetaMixin:
+    """
+    Functionality to expose a `meta` member giving dict-like access to Metadata
+    fields
+    """
+    def create_meta(
+            self,
+            site: Site, parent: Optional[MetaMixin],
+            meta_values: Optional[dict[str, Any]] = None) -> Meta:
+        if parent is None:
+            meta = Meta(site.metadata)
+        else:
+            meta = parent.meta.derive()
+        if meta_values is not None:
+            meta.update(meta_values)
+        return meta
