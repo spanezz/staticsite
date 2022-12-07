@@ -45,12 +45,6 @@ class Structure:
 
         self.tracked_metadata.add(name)
 
-        # Redo indexing for existing pages
-        # TODO: this should not be needed anymore now that we do 2 stage loading
-        for page in self.pages.values():
-            if name in page.meta:
-                self.pages_by_metadata[name].append(page)
-
     def index(self, page: Page):
         """
         Register a new page in the site
