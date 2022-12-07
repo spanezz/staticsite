@@ -25,7 +25,7 @@ class MockSite:
     """
     Define a mock site for testing
     """
-    def __init__(self, files: MockFiles):
+    def __init__(self, files: MockFiles, auto_load_site: bool = True):
         self.files = files
         self.site: Optional[staticsite.Site] = None
         self.stack = contextlib.ExitStack()
@@ -44,6 +44,9 @@ class MockSite:
         self.settings.TIMEZONE = "Europe/Rome"
         self.settings.CACHE_REBUILDS = False
         self.settings.THEME_PATHS = [os.path.join(project_root, "themes")]
+
+        # Set to False if you only want to populate the workdir
+        self.auto_load_site = auto_load_site
 
     def populate_workdir(self):
         self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
@@ -67,13 +70,17 @@ class MockSite:
             else:
                 raise TypeError("content should be a str or bytes")
 
-    def __enter__(self) -> "MockSite":
-        self.populate_workdir()
+    def load_site(self):
         self.site = staticsite.Site(
                 self.settings,
                 generation_time=datetime.datetime.fromtimestamp(self.generation_time, pytz.utc))
         self.site.load()
         self.site.analyze()
+
+    def __enter__(self) -> "MockSite":
+        self.populate_workdir()
+        if self.auto_load_site:
+            self.load_site()
         return self
 
     def __exit__(self, *args):
@@ -198,31 +205,6 @@ class Site(staticsite.Site):
 def datafile_abspath(relpath):
     test_root = os.path.dirname(__file__)
     return os.path.join(test_root, "data", relpath)
-
-
-@contextmanager
-def workdir(files: Dict[str, Union[str, bytes, Dict]] = None):
-    """
-    Create a temporary directory and populate it with the given files
-    """
-    if files is None:
-        files = {}
-    with tempfile.TemporaryDirectory() as root:
-        for relpath, content in files.items():
-            abspath = os.path.join(root, relpath)
-            os.makedirs(os.path.dirname(abspath), exist_ok=True)
-            if isinstance(content, str):
-                with open(abspath, "wt") as fd:
-                    fd.write(content)
-            elif isinstance(content, bytes):
-                with open(abspath, "wb") as fd:
-                    fd.write(content)
-            elif isinstance(content, dict):
-                with open(abspath, "wt") as fd:
-                    fd.write(front_matter.write(content, style="json"))
-            else:
-                raise TypeError("content should be a str or bytes")
-        yield root
 
 
 @contextmanager

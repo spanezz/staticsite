@@ -163,11 +163,11 @@ class TestSiteName(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name title")
 
 
-class TestFields(TestCase):
+class TestFields(test_utils.MockSiteTestMixin, TestCase):
     def test_date(self):
         self.maxDiff = None
 
-        files = {
+        sitedef = test_utils.MockSite({
             "index.html": """
 {% block front_matter %}
 ---
@@ -182,21 +182,17 @@ date: 2005-01-01 00:00:00
 data_type: test
 date: 2010-01-01 00:00:00
 """,
-        }
+        })
+        sitedef.settings.SITE_NAME = None
+        sitedef.settings.TIMEZONE = "UTC"
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(SITE_NAME=None, CONTENT=root, TIMEZONE="UTC")
-            site.load()
-            site.analyze()
-
-            j2page = site.find_page("")
-            mdpage = site.find_page("page")
-            datapage = site.find_page("page1")
+        with self.site(sitedef) as mocksite:
+            j2page, mdpage, datapage = mocksite.find_page("", "page", "page1")
 
             self.assertEqual(j2page.to_dict(), {
                 "src": {
                     "relpath": "index.html",
-                    "abspath": os.path.join(root, "index.html"),
+                    "abspath": os.path.join(mocksite.root, "index.html"),
                 },
                 'site_path': '',
                 "build_path": "index.html",
@@ -222,7 +218,7 @@ date: 2010-01-01 00:00:00
             self.assertEqual(mdpage.to_dict(), {
                 "src": {
                     "relpath": "page.md",
-                    "abspath": os.path.join(root, "page.md"),
+                    "abspath": os.path.join(mocksite.root, "page.md"),
                 },
                 'site_path': 'page',
                 "build_path": "page/index.html",
@@ -246,7 +242,7 @@ date: 2010-01-01 00:00:00
             self.assertEqual(datapage.to_dict(), {
                 "src": {
                     "relpath": "page1.yaml",
-                    "abspath": os.path.join(root, "page1.yaml"),
+                    "abspath": os.path.join(mocksite.root, "page1.yaml"),
                 },
                 'site_path': 'page1',
                 "build_path": "page1/index.html",

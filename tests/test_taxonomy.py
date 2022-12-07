@@ -4,7 +4,7 @@ from . import utils as test_utils
 import datetime
 
 
-class TestTags(TestCase):
+class TestTags(test_utils.MockSiteTestMixin, TestCase):
     def test_site(self):
         """
         Test simply assigning pages to taxonomies
@@ -13,14 +13,8 @@ class TestTags(TestCase):
             "taxonomies/tags.taxonomy": "---\n",
             "page1.md": {"date": str(datetime.datetime(2016, 1, 1)), "tags": ["a", "b"]},
         }
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(taxonomies=["tags"], CONTENT=root)
-            site.load()
-            site.analyze()
-
-            tags = site.find_page("taxonomies/tags")
-            page1 = site.find_page("page1")
-
+        with self.site(files) as mocksite:
+            tags, page1 = mocksite.page("taxonomies/tags", "page1")
             self.assertEqual(tags.categories["a"].meta["pages"], [page1])
             self.assertEqual(tags.categories["b"].meta["pages"], [page1])
 
@@ -36,14 +30,8 @@ tags: [cat]
 # Title
 """
         }
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(taxonomies=["tags"], CONTENT=root)
-            site.load()
-            site.analyze()
-
-            tags = site.find_page("taxonomies/tags")
+        with self.site(files) as mocksite:
+            tags, page = mocksite.page("taxonomies/tags", "page")
             cat = tags.categories["cat"]
-            page = site.find_page("page")
-
             self.assertEqual(cat.meta["pages"], [page])
             self.assertEqual(page.meta["tags"], [cat])

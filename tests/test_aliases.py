@@ -3,19 +3,13 @@ from unittest import TestCase
 from . import utils as test_utils
 
 
-class TestAliases(TestCase):
+class TestAliases(test_utils.MockSiteTestMixin, TestCase):
     def test_site(self):
         files = {
             "page.md": {"aliases": ["alias", "test/alias"]},
         }
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(CONTENT=root)
-            site.load()
-            site.analyze()
-
-            page = site.find_page("page")
-            alias1 = site.find_page("alias")
-            alias2 = site.find_page("test/alias")
+        with self.site(files) as mocksite:
+            page, alias1, alias2 = mocksite.page("page", "alias", "test/alias")
 
             self.assertEqual(page.node.compute_path(), "page")
             self.assertEqual(page.build_path, "page/index.html")

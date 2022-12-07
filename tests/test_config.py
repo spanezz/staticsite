@@ -1,22 +1,25 @@
-from unittest import TestCase
-from unittest import mock
-from staticsite.cmd.command import SiteCommand
-from staticsite.cmd.build import Build
-from . import utils as test_utils
+from __future__ import annotations
+
 import os
+from unittest import TestCase, mock
+
+from staticsite.cmd.build import Build
+from staticsite.cmd.command import SiteCommand
+
+from . import utils as test_utils
 
 
-class TestBuildSettings(TestCase):
+class TestBuildSettings(test_utils.MockSiteTestMixin, TestCase):
     """
     Test settings after command line parsing
     """
     def test_defaults(self):
-        with test_utils.workdir() as root:
-            with mock.patch("os.getcwd", return_value=root):
+        with self.site(test_utils.MockSite({}, auto_load_site=False)) as mocksite:
+            with mock.patch("os.getcwd", return_value=mocksite.root):
                 args = test_utils.Args()
                 cmd = SiteCommand(args)
             settings = cmd.settings
-            self.assertEqual(settings.PROJECT_ROOT, root)
+            self.assertEqual(settings.PROJECT_ROOT, mocksite.root)
             self.assertEqual(settings.SITE_ROOT, "/")
             self.assertIsNone(settings.SITE_NAME)
             self.assertEqual(settings.ARCHETYPES, "archetypes")
@@ -32,12 +35,12 @@ class TestBuildSettings(TestCase):
         files = {
             "settings.py": "SITE_NAME = 'Test Site'\n",
         }
-        with test_utils.workdir(files) as root:
-            with mock.patch("os.getcwd", return_value=root):
+        with self.site(test_utils.MockSite(files, auto_load_site=False)) as mocksite:
+            with mock.patch("os.getcwd", return_value=mocksite.root):
                 args = test_utils.Args()
                 cmd = SiteCommand(args)
             settings = cmd.settings
-            self.assertEqual(settings.PROJECT_ROOT, root)
+            self.assertEqual(settings.PROJECT_ROOT, mocksite.root)
             self.assertEqual(settings.SITE_ROOT, "/")
             self.assertEqual(settings.SITE_NAME, "Test Site")
             self.assertEqual(settings.ARCHETYPES, "archetypes")
@@ -53,12 +56,12 @@ class TestBuildSettings(TestCase):
         files = {
             ".staticsite.py": "SITE_NAME = 'Test Site'\n",
         }
-        with test_utils.workdir(files) as root:
-            with mock.patch("os.getcwd", return_value=root):
+        with self.site(test_utils.MockSite(files, auto_load_site=False)) as mocksite:
+            with mock.patch("os.getcwd", return_value=mocksite.root):
                 args = test_utils.Args()
                 cmd = SiteCommand(args)
             settings = cmd.settings
-            self.assertEqual(settings.PROJECT_ROOT, root)
+            self.assertEqual(settings.PROJECT_ROOT, mocksite.root)
             self.assertEqual(settings.SITE_ROOT, "/")
             self.assertEqual(settings.SITE_NAME, "Test Site")
             self.assertEqual(settings.ARCHETYPES, "archetypes")

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from unittest import TestCase
 from . import utils as test_utils
 import datetime
@@ -7,7 +8,7 @@ def dt(*args):
     return str(datetime.datetime(*args))
 
 
-class TestSeries(TestCase):
+class TestSeries(test_utils.MockSiteTestMixin, TestCase):
     def test_site(self):
         files = {
             "series.taxonomy": "",
@@ -23,20 +24,16 @@ class TestSeries(TestCase):
             "noseries.md": {"date": dt(2016, 1, 1), "title": "Other things"},
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(CONTENT=root)
-            site.load()
-            site.analyze()
-
-            seriesa1 = site.find_page("seriesa1")
-            seriesa2 = site.find_page("seriesa2")
-            seriesa3 = site.find_page("seriesa3")
-            seriesa4 = site.find_page("seriesa4")
-            seriesb1 = site.find_page("seriesb1")
-            seriesb2 = site.find_page("seriesb2")
-            seriesc1 = site.find_page("seriesc1")
-            noseries = site.find_page("noseries")
-            series = site.find_page("series")
+        with self.site(files) as mocksite:
+            seriesa1 = mocksite.page("seriesa1")
+            seriesa2 = mocksite.page("seriesa2")
+            seriesa3 = mocksite.page("seriesa3")
+            seriesa4 = mocksite.page("seriesa4")
+            seriesb1 = mocksite.page("seriesb1")
+            seriesb2 = mocksite.page("seriesb2")
+            seriesc1 = mocksite.page("seriesc1")
+            noseries = mocksite.page("noseries")
+            series = mocksite.page("series")
 
             # Check that series have been built (check in tags)
             self.assertIn("seriesa", series.categories)
