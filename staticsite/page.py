@@ -37,6 +37,15 @@ class PageMissesFieldError(PageValidationError):
         super().__init__(page, f"missing required field meta.{field}")
 
 
+class MetadataTemplate(metadata.Metadata):
+    """
+    Template name or compiled template, taking its default value from Page.TEMPLATE
+    """
+    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
+        if self.name not in obj.meta and (val := getattr(obj, "TEMPLATE", None)):
+            obj.meta.values[self.name] = val
+
+
 class Page(PageAndNodeFields, SiteElement):
     """
     A source page in the site.
@@ -46,8 +55,10 @@ class Page(PageAndNodeFields, SiteElement):
     """
     # Page type
     TYPE: str
+    # Default page template
+    TEMPLATE = "page.html"
 
-    template = metadata.MetadataDefault("template", default="page.html", doc="""
+    template = MetadataTemplate(doc="""
         Template used to render the page. Defaults to `page.html`, although specific
         pages of some features can default to other template names.
 

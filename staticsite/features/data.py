@@ -161,14 +161,14 @@ def write_data(fd, data, fmt):
 class DataPage(RenderPartialTemplateMixin, Page):
     TYPE = "data"
 
-    def __init__(self, *args, **kw):
+    def __init__(self, site, **kw):
         # Indexed by default
-        kw["meta_values"].setdefault("indexed", True)
-        super().__init__(*args, **kw)
-
-        if "template" not in self.meta:
-            self.meta["template"] = self.site.theme.jinja2.select_template(
-                    [f"data-{self.meta['data_type']}.html", "data.html"])
+        meta_values = kw["meta_values"]
+        meta_values.setdefault("indexed", True)
+        if "template" not in meta_values:
+            meta_values["template"] = site.theme.jinja2.select_template(
+                    [f"data-{meta_values['data_type']}.html", "data.html"])
+        super().__init__(site, **kw)
 
 
 class DataArchetype(Archetype):
