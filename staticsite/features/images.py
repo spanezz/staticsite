@@ -7,7 +7,7 @@ import os
 from typing import TYPE_CHECKING, Any
 
 from staticsite import Feature, Page, structure
-from staticsite.metadata import Metadata
+from staticsite.metadata import FieldsMetaclass, Metadata
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -24,6 +24,19 @@ def basename_no_ext(pathname: str) -> str:
     return os.path.splitext(os.path.basename(pathname))[0]
 
 
+class ImagePageMixin(metaclass=FieldsMetaclass):
+    image = Metadata(doc="""
+        Image used for this post.
+
+        It is set to a path to an image file relative to the current page.
+
+        During the analyze phase, it is resolved to the corresponding [image page](images.md).
+
+        If not set, and an image exists with the same name as the page (besides the
+        extension), that image is used.
+    """)
+
+
 class Images(Feature):
     """
     Handle images in content directory.
@@ -34,16 +47,7 @@ class Images(Feature):
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
-        self.site.register_metadata(Metadata("image", doc="""
-Image used for this post.
-
-It is set to a path to an image file relative to the current page.
-
-During the analyze phase, it is resolved to the corresponding [image page](images.md).
-
-If not set, and an image exists with the same name as the page (besides the
-extension), that image is used.
-"""))
+        self.page_mixins.append(ImagePageMixin)
         self.site.structure.add_tracked_metadata("image")
         # Nodes that contain images
         self.images: set[Image] = set()
@@ -126,7 +130,8 @@ extension), that image is used.
             name = basename_no_ext(image.src.relpath)
             # print(f"Images.analyze {image=!r} {image.node.name=!r} {image.node.page=!r}")
             pages = image.node.build_pages.values()
-            pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
+            if image.node.sub is not None:
+                pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
 
             # Find pages matching this image's name
             for page in pages:

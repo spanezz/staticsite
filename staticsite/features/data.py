@@ -4,7 +4,7 @@ from staticsite import Page, Feature, structure
 from staticsite.archetypes import Archetype
 from staticsite.utils import yaml_codec
 from staticsite.page_filter import PageFilter
-from staticsite.metadata import Metadata
+from staticsite.metadata import Metadata, FieldsMetaclass
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 import jinja2
 import re
@@ -20,6 +20,15 @@ log = logging.getLogger("data")
 
 
 re_ext = re.compile(r"\.(json|toml|yaml)$")
+
+
+class DataPageMixin(metaclass=FieldsMetaclass):
+    data_type = Metadata(doc="""
+        Type of data for this file.
+
+        This is used to group data of the same type together, and to choose a
+        `data-[data_type].html` rendering template.
+    """)
 
 
 class DataPages(Feature):
@@ -42,13 +51,7 @@ class DataPages(Feature):
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
-
-        self.site.register_metadata(Metadata("data_type", doc="""
-Type of data for this file.
-
-This is used to group data of the same type together, and to choose a
-`data-[data_type].html` rendering template.
-"""))
+        self.page_mixins.append(DataPageMixin)
         self.site.structure.add_tracked_metadata("data_type")
 
     def register_page_class(self, type: str, cls):

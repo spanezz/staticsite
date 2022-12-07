@@ -1,9 +1,26 @@
 from __future__ import annotations
 from staticsite.feature import Feature
-from staticsite.metadata import Metadata
+from staticsite.metadata import FieldsMetaclass, Metadata
 import logging
 
 log = logging.getLogger("pages")
+
+
+class PagesPageMixin(metaclass=FieldsMetaclass):
+    pages = Metadata(structure=True, doc="""
+        The `pages` metadata can use to select a set of pages shown by the current
+        page. Although default `page.html` template will not do anything with them,
+        other page templates, like `blog.html`, use this to select the pages to show.
+
+        The `pages` feature allows defining a [page filter](page-filter.md) in the
+        `pages` metadata element, which will be replaced with a list of matching pages.
+
+        To select pages, the `pages` metadata is set to a dictionary that select pages
+        in the site, with the `path`, and taxonomy names arguments similar to the
+        `site_pages` function in [templates](templates.md).
+
+        See [Selecting pages](page-filter.md) for details.
+    """)
 
 
 class PagesFeature(Feature):
@@ -12,20 +29,7 @@ class PagesFeature(Feature):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.register_metadata(Metadata("pages", structure=True, doc="""
-The `pages` metadata can use to select a set of pages shown by the current
-page. Although default `page.html` template will not do anything with them,
-other page templates, like `blog.html`, use this to select the pages to show.
-
-The `pages` feature allows defining a [page filter](page-filter.md) in the
-`pages` metadata element, which will be replaced with a list of matching pages.
-
-To select pages, the `pages` metadata is set to a dictionary that select pages
-in the site, with the `path`, and taxonomy names arguments similar to the
-`site_pages` function in [templates](templates.md).
-
-See [Selecting pages](page-filter.md) for details.
-"""))
+        self.page_mixins = (PagesPageMixin,)
         self.site.structure.add_tracked_metadata("pages")
 
     def analyze(self):

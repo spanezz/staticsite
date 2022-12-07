@@ -6,6 +6,20 @@ import logging
 log = logging.getLogger("related")
 
 
+class RelatedPageMixin(metaclass=metadata.FieldsMetaclass):
+    related = metadata.Metadata(structure=True, doc="""
+        Dict of pages related to this page.
+
+        Dict values will be resolved as pages.
+
+        If there are no related pages, `page.meta.related` will be guaranteed to exist
+        as an empty dictionary.
+
+        Features can add to this. For example, [syndication](syndication.md) can add
+        `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
+    """)
+
+
 class RelatedFeature(Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
@@ -14,17 +28,7 @@ class RelatedFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.register_metadata(metadata.Metadata("related", structure=True, doc="""
-Dict of pages related to this page.
-
-Dict values will be resolved as pages.
-
-If there are no related pages, `page.meta.related` will be guaranteed to exist
-as an empty dictionary.
-
-Features can add to this. For example, [syndication](syndication.md) can add
-`meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
-"""))
+        self.page_mixins.append(RelatedPageMixin)
 
     def analyze(self):
         # Expand pages expressions

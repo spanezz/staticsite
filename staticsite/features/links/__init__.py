@@ -12,7 +12,7 @@ from staticsite.feature import Feature
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
-from staticsite.metadata import Metadata
+from staticsite.metadata import FieldsMetaclass, Metadata
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
@@ -21,7 +21,21 @@ if TYPE_CHECKING:
 log = logging.getLogger("links")
 
 
-class LinksPageMixin:
+class LinksPageMixin(metaclass=FieldsMetaclass):
+    links = Metadata(doc="""
+        Extra metadata for external links.
+
+        It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:
+
+        * `title`: str: short title for the link
+        * `url`: str: external URL
+        * `abstract`: str: long description or abstract for the link
+        * `archive`: str: URL to an archived version of the site
+        * `tags`: List[str]: tags for this link
+        * `related`: List[Dict[str, str]]: other related links, as a list of dicts with
+          `title` and `url` keys
+    """)
+
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         rendered = super().html_body(context, **kw)
@@ -88,19 +102,6 @@ class Links(Feature):
         self.data.register_page_class("links", LinksPage)
 
         # Collect 'links' metadata
-        self.site.register_metadata(Metadata("links", doc="""
-Extra metadata for external links.
-
-It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:
-
-* `title`: str: short title for the link
-* `url`: str: external URL
-* `abstract`: str: long description or abstract for the link
-* `archive`: str: URL to an archived version of the site
-* `tags`: List[str]: tags for this link
-* `related`: List[Dict[str, str]]: other related links, as a list of dicts with
-  `title` and `url` keys
-"""))
         self.site.structure.add_tracked_metadata("links")
 
         # Pages for .links files found in the site
