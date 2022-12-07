@@ -7,6 +7,7 @@ import os
 import shutil
 import stat
 import tempfile
+import time
 from contextlib import ExitStack, contextmanager
 from typing import Any, Dict, Optional, Sequence, Union
 from unittest import TestCase, mock
@@ -132,6 +133,7 @@ class ExampleSite(MockSiteBase):
     def __init__(self, name: str, **kw):
         super().__init__(**kw)
         self.name = name
+        self.generation_time = time.time() + 86400
 
     def populate_workdir(self):
         src = os.path.join(project_root, "example", self.name)
