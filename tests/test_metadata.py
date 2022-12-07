@@ -3,7 +3,7 @@ import os
 from . import utils as test_utils
 
 
-class TestMetadata(TestCase):
+class TestMetadata(test_utils.MockSiteTestMixin, TestCase):
     """
     Test metadata collected on site load
     """
@@ -28,14 +28,9 @@ title: Test1 title
 {% endblock %}""",
         }
 
-        with test_utils.testsite(files) as site:
-            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
-                "", "test.html", "test1.html"
-            ])
-
-            index = site.find_page("")
-            test = site.find_page("test.html")
-            test1 = site.find_page("test1.html")
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths(("", "test.html", "test1.html"))
+            index, test, test1 = mocksite.page("", "test.html", "test1.html")
 
             self.assertEqual(index.TYPE, "jinja2")
             self.assertEqual(test.TYPE, "jinja2")
@@ -59,18 +54,14 @@ title: Test1 title
             "dir1/dir2/page.md": {},
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(PROJECT_ROOT=root)
-            site.load()
-            site.analyze()
-
-            self.assertEqual(site.find_page("").meta["site_name"], "Root site")
-            self.assertEqual(site.find_page("page").meta["site_name"], "Root site")
-            self.assertEqual(site.find_page("page1").meta["site_name"], "Page 1 site")
-            self.assertEqual(site.find_page("dir1").meta["site_name"], "Root site")
-            self.assertEqual(site.find_page("dir1/page").meta["site_name"], "Root site")
-            self.assertEqual(site.find_page("dir1/dir2").meta["site_name"], "dir2 site")
-            self.assertEqual(site.find_page("dir1/dir2/page").meta["site_name"], "dir2 site")
+        with self.site(files) as mocksite:
+            self.assertEqual(mocksite.page("").meta["site_name"], "Root site")
+            self.assertEqual(mocksite.page("page").meta["site_name"], "Root site")
+            self.assertEqual(mocksite.page("page1").meta["site_name"], "Page 1 site")
+            self.assertEqual(mocksite.page("dir1").meta["site_name"], "Root site")
+            self.assertEqual(mocksite.page("dir1/page").meta["site_name"], "Root site")
+            self.assertEqual(mocksite.page("dir1/dir2").meta["site_name"], "dir2 site")
+            self.assertEqual(mocksite.page("dir1/dir2/page").meta["site_name"], "dir2 site")
 
     def test_asset(self):
         self.maxDiff = None
@@ -87,19 +78,9 @@ title: Test1 title
             "test1.md": {},
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(CONTENT=root)
-            site.load()
-            site.analyze()
-
-            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
-                "", "test.md", "test1",
-            ])
-
-            index = site.find_page("")
-            test = site.find_page("test.md")
-            test1 = site.find_page("test1")
-
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths(("", "test.md", "test1"))
+            index, test, test1 = mocksite.page("", "test.md", "test1")
             self.assertEqual(index.TYPE, "dir")
             self.assertEqual(test.TYPE, "asset")
             self.assertEqual(test1.TYPE, "markdown")
@@ -118,63 +99,42 @@ title: Test1 title
             "examples/subdir/test2.md": {},
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(CONTENT=root)
-            site.load()
-            site.analyze()
-
-            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
-                "", "test",
-                "examples/test1.md",
-                "examples/subdir/test2.md",
-            ])
-
-            index = site.find_page("")
-            test = site.find_page("test")
-            test1 = site.find_page("examples/test1.md")
-            test2 = site.find_page("examples/subdir/test2.md")
-
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths(("", "test", "examples/test1.md", "examples/subdir/test2.md"))
+            index, test, test1, test2 = mocksite.page("", "test", "examples/test1.md", "examples/subdir/test2.md")
             self.assertEqual(index.TYPE, "dir")
             self.assertEqual(test.TYPE, "markdown")
             self.assertEqual(test1.TYPE, "asset")
             self.assertEqual(test2.TYPE, "asset")
 
 
-class TestSiteName(TestCase):
+class TestSiteName(test_utils.MockSiteTestMixin, TestCase):
     def test_from_content_dir_name(self):
-        files = {
+        sitedef = test_utils.MockSite({
             "index.md": {},
             "page.md": {},
             "dir/page.md": {},
-        }
+        })
+        sitedef.settings.SITE_NAME = None
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(SITE_NAME=None, CONTENT=root)
-            site.load()
-            site.analyze()
-
-            expected = os.path.basename(root)
-
-            self.assertEqual(site.find_page("").meta["site_name"], expected)
-            self.assertEqual(site.find_page("page").meta["site_name"], expected)
-            self.assertEqual(site.find_page("dir/page").meta["site_name"], expected)
+        with self.site(sitedef) as mocksite:
+            expected = os.path.basename(mocksite.root)
+            self.assertEqual(mocksite.page("").meta["site_name"], expected)
+            self.assertEqual(mocksite.page("page").meta["site_name"], expected)
+            self.assertEqual(mocksite.page("dir/page").meta["site_name"], expected)
 
     def test_from_settings(self):
-        files = {
+        sitedef = test_utils.MockSite({
             "index.md": {},
             "page.md": {},
             "dir/page.md": {},
-        }
+        })
+        sitedef.settings.SITE_NAME = "Site Name"
 
-        with test_utils.workdir(files) as root:
-            # Site name from settings
-            site = test_utils.Site(SITE_NAME="Site Name", CONTENT=root)
-            site.load()
-            site.analyze()
-
-            self.assertEqual(site.find_page("").meta["site_name"], "Site Name")
-            self.assertEqual(site.find_page("page").meta["site_name"], "Site Name")
-            self.assertEqual(site.find_page("dir/page").meta["site_name"], "Site Name")
+        with self.site(sitedef) as mocksite:
+            self.assertEqual(mocksite.page("").meta["site_name"], "Site Name")
+            self.assertEqual(mocksite.page("page").meta["site_name"], "Site Name")
+            self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name")
 
     def test_from_dir_meta(self):
         files = {
@@ -184,30 +144,23 @@ class TestSiteName(TestCase):
             "dir/page.md": {},
         }
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(CONTENT=root)
-            site.load()
-            site.analyze()
-
-            self.assertEqual(site.find_page("").meta["site_name"], "Site Name dirmeta")
-            self.assertEqual(site.find_page("page").meta["site_name"], "Site Name dirmeta")
-            self.assertEqual(site.find_page("dir/page").meta["site_name"], "Site Name dirmeta")
+        with self.site(files) as mocksite:
+            self.assertEqual(mocksite.page("").meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(mocksite.page("page").meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name dirmeta")
 
     def test_from_root_title(self):
-        files = {
+        sitedef = test_utils.MockSite({
             "index.md": {"title": "Site Name title"},
             "page.md": {},
             "dir/page.md": {},
-        }
+        })
+        sitedef.settings.SITE_NAME = None
 
-        with test_utils.workdir(files) as root:
-            site = test_utils.Site(SITE_NAME=None, CONTENT=root)
-            site.load()
-            site.analyze()
-
-            self.assertEqual(site.find_page("").meta["site_name"], "Site Name title")
-            self.assertEqual(site.find_page("page").meta["site_name"], "Site Name title")
-            self.assertEqual(site.find_page("dir/page").meta["site_name"], "Site Name title")
+        with self.site(sitedef) as mocksite:
+            self.assertEqual(mocksite.page("").meta["site_name"], "Site Name title")
+            self.assertEqual(mocksite.page("page").meta["site_name"], "Site Name title")
+            self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name title")
 
 
 class TestFields(TestCase):
