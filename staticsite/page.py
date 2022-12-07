@@ -151,8 +151,6 @@ class Page(SiteElement):
         Raises PageValidationError or one of its subclasses of the page should
         not be added to the site.
         """
-        # TODO: move more of this to on_load functions?
-
         # Check the existence of other mandatory fields
         if "site_url" not in self.meta:
             raise PageMissesFieldError(self, "site_url")
@@ -215,9 +213,6 @@ class Page(SiteElement):
             return target
 
         # print(f"Page.resolve_path {self=!r}, {target=!r}")
-        # TODO: the path to search can follow the Node structure
-        # TODO: the final basename can be a node, the basename of src_relpath,
-        #       or the rendered file name
         # Find the start node for the search
         if target.startswith("/"):
             root = self.site.structure.root
