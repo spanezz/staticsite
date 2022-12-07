@@ -106,12 +106,8 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
 
         with self.site(files) as mocksite:
             site = mocksite.site
-            self.assertCountEqual([p.site_path for p in site.iter_pages(static=False)], [
-                "", "page.html"
-            ])
-
-            index = site.find_page("")
-            page = site.find_page("page.html")
+            mocksite.assertPagePaths(("", "page.html"))
+            index, page = mocksite.page("", "page.html", prepare_render=True)
 
             self.assertEqual(index.to_dict(), {
                 "src": {

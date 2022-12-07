@@ -9,7 +9,6 @@ import logging
 from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
-from .metadata import Metadata, Meta
 from .file import File
 from . import toposort, structure
 

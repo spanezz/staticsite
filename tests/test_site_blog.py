@@ -20,16 +20,14 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
     def test_meta(self):
         self.maxDiff = None
 
-        site_paths = [p.site_path for p in self.site.iter_pages(static=False)]
-        self.assertCountEqual(site_paths, [
+        self.assertPagePaths([
             "", "index.rss", "index.atom", "archive",
             "about",
             "posts", "posts/example",
             "posts/example.jpg", "posts/example-small.jpg", "posts/example-thumbnail.jpg",
         ])
 
-        index = self.site.find_page("")
-        page = self.site.find_page("about")
+        index, page, archive = self.mocksite.page("", "about", "archive", prepare_render=True)
         self.assertEqual(page.meta["title"], "About")
 
         self.assertEqual(index.get_img_attributes("posts/example.jpg"), {
@@ -38,7 +36,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             'srcset': '/posts/example-small.jpg 480w, /posts/example-thumbnail.jpg 128w, /posts/example.jpg 500w',
         })
 
-        self.assertEqual(self.site.find_page("about").to_dict(), {
+        self.assertEqual(page.to_dict(), {
             "src": {
                 "relpath": "about.md",
                 "abspath": os.path.join(self.site.content_root, "about.md"),
@@ -46,13 +44,13 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             'site_path': 'about',
             "build_path": "about/index.html",
             "meta": {
-                "date": '2019-06-01 12:30:00+02:00',
+                "date": '2020-02-01 17:00:00+01:00',
                 "draft": False,
                 'author': "Test User",
-                'copyright': '© 2019 Test User',
+                'copyright': '© 2020 Test User',
                 'indexed': True,
                 'syndicated': True,
-                "syndication_date": '2019-06-01 12:30:00+02:00',
+                "syndication_date": '2020-02-01 17:00:00+01:00',
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'page.html',
@@ -64,7 +62,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "markdown",
         })
 
-        self.assertEqual(self.site.find_page("").to_dict(), {
+        self.assertEqual(index.to_dict(), {
             "src": {
                 "relpath": "index.md",
                 "abspath": os.path.join(self.site.content_root, "index.md"),
@@ -101,11 +99,11 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         })
         # A blog page renders images, relative links, only the beginning of
         # split pages
-        rendered = self.site.find_page("").render().content()
+        rendered = index.render().content()
         self.assertNotIn(b"This is the rest of the blog post", rendered)
         self.assertIn(b"srcset='/posts/example", rendered)
 
-        self.assertEqual(self.site.find_page("archive").to_dict(), {
+        self.assertEqual(archive.to_dict(), {
             'site_path': 'archive',
             "build_path": "archive/index.html",
             "meta": {

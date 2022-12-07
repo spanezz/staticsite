@@ -77,10 +77,10 @@ class TestExampleProject(test_utils.SiteTestMixin, TestCase):
     site_name = "demo"
 
     def test_settings(self):
-        args = test_utils.Args(project=self.example_site.root)
+        args = test_utils.Args(project=self.mocksite.root)
         cmd = SiteCommand(args)
         settings = cmd.settings
-        self.assertEqual(settings.PROJECT_ROOT, self.example_site.root)
+        self.assertEqual(settings.PROJECT_ROOT, self.mocksite.root)
         self.assertEqual(settings.SITE_ROOT, "/")
         # self.assertEqual(settings.SITE_NAME, "Example web site")
         self.assertIsNone(settings.SITE_NAME)

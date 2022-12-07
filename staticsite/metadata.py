@@ -279,7 +279,8 @@ class MetadataDraft(Metadata):
     """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         # if obj.__class__.__name__ not in ("Asset", "Node"):
-        #     print(f"MetadataDraft {obj.__class__=} {obj.meta=} {obj.site.generation_time=}")
+        #     print(f"MetadataDraft {obj.__class__=} {obj.meta=} {obj.site.generation_time=}"
+        #           f" {obj.meta.values['date'] > obj.site.generation_time}")
         if (value := obj.meta.get(self.name)) is None:
             obj.meta.values[self.name] = obj.meta.values["date"] > obj.site.generation_time
         elif not isinstance(value, bool):

@@ -7,9 +7,8 @@ import os
 import shutil
 import stat
 import tempfile
-import time
 from contextlib import ExitStack, contextmanager
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 from unittest import TestCase, mock
 
 import pytz
@@ -48,6 +47,9 @@ class MockSiteBase:
         # date +%s --date="2019-06-01 12:30"
         self.generation_time: Optional[int] = 1559385000
 
+        # Mock stat to return this mtime for files scanned during site load
+        self.mock_file_mtime: Optional[int] = 1559385000
+
         self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
 
     def populate_workdir(self):
@@ -59,10 +61,15 @@ class MockSiteBase:
                 generation_time=(
                     datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
                     if self.generation_time else None))
-        self.site.load()
+        if self.mock_file_mtime:
+            overrides = {"st_mtime": self.mock_file_mtime}
+        else:
+            overrides = None
+        with mock_file_stat(overrides):
+            self.site.load()
         self.site.analyze()
 
-    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
+    def page(self, *paths: tuple[str], prepare_render: bool = False) -> tuple[staticsite.Page]:
         """
         Ensure the site has the given page, by path, and return it
         """
@@ -72,6 +79,8 @@ class MockSiteBase:
             if page is None:
                 self.test_case.fail(f"Page {path!r} not found in site")
             res.append(page)
+            if prepare_render:
+                page.prepare_render()
         if len(res) == 1:
             return res[0]
         else:
@@ -133,7 +142,9 @@ class ExampleSite(MockSiteBase):
     def __init__(self, name: str, **kw):
         super().__init__(**kw)
         self.name = name
-        self.generation_time = time.time() + 86400
+
+        # date +%s --date="2020-02-01 16:00 Z"
+        self.generation_time = 1580572800
 
     def populate_workdir(self):
         src = os.path.join(project_root, "example", self.name)
@@ -161,12 +172,16 @@ class MockSiteTestMixin:
 
 
 @contextmanager
-def mock_file_stat(overrides: Dict[int, Any]):
+def mock_file_stat(overrides: Optional[dict[int, Any]]):
     """
     Override File.stat contents.
 
     Overrides is a dict like: `{"st_mtime": 12345}`
     """
+    if not overrides:
+        yield
+        return
+
     real_stat = os.stat
     real_file_from_dir_entry = staticsite.File.from_dir_entry
 
@@ -187,37 +202,6 @@ def mock_file_stat(overrides: Dict[int, Any]):
 
     with mock.patch("staticsite.file.os.stat", new=mock_stat):
         with mock.patch("staticsite.file.File.from_dir_entry", new=mock_file_from_dir_entry):
-            yield
-
-
-class StatOverride:
-    """
-    Override file stat() results with well-known values
-    """
-    def __init__(self, kw):
-        """
-        Pluck the arguments we need from a bundle of keyword arguments
-        """
-        self.stat_override = kw.pop("stat_override", None)
-        if self.stat_override is None:
-            self.stat_override = {
-                # date +%s --date="2019-06-01 12:30"
-                "st_mtime": 1559385000,
-            }
-        elif self.stat_override is False:
-            self.stat_override = None
-
-        self.generation_time = kw.pop("generation_time", None)
-        if self.generation_time is None:
-            self.generation_time = datetime.datetime(2020, 2, 1, 16, 0, tzinfo=pytz.utc)
-        elif self.generation_time is False:
-            self.generation_time = None
-
-    @contextmanager
-    def __call__(self, site):
-        if self.generation_time is not None:
-            site.generation_time = self.generation_time
-        with mock_file_stat(self.stat_override):
             yield
 
 
@@ -297,8 +281,8 @@ class SiteTestMixin:
 
         cls.build_root = cls.stack.enter_context(tempfile.TemporaryDirectory())
 
-        cls.example_site = cls.stack.enter_context(ExampleSite(name=cls.site_name, settings=cls.site_settings))
-        cls.site = cls.example_site.site
+        cls.mocksite = cls.stack.enter_context(ExampleSite(name=cls.site_name, settings=cls.site_settings))
+        cls.site = cls.mocksite.site
         cls.site.settings.OUTPUT = cls.build_root
 
         builder = Builder(cls.site)
@@ -308,29 +292,29 @@ class SiteTestMixin:
 
     @classmethod
     def tearDownClass(cls):
-        cls.example_site.__exit__(None, None, None)
+        cls.mocksite.__exit__(None, None, None)
         cls.stack.__exit__(None, None, None)
         super().tearDownClass()
 
     def setUp(self):
         super().setUp()
-        self.example_site.test_case = self
+        self.mocksite.test_case = self
 
     def tearDown(self):
-        self.example_site.test_case = None
+        self.mocksite.test_case = None
         super().tearDown()
 
-    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
+    def page(self, *paths: tuple[str], prepare_render: bool = False) -> tuple[staticsite.Page]:
         """
         Ensure the site has the given page, by path, and return it
         """
-        return self.example_site.page(*paths)
+        return self.mocksite.page(*paths, prepare_render=prepare_render)
 
     def assertPagePaths(self, paths: Sequence[str]):
         """
         Check that the list of pages in the site matches the given paths
         """
-        return self.example_site.assertPagePaths(paths)
+        return self.mocksite.assertPagePaths(paths)
 
     def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
         page = self.site.find_page(sitepath)
