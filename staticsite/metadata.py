@@ -227,6 +227,16 @@ class MetadataDate(Metadata):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
+    def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
+        if (date := obj.meta.values.get(self.name)):
+            obj.meta.values[self.name] = obj.site.clean_date(date)
+        elif parent and (date := parent.meta.values.get(self.name)):
+            obj.meta.values[self.name] = obj.site.clean_date(date)
+        elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
+            obj.meta.values[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
+        else:
+            obj.meta.values[self.name] = obj.site.generation_time
+
     def on_load(self, page: Page):
         date = page.meta.values.get(self.name)
         if date is None:
@@ -273,7 +283,7 @@ class MetadataDefault(Metadata):
 
     def fill_new(self, obj: MetaMixin, parent: Optional[MetaMixin] = None):
         if self.name not in obj.meta:
-            obj.meta[self.name] = self.default
+            obj.meta.values[self.name] = self.default
 
     def on_load(self, page: Page):
         page.meta.setdefault(self.name, self.default)
@@ -444,6 +454,33 @@ class PageAndNodeFields(metaclass=FieldsMetaclass):
         SITE_AUTHOR is used as a default if found in settings.
 
         If not found, it defaults to the current user's name.
+    """)
+
+    date = MetadataDate("date", doc="""
+        Publication date for the page.
+
+        A python datetime object, timezone aware. If the date is in the future when
+        `ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
+        --draft` to also consider draft pages.
+
+        If missing, the modification time of the file is used.
+    """)
+
+    asset = MetadataInherited("asset", doc="""
+        If set to True for a file (for example, by a `file:` pattern in a directory
+        index), the file is loaded as a static asset, regardless of whether a feature
+        would load it.
+
+        If set to True in a directory index, the directory and all its subdirectories
+        are loaded as static assets, without the interventions of features.
+    """)
+
+    indexed = MetadataIndexed("indexed", doc="""
+        If true, the page appears in [directory indices](dir.md) and in
+        [page filter results](page_filter.md).
+
+        It defaults to true at least for [Markdown](markdown.md),
+        [reStructuredText](rst.rst), and [data](data.md) pages.
     """)
 
 

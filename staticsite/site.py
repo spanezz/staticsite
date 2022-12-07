@@ -45,6 +45,16 @@ class Site:
         if self.settings.CONTENT is None:
             self.settings.CONTENT = "."
 
+        # Site time zone
+        if settings.TIMEZONE is None:
+            from dateutil.tz import tzlocal
+            self.timezone = tzlocal()
+        else:
+            self.timezone = pytz.timezone(settings.TIMEZONE)
+
+        # Current datetime
+        self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
+
         # Repository of metadata descriptions
         self.metadata = metadata.Registry(self)
 
@@ -62,16 +72,6 @@ class Site:
 
         # Set to True when pages have been analyzed
         self.stage_pages_analyzed = False
-
-        # Site time zone
-        if settings.TIMEZONE is None:
-            from dateutil.tz import tzlocal
-            self.timezone = tzlocal()
-        else:
-            self.timezone = pytz.timezone(settings.TIMEZONE)
-
-        # Current datetime
-        self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
 
         # Theme used to render pages
         self.theme = None
@@ -93,16 +93,6 @@ class Site:
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
 
         # Register well-known metadata
-
-        self.register_metadata(metadata.MetadataDate("date", doc="""
-Publication date for the page.
-
-A python datetime object, timezone aware. If the date is in the future when
-`ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
---draft` to also consider draft pages.
-
-If missing, the modification time of the file is used.
-"""))
 
         self.register_metadata(metadata.MetadataDraft("draft", doc="""
 If true, the page is still a draft and will not appear in the destination site,
@@ -147,23 +137,6 @@ If `template_description` is set instead of `description`, it is a jinja2
 template used to generate the description. The template context will have
 `page` available, with the current page. The result of the template will not be
 further escaped, so you can use HTML markup in it.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("asset", doc="""
-If set to True for a file (for example, by a `file:` pattern in a directory
-index), the file is loaded as a static asset, regardless of whether a feature
-would load it.
-
-If set to True in a directory index, the directory and all its subdirectories
-are loaded as static assets, without the interventions of features.
-"""))
-
-        self.register_metadata(metadata.MetadataIndexed("indexed", doc="""
-If true, the page appears in [directory indices](dir.md) and in
-[page filter results](page_filter.md).
-
-It defaults to true at least for [Markdown](markdown.md),
-[reStructuredText](rst.rst), and [data](data.md) pages.
 """))
 
     def find_page(self, path: str):
