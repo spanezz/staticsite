@@ -205,28 +205,6 @@ def mock_file_stat(overrides: Optional[dict[int, Any]]):
             yield
 
 
-def test_settings(**kw):
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    kw.setdefault("SITE_NAME", "Test site")
-    kw.setdefault("SITE_URL", "https://www.example.org")
-    kw.setdefault("SITE_AUTHOR", "Test User")
-    kw.setdefault("TIMEZONE", "Europe/Rome")
-    kw.setdefault("CACHE_REBUILDS", False)
-    kw.setdefault("THEME_PATHS", [os.path.join(project_root, "themes")])
-
-    settings = Settings()
-    for k, v in kw.items():
-        setattr(settings, k, v)
-    return settings
-
-
-class Site(staticsite.Site):
-    def __init__(self, taxonomies=(), **kw):
-        settings = test_settings(**kw)
-        super().__init__(settings=settings)
-        self._taxonomies = taxonomies
-
-
 def datafile_abspath(relpath):
     test_root = os.path.dirname(__file__)
     return os.path.join(test_root, "data", relpath)

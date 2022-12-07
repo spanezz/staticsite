@@ -10,16 +10,6 @@ import pytz
 
 
 @contextmanager
-def override_env(**kw):
-    orig = {k: os.environ[k] for k in kw}
-    for k, v in kw.items():
-        os.environ[k] = v
-    yield
-    for k, v in orig.items():
-        os.environ[k] = v
-
-
-@contextmanager
 def override_tz(val):
     orig = os.environ.get("TZ", None)
     os.environ["TZ"] = val
@@ -32,21 +22,19 @@ def override_tz(val):
     time.tzset()
 
 
-class TestAsset(TestCase):
+class TestAsset(test_utils.MockSiteTestMixin, TestCase):
     @test_utils.assert_no_logs()
     def test_timestamps(self):
-        site = test_utils.Site()
-        site.structure.root.meta["site_url"] = "https://www.example.org"
-
         with override_tz("Pacific/Samoa"):
-            with tempfile.NamedTemporaryFile() as f:
-                # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
-                os.utime(f.name, (1477958400, 1477958400))
-                src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
-                page = site.structure.root.add_asset(src=src, name="testasset")
+            with self.site({}) as mocksite:
+                with tempfile.NamedTemporaryFile() as f:
+                    # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
+                    os.utime(f.name, (1477958400, 1477958400))
+                    src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
+                    page = mocksite.site.structure.root.add_asset(src=src, name="testasset")
 
-                self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
-                self.assertEqual(page.meta["site_url"], "https://www.example.org")
-                self.assertEqual(page.site_path, "testasset")
-                self.assertEqual(page.build_path, "testasset")
-                self.assertFalse(page.directory_index)
+                    self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
+                    self.assertEqual(page.meta["site_url"], "https://www.example.org")
+                    self.assertEqual(page.site_path, "testasset")
+                    self.assertEqual(page.build_path, "testasset")
+                    self.assertFalse(page.directory_index)
