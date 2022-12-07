@@ -149,15 +149,6 @@ template used to generate the description. The template context will have
 further escaped, so you can use HTML markup in it.
 """))
 
-        self.register_metadata(Metadata("build_path", doc="""
-Relative path in the build directory for the file that will be written
-when this page gets rendered. For example, `blog/2016/example.md`
-generates `blog/2016/example/index.html`.
-
-If found in pages front matter, it is ignored, and is always computed at page
-load time.
-"""))
-
         self.register_metadata(metadata.MetadataInherited("asset", doc="""
 If set to True for a file (for example, by a `file:` pattern in a directory
 index), the file is loaded as a static asset, regardless of whether a feature
