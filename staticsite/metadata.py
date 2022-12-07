@@ -246,36 +246,6 @@ class MetadataTemplateInherited(Metadata):
             else:
                 obj.meta.values[self.template] = tpl
 
-    def lookup_template(self, meta: Meta) -> Optional[jinja2.Template]:
-        """
-        Recursively find a template in meta or its parents
-        """
-        if (val := meta.values.get(self.template)):
-            if isinstance(val, str):
-                compiled = self.site.theme.jinja2.from_string(val)
-                # Replace with a compiled version, to need to compile it only
-                # once
-                meta.values[self.template] = compiled
-                return compiled
-            else:
-                return val
-        if meta.parent is None:
-            return None
-        return self.lookup_template(meta.parent)
-
-    def derive(self, meta: Meta):
-        # If a template exists, render without looking for a parent element
-        if (template := self.lookup_template(meta)) is not None:
-            val = markupsafe.Markup(template.render(meta=meta, page={"meta": meta}))
-            meta.values[self.name] = val
-            return val
-
-        # Else fallback to plain inheritance
-        if meta.parent is None:
-            return None
-        meta.values[self.name] = val = meta.parent.get(self.name)
-        return val
-
 
 class MetadataDate(Metadata):
     """
@@ -291,16 +261,6 @@ class MetadataDate(Metadata):
         else:
             obj.meta.values[self.name] = obj.site.generation_time
 
-    def on_load(self, page: Page):
-        date = page.meta.values.get(self.name)
-        if date is None:
-            if page.src is not None and page.src.stat is not None:
-                page.meta.values[self.name] = self.site.localized_timestamp(page.src.stat.st_mtime)
-            else:
-                page.meta.values[self.name] = self.site.generation_time
-        else:
-            page.meta.values[self.name] = self.site.clean_date(date)
-
 
 class MetadataIndexed(Metadata):
     """
@@ -311,12 +271,6 @@ class MetadataIndexed(Metadata):
         if isinstance(val, str):
             val = val.lower() in ("yes", "true", "1")
         obj.meta[self.name] = val
-
-    def on_load(self, page: Page):
-        val = page.meta.get(self.name, False)
-        if isinstance(val, str):
-            val = val.lower() in ("yes", "true", "1")
-        page.meta[self.name] = val
 
 
 class MetadataDraft(Metadata):
@@ -343,9 +297,6 @@ class MetadataDefault(Metadata):
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if self.name not in obj.meta:
             obj.meta.values[self.name] = self.default
-
-    def on_load(self, page: Page):
-        page.meta.setdefault(self.name, self.default)
 
 
 class Meta:
