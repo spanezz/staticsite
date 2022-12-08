@@ -60,7 +60,7 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
 
         If not set, it defaults to the value of `indexed`.
     """)
-    syndication_date = fields.Field(doc="""
+    syndication_date = fields.Date(doc="""
         Syndication date for this page.
 
         This is the date that will appear in RSS and Atom feeds, and the page will not
@@ -90,11 +90,9 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
         #
         # If page.meta.syndicate is true, it is always present, and if not set it
         # defaults to page.meta.date.
-        if (date := self.meta.get("syndication_date")) is None:
+        if "syndication_date" not in self.meta:
             if self.meta["syndicated"]:
                 self.meta["syndication_date"] = self.meta["date"]
-        else:
-            self.meta["syndication_date"] = self.site.clean_date(date)
 
 
 def _get_syndicated_pages(page: Page, limit: Optional[int] = None) -> List[Page]:

@@ -87,13 +87,18 @@ class TemplateInherited(Inherited):
             raise ValueError(f"{value!r} is not a valid value for a template field")
 
 
-class ElementDate(Field):
+class Date(Field):
     """
-    Make sure, on page load, that the element is a valid aware datetime object
+    Field containing a date
     """
     def _clean(self, obj: SiteElement, value: Any) -> jinja2.Template:
         return obj.site.clean_date(value)
 
+
+class ElementDate(Date):
+    """
+    Make sure, on page load, that the element is a valid aware datetime object
+    """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (date := obj.meta.get(self.name)):
             obj.meta[self.name] = obj.site.clean_date(date)
