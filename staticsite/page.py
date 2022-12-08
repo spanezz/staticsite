@@ -229,7 +229,7 @@ class Page(SiteElement):
         not be added to the site.
         """
         # Check the existence of other mandatory fields
-        if "site_url" not in self.meta:
+        if self.site_url is None:
             raise PageMissesFieldError(self, "site_url")
 
     @cached_property
@@ -242,8 +242,7 @@ class Page(SiteElement):
     @property
     def date_as_iso8601(self):
         from dateutil.tz import tzlocal
-        ts = self.meta.get("date", None)
-        if ts is None:
+        if (ts := self.date) is None:
             return None
         # TODO: Take timezone from config instead of tzlocal()
         tz = tzlocal()
@@ -355,11 +354,11 @@ class Page(SiteElement):
         # print(f"Page.url_for {self=!r}, {target=!r}, {page=!r}")
 
         # If the destination has a different site_url, generate an absolute url
-        if self.meta["site_url"] != page.meta["site_url"]:
+        if self.site_url != page.site_url:
             absolute = True
 
         if absolute:
-            site_url = page.meta["site_url"].rstrip("/")
+            site_url = page.site_url.rstrip("/")
             return f"{site_url}/{page.site_path}"
         else:
             return "/" + page.site_path
@@ -373,38 +372,37 @@ class Page(SiteElement):
         img = self.resolve_path(image)
 
         res = {
-            "alt": img.meta["title"],
+            "alt": img.title,
         }
 
         if type is not None:
             # If a specific version is required, do not use srcset
-            rel = img.meta["related"].get(type, img)
-            res["width"] = str(rel.meta["width"])
-            res["height"] = str(rel.meta["height"])
+            rel = img.related.get(type, img)
+            res["width"] = str(rel.width)
+            res["height"] = str(rel.height)
             res["src"] = self.url_for(rel, absolute=absolute)
         else:
             # https://developers.google.com/web/ilt/pwa/lab-responsive-images
             # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
             srcsets = []
-            for rel in img.meta["related"].values():
+            for rel in img.related.values():
                 if rel.TYPE != "image":
                     continue
 
-                width = rel.meta.get("width")
-                if width is None:
+                if (width := rel.width) is None:
                     continue
 
                 url = self.url_for(rel, absolute=absolute)
                 srcsets.append(f"{markupsafe.escape(url)} {width}w")
 
             if srcsets:
-                width = img.meta["width"]
+                width = img.width
                 srcsets.append(f"{markupsafe.escape(self.url_for(img))} {width}w")
                 res["srcset"] = ", ".join(srcsets)
                 res["src"] = self.url_for(img, absolute=absolute)
             else:
-                res["width"] = str(img.meta["width"])
-                res["height"] = str(img.meta["height"])
+                res["width"] = str(img.width)
+                res["height"] = str(img.height)
                 res["src"] = self.url_for(img, absolute=absolute)
 
         return res

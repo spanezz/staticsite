@@ -125,12 +125,12 @@ class DataPages(Feature):
     def analyze(self):
         # Dispatch pages by type
         for page in self.site.structure.pages_by_metadata["data_type"]:
-            data_type = page.meta.get("data_type")
+            data_type = page.data_type
             self.by_type[data_type].append(page)
 
         # Sort the pages of each type by date
         for pages in self.by_type.values():
-            pages.sort(key=lambda x: x.meta["date"])
+            pages.sort(key=lambda x: x.date)
 
     @jinja2.pass_context
     def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):

@@ -47,7 +47,7 @@ class Dir(Page):
                 else:
                     pages.append(sub.page)
         for name, page in self.node.build_pages.items():
-            if page != self and page.leaf and page.meta["indexed"]:
+            if page != self and page.leaf and page.indexed:
                 pages.append(sub.page)
 
         # FIXME: a lot is here for backwards compatibility. We could do some
@@ -60,14 +60,14 @@ class Dir(Page):
 
         # Since finalize is called from the bottom up, subdirs have their date
         # up to date
-        self.subdirs.sort(key=lambda p: p.meta["date"])
-        self.pages.sort(key=lambda p: p.meta["date"])
+        self.subdirs.sort(key=lambda p: p.date)
+        self.pages.sort(key=lambda p: p.date)
 
         date_pages = []
         if self.subdirs:
-            date_pages.append(self.subdirs[-1].meta["date"])
+            date_pages.append(self.subdirs[-1].date)
         if self.pages:
-            date_pages.append(self.meta["pages"][-1].meta["date"])
+            date_pages.append(self.pages[-1].date)
 
         if date_pages:
             self.date = max(date_pages)

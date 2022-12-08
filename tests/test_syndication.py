@@ -101,15 +101,15 @@ text
             synd = blog.meta["syndication"]
             self.assertEqual(synd.pages, [post2])
 
-            self.assertNotIn("syndication", post1.meta)
-            self.assertEqual(post1.meta["related"], {
+            self.assertIsNone(post1.syndication)
+            self.assertEqual(post1.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertNotIn("syndication", post2.meta)
-            self.assertNotIn("syndication", widget.meta)
-            self.assertEqual(rss.meta["pages"], synd.pages)
-            self.assertEqual(atom.meta["pages"], synd.pages)
+            self.assertIsNone(post2.syndication)
+            self.assertIsNone(widget.syndication)
+            self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(atom.pages, synd.pages)
 
     def test_images(self):
         self.maxDiff = None

@@ -5,15 +5,16 @@ import os
 
 
 class MockPage:
-    def __init__(self, *, site_path, **kw):
+    def __init__(self,  **kw):
         self.meta = kw
-        self.site_path = site_path
+        for k, v in kw.items():
+            setattr(self, k, v)
 
     def __str__(self):
-        return str(self.meta["site_path"])
+        return str(self.site_path)
 
     def __repr__(self):
-        return str(self.meta["site_path"])
+        return str(self.site_path)
 
 
 class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
@@ -46,13 +47,13 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.site_path, reverse=True))
 
             expr = theme.jinja2.compile_expression("pages|arrange('-date')")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"], reverse=True))
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date, reverse=True))
 
             expr = theme.jinja2.compile_expression("pages|arrange('-date', 5)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"], reverse=True)[:5])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date, reverse=True)[:5])
 
             expr = theme.jinja2.compile_expression("pages|arrange('date', 5)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"])[:5])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date)[:5])
 
             # Limit = 1
 
@@ -63,10 +64,10 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.site_path, reverse=True)[:1])
 
             expr = theme.jinja2.compile_expression("pages|arrange('-date', 1)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"], reverse=True)[:1])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date, reverse=True)[:1])
 
             expr = theme.jinja2.compile_expression("pages|arrange('date', 1)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"])[:1])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date)[:1])
 
             # Large list
 
@@ -79,10 +80,10 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.site_path, reverse=True)[:5])
 
             expr = theme.jinja2.compile_expression("pages|arrange('-date', 5)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"], reverse=True)[:5])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date, reverse=True)[:5])
 
             expr = theme.jinja2.compile_expression("pages|arrange('date', 5)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"])[:5])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date)[:5])
 
             expr = theme.jinja2.compile_expression("pages|arrange('url', 50)")
             self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.site_path)[:50])
@@ -91,10 +92,10 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.site_path, reverse=True)[:50])
 
             expr = theme.jinja2.compile_expression("pages|arrange('-date', 50)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"], reverse=True)[:50])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date, reverse=True)[:50])
 
             expr = theme.jinja2.compile_expression("pages|arrange('date', 50)")
-            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.meta["date"])[:50])
+            self.assertEqual(expr(pages=pages), sorted(pages, key=lambda x: x.date)[:50])
 
     def test_page_template_conflicts(self):
         self.maxDiff = None

@@ -57,7 +57,7 @@ def sort_args(sort: Optional[str]) -> tuple[Optional[str], bool, Optional[Callab
             return page.site_path
     else:
         def key(page):
-            return page.meta.get(sort, None)
+            return getattr(page, sort, None)
 
     return sort, reverse, key
 
@@ -118,7 +118,7 @@ class PageFilter:
 
         for name, page in root.build_pages.items():
             # print(f"_filter {page=!r} indexed={page.meta['indexed']}")
-            if not page.meta["indexed"]:
+            if not page.indexed:
                 continue
             if self.allow is not None and page not in self.allow:
                 continue
@@ -128,7 +128,7 @@ class PageFilter:
             # Taxonomy_filters
             fail_taxonomies = False
             for name, t_filter in self.taxonomy_filters:
-                page_tags = frozenset(t.name for t in page.meta.get(name, ()))
+                page_tags = frozenset(t.name for t in getattr(page, name, ()))
                 if not t_filter.issubset(page_tags):
                     fail_taxonomies = True
             if fail_taxonomies:

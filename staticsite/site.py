@@ -296,7 +296,7 @@ class Site:
             log.warn("%s: skipping page: %s", e.page, e.msg)
             return True
 
-        if not self.settings.DRAFT_MODE and page.meta["draft"]:
+        if not self.settings.DRAFT_MODE and page.draft:
             log.info("%s: page is still a draft: skipping", page)
             return True
 

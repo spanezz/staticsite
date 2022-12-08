@@ -36,8 +36,7 @@ class AliasesFeature(Feature):
     def analyze(self):
         # Build alias pages from pages with an 'aliases' metadata
         for page in self.site.structure.pages_by_metadata["aliases"]:
-            aliases = page.meta.get("aliases")
-            if not aliases:
+            if not (aliases := page.aliases):
                 continue
 
             for alias in aliases:

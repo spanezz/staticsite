@@ -15,8 +15,8 @@ class TestTags(test_utils.MockSiteTestMixin, TestCase):
         }
         with self.site(files) as mocksite:
             tags, page1 = mocksite.page("taxonomies/tags", "page1")
-            self.assertEqual(tags.categories["a"].meta["pages"], [page1])
-            self.assertEqual(tags.categories["b"].meta["pages"], [page1])
+            self.assertEqual(tags.categories["a"].pages, [page1])
+            self.assertEqual(tags.categories["b"].pages, [page1])
 
     def test_load(self):
         """
@@ -33,5 +33,5 @@ tags: [cat]
         with self.site(files) as mocksite:
             tags, page = mocksite.page("taxonomies/tags", "page")
             cat = tags.categories["cat"]
-            self.assertEqual(cat.meta["pages"], [page])
-            self.assertEqual(page.meta["tags"], [cat])
+            self.assertEqual(cat.pages, [page])
+            self.assertEqual(page.tags, [cat])
