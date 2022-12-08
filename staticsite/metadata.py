@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any, Optional
 
 from . import fields
 
 if TYPE_CHECKING:
     from .site import Site
+
+log = logging.getLogger("metadata")
 
 
 class FieldsMetaclass(type):
@@ -148,6 +151,7 @@ It defaults to false, or true if `meta.date` is in the future.
             # TODO: remove this and leave only update_meta only, when we can map all metadata used by features
             for k, v in meta_values.items():
                 if k not in self.meta:
+                    log.warning(f"meta[{k!r}] is set but it does not correspond to a field")
                     self.meta[k] = v
 
         # Call fields to fill in computed fields

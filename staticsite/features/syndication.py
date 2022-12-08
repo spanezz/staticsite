@@ -68,6 +68,15 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
 
         If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
     """)
+    rss_page = fields.Field(doc="""
+        Page with the RSS feed with posts for the syndication the page is in
+    """)
+    atom_page = fields.Field(doc="""
+        Page with the Atom feed with posts for the syndication the page is in
+    """)
+    archive = fields.Field(doc="""
+        Page with an archive of all posts for the syndication the page is in
+    """)
 
     def validate(self):
         super().validate()
