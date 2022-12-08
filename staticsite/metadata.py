@@ -38,46 +38,6 @@ class FieldsMetaclass(type):
         return res
 
 
-class Meta:
-    """
-    Read-only dict accessor to a SiteElement fields
-    """
-    def __init__(self, obj: SiteElement):
-        self.obj = obj
-
-    def __getitem__(self, key: str) -> Any:
-        if key not in self.obj._fields:
-            raise KeyError(key)
-
-        try:
-            return getattr(self.obj, key)
-        except AttributeError:
-            raise KeyError(key)
-
-    def __contains__(self, key: str):
-        if key not in self.obj._fields:
-            return False
-
-        return getattr(self.obj, key) is not None
-
-    def get(self, key: str, default: Any = None) -> Any:
-        if key not in self.obj._fields:
-            return default
-
-        return getattr(self.obj, key, default)
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Return a dict with all the values of this Meta, including the inherited
-        ones
-        """
-        res = {}
-        for key in self.obj._fields:
-            if (val := getattr(self.obj, key)) is not None:
-                res[key] = val
-        return res
-
-
 class SiteElement(metaclass=FieldsMetaclass):
     """
     Functionality to expose a `meta` member giving dict-like access to Metadata
@@ -159,8 +119,6 @@ It defaults to false, or true if `meta.date` is in the future.
             meta_values: Optional[dict[str, Any]] = None):
         # Pointer to the root structure
         self.site = site
-        # The entry's metadata
-        self.meta: Meta = Meta(self)
 
         if meta_values:
             self.update_meta(meta_values)

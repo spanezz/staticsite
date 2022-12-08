@@ -45,6 +45,46 @@ class TemplateField(fields.Field):
             obj.__dict__[self.name] = val
 
 
+class Meta:
+    """
+    Read-only dict accessor to Page's fields
+    """
+    def __init__(self, page: Page):
+        self._page = page
+
+    def __getitem__(self, key: str) -> Any:
+        if key not in self._page._fields:
+            raise KeyError(key)
+
+        try:
+            return getattr(self._page, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: str):
+        if key not in self._page._fields:
+            return False
+
+        return getattr(self._page, key) is not None
+
+    def get(self, key: str, default: Any = None) -> Any:
+        if key not in self._page._fields:
+            return default
+
+        return getattr(self._page, key, default)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Return a dict with all the values of this Meta, including the inherited
+        ones
+        """
+        res = {}
+        for key in self._page._fields:
+            if (val := getattr(self._page, key)) is not None:
+                res[key] = val
+        return res
+
+
 class Page(SiteElement):
     """
     A source page in the site.
@@ -120,6 +160,8 @@ class Page(SiteElement):
             leaf: bool,
             directory_index: bool = False):
         super().__init__(site, parent=created_from or node, meta_values=meta_values)
+        # Read-only, dict-like accessor to the page's fields
+        self.meta: Meta = Meta(self)
         # structure.Node where this page is installed in the rendered structure
         self.node: structure.Node = node
         # Node to use as initial node for find_pages
