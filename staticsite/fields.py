@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Optional, Union
-
-import markupsafe
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    import jinja2
-
     from .metadata import SiteElement
 
 
@@ -17,7 +13,7 @@ class Field:
     """
 
     def __init__(
-            self,
+            self, *,
             structure: bool = False,
             doc: str = ""):
         """
@@ -73,60 +69,18 @@ class Inherited(Field):
             obj.meta[self.name] = parent.meta[self.name]
 
 
-class TemplateInherited(Field):
+class TemplateInherited(Inherited):
     """
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
     """
-    def __init__(self, *args, template: str, **kw):
-        """
-        :arg template_for: set to the name of another field, it documents that
-                           this metadata is a template version of another
-                           metadata
-        """
-        super().__init__(*args, **kw)
-        self.template: str = template
-
-    def get_notes(self):
-        yield from super().get_notes()
-        yield "Inherited from parent pages"
-        yield f"Template: {self.template}"
-
-    def set_template(self, obj: SiteElement, tpl: Union[str, jinja2.Template]):
-        if isinstance(tpl, str):
-            obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
-        else:
-            obj.meta[self.template] = tpl
-
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (tpl := obj.meta.get(self.template)):
-            # Make sure the current template value is a compiled template
-            if isinstance(tpl, str):
-                obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
-        elif parent is not None:
-            # Try to inherit template
-            if self.template not in obj.meta and (tpl := parent.meta.get(self.template)):
-                obj.meta[self.template] = tpl
-
-    def prepare_to_render(self, obj: SiteElement):
-        if self.name in obj.meta:
-            return
-
-        if (template := obj.meta.get(self.template)) is not None:
-            # If a template exists, render
-            # TODO: remove meta= and make it compatibile again with stable staticsite
-            val = markupsafe.Markup(template.render(meta=obj.meta, page=obj))
-            obj.meta[self.name] = val
-            return val
 
     def set(self, obj: SiteElement, values: dict[str, Any]):
         super().set(obj, values)
-        # Also copy the template name
-        if self.template in values:
-            if isinstance(tpl := values[self.template], str):
-                obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
-            else:
-                obj.meta[self.template] = tpl
+        # Make sure the template is compiled
+        if (tpl := obj.meta.get(self.name)):
+            if isinstance(tpl, str):
+                obj.meta[self.name] = obj.site.theme.jinja2.from_string(tpl)
 
 
 class Date(Field):

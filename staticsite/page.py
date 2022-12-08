@@ -65,6 +65,29 @@ class Page(SiteElement):
         Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
     """)
 
+    copyright = fields.Field(doc="""
+        Copyright notice for the page. If missing, it's generated using
+        `template_copyright`.
+    """)
+
+    title = fields.Field(doc="""
+        Page title.
+
+        If missing:
+
+         * it is generated via template_title, if present
+         * the first title found in the page contents is used.
+         * in the case of jinaj2 template pages, the contents of `{% block title %}`,
+           if present, is rendered and used.
+         * if the page has no title, the title of directory indices above this page is
+           inherited.
+         * if still no title can be found, the site name is used as a default.
+    """)
+
+    description = fields.Field(doc="""
+        The page description. If omitted, the page will have no description.
+    """)
+
     def __init__(
             self, site: Site, *,
             meta_values: dict[str, Any],
@@ -364,8 +387,17 @@ class Page(SiteElement):
         for field in self._fields.values():
             field.prepare_to_render(self)
 
+        # Render template_* fields
+        for name in ('title', 'copyright', 'description'):
+            if name in self.meta:
+                # If we have a value set, use it
+                continue
+            if (tpl := self.meta.get("template_" + name)):
+                # If a template exists, render it
+                # TODO: remove meta= and make it compatibile again with stable staticsite
+                self.meta[name] = markupsafe.Markup(tpl.render(meta=self.meta, page=self))
+
         # title must exist
-        # TODO: move this to a Metadata field
         if "title" not in self.meta:
             self.meta["title"] = self.meta["site_name"]
 

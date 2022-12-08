@@ -207,7 +207,7 @@ class Site:
 
         # Scan the main content filesystem
         src = File.with_stat("", os.path.abspath(self.content_root))
-        tree = self.scan_tree(src, self._settings_to_meta())
+        tree = self.scan_tree(src, self._settings_to_meta(), toplevel=True)
 
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
@@ -232,12 +232,14 @@ class Site:
 
         self.stage_content_directory_scanned = True
 
-    def scan_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:
+    def scan_tree(self, src: File, meta: dict[str, Any], toplevel: bool = False) -> fstree.Tree:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """
         if meta.get("asset"):
             tree = fstree.AssetTree(self, src)
+        elif toplevel:
+            tree = fstree.RootPageTree(self, src)
         else:
             tree = fstree.PageTree(self, src)
         tree.meta.update(meta)

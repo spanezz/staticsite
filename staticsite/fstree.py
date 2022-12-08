@@ -140,6 +140,21 @@ class PageTree(Tree):
             file_meta = {}
         self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
+    def _load_dir_meta(self) -> dict[str, Any]:
+        """
+        Let features add to directory metadata
+
+        This for example lets metadata of an index.md do the same work as a
+        .staticfile file
+        """
+        res = {}
+        for feature in self.site.features.ordered():
+            meta = feature.load_dir_meta(self)
+            if meta is not None:
+                self._take_dir_rules(meta)
+                res.update(meta)
+        return res
+
     def _scandir(self):
         subdirs: list[tuple[str, File]] = []
         with os.scandir(self.dir_fd) as entries:
@@ -164,15 +179,8 @@ class PageTree(Tree):
                     # Take note of files
                     self.files[entry.name] = File.from_dir_entry(self.src, entry)
 
-        # Let features add to node metadata
-        #
-        # This for example lets metadata of an index.md do the same work as a
-        # .staticfile file
-        for feature in self.site.features.ordered():
-            meta = feature.load_dir_meta(self)
-            if meta is not None:
-                self._take_dir_rules(meta)
-                self.meta.update(meta)
+        # Let features add to directory metadata
+        self.meta.update(self._load_dir_meta())
 
         # Instantiate subtrees
         for name, src in subdirs:
@@ -242,6 +250,17 @@ class PageTree(Tree):
 
         if dir_index:
             dir_index.analyze()
+
+
+class RootPageTree(PageTree):
+    """
+    Special behaviour of the root of the directory hierarchy
+    """
+    def _load_dir_meta(self) -> dict[str, Any]:
+        res = super()._load_dir_meta()
+        if (title := res.get("title")) and "site_name" not in res and "site_name" not in self.meta:
+            res["site_name"] = title
+        return res
 
 
 class AssetTree(Tree):

@@ -73,9 +73,8 @@ class SiteElement(metaclass=FieldsMetaclass):
         If missing, the modification time of the file is used.
     """)
 
-    template_copyright = fields.TemplateInherited(template="template_copyright", doc="""
-        If `template_copyright` is set instead of `copyright`, it is a jinja2 template
-        used to generate the copyright information.
+    template_copyright = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `copyright` when it is not explicitly set.
 
         The template context will have `page` available, with the current page. The
         result of the template will not be further escaped, so you can use HTML markup
@@ -84,32 +83,21 @@ class SiteElement(metaclass=FieldsMetaclass):
         If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
     """)
 
-    title = fields.TemplateInherited(template="template_title", doc="""
-        The page title.
+    template_title = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `title` when it is not explicitly set.
 
-        If `template_title` is set instead of `title`, it is a jinja2 template used to
-        generate the title. The template context will have `page` available, with the
-        current page. The result of the template will not be further escaped, so you
-        can use HTML markup
-        in it.
-
-        If omitted:
-
-         * the first title found in the page contents is used.
-         * in the case of jinaj2 template pages, the contents of `{% block title %}`,
-           if present, is rendered and used.
-         * if the page has no title, the title of directory indices above this page is
-           inherited.
-         * if still no title can be found, the site name is used as a default.
+        The template context will have `page` available, with the current page.
+        The result of the template will not be further escaped, so you can use
+        HTML markup in it.
     """)
 
-    description = fields.TemplateInherited(template="template_description", doc="""
-        The page description. If omitted, the page will have no description.
+    template_description = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `description` when it is not
+        explicitly set.
 
-        If `template_description` is set instead of `description`, it is a jinja2
-        template used to generate the description. The template context will have
-        `page` available, with the current page. The result of the template will not be
-        further escaped, so you can use HTML markup in it.
+        The template context will have `page` available, with the current page.
+        The result of the template will not be further escaped, so you can use
+        HTML markup in it.
     """)
 
     asset = fields.Inherited(doc="""
