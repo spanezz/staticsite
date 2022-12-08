@@ -472,7 +472,8 @@ class Page(SiteElement):
         try:
             return template.render(**template_args)
         except jinja2.TemplateError as e:
-            log.error("%s: failed to render %s: %s", template.filename, self.src.relpath, e)
-            log.debug("%s: failed to render %s: %s", template.filename, self.src.relpath, e, exc_info=True)
+            log.error("%s: failed to render %s: %s", template.filename, self.src.relpath if self.src else repr(self), e)
+            log.debug("%s: failed to render %s: %s",
+                      template.filename, self.src.relpath if self.src else repr(self), e, exc_info=True)
             # TODO: return a "render error" page? But that risks silent errors
             return None

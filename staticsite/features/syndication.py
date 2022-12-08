@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Union
 
 import jinja2
 
-from staticsite import structure, fields
+from staticsite import fields, metadata, structure
 from staticsite.feature import Feature
 from staticsite.metadata import FieldsMetaclass
 from staticsite.page import Page, PageNotFoundError
@@ -15,12 +15,173 @@ from staticsite.utils import arrange
 log = logging.getLogger("syndication")
 
 
+class Syndication:
+    """
+    Syndication information for a group of pages
+    """
+    def __init__(
+            self,
+            index: Page, *,
+            title: Optional[str] = None,
+            template_title: Optional[str] = None,
+            template_description: Optional[str] = None,
+            add_to: Union[bool, str, None] = True,
+            archive: Union[bool, dict[str, Any]] = True):
+        # Default metadata for syndication pages
+        self.default_meta: dict[str, Any] = {}
+        if title is not None:
+            self.default_meta["title"] = title
+        if template_title is not None:
+            self.default_meta["template_title"] = template_title
+        if template_description is not None:
+            self.default_meta["template_description"] = template_description
+
+        # Page that defined the syndication
+        self.index: Page = index
+
+        # Pages that get syndicated
+        self.pages: List[Page] = []
+
+        # Pages to which we add feed information
+        #
+        # If True: defaults to self.pages.
+        #
+        # If a string: expanded as a page filter
+        self.add_to = add_to
+
+        # Describe if and how to build an archive for this syndication
+        self.archive: Optional[dict[str, Any]]
+        if archive is False:
+            self.archive = None
+        elif archive is True:
+            self.archive = {}
+        elif isinstance(archive, dict):
+            self.archive = archive
+        else:
+            raise ValueError(f"{archive!r} is not a valid value for a syndication.archive field")
+
+        # RSS feed page
+        self.rss_page: Optional[RSSPage] = None
+
+        # Atom feed page
+        self.atom_page: Optional[AtomPage] = None
+
+        # Archive page
+        self.archive_page: Optional[AtomPage] = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "index": self.index,
+            "pages": self.pages,
+            "add_to": self.add_to,
+            "archive": self.archive,
+            "rss_page": self.rss_page,
+            "atom_page": self.atom_page,
+            "archive_page": self.archive_page,
+        }
+
+    def fill_pages(self):
+        """
+        Given a list of pages to potentially syndicate, filter them by their
+        syndicated header, and sort by syndication date.
+        """
+        draft_mode = self.index.site.settings.DRAFT_MODE
+        for page in self.index.meta.get("pages", []):
+            if not page.meta["syndicated"]:
+                continue
+            if not draft_mode and page.meta["syndication_date"] > page.site.generation_time:
+                continue
+            self.pages.append(page)
+        self.pages.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
+
+    def make_feeds(self):
+        """
+        Build RSS and Atom feeds
+        """
+        page_name, ext = os.path.splitext(self.index.dst)
+
+        meta_values = self.default_meta
+        meta_values["pages"] = self.pages
+        meta_values["index"] = self.index
+
+        # RSS feed
+        rss_page = self.index.node.create_page(
+                created_from=self.index,
+                page_cls=RSSPage,
+                meta_values=meta_values,
+                dst=f"{page_name}.{RSSPage.TYPE}")
+        self.rss_page = rss_page
+        log.debug("%s: adding syndication page for %s", rss_page, self.index)
+        # print(f"  rss_page {rss_page.meta=!r}")
+
+        # Atom feed
+        atom_page = self.index.node.create_page(
+                created_from=self.index,
+                page_cls=AtomPage,
+                meta_values=meta_values,
+                dst=f"{page_name}.{AtomPage.TYPE}")
+        self.atom_page = atom_page
+        log.debug("%s: adding syndication page for %s", atom_page, self.index)
+
+        self.index.add_related("rss_feed", self.rss_page)
+        self.index.add_related("atom_feed", self.atom_page)
+
+    def make_archive(self):
+        """
+        Build archive pages
+        """
+        if self.archive is None:
+            return
+
+        self.archive["pages"] = self.pages
+        self.archive["index"] = self.index
+        self.archive_page = self.index.node.create_page(
+                created_from=self.index,
+                page_cls=ArchivePage,
+                meta_values=self.archive,
+                path=structure.Path(("archive",)))
+        self.archive_page.add_related("rss_feed", self.rss_page)
+        self.archive_page.add_related("atom_feed", self.atom_page)
+
+    def process_add_to(self):
+        """
+        Add a link to the syndication to the pages listed in add_to
+        """
+        add_to = self.add_to
+        if add_to is False or add_to in ("no", "false", 0):
+            pass
+        elif add_to is True:
+            for dest in self.pages:
+                dest.add_related("rss_feed", self.rss_page)
+                dest.add_related("atom_feed", self.atom_page)
+        else:
+            for dest in self.index.find_pages(**add_to):
+                dest.add_related("rss_feed", self.rss_page)
+                dest.add_related("atom_feed", self.atom_page)
+
+
 class SyndicatedPageError(Exception):
     pass
 
 
+class SyndicationField(fields.Field):
+    def _clean(self, obj: metadata.SiteElement, value: Any) -> Syndication:
+        if value is True:
+            return Syndication(obj)
+        elif value is False:
+            return None
+        elif isinstance(value, Syndication):
+            return value
+        elif isinstance(value, str):
+            return value.lower() in ("yes", "true", "1")
+        elif isinstance(value, dict):
+            return Syndication(obj, **value)
+        else:
+            raise ValueError(f"{value!r} for `syndication` needs to be True or a dictionary of values")
+
+
 class SyndicationPageMixin(metaclass=FieldsMetaclass):
-    syndication = fields.Field(structure=True, doc="""
+    syndication = SyndicationField(structure=True, doc="""
         Defines syndication for the contents of this page.
 
         It is a structure which can contain normal metadata, plus:
@@ -101,18 +262,12 @@ def _get_syndicated_pages(page: Page, limit: Optional[int] = None) -> List[Page]
     """
     syndication = page.meta.get("syndication")
     if syndication is not None:
-        pages = syndication.get("pages")
-        if pages is not None:
-            # meta.syndication.pages is already sorted
-            if limit is None:
-                return pages
-            else:
-                return pages[:limit]
+        # syndication.pages is already sorted
+        return syndication.pages[:limit]
 
     pages = page.meta.get("pages")
     if pages is None:
         raise SyndicatedPageError(f"page {page!r} has no `syndication.pages` or `pages` in metadata")
-
     return arrange(pages, "-syndication_date", limit=limit)
 
 
@@ -169,119 +324,35 @@ class SyndicationFeature(Feature):
             log.warn("%s: %s", context.name, e)
             return []
 
-    def prepare_syndication_list(self, pages) -> list[Page]:
-        """
-        Given a list of pages to potentially syndicate, filter them by their
-        syndicated header, and sort by syndication date.
-        """
-        draft_mode = self.site.settings.DRAFT_MODE
-        res = []
-        for page in pages:
-            if not page.meta["syndicated"]:
-                continue
-            if not draft_mode and page.meta["syndication_date"] > self.site.generation_time:
-                continue
-            res.append(page)
-        res.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
-        return res
-
     def analyze(self):
         # Build syndications from pages with a 'syndication' metadata
         for page in self.site.structure.pages_by_metadata["syndication"]:
             # The syndication header is the base for the feed pages's metadata,
             # and is added as 'syndication' to all the pages that get the feed
             # links
-            meta_dict = page.meta.get("syndication")
-            # print(f"Syndication.analyze {page=!r} page.meta.syndication={meta_dict!r}")
-            if meta_dict is None:
+            if (syndication := page.meta.get("syndication")) is None:
                 continue
-            elif meta_dict is True:
-                meta_values = {}
-            else:
-                # Make a shallow copy to prevent undesired side effects if multiple
-                # pages share the same syndication dict, as may be the case with
-                # taxonomies
-                meta_values = dict(meta_dict)
-                # print(f"  initial base metadata for feeds {meta=!r}")
 
-            # Add the syndication link to the index page
-            page.meta["syndication"] = meta_values
+            # Build the final list of the pages covered by the syndication
+            syndication.fill_pages()
 
-            # Index page for the syndication
-            meta_values["index"] = page
+            # Generate RSS and Atom feeds
+            syndication.make_feeds()
 
-            # Pages involved in the syndication
-            pages = page.meta.get("pages", [])
-            meta_values["pages"] = self.prepare_syndication_list(pages)
+            # Make archive pages
+            syndication.make_archive()
 
-            # print(f"  final base metadata for feeds {meta=!r}")
-
-            page_name, ext = os.path.splitext(page.dst)
-
-            # print(f"Syndication {page=!r}, {pages=}")
-
-            # RSS feed
-            rss_page = page.node.create_page(
-                    created_from=page,
-                    page_cls=RSSPage,
-                    meta_values=meta_values,
-                    dst=f"{page_name}.{RSSPage.TYPE}")
-            meta_values["rss_page"] = rss_page
-            log.debug("%s: adding syndication page for %s", rss_page, page)
-            # print(f"  rss_page {rss_page.meta=!r}")
-
-            # Atom feed
-            atom_page = page.node.create_page(
-                    created_from=page,
-                    page_cls=AtomPage,
-                    meta_values=meta_values,
-                    dst=f"{page_name}.{AtomPage.TYPE}")
-            meta_values["atom_page"] = atom_page
-            log.debug("%s: adding syndication page for %s", atom_page, page)
-
-            # Archive page
-            archive_meta_values: Optional[dict[str, Any]]
-            if (val := meta_values.get("archive")) is False:
-                archive_meta_values = None
-            elif val is None or val is True:
-                archive_meta_values = {}
-            else:
-                archive_meta_values = dict(val)
-
-            if archive_meta_values is not None:
-                archive_meta_values["pages"] = pages
-                archive_meta_values["index"] = page
-                archive_page = page.node.create_page(
-                        created_from=page,
-                        page_cls=ArchivePage,
-                        meta_values=archive_meta_values,
-                        path=structure.Path(("archive",)))
-                archive_page.add_related("rss_feed", rss_page)
-                archive_page.add_related("atom_feed", atom_page)
-
-            page.add_related("rss_feed", rss_page)
-            page.add_related("atom_feed", atom_page)
-
-            # Add a link to the syndication to the pages listed in add_to
-            add_to = meta_values.get("add_to", True)
-            if add_to is False:
-                pass
-            elif add_to is True:
-                for dest in pages:
-                    dest.add_related("rss_feed", rss_page)
-                    dest.add_related("atom_feed", atom_page)
-            else:
-                for dest in page.find_pages(**add_to):
-                    dest.add_related("rss_feed", rss_page)
-                    dest.add_related("atom_feed", atom_page)
+            # Add feed pages according to syndication.add_to
+            syndication.process_add_to()
 
 
 class SyndicationPage(Page):
     """
     Base class for syndication pages
     """
-    # Default template to use for this type of page
-    TEMPLATE: str
+    index = fields.Field(doc="""
+        Page that defined the syndication for this feed
+    """)
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -308,6 +379,10 @@ class AtomPage(SyndicationPage):
 
 
 class ArchivePage(Page):
+    index = fields.Field(doc="""
+        Page that defined the syndication for this feed
+    """)
+
     TYPE = "archive"
     TEMPLATE = "archive.html"
 

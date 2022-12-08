@@ -77,10 +77,18 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'copyright': '© 2020 Test User',
                 'indexed': True,
                 'syndicated': True,
-                'syndication': {'atom_page': 'AtomPage(index.atom)',
-                                'index': 'MarkdownPage()',
-                                'pages': ['MarkdownPage(posts/example)'],
-                                'rss_page': 'RSSPage(index.rss)'},
+                'syndication': {
+                    'add_to': True,
+                    'archive':  {
+                        'index': 'MarkdownPage()',
+                        'pages': ['MarkdownPage(posts/example)'],
+                    },
+                    'archive_page': 'ArchivePage(archive)',
+                    'atom_page': 'AtomPage(index.atom)',
+                    'index': 'MarkdownPage()',
+                    'pages': ['MarkdownPage(posts/example)'],
+                    'rss_page': 'RSSPage(index.rss)'
+                },
                 'syndication_date': '2020-02-01 17:00:00+01:00',
                 'pages': ['MarkdownPage(posts/example)'],
                 'site_name': 'My example blog',

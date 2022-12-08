@@ -38,7 +38,7 @@ text
                     "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
             synd = blog.meta["syndication"]
-            self.assertEqual(synd["pages"], [post2, post1])
+            self.assertEqual(synd.pages, [post2, post1])
 
             self.assertNotIn("syndication", post1.meta)
             self.assertEqual(post1.meta["related"], {
@@ -50,8 +50,8 @@ text
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertEqual(rss.meta["pages"], synd["pages"])
-            self.assertEqual(atom.meta["pages"], synd["pages"])
+            self.assertEqual(rss.meta["pages"], synd.pages)
+            self.assertEqual(atom.meta["pages"], synd.pages)
             self.assertNotIn("syndication", widget.meta)
 
     def test_add_to_false(self):
@@ -72,13 +72,13 @@ text
                     "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
             synd = blog.meta["syndication"]
-            self.assertEqual(synd["pages"], [post2, post1])
+            self.assertEqual(synd.pages, [post2, post1])
 
             self.assertNotIn("syndication", post1.meta)
             self.assertNotIn("syndication", post2.meta)
             self.assertNotIn("syndication", widget.meta)
-            self.assertEqual(rss.meta["pages"], synd["pages"])
-            self.assertEqual(atom.meta["pages"], synd["pages"])
+            self.assertEqual(rss.meta["pages"], synd.pages)
+            self.assertEqual(atom.meta["pages"], synd.pages)
 
     def test_complex(self):
         files = dict(BASE_FILES)
@@ -99,7 +99,7 @@ text
                     "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
             synd = blog.meta["syndication"]
-            self.assertEqual(synd["pages"], [post2])
+            self.assertEqual(synd.pages, [post2])
 
             self.assertNotIn("syndication", post1.meta)
             self.assertEqual(post1.meta["related"], {
@@ -108,8 +108,8 @@ text
             })
             self.assertNotIn("syndication", post2.meta)
             self.assertNotIn("syndication", widget.meta)
-            self.assertEqual(rss.meta["pages"], synd["pages"])
-            self.assertEqual(atom.meta["pages"], synd["pages"])
+            self.assertEqual(rss.meta["pages"], synd.pages)
+            self.assertEqual(atom.meta["pages"], synd.pages)
 
     def test_images(self):
         self.maxDiff = None

@@ -51,7 +51,8 @@ class Field:
         """
         # By default, plain assignment
         if self.name in values:
-            obj.meta[self.name] = self._clean(obj, values[self.name])
+            if (cleaned_value := self._clean(obj, values[self.name])) is not None:
+                obj.meta[self.name] = cleaned_value
 
 
 class Inherited(Field):
