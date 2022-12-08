@@ -21,6 +21,7 @@ class Asset(Page):
         self.draft = False
         self.indexed = False
         self.name = name
+        self.ready_to_render = True
 
     def validate(self):
         # Disable the default page validation: the constructor does all that is
