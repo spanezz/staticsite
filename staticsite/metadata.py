@@ -204,19 +204,6 @@ class MetadataDraft(Metadata):
             obj.meta[self.name] = bool(value)
 
 
-class MetadataDefault(Metadata):
-    """
-    Metadata with a default value when not set
-    """
-    def __init__(self, name, default, **kw):
-        super().__init__(name, **kw)
-        self.default = default
-
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if self.name not in obj.meta:
-            obj.meta[self.name] = self.default
-
-
 class SiteElement(metaclass=FieldsMetaclass):
     """
     Functionality to expose a `meta` member giving dict-like access to Metadata
