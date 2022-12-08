@@ -1,16 +1,144 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict, Iterable, Optional, Any
-from staticsite import Page, structure, metadata, fields
-from staticsite.feature import Feature
-from collections import defaultdict
-import heapq
+
 import functools
+import heapq
 import logging
+from collections import defaultdict
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
+
+from staticsite import Page, fields, metadata, structure
+from staticsite.feature import Feature
+from staticsite.features.syndication import Syndication
+from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.node import Node
 
 log = logging.getLogger("taxonomy")
+
+
+class Taxonomy:
+    """
+    Definition of a taxonomy for the site
+    """
+    def __init__(self, *, name: str, src: file.File, **kw):
+        self.name = name
+        self.src = src
+        self.index: Optional[Page] = None
+        # Metadata for the taxonomy index page
+        self.index_meta: dict[str, Any] = {"taxonomy": self}
+        # Metadata for the category pages
+        self.category_meta: dict[str, Any] = {}
+        # Metadata for the archive pages
+        self.archive_meta: dict[str, Any] = {}
+        # Category pages by category name
+        self.category_pages: dict[str, Page] = {}
+
+    def update_meta(
+            self,
+            category: Optional[dict[str, Any]] = None,
+            archive: Optional[dict[str, Any]] = None,
+            **kw):
+        """
+        Add information from a parsed taxonomy file
+        """
+        self.index_meta.update(kw)
+
+        # Metadata for category pages
+        if category is not None:
+            self.category_meta.update(category)
+        self.category_meta.setdefault("template_title", "{{meta.name}}")
+
+    def create_index(self, node: Node) -> TaxonomyPage:
+        """
+        Create the index page for this taxonomy
+        """
+        self.index = node.create_page(
+            page_cls=TaxonomyPage,
+            src=self.src,
+            meta_values=self.index_meta,
+            name=self.name,
+            directory_index=True,
+            path=structure.Path((self.name,)))
+        return self.index
+
+    def create_category_page(self, name: str, pages: List[Page]) -> CategoryPage:
+        """
+        Generate the page for one category in this taxonomy
+        """
+        # Sort pages by date, used by series sequencing
+        pages.sort(key=lambda p: p.meta["date"])
+
+        # Create category page
+        category_meta = dict(self.category_meta)
+        category_meta["name"] = name
+        category_meta["pages"] = pages
+        category_meta["date"] = pages[-1].meta["date"]
+
+        # Syndication
+        if (syndication_value := self.category_meta.pop("syndication", None)) is not None:
+            syndication = Syndication.clean_value(None, syndication_value)
+        else:
+            syndication = Syndication(None)
+
+        if syndication is not None:
+            category_meta["syndication"] = syndication
+
+        # Don't auto-add feeds for the tag syndication pages
+        syndication.add_to = False
+
+        # TODO: archive
+
+        # if archive is not None:
+        #     self.archive_meta.update(archive)
+        #     elif archive is False:
+        #         archive = None
+
+        #     if archive is not None:
+        #         archive.setdefault("template_title", "{{meta.created_from.name}} archive")
+
+        return self.index.node.create_page(
+            created_from=self.index,
+            page_cls=CategoryPage,
+            meta_values=category_meta,
+            name=name,
+            path=structure.Path((name,))
+        )
+
+    def generate_pages(self):
+        self.category_meta["taxonomy"] = self.index
+
+        # Group pages by category
+        by_category: dict[str, list[Page]] = defaultdict(list)
+        for page in self.index.site.structure.pages_by_metadata[self.name]:
+            categories = page.meta.get(self.name)
+            if not categories:
+                continue
+            # Make sure page.meta.$category is a list
+            # TODO: move to field validator
+            if isinstance(categories, str):
+                categories = page.meta[self.name] = (categories,)
+            # File the page in its category lists
+            for category in categories:
+                by_category[category].append(page)
+
+        # Create category pages
+        for category, pages in by_category.items():
+            self.category_pages[category] = self.create_category_page(category, pages)
+
+        # Replace category names with category pages in each categorized page
+        for page in self.index.site.structure.pages_by_metadata[self.name]:
+            categories = page.meta.get(self.name)
+            if not categories:
+                continue
+            page.meta[self.name] = [self.category_pages[c] for c in categories]
+
+        # Sort categories dict by category name
+        self.category_pages = {k: v for k, v in sorted(self.category_pages.items())}
+
+        # Set self.meta.pages to the sorted list of categories
+        self.index.meta["pages"] = list(self.category_pages.values())
 
 
 class TaxonomyPageMixin(metaclass=metadata.FieldsMetaclass):
@@ -34,12 +162,12 @@ class TaxonomyFeature(Feature):
         self.known_taxonomies = set()
 
         # All TaxonomyPages found
-        self.taxonomies: dict[str, TaxonomyPage] = {}
+        self.taxonomies: dict[str, Taxonomy] = {}
 
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
-    def register_taxonomy_name(self, name):
+    def register_taxonomy(self, name, src: file.File):
         # Note that if we want to make the tags inheritable, we need to
         # interface with 'rst' (or 'rst' to interface with us) because rst
         # needs to know which metadata items are taxonomies in order to parse
@@ -47,6 +175,7 @@ class TaxonomyFeature(Feature):
         # Instead of making tags inheritable from normal metadata, we can offer
         # them to be added by 'files' or 'dirs' directives.
         self.page_mixins.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
+            # TODO: make this validate as string lists
             name: fields.Field(structure=True, doc=f"""
                 List of categories for the `{name}` taxonomy.
 
@@ -55,12 +184,13 @@ class TaxonomyFeature(Feature):
             """)}))
         self.known_taxonomies.add(name)
         self.site.structure.add_tracked_metadata(name)
+        self.taxonomies[name] = Taxonomy(name=name, src=src)
 
     def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         for fname in directory.files.keys():
             if not fname.endswith(".taxonomy"):
                 continue
-            self.register_taxonomy_name(fname[:-9])
+            self.register_taxonomy(fname[:-9], directory.src)
 
     def load_dir(
             self,
@@ -74,7 +204,7 @@ class TaxonomyFeature(Feature):
                 continue
             taken.append(fname)
 
-            name = fname[:-9]
+            taxonomy = self.taxonomies[fname[:-9]]
 
             try:
                 fm_meta = self.load_file_meta(directory, fname)
@@ -83,27 +213,18 @@ class TaxonomyFeature(Feature):
                 continue
             meta_values.update(fm_meta)
 
-            page = node.create_page(
-                page_cls=TaxonomyPage,
-                src=src,
-                meta_values=meta_values,
-                name=name,
-                directory_index=True,
-                path=structure.Path((name,)))
-
-            self.taxonomies[page.name] = page
-            pages.append(page)
+            taxonomy.update_meta(**meta_values)
+            pages.append(taxonomy.create_index(node))
 
         for fname in taken:
             del files[fname]
 
         return pages
 
-    def load_file_meta(self, directory: fstree.Tree, fname: str):
+    def load_file_meta(self, directory: fstree.Tree, fname: str) -> dict[str, Any]:
         """
         Parse the taxonomy file to read its description
         """
-        from staticsite.utils import front_matter
         with directory.open(fname, "rt") as fd:
             fmt, meta = front_matter.read_whole(fd)
         if meta is None:
@@ -111,16 +232,18 @@ class TaxonomyFeature(Feature):
         return meta
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
-        return self.taxonomies.values()
+        return [t.index for t in self.taxonomies.values()]
 
     def jinja2_taxonomy(self, name) -> Optional["TaxonomyPage"]:
-        return self.taxonomies.get(name)
+        if (taxonomy := self.taxonomies.get(name)):
+            return taxonomy.index
+        return None
 
     def analyze(self):
         # Call analyze on all taxonomy pages, to populate them by scanning
         # site pages
         for taxonomy in self.taxonomies.values():
-            taxonomy.analyze()
+            taxonomy.generate_pages()
 
 
 class TaxonomyPage(Page):
@@ -130,6 +253,8 @@ class TaxonomyPage(Page):
     TYPE = "taxonomy"
     TEMPLATE = "taxonomy.html"
 
+    taxonomy = fields.Field(doc="Structured taxonomy information")
+
     def __init__(self, *args, name: str, **kw):
         meta_values = kw["meta_values"]
         meta_values.setdefault("nav_title", name.capitalize())
@@ -138,32 +263,13 @@ class TaxonomyPage(Page):
         # Taxonomy name (e.g. "tags")
         self.name = name
 
-        # Map all possible values for this taxonomy to the pages that reference
-        # them
-        self.categories: Dict[str, CategoryPage] = {}
-
-        # Metadata for category pages
-        self.category_meta = self.meta.get("category", {})
-        self.category_meta.setdefault("template", "blog.html")
-        self.category_meta.setdefault("template_title", "{{meta.name}}")
-
-        synd = self.category_meta.get("syndication")
-        if synd is None or synd is True:
-            self.category_meta["syndication"] = synd = {}
-        elif synd is False:
-            synd = None
-
-        if synd is not None:
-            synd.setdefault("add_to", False)
-
-            archive = synd.get("archive")
-            if archive is None or archive is True:
-                synd["archive"] = archive = {}
-            elif archive is False:
-                archive = None
-
-            if archive is not None:
-                archive.setdefault("template_title", "{{meta.created_from.name}} archive")
+    @property
+    def categories(self):
+        """
+        Map all possible values for this taxonomy to the pages that reference
+        them
+        """
+        return self.meta['taxonomy'].category_pages
 
     def to_dict(self):
         from staticsite.utils import dump_meta
@@ -188,64 +294,17 @@ class TaxonomyPage(Page):
         """
         return heapq.nlargest(count, self.categories.values(), key=lambda c: c.meta["date"])
 
-    def analyze(self):
-        # Group pages by category
-        by_category = defaultdict(list)
-        for page in self.site.structure.pages_by_metadata[self.name]:
-            categories = page.meta.get(self.name)
-            if not categories:
-                continue
-            # Make sure page.meta.$category is a list
-            if isinstance(categories, str):
-                categories = page.meta[self.name] = (categories,)
-            # File the page in its category lists
-            for category in categories:
-                by_category[category].append(page)
-
-        # Create category pages
-        for category, pages in by_category.items():
-            # Sort pages by date, used by series sequencing
-            pages.sort(key=lambda p: p.meta["date"])
-
-            # Create category page
-            category_meta = dict(self.category_meta)
-            category_meta["taxonomy"] = self
-            category_meta["name"] = category
-            category_meta["pages"] = pages
-            category_meta["date"] = pages[-1].meta["date"]
-
-            category_page = self.node.create_page(
-                created_from=self,
-                page_cls=CategoryPage,
-                meta_values=category_meta,
-                name=category,
-                path=structure.Path((category,))
-            )
-
-            self.categories[category] = category_page
-
-        # Replace category names with category pages in each categorized page
-        for page in self.site.structure.pages_by_metadata[self.name]:
-            categories = page.meta.get(self.name)
-            if not categories:
-                continue
-            page.meta[self.name] = [self.categories[c] for c in categories]
-
-        # Sort categories dict by category name
-        self.categories = {k: v for k, v in sorted(self.categories.items())}
-
-        # Set self.meta.pages to the sorted list of categories
-        self.meta["pages"] = list(self.categories.values())
-
 
 @functools.total_ordering
 class CategoryPage(Page):
     """
     Index page showing all the pages tagged with a given taxonomy item
     """
+    TYPE = "category"
+    TEMPLATE = "blog.html"
+
     taxonomy = fields.Field(doc="Page that defined this taxonomy")
     name = fields.Field(doc="Name of the category shown in this page")
-    TYPE = "category"
 
     def __init__(self, *args, name: str = None, **kw):
         super().__init__(*args, **kw)

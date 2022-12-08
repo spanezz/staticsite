@@ -159,6 +159,28 @@ class Syndication:
                 dest.add_related("rss_feed", self.rss_page)
                 dest.add_related("atom_feed", self.atom_page)
 
+    @classmethod
+    def clean_value(self, page: Page, value: Any) -> Syndication:
+        """
+        Instantiate a Syndication object from a Page field
+        """
+        if value is True:
+            return Syndication(page)
+        elif value is False:
+            return None
+        elif isinstance(value, Syndication):
+            value.index = page
+            return value
+        elif isinstance(value, str):
+            if value.lower() in ("yes", "true", "1"):
+                return Syndication(page)
+            else:
+                return None
+        elif isinstance(value, dict):
+            return Syndication(page, **value)
+        else:
+            raise ValueError(f"{value!r} for `syndication` needs to be True or a dictionary of values")
+
 
 class SyndicatedPageError(Exception):
     pass
@@ -166,18 +188,7 @@ class SyndicatedPageError(Exception):
 
 class SyndicationField(fields.Field):
     def _clean(self, obj: metadata.SiteElement, value: Any) -> Syndication:
-        if value is True:
-            return Syndication(obj)
-        elif value is False:
-            return None
-        elif isinstance(value, Syndication):
-            return value
-        elif isinstance(value, str):
-            return value.lower() in ("yes", "true", "1")
-        elif isinstance(value, dict):
-            return Syndication(obj, **value)
-        else:
-            raise ValueError(f"{value!r} for `syndication` needs to be True or a dictionary of values")
+        return Syndication.clean_value(obj, value)
 
 
 class SyndicationPageMixin(metaclass=FieldsMetaclass):

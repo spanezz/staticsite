@@ -84,6 +84,14 @@ class Page(SiteElement):
          * if still no title can be found, the site name is used as a default.
     """)
 
+    series_title = fields.Field(doc="""
+        Series title from this page onwards.
+
+        If this page is part of a series, and it defines `series_title`, then
+        the series title will be changed to this, from this page onwards, but
+        not for the previous pages
+    """)
+
     description = fields.Field(doc="""
         The page description. If omitted, the page will have no description.
     """)

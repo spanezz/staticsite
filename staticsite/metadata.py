@@ -132,6 +132,7 @@ It defaults to false, or true if `meta.date` is in the future.
             for k, v in meta_values.items():
                 if k not in self.meta:
                     log.warning("%s: meta[%r] is set but it does not correspond to a field", self, k)
+                    raise RuntimeError(f"{self}: spurious meta {k!r}")
                     self.meta[k] = v
 
         # Call fields to fill in computed fields
