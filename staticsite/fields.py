@@ -92,15 +92,30 @@ class Date(Field):
             obj.meta[self.name] = obj.site.generation_time
 
 
-class Indexed(Field):
+class Bool(Field):
     """
-    Make sure the field exists and is a bool, defaulting to False
+    Make sure the field is a bool, possibly with a default value
     """
+    def __init__(
+            self, *,
+            default: Optional[bool] = None,
+            **kw):
+        super().__init__(**kw)
+        self.default = default
+
+    def _clean(self, val: Any) -> bool:
+        if val in (True, False):
+            return val
+        elif isinstance(val, str):
+            return val.lower() in ("yes", "true", "1")
+        else:
+            raise ValueError(f"{val!r} is not a valid value for a bool field")
+
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        val = obj.meta.get(self.name, False)
-        if isinstance(val, str):
-            val = val.lower() in ("yes", "true", "1")
-        obj.meta[self.name] = val
+        if (val := obj.meta.get(self.name)) is not None:
+            obj.meta[self.name] = self._clean(val)
+        elif self.default is not None:
+            obj.meta[self.name] = self._clean(self.default)
 
 
 class Draft(Field):

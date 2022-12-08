@@ -55,7 +55,7 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
             template: archive.html
         ```
     """)
-    syndicated = fields.Field(doc="""
+    syndicated = fields.Bool(doc="""
         Set to true if the page can be included in a syndication, else to false.
 
         If not set, it defaults to the value of `indexed`.
@@ -81,12 +81,10 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
     def validate(self):
         super().validate()
 
-        # Make sure the syndicated exists
-        if (val := self.meta.get("syndicated")) is None:
+        # Make sure the syndicated field has a value
+        if "syndicated" not in self.meta:
             # If not present, default to 'indexed'
             self.meta["syndicated"] = self.meta["indexed"]
-        elif isinstance(val, str):
-            self.meta["syndicated"] = val.lower() in ("yes", "true", "1")
 
         # Parse syndication_date to a date if provided.
         #

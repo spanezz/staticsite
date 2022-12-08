@@ -88,6 +88,14 @@ class Page(SiteElement):
         The page description. If omitted, the page will have no description.
     """)
 
+    indexed = fields.Bool(default=False, doc="""
+        If true, the page appears in [directory indices](dir.md) and in
+        [page filter results](page_filter.md).
+
+        It defaults to true at least for [Markdown](markdown.md),
+        [reStructuredText](rst.rst), and [data](data.md) pages.
+    """)
+
     def __init__(
             self, site: Site, *,
             meta_values: dict[str, Any],

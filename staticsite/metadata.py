@@ -109,14 +109,6 @@ class SiteElement(metaclass=FieldsMetaclass):
         are loaded as static assets, without the interventions of features.
     """)
 
-    indexed = fields.Indexed(doc="""
-        If true, the page appears in [directory indices](dir.md) and in
-        [page filter results](page_filter.md).
-
-        It defaults to true at least for [Markdown](markdown.md),
-        [reStructuredText](rst.rst), and [data](data.md) pages.
-    """)
-
     draft = fields.Draft(doc="""
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
