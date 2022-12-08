@@ -143,8 +143,6 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'indexed': False,
                 'syndicated': False,
                 'pages': ['MarkdownPage(posts/example)'],
-                'rss_page': 'RSSPage(index.rss)',
-                'atom_page': 'AtomPage(index.atom)',
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'syndication.rss',

@@ -68,15 +68,15 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
 
         If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
     """)
-    rss_page = fields.Field(doc="""
-        Page with the RSS feed with posts for the syndication the page is in
-    """)
-    atom_page = fields.Field(doc="""
-        Page with the Atom feed with posts for the syndication the page is in
-    """)
-    archive = fields.Field(doc="""
-        Page with an archive of all posts for the syndication the page is in
-    """)
+    # rss_page = fields.Field(doc="""
+    #     Page with the RSS feed with posts for the syndication the page is in
+    # """)
+    # atom_page = fields.Field(doc="""
+    #     Page with the Atom feed with posts for the syndication the page is in
+    # """)
+    # archive = fields.Field(doc="""
+    #     Page with an archive of all posts for the syndication the page is in
+    # """)
 
     def validate(self):
         super().validate()
@@ -230,7 +230,6 @@ class SyndicationFeature(Feature):
                     page_cls=RSSPage,
                     meta_values=meta_values,
                     dst=f"{page_name}.{RSSPage.TYPE}")
-            rss_page.meta["rss_page"] = rss_page
             meta_values["rss_page"] = rss_page
             log.debug("%s: adding syndication page for %s", rss_page, page)
             # print(f"  rss_page {rss_page.meta=!r}")
@@ -241,8 +240,6 @@ class SyndicationFeature(Feature):
                     page_cls=AtomPage,
                     meta_values=meta_values,
                     dst=f"{page_name}.{AtomPage.TYPE}")
-            rss_page.meta["atom_page"] = atom_page
-            atom_page.meta["atom_page"] = atom_page
             meta_values["atom_page"] = atom_page
             log.debug("%s: adding syndication page for %s", atom_page, page)
 

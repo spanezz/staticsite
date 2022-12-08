@@ -35,6 +35,12 @@ class ImagePageMixin(metaclass=FieldsMetaclass):
         If not set, and an image exists with the same name as the page (besides the
         extension), that image is used.
     """)
+    width = fields.Field(doc="""
+        Image width
+    """)
+    height = fields.Field(doc="""
+        Image height
+    """)
 
 
 class Images(Feature):

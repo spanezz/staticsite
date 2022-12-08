@@ -151,7 +151,7 @@ It defaults to false, or true if `meta.date` is in the future.
             # TODO: remove this and leave only update_meta only, when we can map all metadata used by features
             for k, v in meta_values.items():
                 if k not in self.meta:
-                    log.warning(f"meta[{k!r}] is set but it does not correspond to a field")
+                    log.warning("%s: meta[%r] is set but it does not correspond to a field", self, k)
                     self.meta[k] = v
 
         # Call fields to fill in computed fields
