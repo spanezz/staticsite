@@ -37,12 +37,6 @@ class Field:
         # By default, nothing to do
         pass
 
-    def prepare_to_render(self, obj: SiteElement):
-        """
-        Compute values before the SiteElement gets rendered
-        """
-        pass
-
     def set(self, obj: SiteElement, values: dict[str, Any]):
         """
         Set metadata values in obj from values

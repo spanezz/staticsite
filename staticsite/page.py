@@ -383,10 +383,6 @@ class Page(SiteElement):
             return
         self.ready_to_render = True
 
-        # Call prepare_to_render hooks in fields
-        for field in self._fields.values():
-            field.prepare_to_render(self)
-
         # Render template_* fields
         for name in ('title', 'copyright', 'description'):
             if name in self.meta:

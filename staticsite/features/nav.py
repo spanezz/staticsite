@@ -42,11 +42,6 @@ class NavField(fields.Inherited):
         if (val := values.get(self.name)):
             obj.meta[self.name] = NavData(obj, val)
 
-    # def prepare_to_render(self, obj: metadata.SiteElement):
-    #     """
-    #     Compute values before the SiteElement gets rendered
-    #     """
-
 
 class NavMixin(metaclass=metadata.FieldsMetaclass):
     nav = NavField(structure=True, doc="""
