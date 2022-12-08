@@ -48,14 +48,14 @@ class SiteElement(metaclass=FieldsMetaclass):
     fields
     """
 
-    site_name = fields.Inherited("site_name", doc="""
+    site_name = fields.Inherited(doc="""
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
     """)
-    site_url = fields.Inherited("site_url", doc="""
+    site_url = fields.Inherited(doc="""
         Base URL for the site, used to generate an absolute URL to the page.
     """)
-    author = fields.Inherited("author", doc="""
+    author = fields.Inherited(doc="""
         A string with the name of the author for this page.
 
         SITE_AUTHOR is used as a default if found in settings.
@@ -63,7 +63,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If not found, it defaults to the current user's name.
     """)
 
-    date = fields.Date("date", doc="""
+    date = fields.Date(doc="""
         Publication date for the page.
 
         A python datetime object, timezone aware. If the date is in the future when
@@ -73,7 +73,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If missing, the modification time of the file is used.
     """)
 
-    copyright = fields.TemplateInherited("copyright", template="template_copyright", doc="""
+    template_copyright = fields.TemplateInherited(template="template_copyright", doc="""
         If `template_copyright` is set instead of `copyright`, it is a jinja2 template
         used to generate the copyright information.
 
@@ -84,7 +84,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
     """)
 
-    title = fields.TemplateInherited("title", template="template_title", doc="""
+    title = fields.TemplateInherited(template="template_title", doc="""
         The page title.
 
         If `template_title` is set instead of `title`, it is a jinja2 template used to
@@ -103,7 +103,7 @@ class SiteElement(metaclass=FieldsMetaclass):
          * if still no title can be found, the site name is used as a default.
     """)
 
-    description = fields.TemplateInherited("description", template="template_description", doc="""
+    description = fields.TemplateInherited(template="template_description", doc="""
         The page description. If omitted, the page will have no description.
 
         If `template_description` is set instead of `description`, it is a jinja2
@@ -112,7 +112,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         further escaped, so you can use HTML markup in it.
     """)
 
-    asset = fields.Inherited("asset", doc="""
+    asset = fields.Inherited(doc="""
         If set to True for a file (for example, by a `file:` pattern in a directory
         index), the file is loaded as a static asset, regardless of whether a feature
         would load it.
@@ -121,7 +121,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         are loaded as static assets, without the interventions of features.
     """)
 
-    indexed = fields.Indexed("indexed", doc="""
+    indexed = fields.Indexed(doc="""
         If true, the page appears in [directory indices](dir.md) and in
         [page filter results](page_filter.md).
 
@@ -129,7 +129,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         [reStructuredText](rst.rst), and [data](data.md) pages.
     """)
 
-    draft = fields.Draft("draft", doc="""
+    draft = fields.Draft(doc="""
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
 
