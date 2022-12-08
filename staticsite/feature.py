@@ -223,9 +223,16 @@ class Features:
             self.features[cls.NAME] = feature
             self.sorted.append(feature)
             self.node_mixins += feature.node_mixins
-            self.page_mixins += feature.page_mixins
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
+
+    def contents_scanned(self):
+        """
+        Hook called when the site is done scanning contents, and before
+        instantiating pages
+        """
+        for feature in self.sorted:
+            self.page_mixins += feature.page_mixins
 
     def load_default_features(self):
         """

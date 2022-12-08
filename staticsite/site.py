@@ -227,6 +227,9 @@ class Site:
         # Scan asset trees from themes
         self.theme.scan_assets()
 
+        # Notify Features that contents have been scanned
+        self.features.contents_scanned()
+
         self.stage_content_directory_scanned = True
 
     def scan_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:

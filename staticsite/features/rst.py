@@ -140,12 +140,11 @@ class RestructuredText(Feature):
             node: structure.Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
-        # Update the list of yaml tags with information from site.metadata
         if not self.yaml_tags_filled:
-            # TODO: we need another way to register structure metadata
-            # for meta in self.site.metadata.values():
-            #     if meta.structure:
-            #         self.yaml_tags.add(meta.name)
+            cls = self.site.features.get_page_class(RstPage)
+            for name, field in cls._fields.items():
+                if field.structure:
+                    self.yaml_tags.add(name)
             self.yaml_tags_filled = True
 
         taken: List[str] = []
