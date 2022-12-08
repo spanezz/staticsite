@@ -258,8 +258,6 @@ class RstPage(Page):
         self._render_page()
 
     def _render_page(self):
-        self.prepare_render()
-
         if not self.doctree_scan.links_rewritten:
             for node in self.doctree_scan.links_target:
                 node.attributes["refuri"] = self.resolve_url(node.attributes["refuri"])

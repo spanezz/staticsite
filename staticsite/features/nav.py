@@ -100,7 +100,6 @@ class Nav(Feature):
         # Make sure nav_title is filled
         for page in nav_pages:
             if not page.nav_title:
-                page.prepare_render()
                 page.nav_title = page.title
 
 

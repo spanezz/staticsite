@@ -18,7 +18,6 @@ class TestNav(test_utils.MockSiteTestMixin, TestCase):
 
         with self.site(files) as mocksite:
             page = mocksite.page("dir1/dir2/dir3/page")
-            page.prepare_render()
             self.assertEqual(page.to_dict(), {
                 "src": {
                     "relpath": "dir1/dir2/dir3/page.md",

@@ -69,7 +69,7 @@ class MockSiteBase:
             self.site.load()
         self.site.analyze()
 
-    def page(self, *paths: tuple[str], prepare_render: bool = False) -> tuple[staticsite.Page]:
+    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
         """
         Ensure the site has the given page, by path, and return it
         """
@@ -79,8 +79,6 @@ class MockSiteBase:
             if page is None:
                 self.test_case.fail(f"Page {path!r} not found in site")
             res.append(page)
-            if prepare_render:
-                page.prepare_render()
         if len(res) == 1:
             return res[0]
         else:
@@ -282,11 +280,11 @@ class SiteTestMixin:
         self.mocksite.test_case = None
         super().tearDown()
 
-    def page(self, *paths: tuple[str], prepare_render: bool = False) -> tuple[staticsite.Page]:
+    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
         """
         Ensure the site has the given page, by path, and return it
         """
-        return self.mocksite.page(*paths, prepare_render=prepare_render)
+        return self.mocksite.page(*paths)
 
     def assertPagePaths(self, paths: Sequence[str]):
         """

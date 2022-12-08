@@ -375,7 +375,6 @@ class MarkdownPage(Page):
 
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
-        self.prepare_render()
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
@@ -385,7 +384,6 @@ class MarkdownPage(Page):
 
     @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
-        self.prepare_render()
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
@@ -395,7 +393,6 @@ class MarkdownPage(Page):
 
     @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
-        self.prepare_render()
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + [""] + self.body_rest

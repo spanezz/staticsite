@@ -15,10 +15,6 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
         with self.site(files) as mocksite:
             # We have a root dir index and dir indices for all subdirs
             pages = mocksite.page("", "dir1", "dir1/dir2", "dir1/dir2/dir3")
-            # Call prepare_render on all the pages, to make sure we get the
-            # final computed version of metadata
-            for page in pages:
-                page.prepare_render()
             dir_root, dir_dir1, dir_dir2, dir_dir3 = pages
 
             self.assertEqual(dir_root.TYPE, "dir")

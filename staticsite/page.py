@@ -182,9 +182,6 @@ class Page(SiteElement):
         # True if this page can render a short version of itself
         self.content_has_split = False
 
-        # Set to true after pre-rendering hooks have been called
-        self.ready_to_render: bool = False
-
         # External links found when rendering the page
         self.rendered_external_links: set[str] = set()
 
@@ -231,6 +228,20 @@ class Page(SiteElement):
         # Check the existence of other mandatory fields
         if self.site_url is None:
             raise PageMissesFieldError(self, "site_url")
+
+        # Render template_* fields
+        for name in ('title', 'copyright', 'description'):
+            if getattr(self, name, None):
+                # If we have a value set, use it
+                continue
+            if (tpl := getattr(self, "template_" + name, None)):
+                # If a template exists, render it
+                # TODO: remove meta= and make it compatibile again with stable staticsite
+                setattr(self, name, markupsafe.Markup(tpl.render(meta=self.meta, page=self)))
+
+        # title must exist
+        if self.title is None:
+            self.title = self.site_name
 
     @cached_property
     def page_template(self):
@@ -425,36 +436,11 @@ class Page(SiteElement):
         else:
             return self.TYPE
 
-    def prepare_render(self):
-        """
-        Prepare for rendering.
-
-        This is idempotent, and can be called multiple times
-        """
-        if self.ready_to_render:
-            return
-        self.ready_to_render = True
-
-        # Render template_* fields
-        for name in ('title', 'copyright', 'description'):
-            if getattr(self, name, None):
-                # If we have a value set, use it
-                continue
-            if (tpl := getattr(self, "template_" + name, None)):
-                # If a template exists, render it
-                # TODO: remove meta= and make it compatibile again with stable staticsite
-                setattr(self, name, markupsafe.Markup(tpl.render(meta=self.meta, page=self)))
-
-        # title must exist
-        if self.title is None:
-            self.title = self.site_name
-
     @jinja2.pass_context
     def html_full(self, context, **kw) -> str:
         """
         Render the full page, from the <html> tag downwards.
         """
-        self.prepare_render()
         context = dict(context)
         context["render_style"] = "full"
         context.update(kw)
@@ -489,7 +475,6 @@ class Page(SiteElement):
 
     def to_dict(self):
         from .utils import dump_meta
-        self.prepare_render()
         res = {
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
