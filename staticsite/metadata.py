@@ -25,17 +25,13 @@ class FieldsMetaclass(type):
                 _fields.update(b_fields)
 
         # Add fields from the class itself
-        for field_name, val in list(dct.items()):
+        for field_name, val in dct.items():
             if isinstance(val, fields.Field):
                 # Store its description in the Model _meta
                 _fields[field_name] = val
-                val.name = field_name
             else:
                 # Leave untouched
                 continue
-
-            # Remove field_name from class variables
-            del dct[field_name]
 
         res = super().__new__(cls, name, bases, dct)
         res._fields = _fields

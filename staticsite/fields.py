@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 import jinja2
 
@@ -13,7 +13,6 @@ class Field:
     """
     Declarative description of a metadata element used by staticsite
     """
-
     def __init__(
             self, *,
             structure: bool = False,
@@ -31,6 +30,17 @@ class Field:
 
     def get_notes(self):
         return ()
+
+    def __set_name__(self, owner: Type[SiteElement], name: str) -> None:
+        self.name = name
+
+    def __get__(self, obj: SiteElement, type: Type = None) -> Any:
+        if self.name not in obj.__dict__:
+            raise AttributeError(self.name)
+        return obj.__dict__[self.name]
+
+    def __set__(self, obj: SiteElement, value: Any) -> None:
+        obj.__dict__[self.name] = self._clean(obj, value)
 
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         """
