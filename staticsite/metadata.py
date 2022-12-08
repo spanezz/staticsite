@@ -63,7 +63,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If not found, it defaults to the current user's name.
     """)
 
-    date = fields.Date(doc="""
+    date = fields.ElementDate(doc="""
         Publication date for the page.
 
         A python datetime object, timezone aware. If the date is in the future when

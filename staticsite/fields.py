@@ -77,7 +77,7 @@ class TemplateInherited(Inherited):
                 obj.meta[self.name] = obj.site.theme.jinja2.from_string(tpl)
 
 
-class Date(Field):
+class ElementDate(Field):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
