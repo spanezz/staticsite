@@ -3,6 +3,8 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any, Optional
 
+import jinja2
+
 if TYPE_CHECKING:
     from .metadata import SiteElement
 
@@ -37,13 +39,19 @@ class Field:
         # By default, nothing to do
         pass
 
+    def _clean(self, onj: SiteElement, value: Any) -> Any:
+        """
+        Hook to allow to clean values before set
+        """
+        return value
+
     def set(self, obj: SiteElement, values: dict[str, Any]):
         """
         Set metadata values in obj from values
         """
         # By default, plain assignment
         if self.name in values:
-            obj.meta[self.name] = values[self.name]
+            obj.meta[self.name] = self._clean(obj, values[self.name])
 
 
 class Inherited(Field):
@@ -69,18 +77,23 @@ class TemplateInherited(Inherited):
     other files in directories and subdirectories.
     """
 
-    def set(self, obj: SiteElement, values: dict[str, Any]):
-        super().set(obj, values)
+    def _clean(self, obj: SiteElement, value: Any) -> jinja2.Template:
         # Make sure the template is compiled
-        if (tpl := obj.meta.get(self.name)):
-            if isinstance(tpl, str):
-                obj.meta[self.name] = obj.site.theme.jinja2.from_string(tpl)
+        if isinstance(value, jinja2.Template):
+            return value
+        elif isinstance(value, str):
+            return obj.site.theme.jinja2.from_string(value)
+        else:
+            raise ValueError(f"{value!r} is not a valid value for a template field")
 
 
 class ElementDate(Field):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
+    def _clean(self, obj: SiteElement, value: Any) -> jinja2.Template:
+        return obj.site.clean_date(value)
+
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (date := obj.meta.get(self.name)):
             obj.meta[self.name] = obj.site.clean_date(date)
@@ -103,7 +116,7 @@ class Bool(Field):
         super().__init__(**kw)
         self.default = default
 
-    def _clean(self, val: Any) -> bool:
+    def _clean(self, obj: SiteElement, val: Any) -> bool:
         if val in (True, False):
             return val
         elif isinstance(val, str):
@@ -113,9 +126,9 @@ class Bool(Field):
 
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (val := obj.meta.get(self.name)) is not None:
-            obj.meta[self.name] = self._clean(val)
+            obj.meta[self.name] = self._clean(obj, val)
         elif self.default is not None:
-            obj.meta[self.name] = self._clean(self.default)
+            obj.meta[self.name] = self._clean(obj, self.default)
 
 
 class Draft(Field):
