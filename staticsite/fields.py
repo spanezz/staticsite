@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     import jinja2
 
     from .metadata import SiteElement
-    from .site import Site
 
 
 class Field:
@@ -28,7 +27,6 @@ class Field:
                         string
         :arg doc: documentation for this metadata element
         """
-        self.site: Site = None
         self.name: str
         self.structure: bool = structure
         self.doc = inspect.cleandoc(doc)
