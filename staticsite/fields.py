@@ -30,8 +30,6 @@ class Field:
         """
         self.site: Site = None
         self.name: str
-        # Type of this value
-        self.type: str = "TODO"
         self.structure: bool = structure
         self.doc = inspect.cleandoc(doc)
 
@@ -90,7 +88,6 @@ class TemplateInherited(Field):
         """
         super().__init__(*args, **kw)
         self.template: str = template
-        self.type = "jinja2"
 
     def get_notes(self):
         yield from super().get_notes()
