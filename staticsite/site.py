@@ -14,7 +14,6 @@ import pytz
 from . import structure, fstree
 from .cache import Caches, DisabledCaches
 from .file import File
-from .metadata import Metadata
 from .settings import Settings
 from .utils import timings
 
@@ -131,20 +130,6 @@ class Site:
         """
         warnings.warn("use site.structure.tracked_metadata instead of site.tracked_metadata", DeprecationWarning)
         return self.structure.tracked_metadata
-
-    def register_metadata(self, metadata: Metadata):
-        """
-        Add a well-known metadata description to the metadata registry.
-
-        This can be called safely by feature constructors and `load_dir_meta`
-        methods of features.
-
-        After directory metadata have been loaded, this method should not be
-        called anymore.
-        """
-        if self.stage_content_directory_scanned:
-            log.warn("register_metadata called after content directory has been scanned")
-        self.metadata.add(metadata)
 
     @cached_property
     def archetypes(self) -> "archetypes.Archetypes":
