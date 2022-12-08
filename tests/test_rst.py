@@ -13,7 +13,7 @@ class TestRst(test_utils.MockSiteTestMixin, TestCase):
             "index.rst": """
 :date: 2016-04-16 10:23:00+02:00
 :tags: [example, "another_tag"]
-:foo:
+:description:
   line1
   line2
   line3
@@ -58,7 +58,7 @@ Example blog post in reStructuredText
                     "draft": False,
                     "syndicated": True,
                     "syndication_date": "2016-04-16 10:23:00+02:00",
-                    "foo": "line1\nline2\nline3",
+                    "description": "line1\nline2\nline3",
                     'tags': [
                         'CategoryPage(taxonomies/tags/example)',
                         'CategoryPage(taxonomies/tags/another_tag)'
