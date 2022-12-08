@@ -17,7 +17,8 @@ class TaxonomyPageMixin(metaclass=metadata.FieldsMetaclass):
     """
     Base class for dynamically generated taxonomy page mixins
     """
-    pass
+    # This is empty to begin with, to serve as a base for TaxonomyMixins
+    # dynamically generated when taxonomies are found
 
 
 class TaxonomyFeature(Feature):
@@ -33,7 +34,7 @@ class TaxonomyFeature(Feature):
         self.known_taxonomies = set()
 
         # All TaxonomyPages found
-        self.taxonomies: Dict[str, TaxonomyPage] = {}
+        self.taxonomies: dict[str, TaxonomyPage] = {}
 
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
@@ -127,10 +128,10 @@ class TaxonomyPage(Page):
     Root page for one taxonomy defined in the site
     """
     TYPE = "taxonomy"
+    TEMPLATE = "taxonomy.html"
 
     def __init__(self, *args, name: str, **kw):
         meta_values = kw["meta_values"]
-        meta_values.setdefault("template", "taxonomy.html")
         meta_values.setdefault("nav_title", name.capitalize())
         super().__init__(*args, **kw)
 
@@ -242,6 +243,8 @@ class CategoryPage(Page):
     """
     Index page showing all the pages tagged with a given taxonomy item
     """
+    taxonomy = fields.Field(doc="Page that defined this taxonomy")
+    name = fields.Field(doc="Name of the category shown in this page")
     TYPE = "category"
 
     def __init__(self, *args, name: str = None, **kw):

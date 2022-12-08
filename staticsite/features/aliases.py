@@ -56,6 +56,7 @@ class AliasPage(Page):
     """
     Page rendering a redirect to another page
     """
+    page = fields.Field(doc="Page this alias redirects to")
     TYPE = "alias"
     # Default template to use for this type of page
     TEMPLATE: str
