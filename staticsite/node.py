@@ -6,7 +6,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, TextIO, Type, Union
 
-from . import metadata
+from . import fields
 from .metadata import SiteElement
 
 if TYPE_CHECKING:
@@ -59,7 +59,7 @@ class Node(SiteElement):
     """
     One node in the rendered directory hierarchy of the site
     """
-    site_path = metadata.Metadata("site_path", doc="""
+    site_path = fields.Field("site_path", doc="""
         Where a content directory appears in the site.
 
         By default, is is the `site_path` of the parent directory, plus the directory

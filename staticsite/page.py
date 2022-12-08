@@ -10,7 +10,7 @@ from urllib.parse import urlparse, urlunparse
 import jinja2
 import markupsafe
 
-from . import metadata, structure
+from . import structure, fields
 from .metadata import SiteElement
 from .render import RenderedString
 
@@ -37,7 +37,7 @@ class PageMissesFieldError(PageValidationError):
         super().__init__(page, f"missing required field meta.{field}")
 
 
-class MetadataTemplate(metadata.Metadata):
+class TemplateField(fields.Field):
     """
     Template name or compiled template, taking its default value from Page.TEMPLATE
     """
@@ -58,7 +58,7 @@ class Page(SiteElement):
     # Default page template
     TEMPLATE = "page.html"
 
-    template = MetadataTemplate(doc="""
+    template = TemplateField(doc="""
         Template used to render the page. Defaults to `page.html`, although specific
         pages of some features can default to other template names.
 

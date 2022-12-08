@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Any, List
 
 import jinja2
 
-from staticsite import structure
+from staticsite import structure, fields
 from staticsite.feature import Feature
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
-from staticsite.metadata import FieldsMetaclass, Metadata
+from staticsite.metadata import FieldsMetaclass
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ log = logging.getLogger("links")
 
 
 class LinksPageMixin(metaclass=FieldsMetaclass):
-    links = Metadata(doc="""
+    links = fields.Field(doc="""
         Extra metadata for external links.
 
         It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:

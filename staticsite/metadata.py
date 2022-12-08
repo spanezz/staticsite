@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import inspect
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
-import markupsafe
+from . import fields
 
 if TYPE_CHECKING:
-    import jinja2
-
     from .site import Site
 
 
@@ -26,7 +23,7 @@ class FieldsMetaclass(type):
 
         # Add fields from the class itself
         for field_name, val in list(dct.items()):
-            if isinstance(val, Metadata):
+            if isinstance(val, fields.Field):
                 # Store its description in the Model _meta
                 _fields[field_name] = val
                 val.name = field_name
@@ -42,182 +39,20 @@ class FieldsMetaclass(type):
         return res
 
 
-class Metadata:
-    """
-    Declarative description of a metadata element used by staticsite
-    """
-
-    def __init__(
-            self,
-            structure: bool = False,
-            doc: str = ""):
-        """
-        :arg name: name of this metadata element
-        :arg structure: set to True if this element is a structured value. Set
-                        to false if it is a simple value like an integer or
-                        string
-        :arg doc: documentation for this metadata element
-        """
-        self.site: Site = None
-        self.name: str
-        # Type of this value
-        self.type: str = "TODO"
-        self.structure: bool = structure
-        self.doc = inspect.cleandoc(doc)
-
-    def get_notes(self):
-        return ()
-
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        """
-        Compute values for the meta element of a newly created SiteElement
-        """
-        # By default, nothing to do
-        pass
-
-    def prepare_to_render(self, obj: SiteElement):
-        """
-        Compute values before the SiteElement gets rendered
-        """
-        pass
-
-    def set(self, obj: SiteElement, values: dict[str, Any]):
-        """
-        Set metadata values in obj from values
-        """
-        # By default, plain assignment
-        if self.name in values:
-            obj.meta[self.name] = values[self.name]
-
-
-class MetadataInherited(Metadata):
-    """
-    This metadata, when present in a directory index, should be inherited by
-    other files in directories and subdirectories.
-    """
-
-    def get_notes(self):
-        yield from super().get_notes()
-        yield "Inherited from parent pages"
-
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if parent is None:
-            return
-        if self.name not in obj.meta and self.name in parent.meta:
-            obj.meta[self.name] = parent.meta[self.name]
-
-
-class MetadataTemplateInherited(Metadata):
-    """
-    This metadata, when present in a directory index, should be inherited by
-    other files in directories and subdirectories.
-    """
-    def __init__(self, *args, template: str, **kw):
-        """
-        :arg template_for: set to the name of another field, it documents that
-                           this metadata is a template version of another
-                           metadata
-        """
-        super().__init__(*args, **kw)
-        self.template: str = template
-        self.type = "jinja2"
-
-    def get_notes(self):
-        yield from super().get_notes()
-        yield "Inherited from parent pages"
-        yield f"Template: {self.template}"
-
-    def set_template(self, obj: SiteElement, tpl: Union[str, jinja2.Template]):
-        if isinstance(tpl, str):
-            obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
-        else:
-            obj.meta[self.template] = tpl
-
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (tpl := obj.meta.get(self.template)):
-            # Make sure the current template value is a compiled template
-            if isinstance(tpl, str):
-                obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
-        elif parent is not None:
-            # Try to inherit template
-            if self.template not in obj.meta and (tpl := parent.meta.get(self.template)):
-                obj.meta[self.template] = tpl
-
-    def prepare_to_render(self, obj: SiteElement):
-        if self.name in obj.meta:
-            return
-
-        if (template := obj.meta.get(self.template)) is not None:
-            # If a template exists, render
-            # TODO: remove meta= and make it compatibile again with stable staticsite
-            val = markupsafe.Markup(template.render(meta=obj.meta, page=obj))
-            obj.meta[self.name] = val
-            return val
-
-    def set(self, obj: SiteElement, values: dict[str, Any]):
-        super().set(obj, values)
-        # Also copy the template name
-        if self.template in values:
-            if isinstance(tpl := values[self.template], str):
-                obj.meta[self.template] = obj.site.theme.jinja2.from_string(tpl)
-            else:
-                obj.meta[self.template] = tpl
-
-
-class MetadataDate(Metadata):
-    """
-    Make sure, on page load, that the element is a valid aware datetime object
-    """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (date := obj.meta.get(self.name)):
-            obj.meta[self.name] = obj.site.clean_date(date)
-        elif parent and (date := parent.meta.get(self.name)):
-            obj.meta[self.name] = obj.site.clean_date(date)
-        elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
-            obj.meta[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
-        else:
-            obj.meta[self.name] = obj.site.generation_time
-
-
-class MetadataIndexed(Metadata):
-    """
-    Make sure the field exists and is a bool, defaulting to False
-    """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        val = obj.meta.get(self.name, False)
-        if isinstance(val, str):
-            val = val.lower() in ("yes", "true", "1")
-        obj.meta[self.name] = val
-
-
-class MetadataDraft(Metadata):
-    """
-    Make sure the draft exists and is a bool, computed according to the date
-    """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        # if obj.__class__.__name__ not in ("Asset", "Node"):
-        #     print(f"MetadataDraft {obj.__class__=} {obj.meta=} {obj.site.generation_time=}"
-        #           f" {obj.meta['date'] > obj.site.generation_time}")
-        if (value := obj.meta.get(self.name)) is None:
-            obj.meta[self.name] = obj.meta["date"] > obj.site.generation_time
-        elif not isinstance(value, bool):
-            obj.meta[self.name] = bool(value)
-
-
 class SiteElement(metaclass=FieldsMetaclass):
     """
     Functionality to expose a `meta` member giving dict-like access to Metadata
     fields
     """
 
-    site_name = MetadataInherited("site_name", doc="""
+    site_name = fields.Inherited("site_name", doc="""
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
     """)
-    site_url = MetadataInherited("site_url", doc="""
+    site_url = fields.Inherited("site_url", doc="""
         Base URL for the site, used to generate an absolute URL to the page.
     """)
-    author = MetadataInherited("author", doc="""
+    author = fields.Inherited("author", doc="""
         A string with the name of the author for this page.
 
         SITE_AUTHOR is used as a default if found in settings.
@@ -225,7 +60,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If not found, it defaults to the current user's name.
     """)
 
-    date = MetadataDate("date", doc="""
+    date = fields.Date("date", doc="""
         Publication date for the page.
 
         A python datetime object, timezone aware. If the date is in the future when
@@ -235,7 +70,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If missing, the modification time of the file is used.
     """)
 
-    copyright = MetadataTemplateInherited("copyright", template="template_copyright", doc="""
+    copyright = fields.TemplateInherited("copyright", template="template_copyright", doc="""
         If `template_copyright` is set instead of `copyright`, it is a jinja2 template
         used to generate the copyright information.
 
@@ -246,7 +81,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
     """)
 
-    title = MetadataTemplateInherited("title", template="template_title", doc="""
+    title = fields.TemplateInherited("title", template="template_title", doc="""
         The page title.
 
         If `template_title` is set instead of `title`, it is a jinja2 template used to
@@ -265,7 +100,7 @@ class SiteElement(metaclass=FieldsMetaclass):
          * if still no title can be found, the site name is used as a default.
     """)
 
-    description = MetadataTemplateInherited("description", template="template_description", doc="""
+    description = fields.TemplateInherited("description", template="template_description", doc="""
         The page description. If omitted, the page will have no description.
 
         If `template_description` is set instead of `description`, it is a jinja2
@@ -274,7 +109,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         further escaped, so you can use HTML markup in it.
     """)
 
-    asset = MetadataInherited("asset", doc="""
+    asset = fields.Inherited("asset", doc="""
         If set to True for a file (for example, by a `file:` pattern in a directory
         index), the file is loaded as a static asset, regardless of whether a feature
         would load it.
@@ -283,7 +118,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         are loaded as static assets, without the interventions of features.
     """)
 
-    indexed = MetadataIndexed("indexed", doc="""
+    indexed = fields.Indexed("indexed", doc="""
         If true, the page appears in [directory indices](dir.md) and in
         [page filter results](page_filter.md).
 
@@ -291,7 +126,7 @@ class SiteElement(metaclass=FieldsMetaclass):
         [reStructuredText](rst.rst), and [data](data.md) pages.
     """)
 
-    draft = MetadataDraft("draft", doc="""
+    draft = fields.Draft("draft", doc="""
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
 

@@ -1,20 +1,23 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
-from staticsite import Page, Feature, structure
-from staticsite.archetypes import Archetype
-from staticsite.utils import yaml_codec
-from staticsite.page_filter import PageFilter
-from staticsite.metadata import Metadata, FieldsMetaclass
-from staticsite.features.jinja2 import RenderPartialTemplateMixin
-import jinja2
-import re
-import os
+
 import io
-from collections import defaultdict
 import logging
+import os
+import re
+from collections import defaultdict
+from typing import TYPE_CHECKING, Any
+
+import jinja2
+
+from staticsite import Feature, Page, fields, structure
+from staticsite.archetypes import Archetype
+from staticsite.features.jinja2 import RenderPartialTemplateMixin
+from staticsite.metadata import FieldsMetaclass
+from staticsite.page_filter import PageFilter
+from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
-    from staticsite import scan, file
+    from staticsite import file, scan
 
 log = logging.getLogger("data")
 
@@ -23,7 +26,7 @@ re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
 class DataPageMixin(metaclass=FieldsMetaclass):
-    data_type = Metadata(doc="""
+    data_type = fields.Field(doc="""
         Type of data for this file.
 
         This is used to group data of the same type together, and to choose a

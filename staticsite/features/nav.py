@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
-from staticsite import metadata
+from staticsite import metadata, fields
 from staticsite.feature import Feature
 from staticsite.page import PageNotFoundError
 
@@ -33,7 +33,7 @@ class NavData:
         return self.resolved
 
 
-class MetadataNav(metadata.MetadataInherited):
+class NavField(fields.Inherited):
     def set(self, obj: metadata.SiteElement, values: dict[str, Any]):
         """
         Set metadata values in obj from values
@@ -49,14 +49,14 @@ class MetadataNav(metadata.MetadataInherited):
 
 
 class NavMixin(metaclass=metadata.FieldsMetaclass):
-    nav = MetadataNav(structure=True, doc="""
+    nav = NavField(structure=True, doc="""
         List of page paths, relative to the page defining the nav element, that
         are used for the navbar.
     """)
 
 
 class NavPageMixin(NavMixin):
-    nav_title = metadata.Metadata(doc="""
+    nav_title = fields.Field(doc="""
         Title to use when this page is linked in a navbar.
 
         It defaults to `page.meta.title`, or to the series name for series pages.

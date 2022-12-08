@@ -1,13 +1,15 @@
 from __future__ import annotations
-from staticsite.feature import Feature
-from staticsite import metadata
+
 import logging
+
+from staticsite import fields, metadata
+from staticsite.feature import Feature
 
 log = logging.getLogger("related")
 
 
 class RelatedPageMixin(metaclass=metadata.FieldsMetaclass):
-    related = metadata.Metadata(structure=True, doc="""
+    related = fields.Field(structure=True, doc="""
         Dict of pages related to this page.
 
         Dict values will be resolved as pages.

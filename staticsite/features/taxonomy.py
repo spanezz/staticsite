@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict, Iterable, Optional, Any
-from staticsite import Page, structure, metadata
+from staticsite import Page, structure, metadata, fields
 from staticsite.feature import Feature
 from collections import defaultdict
 import heapq
@@ -46,7 +46,7 @@ class TaxonomyFeature(Feature):
         # Instead of making tags inheritable from normal metadata, we can offer
         # them to be added by 'files' or 'dirs' directives.
         self.page_mixins.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
-            name: metadata.Metadata(structure=True, doc=f"""
+            name: fields.Field(structure=True, doc=f"""
                 List of categories for the `{name}` taxonomy.
 
                 Setting this as a simple string is the same as setting it as a list of one

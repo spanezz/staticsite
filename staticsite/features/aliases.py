@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from staticsite import metadata, structure
+from staticsite import fields, metadata, structure
 from staticsite.feature import Feature
 from staticsite.page import Page
 
@@ -14,7 +14,7 @@ log = logging.getLogger("aliases")
 
 
 class AliasesPageMixin(metaclass=metadata.FieldsMetaclass):
-    aliases = metadata.Metadata(structure=True, doc="""
+    aliases = fields.Field(structure=True, doc="""
         Relative paths in the destination directory where the page should also show up.
         [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
         existing links when moving a page to a different location.

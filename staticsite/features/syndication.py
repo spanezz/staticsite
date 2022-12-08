@@ -6,9 +6,9 @@ from typing import Any, List, Optional, Union
 
 import jinja2
 
-from staticsite import structure
+from staticsite import structure, fields
 from staticsite.feature import Feature
-from staticsite.metadata import FieldsMetaclass, Metadata
+from staticsite.metadata import FieldsMetaclass
 from staticsite.page import Page, PageNotFoundError
 from staticsite.utils import arrange
 
@@ -20,7 +20,7 @@ class SyndicatedPageError(Exception):
 
 
 class SyndicationPageMixin(metaclass=FieldsMetaclass):
-    syndication = Metadata(structure=True, doc="""
+    syndication = fields.Field(structure=True, doc="""
         Defines syndication for the contents of this page.
 
         It is a structure which can contain normal metadata, plus:
@@ -55,12 +55,12 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
             template: archive.html
         ```
     """)
-    syndicated = Metadata(doc="""
+    syndicated = fields.Field(doc="""
         Set to true if the page can be included in a syndication, else to false.
 
         If not set, it defaults to the value of `indexed`.
     """)
-    syndication_date = Metadata(doc="""
+    syndication_date = fields.Field(doc="""
         Syndication date for this page.
 
         This is the date that will appear in RSS and Atom feeds, and the page will not
