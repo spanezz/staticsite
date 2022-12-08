@@ -36,9 +36,9 @@ title: Test1 title
             self.assertEqual(test.TYPE, "jinja2")
             self.assertEqual(test1.TYPE, "jinja2")
 
-            self.assertEqual(index.meta["title"], "Default title")
-            self.assertEqual(test.meta["title"], "Test title")
-            self.assertEqual(test1.meta["title"], "Test1 title")
+            self.assertEqual(index.title, "Default title")
+            self.assertEqual(test.title, "Test title")
+            self.assertEqual(test1.title, "Test1 title")
 
     def test_tree_meta(self):
         files = {
@@ -55,13 +55,13 @@ title: Test1 title
         }
 
         with self.site(files) as mocksite:
-            self.assertEqual(mocksite.page("").meta["site_name"], "Root site")
-            self.assertEqual(mocksite.page("page").meta["site_name"], "Root site")
-            self.assertEqual(mocksite.page("page1").meta["site_name"], "Page 1 site")
-            self.assertEqual(mocksite.page("dir1").meta["site_name"], "Root site")
-            self.assertEqual(mocksite.page("dir1/page").meta["site_name"], "Root site")
-            self.assertEqual(mocksite.page("dir1/dir2").meta["site_name"], "dir2 site")
-            self.assertEqual(mocksite.page("dir1/dir2/page").meta["site_name"], "dir2 site")
+            self.assertEqual(mocksite.page("").site_name, "Root site")
+            self.assertEqual(mocksite.page("page").site_name, "Root site")
+            self.assertEqual(mocksite.page("page1").site_name, "Page 1 site")
+            self.assertEqual(mocksite.page("dir1").site_name, "Root site")
+            self.assertEqual(mocksite.page("dir1/page").site_name, "Root site")
+            self.assertEqual(mocksite.page("dir1/dir2").site_name, "dir2 site")
+            self.assertEqual(mocksite.page("dir1/dir2/page").site_name, "dir2 site")
 
     def test_asset(self):
         self.maxDiff = None
@@ -119,9 +119,9 @@ class TestSiteName(test_utils.MockSiteTestMixin, TestCase):
 
         with self.site(sitedef) as mocksite:
             expected = os.path.basename(mocksite.root)
-            self.assertEqual(mocksite.page("").meta["site_name"], expected)
-            self.assertEqual(mocksite.page("page").meta["site_name"], expected)
-            self.assertEqual(mocksite.page("dir/page").meta["site_name"], expected)
+            self.assertEqual(mocksite.page("").site_name, expected)
+            self.assertEqual(mocksite.page("page").site_name, expected)
+            self.assertEqual(mocksite.page("dir/page").site_name, expected)
 
     def test_from_settings(self):
         sitedef = test_utils.MockSite({
@@ -132,9 +132,9 @@ class TestSiteName(test_utils.MockSiteTestMixin, TestCase):
         sitedef.settings.SITE_NAME = "Site Name"
 
         with self.site(sitedef) as mocksite:
-            self.assertEqual(mocksite.page("").meta["site_name"], "Site Name")
-            self.assertEqual(mocksite.page("page").meta["site_name"], "Site Name")
-            self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name")
+            self.assertEqual(mocksite.page("").site_name, "Site Name")
+            self.assertEqual(mocksite.page("page").site_name, "Site Name")
+            self.assertEqual(mocksite.page("dir/page").site_name, "Site Name")
 
     def test_from_dir_meta(self):
         files = {
@@ -145,9 +145,9 @@ class TestSiteName(test_utils.MockSiteTestMixin, TestCase):
         }
 
         with self.site(files) as mocksite:
-            self.assertEqual(mocksite.page("").meta["site_name"], "Site Name dirmeta")
-            self.assertEqual(mocksite.page("page").meta["site_name"], "Site Name dirmeta")
-            self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name dirmeta")
+            self.assertEqual(mocksite.page("").site_name, "Site Name dirmeta")
+            self.assertEqual(mocksite.page("page").site_name, "Site Name dirmeta")
+            self.assertEqual(mocksite.page("dir/page").site_name, "Site Name dirmeta")
 
     def test_from_root_title(self):
         sitedef = test_utils.MockSite({
@@ -158,9 +158,9 @@ class TestSiteName(test_utils.MockSiteTestMixin, TestCase):
         sitedef.settings.SITE_NAME = None
 
         with self.site(sitedef) as mocksite:
-            self.assertEqual(mocksite.page("").meta["site_name"], "Site Name title")
-            self.assertEqual(mocksite.page("page").meta["site_name"], "Site Name title")
-            self.assertEqual(mocksite.page("dir/page").meta["site_name"], "Site Name title")
+            self.assertEqual(mocksite.page("").site_name, "Site Name title")
+            self.assertEqual(mocksite.page("page").site_name, "Site Name title")
+            self.assertEqual(mocksite.page("dir/page").site_name, "Site Name title")
 
 
 class TestFields(test_utils.MockSiteTestMixin, TestCase):

@@ -50,5 +50,5 @@ class TestPageFilter(test_utils.MockSiteTestMixin, TestCase):
 
             page, page1, page2, page3, page4 = mocksite.page(
                     "page", "dir/page1", "dir/page2", "dir/dir/page3", "dir/dir/page4")
-            self.assertCountEqual(page.meta["pages"], [page1, page2, page3, page4])
-            self.assertCountEqual(page1.meta["pages"], [page3, page4])
+            self.assertCountEqual(page.pages, [page1, page2, page3, page4])
+            self.assertCountEqual(page1.pages, [page3, page4])

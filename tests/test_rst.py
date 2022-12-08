@@ -43,7 +43,7 @@ Example blog post in reStructuredText
 
             # We have a root dir index and dir indices for all subdirs
             self.assertEqual(page.TYPE, "rst")
-            self.assertCountEqual(page.meta["tags"], [tag_example, tag_another])
+            self.assertCountEqual(page.tags, [tag_example, tag_another])
             self.assertEqual(page.to_dict(), {
                 "src": {
                     "abspath": os.path.join(mocksite.site.content_root, "index.rst"),

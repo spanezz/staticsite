@@ -37,22 +37,22 @@ text
             blog, post1, post2, widget, rss, atom = mocksite.page(
                     "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
-            synd = blog.meta["syndication"]
+            synd = blog.syndication
             self.assertEqual(synd.pages, [post2, post1])
 
-            self.assertNotIn("syndication", post1.meta)
-            self.assertEqual(post1.meta["related"], {
+            self.assertIsNone(post1.syndication)
+            self.assertEqual(post1.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertNotIn("syndication", post2.meta)
-            self.assertEqual(post2.meta["related"], {
+            self.assertIsNone(post2.syndication)
+            self.assertEqual(post2.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertEqual(rss.meta["pages"], synd.pages)
-            self.assertEqual(atom.meta["pages"], synd.pages)
-            self.assertNotIn("syndication", widget.meta)
+            self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(atom.pages, synd.pages)
+            self.assertIsNone(widget.syndication)
 
     def test_add_to_false(self):
         files = dict(BASE_FILES)
@@ -71,14 +71,14 @@ text
             blog, post1, post2, widget, rss, atom = mocksite.page(
                     "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
-            synd = blog.meta["syndication"]
+            synd = blog.syndication
             self.assertEqual(synd.pages, [post2, post1])
 
-            self.assertNotIn("syndication", post1.meta)
-            self.assertNotIn("syndication", post2.meta)
-            self.assertNotIn("syndication", widget.meta)
-            self.assertEqual(rss.meta["pages"], synd.pages)
-            self.assertEqual(atom.meta["pages"], synd.pages)
+            self.assertIsNone(post1.syndication)
+            self.assertIsNone(post2.syndication)
+            self.assertIsNone(widget.syndication)
+            self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(atom.pages, synd.pages)
 
     def test_complex(self):
         files = dict(BASE_FILES)
@@ -98,7 +98,7 @@ text
             blog, post1, post2, widget, rss, atom = mocksite.page(
                     "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
-            synd = blog.meta["syndication"]
+            synd = blog.syndication
             self.assertEqual(synd.pages, [post2])
 
             self.assertIsNone(post1.syndication)
