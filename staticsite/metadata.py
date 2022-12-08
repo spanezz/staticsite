@@ -128,12 +128,8 @@ It defaults to false, or true if `meta.date` is in the future.
 
         if meta_values:
             self.update_meta(meta_values)
-            # TODO: remove this and leave only update_meta only, when we can map all metadata used by features
-            for k, v in meta_values.items():
-                if k not in self.meta:
-                    log.warning("%s: meta[%r] is set but it does not correspond to a field", self, k)
-                    raise RuntimeError(f"{self}: spurious meta {k!r}")
-                    self.meta[k] = v
+            # TODO: make update_meta pop values, then warn here about the
+            # values that are left and will be ignored
 
         # Call fields to fill in computed fields
         for field in self._fields.values():
