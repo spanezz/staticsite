@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from staticsite import fields, metadata, structure
 from staticsite.feature import Feature
 from staticsite.page import Page
 
-if TYPE_CHECKING:
-    from staticsite.site import Site
 
 log = logging.getLogger("aliases")
 
@@ -47,7 +44,6 @@ class AliasesFeature(Feature):
                 self.site.structure.root.create_page(
                         page_cls=AliasPage,
                         created_from=page,
-                        alias=alias,
                         meta_values={"page": page},
                         path=structure.Path.from_string(alias))
 
@@ -58,12 +54,7 @@ class AliasPage(Page):
     """
     page = fields.Field(doc="Page this alias redirects to")
     TYPE = "alias"
-    # Default template to use for this type of page
-    TEMPLATE: str
-
-    def __init__(self, site: Site, *, alias: str, **kw):
-        super().__init__(site, **kw)
-        self.meta["template"] = "redirect.html"
+    TEMPLATE = "redirect.html"
 
 
 FEATURES = {

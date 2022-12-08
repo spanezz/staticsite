@@ -68,13 +68,13 @@ class Taxonomy:
         Generate the page for one category in this taxonomy
         """
         # Sort pages by date, used by series sequencing
-        pages.sort(key=lambda p: p.meta["date"])
+        pages.sort(key=lambda p: p.date)
 
         # Create category page
         category_meta = dict(self.category_meta)
         category_meta["name"] = name
         category_meta["pages"] = pages
-        category_meta["date"] = pages[-1].meta["date"]
+        category_meta["date"] = pages[-1].date
 
         # Syndication
         if (syndication_value := self.category_meta.pop("syndication", None)) is not None:
@@ -112,13 +112,14 @@ class Taxonomy:
         # Group pages by category
         by_category: dict[str, list[Page]] = defaultdict(list)
         for page in self.index.site.structure.pages_by_metadata[self.name]:
-            categories = page.meta.get(self.name)
+            categories = getattr(page, self.name, None)
             if not categories:
                 continue
             # Make sure page.meta.$category is a list
             # TODO: move to field validator
             if isinstance(categories, str):
-                categories = page.meta[self.name] = (categories,)
+                categories = (categories,)
+                setattr(page, self.name, categories)
             # File the page in its category lists
             for category in categories:
                 by_category[category].append(page)
@@ -129,16 +130,15 @@ class Taxonomy:
 
         # Replace category names with category pages in each categorized page
         for page in self.index.site.structure.pages_by_metadata[self.name]:
-            categories = page.meta.get(self.name)
-            if not categories:
+            if not (categories := getattr(page, self.name, None)):
                 continue
-            page.meta[self.name] = [self.category_pages[c] for c in categories]
+            setattr(page, self.name, [self.category_pages[c] for c in categories])
 
         # Sort categories dict by category name
         self.category_pages = {k: v for k, v in sorted(self.category_pages.items())}
 
         # Set self.meta.pages to the sorted list of categories
-        self.index.meta["pages"] = list(self.category_pages.values())
+        self.index.pages = list(self.category_pages.values())
 
 
 class TaxonomyPageMixin(metaclass=metadata.FieldsMetaclass):
@@ -176,7 +176,7 @@ class TaxonomyFeature(Feature):
         # them to be added by 'files' or 'dirs' directives.
         self.page_mixins.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
             # TODO: make this validate as string lists
-            name: fields.Field(structure=True, doc=f"""
+            name: fields.Field(structure=True, default=(), doc=f"""
                 List of categories for the `{name}` taxonomy.
 
                 Setting this as a simple string is the same as setting it as a list of one
@@ -269,7 +269,7 @@ class TaxonomyPage(Page):
         Map all possible values for this taxonomy to the pages that reference
         them
         """
-        return self.meta['taxonomy'].category_pages
+        return self.taxonomy.category_pages
 
     def to_dict(self):
         from staticsite.utils import dump_meta
@@ -286,13 +286,13 @@ class TaxonomyPage(Page):
         """
         Return the ``count`` categories with the most pages
         """
-        return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.meta["pages"]))
+        return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.pages))
 
     def most_recent(self, count=10):
         """
         Return the ``count`` categories with the most recent date
         """
-        return heapq.nlargest(count, self.categories.values(), key=lambda c: c.meta["date"])
+        return heapq.nlargest(count, self.categories.values(), key=lambda c: c.date)
 
 
 @functools.total_ordering
@@ -311,7 +311,7 @@ class CategoryPage(Page):
         # Category name
         self.name = name
         # Index of each page in the category sequence
-        self.page_index: Dict[Page, int] = {page: idx for idx, page in enumerate(self.meta["pages"])}
+        self.page_index: Dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)}
 
     def to_dict(self):
         res = super().to_dict()
@@ -347,8 +347,8 @@ class CategoryPage(Page):
         # Compute a series title for this page.
         # Look for the last defined series title, defaulting to the title of
         # the first page in the series.
-        pages = self.meta["pages"]
-        series_title = pages[0].meta["title"]
+        pages = self.pages
+        series_title = pages[0].title
         return {
             # Array with all the pages in the series
             "pages": pages,
@@ -366,11 +366,10 @@ class CategoryPage(Page):
         # Compute a series title for this page.
         # Look for the last defined series title, defaulting to the title of
         # the first page in the series.
-        pages = self.meta["pages"]
-        series_title = pages[0].meta["title"]
+        pages = self.pages
+        series_title = pages[0].title
         for p in pages:
-            title = p.meta.get("series_title")
-            if title is not None:
+            if (title := p.series_title) is not None:
                 series_title = title
             if p == page:
                 break

@@ -178,7 +178,7 @@ class J2Page(RenderPartialTemplateMixin, Page):
         kw["meta_values"].setdefault("indexed", True)
         super().__init__(*args, **kw)
 
-        self.meta["template"] = template
+        self.template = template
 
 
 FEATURES = {

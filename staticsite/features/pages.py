@@ -38,7 +38,7 @@ class PagesFeature(Feature):
     def analyze(self):
         # Expand pages expressions
         for page in self.site.structure.pages_by_metadata["pages"]:
-            query = page.meta["pages"]
+            query = page.pages
             if isinstance(query, str):
                 query = {"path": query}
             elif not isinstance(query, dict):
@@ -50,12 +50,12 @@ class PagesFeature(Feature):
             # Do not include self in the result list
             pages = [p for p in page.find_pages(**query) if p != page]
             # print(f"pages {page=!r}, {query=!r}, {pages=}")
-            page.meta["pages"] = pages
+            page.pages = pages
             if pages:
-                max_date = max(p.meta["date"] for p in pages)
+                max_date = max(p.date for p in pages)
 
                 # Update the page date to the max of the pages dates
-                page.meta["date"] = max(max_date, page.meta["date"])
+                page.date = max(max_date, page.date)
 
 
 FEATURES = {

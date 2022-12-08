@@ -34,13 +34,15 @@ class NavData:
 
 
 class NavField(fields.Inherited):
-    def set(self, obj: metadata.SiteElement, values: dict[str, Any]):
+    def __init__(self, **kw):
+        kw.setdefault("default", ())
+        super().__init__(**kw)
+
+    def _clean(self, obj: metadata.SiteElement, value: Any) -> NavData:
         """
         Set metadata values in obj from values
         """
-        # Create a NavData element from the value set
-        if (val := values.get(self.name)):
-            obj.meta[self.name] = NavData(obj, val)
+        return NavData(obj, value)
 
 
 class NavMixin(metaclass=metadata.FieldsMetaclass):
@@ -54,7 +56,7 @@ class NavPageMixin(NavMixin):
     nav_title = fields.Field(doc="""
         Title to use when this page is linked in a navbar.
 
-        It defaults to `page.meta.title`, or to the series name for series pages.
+        It defaults to `page.title`, or to the series name for series pages.
 
         `nav_title` is only guaranteed to exist for pages that are used in `nav`.
     """)
@@ -77,7 +79,7 @@ class Nav(Feature):
         nav_pages: set[Page] = set()
 
         for page in self.site.structure.pages_by_metadata["nav"]:
-            if (nav := page.meta.get("nav")) is None:
+            if (nav := page.nav) is None:
                 continue
 
             # Resolve everything as pages
@@ -93,13 +95,13 @@ class Nav(Feature):
             # Build list of target pages
             nav_pages.update(this_nav)
 
-            page.meta["nav"] = this_nav
+            page.nav = this_nav
 
         # Make sure nav_title is filled
         for page in nav_pages:
-            if "nav_title" not in page.meta:
+            if not page.nav_title:
                 page.prepare_render()
-                page.meta["nav_title"] = page.meta["title"]
+                page.nav_title = page.title
 
 
 FEATURES = {

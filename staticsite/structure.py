@@ -62,7 +62,7 @@ class Structure:
 
         # Also group pages by tracked metadata
         for tracked in self.tracked_metadata:
-            if tracked in page.meta:
+            if tracked in page.__dict__:
                 self.pages_by_metadata[tracked].append(page)
 
     def analyze(self):

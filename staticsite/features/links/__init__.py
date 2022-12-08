@@ -77,7 +77,7 @@ class LinksPage(DataPage):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.links = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
+        self._links = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
 
 
 class Links(Feature):
@@ -197,7 +197,7 @@ class Links(Feature):
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
         for page in self.site.structure.pages_by_metadata["links"]:
-            for link in page.meta["links"]:
+            for link in page.links:
                 link = Link(link)
                 self.links.append(link)
                 for tag in link.tags:

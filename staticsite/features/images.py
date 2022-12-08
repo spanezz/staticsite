@@ -124,11 +124,11 @@ class Images(Feature):
     def analyze(self):
         # Resolve image from strings to Image pages
         for page in self.site.structure.pages_by_metadata["image"]:
-            val = page.meta.get(self.name)
+            val = getattr(page, self.name, None)
             if isinstance(val, str):
                 val = page.resolve_path(val)
                 # TODO: warn if val is not an Image page?
-                page.meta[self.name] = val
+                setattr(page, self.name, val)
 
         # If an image exists with the same basename as a page, auto-add an
         # "image" metadata to it
@@ -150,9 +150,9 @@ class Images(Feature):
                     continue
                 if basename_no_ext(src.relpath) == name:
                     # Don't add if already set
-                    if not page.meta.get("image") and basename_no_ext(src.relpath) == name:
+                    if not page.image and basename_no_ext(src.relpath) == name:
                         # print("Images.analyze  add")
-                        page.meta["image"] = image
+                        page.image = image
                     break
 
 
@@ -161,7 +161,7 @@ class Image(Page):
 
     def __init__(self, *args, mimetype: str = None, **kw):
         super().__init__(*args, **kw)
-        self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+        self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
     def render(self, **kw) -> RenderedElement:
         return RenderedFile(self.src)
@@ -194,20 +194,20 @@ class ScaledImage(Page):
     def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):
         super().__init__(*args, **kw)
         self.name = name
-        created_from = self.meta["created_from"]
-        self.meta["date"] = created_from.meta["date"]
-        if (title := created_from.meta.get("title")):
-            self.meta["title"] = title
+        created_from = self.created_from
+        self.date = created_from.date
+        if (title := created_from.title):
+            self.title = title
 
-        if "height" not in self.meta:
-            self.meta["height"] = round(
-                    created_from.meta["height"] * (
-                        info["width"] / created_from.meta["width"]))
+        if self.height is None:
+            self.height = round(
+                    created_from.height * (
+                        info["width"] / created_from.width))
 
-        self.created_from.add_related(name, self)
+        created_from.add_related(name, self)
 
     def render(self, **kw) -> RenderedElement:
-        return RenderedScaledImage(self.src, self.meta["width"], self.meta["height"])
+        return RenderedScaledImage(self.src, self.width, self.height)
 
 
 FEATURES = {

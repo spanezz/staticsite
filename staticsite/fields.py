@@ -15,6 +15,7 @@ class Field:
     """
     def __init__(
             self, *,
+            default: Any = None,
             structure: bool = False,
             doc: str = ""):
         """
@@ -25,6 +26,7 @@ class Field:
         :arg doc: documentation for this metadata element
         """
         self.name: str
+        self.default: Any = default
         self.structure: bool = structure
         self.doc = inspect.cleandoc(doc)
 
@@ -35,9 +37,7 @@ class Field:
         self.name = name
 
     def __get__(self, obj: SiteElement, type: Type = None) -> Any:
-        if self.name not in obj.__dict__:
-            raise AttributeError(self.name)
-        return obj.__dict__[self.name]
+        return obj.__dict__.get(self.name, self.default)
 
     def __set__(self, obj: SiteElement, value: Any) -> None:
         obj.__dict__[self.name] = self._clean(obj, value)
@@ -49,7 +49,7 @@ class Field:
         # By default, nothing to do
         pass
 
-    def _clean(self, onj: SiteElement, value: Any) -> Any:
+    def _clean(self, obj: SiteElement, value: Any) -> Any:
         """
         Hook to allow to clean values before set
         """
@@ -62,7 +62,7 @@ class Field:
         # By default, plain assignment
         if self.name in values:
             if (cleaned_value := self._clean(obj, values[self.name])) is not None:
-                obj.meta[self.name] = cleaned_value
+                obj.__dict__[self.name] = cleaned_value
 
 
 class Inherited(Field):
@@ -78,8 +78,8 @@ class Inherited(Field):
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if parent is None:
             return
-        if self.name not in obj.meta and self.name in parent.meta:
-            obj.meta[self.name] = parent.meta[self.name]
+        if self.name not in obj.__dict__ and self.name in parent.__dict__:
+            obj.__dict__[self.name] = parent.__dict__[self.name]
 
 
 class TemplateInherited(Inherited):
@@ -111,14 +111,14 @@ class ElementDate(Date):
     Make sure, on page load, that the element is a valid aware datetime object
     """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (date := obj.meta.get(self.name)):
-            obj.meta[self.name] = obj.site.clean_date(date)
-        elif parent and (date := parent.meta.get(self.name)):
-            obj.meta[self.name] = obj.site.clean_date(date)
+        if (date := obj.__dict__.get(self.name)):
+            obj.__dict__[self.name] = obj.site.clean_date(date)
+        elif parent and (date := parent.__dict__.get(self.name)):
+            obj.__dict__[self.name] = obj.site.clean_date(date)
         elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
-            obj.meta[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
+            obj.__dict__[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
         else:
-            obj.meta[self.name] = obj.site.generation_time
+            obj.__dict__[self.name] = obj.site.generation_time
 
 
 class Bool(Field):
@@ -141,10 +141,10 @@ class Bool(Field):
             raise ValueError(f"{val!r} is not a valid value for a bool field")
 
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (val := obj.meta.get(self.name)) is not None:
-            obj.meta[self.name] = self._clean(obj, val)
+        if (val := obj.__dict__.get(self.name)) is not None:
+            obj.__dict__[self.name] = self._clean(obj, val)
         elif self.default is not None:
-            obj.meta[self.name] = self._clean(obj, self.default)
+            obj.__dict__[self.name] = self._clean(obj, self.default)
 
 
 class Draft(Field):
@@ -153,9 +153,9 @@ class Draft(Field):
     """
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         # if obj.__class__.__name__ not in ("Asset", "Node"):
-        #     print(f"MetadataDraft {obj.__class__=} {obj.meta=} {obj.site.generation_time=}"
-        #           f" {obj.meta['date'] > obj.site.generation_time}")
-        if (value := obj.meta.get(self.name)) is None:
-            obj.meta[self.name] = obj.meta["date"] > obj.site.generation_time
+        #     print(f"MetadataDraft {obj.__class__=} {obj.__dict__=} {obj.site.generation_time=}"
+        #           f" {obj.__dict__['date'] > obj.site.generation_time}")
+        if (value := obj.__dict__.get(self.name)) is None:
+            obj.__dict__[self.name] = obj.__dict__["date"] > obj.site.generation_time
         elif not isinstance(value, bool):
-            obj.meta[self.name] = bool(value)
+            obj.__dict__[self.name] = bool(value)

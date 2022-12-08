@@ -67,6 +67,7 @@ Example blog post in reStructuredText
                     'template_copyright': 'compiled:None',
                     "title": "Example blog post in reStructuredText",
                     "indexed": True,
+                    "nav": [],
                     "site_name": "Test site",
                     "site_url": "https://www.example.org",
                     'related': {},

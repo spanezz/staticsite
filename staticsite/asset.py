@@ -15,11 +15,11 @@ class Asset(Page):
 
     def __init__(self, site: Site, *, src: file.File, name: str, **kw):
         super().__init__(site, src=src, **kw)
-        self.meta["date"] = site.localized_timestamp(src.stat.st_mtime)
-        self.meta["title"] = name
-        self.meta["asset"] = True
-        self.meta["draft"] = False
-        self.meta["indexed"] = False
+        self.date = site.localized_timestamp(src.stat.st_mtime)
+        self.title = name
+        self.asset = True
+        self.draft = False
+        self.indexed = False
         self.name = name
 
     def validate(self):

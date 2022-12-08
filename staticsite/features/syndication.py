@@ -86,13 +86,13 @@ class Syndication:
         syndicated header, and sort by syndication date.
         """
         draft_mode = self.index.site.settings.DRAFT_MODE
-        for page in self.index.meta.get("pages", []):
-            if not page.meta["syndicated"]:
+        for page in self.index.pages or ():
+            if not page.syndicated:
                 continue
-            if not draft_mode and page.meta["syndication_date"] > page.site.generation_time:
+            if not draft_mode and page.syndication_date > page.site.generation_time:
                 continue
             self.pages.append(page)
-        self.pages.sort(key=lambda p: p.meta["syndication_date"], reverse=True)
+        self.pages.sort(key=lambda p: p.syndication_date, reverse=True)
 
     def make_feeds(self):
         """
@@ -254,30 +254,27 @@ class SyndicationPageMixin(metaclass=FieldsMetaclass):
         super().validate()
 
         # Make sure the syndicated field has a value
-        if "syndicated" not in self.meta:
+        if self.syndicated is None:
             # If not present, default to 'indexed'
-            self.meta["syndicated"] = self.meta["indexed"]
+            self.syndicated = self.indexed
 
         # Parse syndication_date to a date if provided.
         #
         # If page.meta.syndicate is true, it is always present, and if not set it
         # defaults to page.meta.date.
-        if "syndication_date" not in self.meta:
-            if self.meta["syndicated"]:
-                self.meta["syndication_date"] = self.meta["date"]
+        if self.syndicated and self.syndication_date is None:
+            self.syndication_date = self.date
 
 
 def _get_syndicated_pages(page: Page, limit: Optional[int] = None) -> List[Page]:
     """
     Get the sorted list of syndicated pages for a page
     """
-    syndication = page.meta.get("syndication")
-    if syndication is not None:
+    if (syndication := page.syndication) is not None:
         # syndication.pages is already sorted
         return syndication.pages[:limit]
 
-    pages = page.meta.get("pages")
-    if pages is None:
+    if (pages := page.pages) is None:
         raise SyndicatedPageError(f"page {page!r} has no `syndication.pages` or `pages` in metadata")
     return arrange(pages, "-syndication_date", limit=limit)
 
@@ -341,7 +338,7 @@ class SyndicationFeature(Feature):
             # The syndication header is the base for the feed pages's metadata,
             # and is added as 'syndication' to all the pages that get the feed
             # links
-            if (syndication := page.meta.get("syndication")) is None:
+            if (syndication := page.syndication) is None:
                 continue
 
             # Build the final list of the pages covered by the syndication
@@ -367,10 +364,10 @@ class SyndicationPage(Page):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        if self.meta["pages"]:
-            self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
+        if self.pages:
+            self.date = max(p.date for p in self.pages)
         else:
-            self.meta["date"] = self.site.generation_time
+            self.date = self.site.generation_time
 
 
 class RSSPage(SyndicationPage):
@@ -400,12 +397,12 @@ class ArchivePage(Page):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
-        self.meta["pages"] = self.created_from.meta["pages"]
+        self.pages = self.created_from.pages
 
-        if self.meta["pages"]:
-            self.meta["date"] = max(p.meta["date"] for p in self.meta["pages"])
+        if self.pages:
+            self.date = max(p.date for p in self.pages)
         else:
-            self.meta["date"] = self.site.generation_time
+            self.date = self.site.generation_time
 
         self.created_from.add_related("archive", self)
 

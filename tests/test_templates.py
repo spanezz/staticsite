@@ -130,6 +130,7 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
                     'template_copyright': 'compiled:None',
                     'title': 'Test site',
                     'related': {},
+                    'nav': [],
                 },
                 "type": "markdown",
             })
@@ -158,6 +159,7 @@ class TestTemplates(test_utils.MockSiteTestMixin, TestCase):
                     'template_copyright': 'compiled:None',
                     'title': 'Test site',
                     'related': {},
+                    'nav': [],
                 },
                 "type": "jinja2",
             })

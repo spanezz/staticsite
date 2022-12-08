@@ -220,9 +220,9 @@ class Site:
             # set yet
             # TODO: template_title is not supported (yet?)
             if (title := self.structure.root.meta.get("title")):
-                self.structure.root.meta["site_name"] = title
+                self.structure.root.site_name = title
             else:
-                self.structure.root.meta["site_name"] = os.path.basename(tree.src.abspath)
+                self.structure.root.site_name = os.path.basename(tree.src.abspath)
 
         # Scan asset trees from themes
         self.theme.scan_assets()

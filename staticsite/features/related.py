@@ -36,9 +36,9 @@ class RelatedFeature(Feature):
         # Expand pages expressions
         # TODO: redo this using a tracked metadata
         for page in self.site.iter_pages(static=False):
-            related = page.meta.get("related", None)
-            if related is None:
-                page.meta[self.name] = related = {}
+            if (related := page.related) is None:
+                related = {}
+                setattr(page, self.name, related)
 
             for k, v in related.items():
                 if isinstance(v, str):

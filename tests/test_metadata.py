@@ -204,6 +204,7 @@ date: 2010-01-01 00:00:00
                     'indexed': True,
                     'syndicated': True,
                     "syndication_date": '2000-01-01 00:00:00+00:00',
+                    'nav': [],
                     'site_name': 'Test1 title',
                     'site_url': 'https://www.example.org',
                     'template': 'compiled:index.html',
@@ -235,6 +236,7 @@ date: 2010-01-01 00:00:00
                     'template_copyright': 'compiled:None',
                     'title': 'Test1 title',
                     'related': {},
+                    'nav': [],
                 },
                 "type": "markdown",
             })
@@ -261,6 +263,7 @@ date: 2010-01-01 00:00:00
                     'title': 'Test1 title',
                     'data_type': 'test',
                     'related': {},
+                    'nav': [],
                 },
                 "type": "data",
             })

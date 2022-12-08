@@ -17,6 +17,7 @@ class Dir(Page):
     Page with a directory index
     """
     TYPE = "dir"
+    TEMPLATE = "dir.html"
 
     def __init__(self, site: Site, *, name: Optional[str] = None, **kw):
         super().__init__(site, **kw)
@@ -27,14 +28,13 @@ class Dir(Page):
         # Files found in this directory
         self.files: dict[str, file.File] = {}
 
-        self.meta["template"] = "dir.html"
-        self.meta["syndicated"] = False
-        self.meta["indexed"] = False
+        self.syndicated = False
+        self.indexed = False
 
         self.parent: Optional[Page] = None
         if self.node.parent and self.node.parent.page:
             self.parent = self.node.parent.page
-            self.meta["title"] = self.name
+            self.title = self.name
 
         self.subdirs: list[Page] = []
 
@@ -53,7 +53,7 @@ class Dir(Page):
         # FIXME: a lot is here for backwards compatibility. We could do some
         # cleanup, and rearrange theme/default/dir.html accordingly
 
-        self.meta["pages"] = pages
+        self.pages = pages
         # self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
 
         # TODO: set draft if all subdirs and pages are drafts?
@@ -61,15 +61,15 @@ class Dir(Page):
         # Since finalize is called from the bottom up, subdirs have their date
         # up to date
         self.subdirs.sort(key=lambda p: p.meta["date"])
-        self.meta["pages"].sort(key=lambda p: p.meta["date"])
+        self.pages.sort(key=lambda p: p.meta["date"])
 
         date_pages = []
         if self.subdirs:
             date_pages.append(self.subdirs[-1].meta["date"])
-        if self.meta["pages"]:
+        if self.pages:
             date_pages.append(self.meta["pages"][-1].meta["date"])
 
         if date_pages:
-            self.meta["date"] = max(date_pages)
+            self.date = max(date_pages)
         else:
-            self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
+            self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
