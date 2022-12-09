@@ -125,11 +125,10 @@ class Images(Feature):
     def analyze(self):
         # Resolve image from strings to Image pages
         for page in self.site.structure.pages_by_metadata["image"]:
-            val = getattr(page, self.name, None)
+            val = page.image
             if isinstance(val, str):
-                val = page.resolve_path(val)
+                page.image = page.resolve_path(val)
                 # TODO: warn if val is not an Image page?
-                setattr(page, self.name, val)
 
         # If an image exists with the same basename as a page, auto-add an
         # "image" metadata to it
@@ -152,7 +151,7 @@ class Images(Feature):
                 if basename_no_ext(src.relpath) == name:
                     # Don't add if already set
                     if not page.image and basename_no_ext(src.relpath) == name:
-                        # print("Images.analyze  add")
+                        # print(f"Images.analyze  add {image!r}")
                         page.image = image
                     break
 
