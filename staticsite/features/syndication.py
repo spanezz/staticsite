@@ -6,9 +6,10 @@ from typing import Any, List, Optional, Union
 
 import jinja2
 
-from staticsite import fields, metadata, structure
+from staticsite import fields, metadata
 from staticsite.feature import Feature
 from staticsite.metadata import FieldsMetaclass
+from staticsite.node import Path
 from staticsite.page import Page, PageNotFoundError
 from staticsite.utils import arrange
 
@@ -139,7 +140,7 @@ class Syndication:
                 created_from=self.index,
                 page_cls=ArchivePage,
                 meta_values=self.archive,
-                path=structure.Path(("archive",)))
+                path=Path(("archive",)))
         self.archive_page.add_related("rss_feed", self.rss_page)
         self.archive_page.add_related("atom_feed", self.atom_page)
 

@@ -1,20 +1,25 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict, Set, TYPE_CHECKING, Any
-from staticsite import Page, Feature, structure
+
+import io
+import logging
+import os
+import re
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import urlparse, urlunparse
+
+import jinja2
+import markdown
+import markupsafe
+
+from staticsite import Feature, Page
+from staticsite.archetypes import Archetype
+from staticsite.node import Path
 from staticsite.page import PageNotFoundError
 from staticsite.utils import front_matter
-from staticsite.archetypes import Archetype
-from urllib.parse import urlparse, urlunparse
-import jinja2
-import markupsafe
-import re
-import os
-import io
-import markdown
-import logging
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.node import Node
 
 log = logging.getLogger("markdown")
 
@@ -211,7 +216,7 @@ class MarkdownPages(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
@@ -231,9 +236,9 @@ class MarkdownPages(Feature):
             meta_values.update(fm_meta)
 
             if (directory_index := fname in ("index.md", "README.md")):
-                path = structure.Path()
+                path = Path()
             else:
-                path = structure.Path((fname[:-3],))
+                path = Path((fname[:-3],))
 
             # print("CREAT", fname, directory_index)
             page = node.create_page(

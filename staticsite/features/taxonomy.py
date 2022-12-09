@@ -6,9 +6,10 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
-from staticsite import Page, fields, metadata, structure
+from staticsite import Page, fields, metadata
 from staticsite.feature import Feature
 from staticsite.features.syndication import Syndication
+from staticsite.node import Path
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -60,7 +61,7 @@ class Taxonomy:
             meta_values=self.index_meta,
             name=self.name,
             directory_index=True,
-            path=structure.Path((self.name,)))
+            path=Path((self.name,)))
         return self.index
 
     def create_category_page(self, name: str, pages: List[Page]) -> CategoryPage:
@@ -103,7 +104,7 @@ class Taxonomy:
             page_cls=CategoryPage,
             meta_values=category_meta,
             name=name,
-            path=structure.Path((name,))
+            path=Path((name,))
         )
 
     def generate_pages(self):
@@ -194,7 +195,7 @@ class TaxonomyFeature(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []

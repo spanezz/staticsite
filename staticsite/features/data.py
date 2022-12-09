@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING, Any
 
 import jinja2
 
-from staticsite import Feature, Page, fields, structure
+from staticsite import Feature, Page, fields
 from staticsite.archetypes import Archetype
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.metadata import FieldsMetaclass
+from staticsite.node import Node, Path
 from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
 
@@ -62,7 +63,7 @@ class DataPages(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: scan.Directory,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken = []
@@ -96,9 +97,9 @@ class DataPages(Feature):
             meta_values.update(fm_meta)
 
             if (directory_index := page_name == "index"):
-                path = structure.Path()
+                path = Path()
             else:
-                path = structure.Path((page_name,))
+                path = Path((page_name,))
 
             page = node.create_page(
                 page_cls=self.page_class_by_type.get(data_type, DataPage),

@@ -1,19 +1,23 @@
 from __future__ import annotations
-from typing import List, Tuple, TYPE_CHECKING, Optional, Any
-from staticsite import Page, Feature, structure
-from staticsite.archetypes import Archetype
-from staticsite.utils import yaml_codec
-import docutils.io
+
+import io
+import logging
+import os
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+
 import docutils.core
+import docutils.io
 import docutils.nodes
 import docutils.writers.html5_polyglot
 import jinja2
-import os
-import io
-import logging
+
+from staticsite import Feature, Page
+from staticsite.node import Node, Path
+from staticsite.archetypes import Archetype
+from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
-    from staticsite import fstree, file
+    from staticsite import file, fstree
 
 log = logging.getLogger("rst")
 
@@ -137,7 +141,7 @@ class RestructuredText(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         if not self.yaml_tags_filled:
@@ -164,9 +168,9 @@ class RestructuredText(Feature):
             meta_values.update(fm_meta)
 
             if (directory_index := fname in ("index.rst", "README.rst")):
-                path = structure.Path()
+                path = Path()
             else:
-                path = structure.Path((fname[:-4],))
+                path = Path((fname[:-4],))
 
             page = node.create_page(
                     page_cls=RstPage,

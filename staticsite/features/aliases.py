@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from staticsite import fields, metadata, structure
+from staticsite import fields, metadata, node
 from staticsite.feature import Feature
 from staticsite.page import Page
 
@@ -44,7 +44,7 @@ class AliasesFeature(Feature):
                         page_cls=AliasPage,
                         created_from=page,
                         meta_values={"page": page},
-                        path=structure.Path.from_string(alias))
+                        path=node.Path.from_string(alias))
 
 
 class AliasPage(Page):

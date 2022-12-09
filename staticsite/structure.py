@@ -3,9 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-# TODO: remove this, which is here only for compatibility
-from .node import Path  # noqa
-
 if TYPE_CHECKING:
     from .page import Page
     from .site import Site

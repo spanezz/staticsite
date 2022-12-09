@@ -11,15 +11,16 @@ from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 import dateutil.parser
 import pytz
 
-from . import structure, fstree
+from . import fstree, structure
 from .cache import Caches, DisabledCaches
 from .file import File
+from .node import Path
 from .settings import Settings
 from .utils import timings
 
 if TYPE_CHECKING:
-    from .page import Page
     from .node import Node
+    from .page import Page
 
 log = logging.getLogger("site")
 
@@ -115,7 +116,7 @@ class Site:
             prune = ()
         else:
             prune = (
-                self.root.lookup(structure.Path.from_string(self.settings.STATIC_PATH)),
+                self.root.lookup(Path.from_string(self.settings.STATIC_PATH)),
             )
         yield from self.root.iter_pages(prune=prune)
 
@@ -251,7 +252,7 @@ class Site:
             # Create root node based on site_path
             if (site_path := tree.meta.get("site_path")) and site_path.strip("/"):
                 # print(f"Site.load_content populate at {site_path} from {tree.src.abspath}")
-                node = self.root.at_path(structure.Path.from_string(site_path))
+                node = self.root.at_path(Path.from_string(site_path))
             else:
                 # print(f"Site.load_content populate at <root> from {tree.src.abspath}")
                 node = self.root

@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING, Any, List
 
 import jinja2
 
-from staticsite import structure, fields
+from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
 from staticsite.metadata import FieldsMetaclass
+from staticsite.node import Node, Path
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
@@ -109,7 +110,7 @@ class Links(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: scan.Directory,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
@@ -138,7 +139,7 @@ class Links(Feature):
                     meta_values=meta_values,
                     name=name,
                     links=self,
-                    path=structure.Path((name,)))
+                    path=Path((name,)))
             pages.append(page)
 
             self.indices.append(page)
