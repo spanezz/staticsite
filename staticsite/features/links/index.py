@@ -65,7 +65,7 @@ class LinkIndexPage(Page):
         # Set self.meta.pages to the sorted list of categories
         pages.sort(key=lambda x: x.title)
         self.pages = pages
-        self.links = self.feature_links.links
+        self.link_collection = self.feature_links.links
 
 
 class LinksTagPage(Page):
