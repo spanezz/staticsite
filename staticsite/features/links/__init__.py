@@ -65,11 +65,12 @@ class LinksPageMixin(metaclass=FieldsMetaclass):
                         info["tags"] = tag_dicts
 
                     data[url] = info
-                rendered += (
-                    "\n<script type='application/json' class='links-metadata'>"
-                    f"{json.dumps(data)}"
-                    "</script>\n"
-                )
+                if data:
+                    rendered += (
+                        "\n<script type='application/json' class='links-metadata'>"
+                        f"{json.dumps(data)}"
+                        "</script>\n"
+                    )
 
         return rendered
 
