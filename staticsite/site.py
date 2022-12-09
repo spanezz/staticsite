@@ -127,14 +127,6 @@ class Site:
         warnings.warn("use site.structure.pages_by_metadata instead of site.pages_by_metadata", DeprecationWarning)
         return self.structure.pages_by_metadata
 
-    @property
-    def tracked_metadata(self):
-        """
-        Compatibility accessor for structure.tracked_metadata
-        """
-        warnings.warn("use site.structure.tracked_metadata instead of site.tracked_metadata", DeprecationWarning)
-        return self.structure.tracked_metadata
-
     @cached_property
     def archetypes(self) -> "archetypes.Archetypes":
         """
@@ -315,8 +307,6 @@ class Site:
         """
         if not self.stage_content_directory_loaded:
             log.warn("analyze called before loading site contents")
-
-        self.structure.analyze()
 
         # Call analyze hook on features
         for feature in self.features.ordered():

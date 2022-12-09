@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from typing import TYPE_CHECKING
 
 # TODO: remove this, which is here only for compatibility
@@ -22,10 +21,7 @@ class Structure:
         self.site = site
 
         # Site pages that have the given metadata
-        self.pages_by_metadata: dict[str, list[Page]] = defaultdict(list)
-
-        # Metadata for which we add pages to pages_by_metadata
-        self.tracked_metadata: set[str] = set()
+        self.pages_by_metadata: dict[str, list[Page]] = {}
 
     def add_tracked_metadata(self, name: str):
         """
@@ -33,29 +29,15 @@ class Structure:
 
         Reindex existing pages, if any
         """
-        if name in self.tracked_metadata:
+        if name in self.pages_by_metadata:
             return
-
-        self.tracked_metadata.add(name)
+        self.pages_by_metadata[name] = []
 
     def index(self, page: Page):
         """
         Register a new page in the site
         """
         # Also group pages by tracked metadata
-        for tracked in self.tracked_metadata:
-            if tracked in page.__dict__:
-                self.pages_by_metadata[tracked].append(page)
-
-    def analyze(self):
-        """
-        Iterate through all Pages in the site to build aggregated content like
-        taxonomies and directory indices.
-
-        Call this after all Pages have been added to the site.
-        """
-        # Add missing pages_by_metadata entries in case no matching page were
-        # found for some of them
-        for key in self.tracked_metadata:
-            if key not in self.pages_by_metadata:
-                self.pages_by_metadata[key] = []
+        for name, pages in self.pages_by_metadata.items():
+            if name in page.__dict__:
+                pages.append(page)
