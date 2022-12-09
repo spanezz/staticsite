@@ -253,12 +253,14 @@ class Builder:
                     log.error("%s:%s page failed to render", render_dir.relpath, name, exc_info=True)
                     self.has_errors = True
                 else:
+                    # log.debug("write_subtree relpath:%s render %s %s", render_dir.relpath, page.TYPE, name)
                     rendered.write(name, dir_fd=render_dir.dir_fd)
                 self.build_log[os.path.join(render_dir.relpath, name)] = page
 
         if node.sub:
             for name, sub in node.sub.items():
                 # Subdir
+                # log.debug("write_subtree relpath:%s render subdir %s", render_dir.relpath, name)
                 render_dir.prepare_subdir(name)
                 with render_dir.subdir(name) as subdir:
                     self.write_subtree(sub, subdir, stats)
