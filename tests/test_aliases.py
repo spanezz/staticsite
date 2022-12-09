@@ -47,3 +47,4 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(alias.template, "redirect.html")
             self.assertEqual(alias.page, page)
             self.assertIsNone(alias.aliases)
+            mocksite.assertBuilt(None, "alias", "alias/index.html", sample="href=\"/page")

@@ -150,7 +150,7 @@ class MockSiteBase:
             for path, pg in self.builder.build_log.items():
                 if pg == page:
                     self.test_case.fail(
-                        f"{dstpath!r} not found in render log; {srcpath!r} was rendered as {path!r} instead")
+                        f"{dstpath!r} not found in render log; {sitepath!r} was rendered as {path!r} instead")
                     break
             else:
                 self.test_case.fail(f"{dstpath!r} not found in render log")
@@ -160,7 +160,7 @@ class MockSiteBase:
                 if pg == page:
                     self.test_case.fail(
                         f"{dstpath!r} rendered {rendered!r} instead of {page!r}."
-                        " {srcpath!r} was rendered as {path!r} instead")
+                        " {sitepath!r} was rendered as {path!r} instead")
                     break
             else:
                 self.test_case.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}")
@@ -174,8 +174,8 @@ class MockSiteBase:
             else:
                 args = {"mode": "rt", "encoding": "utf-8"}
             with open(os.path.join(self.build_root, dstpath), **args) as fd:
-                if sample not in fd.read():
-                    self.test_case.fail(f"{dstpath!r} does not contain {sample!r}")
+                if sample not in (body := fd.read()):
+                    self.test_case.fail(f"{dstpath!r} does not contain {sample!r}. Renrered contents: {body!r}")
 
     def __enter__(self) -> "MockSite":
         self.populate_workdir()
