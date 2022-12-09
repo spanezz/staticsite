@@ -59,23 +59,26 @@ tags: [cat]
                 },
             },
             "page.md": {
-                "tags": ["test"],
+                "tags": ["test", "test1"],
                 "title": "Page",
             }
         }
         with self.site(files) as mocksite:
             mocksite.assertPagePaths((
-                "", "page", "tags", "tags/test",
-                "tags/test/index.rss", "tags/test/index.atom", "tags/test/archive",
+                "", "page", "tags",
+                "tags/test", "tags/test/index.rss", "tags/test/index.atom", "tags/test/archive",
+                "tags/test1", "tags/test1/index.rss", "tags/test1/index.atom", "tags/test1/archive",
             ))
 
-            page, tags, test, rss, atom, archive = mocksite.page(
-                "page", "tags", "tags/test",
-                "tags/test/index.rss", "tags/test/index.atom", "tags/test/archive")
+            page, tags = mocksite.page("page", "tags")
+            test, rss, atom, archive = mocksite.page(
+                    "tags/test", "tags/test/index.rss", "tags/test/index.atom", "tags/test/archive")
+            test1, rss1, atom1, archive1 = mocksite.page(
+                    "tags/test1", "tags/test1/index.rss", "tags/test1/index.atom", "tags/test1/archive")
 
             self.assertEqual(page.title, "Page")
             self.assertIsNone(page.description)
-            self.assertEqual(page.tags, [test])
+            self.assertEqual(page.tags, [test, test1])
             self.assertEqual(page.related, {})
 
             self.assertEqual(test.title, "Latest posts for tag <strong>test</strong>")
@@ -100,3 +103,16 @@ tags: [cat]
                 "atom_feed": atom,
             })
             self.assertEqual(archive.index, test)
+
+            self.assertEqual(rss1.title, "Test site: posts with tag test1")
+            self.assertEqual(rss1.description, "Test site: most recent posts with tag test1")
+            self.assertEqual(rss1.related, {})
+            self.assertEqual(rss1.index, test1)
+
+            self.assertEqual(archive1.title, "Archive of posts for tag <strong>test1</strong>")
+            self.assertEqual(archive1.description, "Archive of all posts with tag <strong>test1</strong>")
+            self.assertEqual(archive1.related, {
+                "rss_feed": rss1,
+                "atom_feed": atom1,
+            })
+            self.assertEqual(archive1.index, test1)

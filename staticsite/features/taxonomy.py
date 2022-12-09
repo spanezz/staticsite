@@ -82,7 +82,7 @@ class Taxonomy:
         category_meta["date"] = pages[-1].date
 
         # Syndication
-        if (syndication_value := self.category_meta.pop("syndication", None)) is not None:
+        if (syndication_value := category_meta.pop("syndication", None)) is not None:
             syndication = Syndication.clean_value(None, syndication_value)
         else:
             syndication = Syndication(None)
