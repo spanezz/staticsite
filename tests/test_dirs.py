@@ -11,6 +11,8 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
             "page_root.md": {},
             "dir1/page_sub.md": {},
             "dir1/dir2/dir3/page_sub3.md": {},
+            "dir1/dir2/dir3/page_sub3/slides.pdf": "",
+            "dir1/dir2/dir3/page_sub4.md": {},
         }
         with self.site(files) as mocksite:
             # We have a root dir index and dir indices for all subdirs
@@ -38,7 +40,13 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(dir_dir2.parent, dir_dir1)
             self.assertEqual(dir_dir2.meta["title"], "dir2")
 
-            self.assertCountEqual(dir_dir3.meta["pages"], [mocksite.page("dir1/dir2/dir3/page_sub3")])
+            self.assertCountEqual(dir_dir3.meta["pages"], [
+                mocksite.page("dir1/dir2/dir3/page_sub3"),
+                mocksite.page("dir1/dir2/dir3/page_sub4"),
+            ])
             self.assertCountEqual(dir_dir3.subdirs, [])
             self.assertEqual(dir_dir3.parent, dir_dir2)
             self.assertEqual(dir_dir3.meta["title"], "dir3")
+
+            asset = mocksite.page("dir1/dir2/dir3/page_sub3/slides.pdf")
+            self.assertEqual(asset.TYPE, "asset")
