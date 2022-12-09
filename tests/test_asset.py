@@ -55,6 +55,7 @@ class TestAsset(test_utils.MockSiteTestMixin, TestCase):
 
             page = mocksite.page("testasset")
 
+            self.assertEqual(page.node.name, "")
             self.assertEqual(page.TYPE, "asset")
             self.assertEqual(page.src.stat.st_mtime, FILE_TS)
             self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
