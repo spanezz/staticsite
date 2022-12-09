@@ -80,9 +80,9 @@ class LinksTagPage(Page):
         super().__init__(*args, **kw)
         self.syndicated = False
         if links is None:
-            self.links = LinkCollection([Link(link) for link in self.links])
+            self.link_collection = LinkCollection([Link(link) for link in self.links])
         else:
-            self.links = links
+            self.link_collection = links
 
     @property
     def src_abspath(self):

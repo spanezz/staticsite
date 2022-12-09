@@ -80,7 +80,7 @@ class LinksPage(DataPage):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._links = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
+        self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
 
 
 class Links(Feature):
@@ -180,7 +180,7 @@ class Links(Feature):
                 links.merge(page.links)
         else:
             for page in page_filter.filter():
-                for link in page._links:
+                for link in page.link_collection:
                     if link_tags is not None and not link_tags.issubset(link.tags):
                         continue
                     links.append(link)
