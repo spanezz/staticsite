@@ -31,6 +31,14 @@ class Site:
 
     This class tracks all resources associated with a site.
     """
+    # Identifiers for steps of the site loading
+    LOAD_STEP_INITIAL = 0
+    LOAD_STEP_FEATURES = 1
+    LOAD_STEP_THEME = 2
+    LOAD_STEP_DIRS = 3
+    LOAD_STEP_CONTENTS = 4
+    LOAD_STEP_ANALYZE = 5
+    LOAD_STEP_ALL = LOAD_STEP_ANALYZE
 
     def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):
         from .feature import Features
@@ -68,6 +76,9 @@ class Site:
 
         # Root directory of the site
         self.root: Node
+
+        # Last load step performed
+        self.last_load_step = self.LOAD_STEP_INITIAL
 
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
@@ -269,18 +280,47 @@ class Site:
         # print("Final site structure:")
         # self.root.print()
 
-    def load(self):
+    def load(self, until: int = LOAD_STEP_ALL):
         """
         Load all site components
         """
-        with timings("Loaded default features in %fs"):
-            self.features.load_default_features()
-        with timings("Loaded theme in %fs"):
-            self.load_theme()
-        with timings("Scanned contents in %fs"):
-            self.scan_content()
-        with timings("Loaded contents in %fs"):
-            self.load_content()
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_FEATURES:
+            with timings("Loaded default features in %fs"):
+                self.features.load_default_features()
+            self.last_load_step = self.LOAD_STEP_FEATURES
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_THEME:
+            with timings("Loaded theme in %fs"):
+                self.load_theme()
+            self.last_load_step = self.LOAD_STEP_THEME
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_DIRS:
+            with timings("Scanned contents in %fs"):
+                self.scan_content()
+            self.last_load_step = self.LOAD_STEP_DIRS
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_CONTENTS:
+            with timings("Loaded contents in %fs"):
+                self.load_content()
+            self.last_load_step = self.LOAD_STEP_CONTENTS
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_ANALYZE:
+            with timings("Analyzed contents in %fs"):
+                self._analyze()
+            self.last_load_step = self.LOAD_STEP_ANALYZE
+        if until <= self.last_load_step:
+            return
 
     def is_page_ignored(self, page: Page) -> bool:
         """
@@ -299,7 +339,7 @@ class Site:
 
         return False
 
-    def analyze(self):
+    def _analyze(self):
         """
         Iterate through all Pages in the site to build aggregated content like
         taxonomies and directory indices.

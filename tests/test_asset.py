@@ -1,12 +1,18 @@
-from unittest import TestCase
-from . import utils as test_utils
-from staticsite.file import File
-from contextlib import contextmanager
-import os
-import time
-import tempfile
+from __future__ import annotations
+
 import datetime
+import os
+import tempfile
+import time
+from contextlib import contextmanager
+from unittest import TestCase
+
 import pytz
+
+from staticsite.file import File
+from staticsite.site import Site
+
+from . import utils as test_utils
 
 
 @contextmanager
@@ -24,17 +30,18 @@ def override_tz(val):
 
 class TestAsset(test_utils.MockSiteTestMixin, TestCase):
     @test_utils.assert_no_logs()
+    @override_tz("Pacific/Samoa")
     def test_timestamps(self):
-        with override_tz("Pacific/Samoa"):
-            with self.site({}) as mocksite:
-                with tempfile.NamedTemporaryFile() as f:
-                    # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
-                    os.utime(f.name, (1477958400, 1477958400))
-                    src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
-                    page = mocksite.site.root.add_asset(src=src, name="testasset")
+        with self.site({}, auto_load_site=False) as mocksite:
+            mocksite.load_site(until=Site.LOAD_STEP_CONTENTS)
+            with tempfile.NamedTemporaryFile() as f:
+                # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
+                os.utime(f.name, (1477958400, 1477958400))
+                src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
+                page = mocksite.site.root.add_asset(src=src, name="testasset")
 
-                    self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
-                    self.assertEqual(page.meta["site_url"], "https://www.example.org")
-                    self.assertEqual(page.site_path, "testasset")
-                    self.assertEqual(page.build_path, "testasset")
-                    self.assertFalse(page.directory_index)
+                self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
+                self.assertEqual(page.meta["site_url"], "https://www.example.org")
+                self.assertEqual(page.site_path, "testasset")
+                self.assertEqual(page.build_path, "testasset")
+                self.assertFalse(page.directory_index)

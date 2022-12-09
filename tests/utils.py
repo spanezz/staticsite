@@ -8,6 +8,7 @@ import shutil
 import stat
 import tempfile
 from contextlib import ExitStack, contextmanager
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 from unittest import TestCase, mock
 
@@ -33,7 +34,6 @@ class MockSiteBase:
     def __init__(self, auto_load_site: bool = True, settings: Optional[dict[str, Any]] = None):
         # Set to False if you only want to populate the workdir
         self.auto_load_site = auto_load_site
-        self.site: Optional[staticsite.Site] = None
         self.stack = contextlib.ExitStack()
         self.root: Optional[str] = None
         self.test_case: Optional[TestCase] = None
@@ -55,25 +55,30 @@ class MockSiteBase:
         self.mock_file_mtime: Optional[int] = 1559385000
 
         self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
-        self.build_root: Optional[str] = None
         self.builder: Optional[Builder] = None
 
     def populate_workdir(self):
         raise NotImplementedError(f"{self.__class__.__name__}.populate_workdir not implemented")
 
-    def load_site(self):
-        self.site = staticsite.Site(
+    @cached_property
+    def site(self) -> staticsite.Site:
+        return staticsite.Site(
                 self.settings,
                 generation_time=(
                     datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
                     if self.generation_time else None))
+
+    @cached_property
+    def build_root(self) -> str:
+        return self.stack.enter_context(tempfile.TemporaryDirectory())
+
+    def load_site(self, until=staticsite.Site.LOAD_STEP_ALL):
         if self.mock_file_mtime:
             overrides = {"st_mtime": self.mock_file_mtime}
         else:
             overrides = None
         with mock_file_stat(overrides):
-            self.site.load()
-        self.site.analyze()
+            self.site.load(until=until)
 
     def build_site(self):
         """
@@ -83,7 +88,6 @@ class MockSiteBase:
 
         The Builder object will be available as self.builder
         """
-        self.build_root = self.stack.enter_context(tempfile.TemporaryDirectory())
         self.site.settings.OUTPUT = self.build_root
         self.builder = Builder(self.site)
         self.builder.write()

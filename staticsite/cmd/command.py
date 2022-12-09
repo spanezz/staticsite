@@ -59,8 +59,6 @@ class Command:
         site = Site(settings=self.settings)
         with timings("Loaded site in %fs"):
             site.load()
-        with timings("Analysed site tree in %fs"):
-            site.analyze()
 
         # If --debug=list was requested
         if self.args.debug == "list":
