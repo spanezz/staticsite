@@ -43,15 +43,13 @@ def main():
         parser.print_help()
     else:
         handler = args.handler(args)
-        res = handler.run()
-        if res is not None:
-            sys.exit(res)
+        return handler.run()
 
 
 if __name__ == "__main__":
     from staticsite.cmd.command import Fail, Success
     try:
-        main()
+        sys.exit(main())
     except Fail as e:
         print(e, file=sys.stderr)
         sys.exit(1)

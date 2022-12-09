@@ -40,6 +40,8 @@ class Build(SiteCommand):
         self.site = self.load_site()
         self.builder = Builder(self.site, type_filter=self.args.type, path_filter=self.args.path)
         self.builder.write()
+        if self.builder.has_errors:
+            return 1
 
 
 class RenderStats:
@@ -148,6 +150,7 @@ class Builder:
         self.build_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
         # Logs which pages have been rendered and to which path
         self.build_log: dict[str, Page] = {}
+        self.has_errors = False
 
     def write(self):
         """
@@ -236,6 +239,7 @@ class Builder:
                     rendered = page.render()
                 except Exception:
                     log.error("%s:%s page failed to render", render_dir.relpath, name, exc_info=True)
+                    self.has_errors = True
                 else:
                     rendered.write(name, dir_fd=render_dir.dir_fd)
                 self.build_log[os.path.join(render_dir.relpath, name)] = page
