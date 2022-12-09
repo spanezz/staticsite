@@ -238,6 +238,7 @@ class Builder:
         """
         Recursively render the given node in the given render directory
         """
+        log.debug("write_subtree relpath:%s node:%r", render_dir.relpath, node)
         # If this is the build node for a page, render it
         for name, page in node.build_pages.items():
             if self.type_filter and page.TYPE != self.type_filter:
