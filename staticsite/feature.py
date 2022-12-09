@@ -1,17 +1,14 @@
 from __future__ import annotations
-from typing import Dict, Callable, Set, List, Type, TYPE_CHECKING, Optional, Any
-from collections import defaultdict
+
 import logging
 import sys
 import warnings
-from .page import Page
-from .node import Node
-from . import fstree, file
-from . import site
-from . import toposort
+from collections import defaultdict
+from typing import Any, Callable, Dict, List, Optional, Set, Type
 
-if TYPE_CHECKING:
-    from . import structure
+from . import file, fstree, site, toposort
+from .node import Node
+from .page import Page
 
 log = logging.getLogger("feature")
 
@@ -77,7 +74,7 @@ class Feature:
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
@@ -247,8 +244,8 @@ class Features:
 
         Feature classes are instantiate in dependency order.
         """
-        import pkgutil
         import importlib
+        import pkgutil
 
         for module_finder, name, ispkg in pkgutil.iter_modules(paths):
             full_name = namespace + "." + name

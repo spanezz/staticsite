@@ -9,11 +9,12 @@ import time
 from collections import Counter
 from typing import TYPE_CHECKING, Generator
 
-from .. import structure, utils
+from .. import utils
 from .command import Fail, SiteCommand
 
 if TYPE_CHECKING:
     from ..page import Page
+    from ..node import Node
 
 log = logging.getLogger("build")
 
@@ -202,7 +203,7 @@ class Builder:
                      stats.sums[type] / 1_000_000_000,
                      stats.counts[type] / stats.sums[type] * 60 * 1_000_000_000)
 
-    def write_subtree(self, node: structure.Node, render_dir: RenderDirectory, stats: RenderStats):
+    def write_subtree(self, node: Node, render_dir: RenderDirectory, stats: RenderStats):
         """
         Recursively render the given node in the given render directory
         """

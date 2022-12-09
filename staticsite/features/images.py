@@ -6,13 +6,14 @@ import mimetypes
 import os
 from typing import TYPE_CHECKING, Any
 
-from staticsite import Feature, Page, fields, structure
+from staticsite import Feature, Page, fields
 from staticsite.metadata import FieldsMetaclass
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
 if TYPE_CHECKING:
     from staticsite import file, scan
+    from staticsite.node import Node
 
 log = logging.getLogger("images")
 
@@ -60,7 +61,7 @@ class Images(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: Node,
             directory: scan.Directory,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []

@@ -10,7 +10,7 @@ from . import site
 from .page import Page
 
 if TYPE_CHECKING:
-    from . import structure
+    from .node import Node
 
 
 def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
@@ -73,7 +73,7 @@ class PageFilter:
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
-            root: Optional[structure.Node] = None,
+            root: Optional[Node] = None,
             allow: Optional[Sequence[Page]] = None,
             **kw):
         self.site = site
@@ -114,7 +114,7 @@ class PageFilter:
 
         return pages
 
-    def _filter(self, root: structure.Node, relpath: str) -> Generator[Page, None, None]:
+    def _filter(self, root: Node, relpath: str) -> Generator[Page, None, None]:
 
         for name, page in root.build_pages.items():
             # print(f"_filter {page=!r} indexed={page.meta['indexed']}")
