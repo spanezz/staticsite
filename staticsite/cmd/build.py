@@ -31,6 +31,8 @@ class Build(SiteCommand):
                             help="render only pages of this type")
         parser.add_argument("--path", action="store",
                             help="render only pages under this path")
+        parser.add_argument("--fail-fast", action="store_true",
+                            help="fail the first time a page gives an error in rendering")
         return parser
 
     def __init__(self, *args, **kw):
@@ -38,7 +40,8 @@ class Build(SiteCommand):
 
     def run(self):
         self.site = self.load_site()
-        self.builder = Builder(self.site, type_filter=self.args.type, path_filter=self.args.path)
+        self.builder = Builder(
+                self.site, type_filter=self.args.type, path_filter=self.args.path, fail_fast=self.args.fail_fast)
         self.builder.write()
         if self.builder.has_errors:
             return 1
@@ -139,7 +142,12 @@ class RenderDirectory:
 
 
 class Builder:
-    def __init__(self, site: Site, type_filter: Optional[str] = None, path_filter: Optional[str] = None):
+    def __init__(
+            self,
+            site: Site,
+            type_filter: Optional[str] = None,
+            path_filter: Optional[str] = None,
+            fail_fast: bool = False):
         self.site = site
         self.type_filter = type_filter
         self.path_filter = path_filter
@@ -150,6 +158,7 @@ class Builder:
         self.build_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
         # Logs which pages have been rendered and to which path
         self.build_log: dict[str, Page] = {}
+        self.fail_fast = fail_fast
         self.has_errors = False
 
     def write(self):
@@ -238,6 +247,8 @@ class Builder:
                 try:
                     rendered = page.render()
                 except Exception:
+                    if self.fail_fast:
+                        raise
                     log.error("%s:%s page failed to render", render_dir.relpath, name, exc_info=True)
                     self.has_errors = True
                 else:
