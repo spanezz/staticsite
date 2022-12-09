@@ -24,6 +24,7 @@ class Syndication:
             self,
             index: Page, *,
             title: Optional[str] = None,
+            description: Optional[str] = None,
             template_title: Optional[str] = None,
             template_description: Optional[str] = None,
             add_to: Union[bool, str, None] = True,
@@ -32,6 +33,8 @@ class Syndication:
         self.default_meta: dict[str, Any] = {}
         if title is not None:
             self.default_meta["title"] = title
+        if description is not None:
+            self.default_meta["description"] = description
         if template_title is not None:
             self.default_meta["template_title"] = template_title
         if template_description is not None:
@@ -99,6 +102,13 @@ class Syndication:
         """
         Build RSS and Atom feeds
         """
+        if "title" not in self.default_meta and "template_title" not in self.default_meta:
+            self.default_meta["title"] = self.index.title
+
+        if ("description" not in self.default_meta and "template_description"
+                not in self.default_meta and self.index.description):
+            self.default_meta["description"] = self.index.description
+
         page_name, ext = os.path.splitext(self.index.dst)
 
         meta_values = self.default_meta

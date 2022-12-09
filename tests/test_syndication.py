@@ -45,13 +45,19 @@ text
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
+
             self.assertIsNone(post2.syndication)
             self.assertEqual(post2.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
+
             self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(rss.title, blog.title)
+
             self.assertEqual(atom.pages, synd.pages)
+            self.assertEqual(atom.title, blog.title)
+
             self.assertIsNone(widget.syndication)
 
     def test_add_to_false(self):
@@ -60,6 +66,7 @@ text
 date: 2016-04-16 10:23:00+02:00
 pages: blog/*
 syndication:
+  title: Syndication
   add_to: no
 ---
 
@@ -77,8 +84,12 @@ text
             self.assertIsNone(post1.syndication)
             self.assertIsNone(post2.syndication)
             self.assertIsNone(widget.syndication)
+
             self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(rss.title, "Syndication")
+
             self.assertEqual(atom.pages, synd.pages)
+            self.assertEqual(atom.title, "Syndication")
 
     def test_complex(self):
         files = dict(BASE_FILES)
