@@ -7,14 +7,16 @@ import os
 import shutil
 import time
 from collections import Counter
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Generator, Optional
 
 from .. import utils
+from ..node import Path
 from .command import Fail, SiteCommand
 
 if TYPE_CHECKING:
-    from ..page import Page
     from ..node import Node
+    from ..page import Page
+    from ..site import Site
 
 log = logging.getLogger("build")
 
@@ -22,16 +24,28 @@ log = logging.getLogger("build")
 class Build(SiteCommand):
     "build the site into the web/ directory of the project"
 
+    @classmethod
+    def make_subparser(cls, subparsers):
+        parser = super().make_subparser(subparsers)
+        parser.add_argument("--type", action="store",
+                            help="render only pages of this type")
+        parser.add_argument("--path", action="store",
+                            help="render only pages under this path")
+        return parser
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
     def run(self):
         self.site = self.load_site()
-        self.builder = Builder(self.site)
+        self.builder = Builder(self.site, type_filter=self.args.type, path_filter=self.args.path)
         self.builder.write()
 
 
 class RenderStats:
+    """
+    Statistics collected during rendering
+    """
     def __init__(self):
         self.sums = Counter()
         self.counts = Counter()
@@ -123,8 +137,10 @@ class RenderDirectory:
 
 
 class Builder:
-    def __init__(self, site):
+    def __init__(self, site: Site, type_filter: Optional[str] = None, path_filter: Optional[str] = None):
         self.site = site
+        self.type_filter = type_filter
+        self.path_filter = path_filter
         if self.site.settings.OUTPUT is None:
             raise Fail(
                     "No output directory configured:"
@@ -192,10 +208,13 @@ class Builder:
 #             pids.discard(pid)
 
     def write_single_process(self):
+        root = self.site.root
+        if self.path_filter is not None:
+            root = root.lookup(Path.from_string(self.path_filter))
         stats = RenderStats()
         os.makedirs(self.build_root, exist_ok=True)
         with RenderDirectory.open(self.build_root) as render_dir:
-            self.write_subtree(self.site.root, render_dir, stats=stats)
+            self.write_subtree(root, render_dir, stats=stats)
         for type in sorted(stats.sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)",
                      type,
@@ -209,10 +228,16 @@ class Builder:
         """
         # If this is the build node for a page, render it
         for name, page in node.build_pages.items():
+            if self.type_filter and page.TYPE != self.type_filter:
+                continue
             render_dir.prepare_file(name)
             with stats.collect(page):
-                rendered = page.render()
-                rendered.write(name, dir_fd=render_dir.dir_fd)
+                try:
+                    rendered = page.render()
+                except Exception:
+                    log.error("%s:%s page failed to render", render_dir.relpath, name, exc_info=True)
+                else:
+                    rendered.write(name, dir_fd=render_dir.dir_fd)
                 self.build_log[os.path.join(render_dir.relpath, name)] = page
 
         if node.sub:
