@@ -14,6 +14,7 @@ from unittest import TestCase, mock
 import pytz
 
 import staticsite
+from staticsite.cmd.build import Builder
 from staticsite.settings import Settings
 from staticsite.utils import front_matter
 
@@ -51,6 +52,8 @@ class MockSiteBase:
         self.mock_file_mtime: Optional[int] = 1559385000
 
         self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
+        self.build_root: Optional[str] = None
+        self.builder: Optional[Builder] = None
 
     def populate_workdir(self):
         raise NotImplementedError(f"{self.__class__.__name__}.populate_workdir not implemented")
@@ -68,6 +71,19 @@ class MockSiteBase:
         with mock_file_stat(overrides):
             self.site.load()
         self.site.analyze()
+
+    def build_site(self):
+        """
+        Build the site in a temporary directory.
+
+        The build directory will be available as self.build_root.
+
+        The Builder object will be available as self.builder
+        """
+        self.build_root = self.stack.enter_context(tempfile.TemporaryDirectory())
+        self.site.settings.OUTPUT = self.build_root
+        self.builder = Builder(self.site)
+        self.builder.write()
 
     def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
         """
@@ -90,6 +106,50 @@ class MockSiteBase:
         """
         self.test_case.assertCountEqual([p.site_path for p in self.site.iter_pages(static=False)], paths)
 
+    def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
+        """
+        Check that page at `srcpath` is in the site at `sitepath` and rendered in `dstpath`.
+
+        Optionally check that the rendered content contains `sample`
+        """
+        if not self.builder:
+            self.build_site()
+
+        page = self.page(sitepath)
+        self.test_case.assertEqual(page.src.relpath, srcpath)
+
+        rendered = self.builder.build_log.get(dstpath)
+        if rendered is None:
+            for path, pg in self.builder.build_log.items():
+                if pg == page:
+                    self.test_case.fail(
+                        f"{dstpath!r} not found in render log; {srcpath!r} was rendered as {path!r} instead")
+                    break
+            else:
+                self.test_case.fail(f"{dstpath!r} not found in render log")
+
+        if rendered != page:
+            for path, pg in self.builder.build_log.items():
+                if pg == page:
+                    self.test_case.fail(
+                        f"{dstpath!r} rendered {rendered!r} instead of {page!r}."
+                        " {srcpath!r} was rendered as {path!r} instead")
+                    break
+            else:
+                self.test_case.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}")
+
+        if os.path.isdir(os.path.join(self.build_root, dstpath)):
+            self.test_case.fail(f"{dstpath!r} rendered as a directory")
+
+        if sample is not None:
+            if isinstance(sample, bytes):
+                args = {"mode": "rb"}
+            else:
+                args = {"mode": "rt", "encoding": "utf-8"}
+            with open(os.path.join(self.build_root, dstpath), **args) as fd:
+                if sample not in fd.read():
+                    self.test_case.fail(f"{dstpath!r} does not contain {sample!r}")
+
     def __enter__(self) -> "MockSite":
         self.populate_workdir()
         if self.auto_load_site:
@@ -98,6 +158,8 @@ class MockSiteBase:
 
     def __exit__(self, *args):
         self.site = None
+        self.builder = None
+        self.build_root = None
         self.stack.__exit__(*args)
 
 
@@ -251,20 +313,15 @@ class SiteTestMixin:
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        from staticsite.cmd.build import Builder
 
         cls.stack = ExitStack()
 
-        cls.build_root = cls.stack.enter_context(tempfile.TemporaryDirectory())
-
         cls.mocksite = cls.stack.enter_context(ExampleSite(name=cls.site_name, settings=cls.site_settings))
         cls.site = cls.mocksite.site
-        cls.site.settings.OUTPUT = cls.build_root
 
-        builder = Builder(cls.site)
-        builder.write()
-        cls.build_root = builder.build_root
-        cls.build_log = builder.build_log
+        cls.mocksite.build_site()
+        cls.build_root = cls.mocksite.build_root
+        cls.build_log = cls.mocksite.builder.build_log
 
     @classmethod
     def tearDownClass(cls):
@@ -293,35 +350,9 @@ class SiteTestMixin:
         return self.mocksite.assertPagePaths(paths)
 
     def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
-        page = self.site.find_page(sitepath)
-        self.assertEqual(page.src.relpath, srcpath)
+        """
+        Check that page at `srcpath` is in the site at `sitepath` and rendered in `dstpath`.
 
-        rendered = self.build_log.get(dstpath)
-        if rendered is None:
-            for path, pg in self.build_log.items():
-                if pg == page:
-                    self.fail(f"{dstpath!r} not found in render log; {srcpath!r} was rendered as {path!r} instead")
-                    break
-            else:
-                self.fail(f"{dstpath!r} not found in render log")
-
-        if rendered != page:
-            for path, pg in self.build_log.items():
-                if pg == page:
-                    self.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}."
-                              " {srcpath!r} was rendered as {path!r} instead")
-                    break
-            else:
-                self.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}")
-
-        if os.path.isdir(os.path.join(self.build_root, dstpath)):
-            self.fail(f"{dstpath!r} rendered as a directory")
-
-        if sample is not None:
-            if isinstance(sample, bytes):
-                args = {"mode": "rb"}
-            else:
-                args = {"mode": "rt", "encoding": "utf-8"}
-            with open(os.path.join(self.build_root, dstpath), **args) as fd:
-                if sample not in fd.read():
-                    self.fail(f"{dstpath!r} does not contain {sample!r}")
+        Optionally check that the rendered content contains `sample`
+        """
+        return self.mocksite.assertBuilt(srcpath, sitepath, dstpath, sample)
