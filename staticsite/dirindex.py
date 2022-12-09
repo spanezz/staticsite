@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Type
 
 from .page import Page
+from . import fields
 
 if TYPE_CHECKING:
     from . import file
@@ -12,12 +13,24 @@ if TYPE_CHECKING:
 log = logging.getLogger("dir")
 
 
+class ParentField(fields.Field):
+    """
+    Field that works as a proxy for page.node.parent.page
+    """
+    def __get__(self, page: Page, type: Type = None) -> Optional[Page]:
+        if (parent := page.node.parent) is None:
+            return None
+        return parent.page
+
+
 class Dir(Page):
     """
     Page with a directory index
     """
     TYPE = "dir"
     TEMPLATE = "dir.html"
+
+    parent = ParentField(doc="Page one level above in the site hierarchy")
 
     def __init__(self, site: Site, *, name: Optional[str] = None, **kw):
         super().__init__(site, **kw)
@@ -31,30 +44,24 @@ class Dir(Page):
         self.syndicated = False
         self.indexed = False
 
-        self.parent: Optional[Page] = None
-        if self.node.parent and self.node.parent.page:
-            self.parent = self.node.parent.page
+        if self.node.parent:
             self.title = self.name
 
         self.subdirs: list[Page] = []
 
-    def analyze(self):
         pages: list[Page] = []
         for name, sub in self.node.sub.items():
-            if sub.page and sub.page != self:  # self is always a subpage because of build_as
+            if sub.page:
                 if sub.page.directory_index:
                     self.subdirs.append(sub.page)
                 else:
                     pages.append(sub.page)
         for name, page in self.node.build_pages.items():
             if page != self and page.leaf and page.indexed:
-                pages.append(sub.page)
-
-        # FIXME: a lot is here for backwards compatibility. We could do some
-        # cleanup, and rearrange theme/default/dir.html accordingly
-
+                pages.append(page)
         self.pages = pages
-        # self.meta["indexed"] = bool(self.meta["pages"]) or any(p.meta["indexed"] for p in self.subdirs)
+
+        # self.indexed = bool(self.pages) or any(p.indexed for p in self.subdirs)
 
         # TODO: set draft if all subdirs and pages are drafts?
 

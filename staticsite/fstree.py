@@ -13,7 +13,6 @@ from .utils import front_matter, open_dir_fd
 
 if TYPE_CHECKING:
     from .site import Site
-    from .page import Page
     from .node import Node
 
 log = logging.getLogger("fstree")
@@ -225,11 +224,6 @@ class PageTree(Tree):
                 break
         # print(f"PageTree.populate_node  remaining files to pick {files_meta.keys()}")
 
-        # If no feature added a directory index, synthesize one
-        dir_index: Optional[Page] = None
-        if not node.page:
-            dir_index = node.add_directory_index(self.src)
-
         # Use everything else as an asset
         # TODO: move into an asset feature?
         for fname, (file_meta, src) in files_meta.items():
@@ -248,8 +242,9 @@ class PageTree(Tree):
             with self.open_subtree(name, tree):
                 tree.populate_node(dir_node)
 
-        if dir_index:
-            dir_index.analyze()
+        # If no feature added a directory index, synthesize one
+        if not node.page:
+            node.add_directory_index(self.src)
 
 
 class RootPageTree(PageTree):

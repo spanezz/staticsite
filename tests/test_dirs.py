@@ -14,8 +14,7 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
         }
         with self.site(files) as mocksite:
             # We have a root dir index and dir indices for all subdirs
-            pages = mocksite.page("", "dir1", "dir1/dir2", "dir1/dir2/dir3")
-            dir_root, dir_dir1, dir_dir2, dir_dir3 = pages
+            dir_root, dir_dir1, dir_dir2, dir_dir3 = mocksite.page("", "dir1", "dir1/dir2", "dir1/dir2/dir3")
 
             self.assertEqual(dir_root.TYPE, "dir")
             self.assertEqual(dir_dir1.TYPE, "dir")
