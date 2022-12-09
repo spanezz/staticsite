@@ -258,11 +258,10 @@ class Builder:
 
         if node.sub:
             for name, sub in node.sub.items():
-                if sub.page and not sub.page.leaf:
-                    # Subdir
-                    render_dir.prepare_subdir(name)
-                    with render_dir.subdir(name) as subdir:
-                        self.write_subtree(sub, subdir, stats)
+                # Subdir
+                render_dir.prepare_subdir(name)
+                with render_dir.subdir(name) as subdir:
+                    self.write_subtree(sub, subdir, stats)
 
         render_dir.cleanup_leftovers()
 
