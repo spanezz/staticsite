@@ -6,27 +6,34 @@ from . import utils as test_utils
 class TestAliases(test_utils.MockSiteTestMixin, TestCase):
     def test_site(self):
         files = {
-            "page.md": {"aliases": ["alias", "test/alias"]},
+            "page.md": {
+                "aliases": ["alias", "test/alias"],
+                "title": "Page Title",
+            },
         }
         with self.site(files) as mocksite:
             page, alias1, alias2 = mocksite.page("page", "alias", "test/alias")
 
             self.assertEqual(page.node.compute_path(), "page")
+            self.assertEqual(page.title, "Page Title")
             self.assertEqual(page.build_path, "page/index.html")
             self.assertIsNotNone(page.aliases)
 
             self.assertEqual(alias1.node.compute_path(), "alias")
+            self.assertEqual(alias1.title, "Page Title")
             self.assertEqual(alias1.build_path, "alias/index.html")
             self.assertEqual(alias1.template, "redirect.html")
             self.assertEqual(alias1.page, page)
             self.assertIsNone(alias1.aliases)
 
             self.assertEqual(alias2.node.compute_path(), "test/alias")
+            self.assertEqual(alias2.title, "Page Title")
             self.assertEqual(alias2.build_path, "test/alias/index.html")
             self.assertEqual(alias2.template, "redirect.html")
             self.assertIsNone(alias2.aliases)
 
     def test_conflict(self):
+        self.maxDiff = None
         files = {
             "page.md": {"aliases": ["alias", "/page", "/dir1/dir2/alias"]},
         }

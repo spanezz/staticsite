@@ -53,7 +53,7 @@ class AliasesFeature(Feature):
                 node.create_page(
                         page_cls=AliasPage,
                         created_from=page,
-                        meta_values={"page": page},
+                        meta_values={"page": page, "title": page.title},
                         path=subpath)
 
 
