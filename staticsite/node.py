@@ -86,6 +86,9 @@ class Node(SiteElement):
         # Subdirectories
         self.sub: dict[str, Node] = {}
 
+    def __repr__(self):
+        return f"Node({self.name})"
+
     def print(self, lead: str = "", file: Optional[TextIO] = None):
         if self.page:
             print(f"{lead}{self.name!r} home: {self.page!r}", file=file)
@@ -180,7 +183,7 @@ class Node(SiteElement):
                 return None
 
         # Match subnode name
-        if self.sub and (subnode := self.sub.get(path.head)) and subnode.page:
+        if (subnode := self.sub.get(path.head)) and subnode.page:
             return subnode.page
 
         # Match subpage names and basename of src.relpath in subpages
@@ -193,6 +196,8 @@ class Node(SiteElement):
 
         # Match basename of src.relpath in subpages
         for subnode in self.sub.values():
+            # print(f"Node.lookup_page:  sub[{subnode.name!r}] ="
+            #       f" {subnode.page!r} {subnode.page.src.relpath if subnode.page else '--'}")
             if (page := subnode.page) and (src := page.src) and os.path.basename(src.relpath) == path.head:
                 return page
 

@@ -188,10 +188,10 @@ class TaxonomyFeature(Feature):
         self.taxonomies[name] = Taxonomy(name=name, src=src)
 
     def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
-        for fname in directory.files.keys():
+        for fname, src in directory.files.items():
             if not fname.endswith(".taxonomy"):
                 continue
-            self.register_taxonomy(fname[:-9], directory.src)
+            self.register_taxonomy(fname[:-9], src)
 
     def load_dir(
             self,
