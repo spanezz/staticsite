@@ -302,7 +302,7 @@ class Page(SiteElement):
         # print(f"Page.resolve_path {self=!r}, {target=!r}")
         # Find the start node for the search
         if target.startswith("/"):
-            root = self.site.structure.root
+            root = self.site.root
             if static:
                 root = root.lookup(structure.Path.from_string(self.site.settings.STATIC_PATH))
         else:

@@ -77,7 +77,7 @@ class PageFilter:
             allow: Optional[Sequence[Page]] = None,
             **kw):
         self.site = site
-        self.root = root or site.structure.root
+        self.root = root or site.root
 
         if path is not None:
             self.re_path = compile_page_match(path)
@@ -103,7 +103,7 @@ class PageFilter:
         # print("PageFilter.filter")
         pages = []
 
-        for page in self._filter(self.root or self.site.structure.root, relpath=""):
+        for page in self._filter(self.root or self.site.root, relpath=""):
             pages.append(page)
 
         if self.sort_key is not None:

@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from .node import Path  # noqa
 
 if TYPE_CHECKING:
-    from .node import Node
     from .page import Page
     from .site import Site
 
@@ -21,9 +20,6 @@ class Structure:
     """
     def __init__(self, site: Site):
         self.site = site
-
-        # Root directory of the site
-        self.root: Node
 
         # Site pages that have the given metadata
         self.pages_by_metadata: dict[str, list[Page]] = defaultdict(list)

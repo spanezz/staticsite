@@ -31,7 +31,7 @@ class TestAsset(test_utils.MockSiteTestMixin, TestCase):
                     # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
                     os.utime(f.name, (1477958400, 1477958400))
                     src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
-                    page = mocksite.site.structure.root.add_asset(src=src, name="testasset")
+                    page = mocksite.site.root.add_asset(src=src, name="testasset")
 
                     self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
                     self.assertEqual(page.meta["site_url"], "https://www.example.org")

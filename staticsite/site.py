@@ -19,6 +19,7 @@ from .utils import timings
 
 if TYPE_CHECKING:
     from .page import Page
+    from .node import Node
 
 log = logging.getLogger("site")
 
@@ -64,6 +65,9 @@ class Site:
         # Structure of pages in the site
         self.structure = structure.Structure(self)
 
+        # Root directory of the site
+        self.root: Node
+
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
 
@@ -101,7 +105,7 @@ class Site:
         """
         Find a page by absolute path in the site
         """
-        return self.structure.root.resolve_path(path)
+        return self.root.resolve_path(path)
 
     def iter_pages(self, static: bool = True) -> Generator[Page, None, None]:
         """
@@ -111,9 +115,9 @@ class Site:
             prune = ()
         else:
             prune = (
-                self.structure.root.lookup(structure.Path.from_string(self.settings.STATIC_PATH)),
+                self.root.lookup(structure.Path.from_string(self.settings.STATIC_PATH)),
             )
-        yield from self.structure.root.iter_pages(prune=prune)
+        yield from self.root.iter_pages(prune=prune)
 
     @property
     def pages_by_metadata(self):
@@ -203,7 +207,7 @@ class Site:
             return
 
         # Create root node
-        self.structure.root = self.features.get_node_class()(self, "")
+        self.root = self.features.get_node_class()(self, "")
 
         # Scan the main content filesystem
         src = File.with_stat("", os.path.abspath(self.content_root))
@@ -211,11 +215,11 @@ class Site:
 
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
-        self.structure.root.update_meta(tree.meta)
+        self.root.update_meta(tree.meta)
 
-        if self.structure.root.site_name is None:
+        if self.root.site_name is None:
             # If we still have no idea of site names, use the root directory's name
-            self.structure.root.site_name = os.path.basename(tree.src.abspath)
+            self.root.site_name = os.path.basename(tree.src.abspath)
 
         # Scan asset trees from themes
         self.theme.scan_assets()
@@ -255,10 +259,10 @@ class Site:
             # Create root node based on site_path
             if (site_path := tree.meta.get("site_path")) and site_path.strip("/"):
                 # print(f"Site.load_content populate at {site_path} from {tree.src.abspath}")
-                node = self.structure.root.at_path(structure.Path.from_string(site_path))
+                node = self.root.at_path(structure.Path.from_string(site_path))
             else:
                 # print(f"Site.load_content populate at <root> from {tree.src.abspath}")
-                node = self.structure.root
+                node = self.root
 
             # Populate node from tree
             with tree.open_tree():
@@ -270,7 +274,7 @@ class Site:
         self.stage_content_directory_loaded = True
 
         # print("Final site structure:")
-        # self.structure.root.print()
+        # self.root.print()
 
     def load(self):
         """

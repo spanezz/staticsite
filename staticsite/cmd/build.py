@@ -194,7 +194,7 @@ class Builder:
         stats = RenderStats()
         os.makedirs(self.build_root, exist_ok=True)
         with RenderDirectory.open(self.build_root) as render_dir:
-            self.write_subtree(self.site.structure.root, render_dir, stats=stats)
+            self.write_subtree(self.site.root, render_dir, stats=stats)
         for type in sorted(stats.sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)",
                      type,

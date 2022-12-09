@@ -286,7 +286,7 @@ class Theme:
         """
         Load static assets
         """
-        site_path = os.path.join(self.site.structure.root.site_path, self.site.settings.STATIC_PATH)
+        site_path = os.path.join(self.site.root.site_path, self.site.settings.STATIC_PATH)
         meta = {"asset": True, "site_path": site_path}
 
         # Load system assets from site settings and theme configurations

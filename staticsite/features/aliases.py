@@ -40,7 +40,7 @@ class AliasesFeature(Feature):
                 continue
 
             for alias in aliases:
-                self.site.structure.root.create_page(
+                self.site.root.create_page(
                         page_cls=AliasPage,
                         created_from=page,
                         meta_values={"page": page},
