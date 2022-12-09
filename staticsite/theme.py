@@ -303,6 +303,7 @@ class Theme:
             )
 
         # Load assets from theme directories
+        meta["site_path"] = site_path
         for path in self.theme_static_dirs:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
