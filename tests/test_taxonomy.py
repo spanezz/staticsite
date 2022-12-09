@@ -35,3 +35,68 @@ tags: [cat]
             cat = tags.categories["cat"]
             self.assertEqual(cat.pages, [page])
             self.assertEqual(page.tags, [cat])
+
+    def test_enrico_tags(self):
+        """
+        Test tags.taxonomy from my own site
+        """
+        files = {
+            "tags.taxonomy": {
+                "title": "All tags",
+                "description": "Index of all tags in the site.",
+                "category": {
+                  "template_title": "Latest posts for tag <strong>{{page.name}}</strong>",
+                  "template_description": "Most recent posts with tag <strong>{{page.name}}</strong>",
+                  "syndication": {
+                    "template_title": "{{page.meta.site_name}}: posts with tag {{page.meta.index.name}}",
+                    "template_description": "{{page.meta.site_name}}: most recent posts"
+                                            " with tag {{page.meta.index.name}}",
+                  }
+                },
+                "archive": {
+                  "template_title": "Archive of posts for tag <strong>{{page.created_from.name}}</strong>",
+                  "template_description": "Archive of all posts with tag <strong>{{page.created_from.name}}</strong>",
+                },
+            },
+            "page.md": {
+                "tags": ["test"],
+                "title": "Page",
+            }
+        }
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
+                "", "page", "tags", "tags/test",
+                "tags/test/index.rss", "tags/test/index.atom", "tags/test/archive",
+            ))
+
+            page, tags, test, rss, atom, archive = mocksite.page(
+                "page", "tags", "tags/test",
+                "tags/test/index.rss", "tags/test/index.atom", "tags/test/archive")
+
+            self.assertEqual(page.title, "Page")
+            self.assertIsNone(page.description)
+            self.assertEqual(page.tags, [test])
+            self.assertEqual(page.related, {})
+
+            self.assertEqual(test.title, "Latest posts for tag <strong>test</strong>")
+            self.assertEqual(test.description, "Most recent posts with tag <strong>test</strong>")
+            self.assertEqual(test.name, "test")
+            self.assertEqual(test.taxonomy, tags)
+            self.assertEqual(test.related, {
+                "rss_feed": rss,
+                "atom_feed": atom,
+                "archive": archive,
+            })
+
+            self.assertEqual(rss.title, "Test site: posts with tag test")
+            self.assertEqual(rss.description, "Test site: most recent posts with tag test")
+            self.assertEqual(rss.related, {})
+            self.assertEqual(rss.index, test)
+
+            self.assertEqual(archive.title, "Archive of posts for tag <strong>test</strong>")
+            self.assertEqual(archive.description, "Archive of all posts with tag <strong>test</strong>")
+            self.assertEqual(archive.related, {
+                "rss_feed": rss,
+                "atom_feed": atom,
+            })
+            self.assertEqual(archive.index, test)
