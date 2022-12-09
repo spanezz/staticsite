@@ -41,6 +41,8 @@ class LinksPageMixin(metaclass=FieldsMetaclass):
     def html_body(self, context, **kw) -> str:
         rendered = super().html_body(context, **kw)
 
+        # If the page has rendered pointers to external links, add a dataset
+        # with extra information for them
         if self.rendered_external_links:
             feature = self.site.features["links"]
             links = feature.links
@@ -178,7 +180,7 @@ class Links(Feature):
                 links.merge(page.links)
         else:
             for page in page_filter.filter():
-                for link in page.links:
+                for link in page._links:
                     if link_tags is not None and not link_tags.issubset(link.tags):
                         continue
                     links.append(link)
