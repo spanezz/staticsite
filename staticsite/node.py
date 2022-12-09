@@ -105,9 +105,9 @@ class Node(SiteElement):
 
     def print(self, lead: str = "", file: Optional[TextIO] = None):
         if self.page:
-            print(f"{lead}{self.name!r} home: {self.page!r}", file=file)
+            print(f"{lead}{self.name!r} page:{self.page!r}", file=file)
         else:
-            print(f"{lead}{self.name!r} (no home)", file=file)
+            print(f"{lead}{self.name!r} (no page)", file=file)
         for name, page in self.build_pages.items():
             print(f"{lead}- {name} → {page!r}", file=file)
         for name, node in self.sub.items():

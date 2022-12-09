@@ -13,6 +13,9 @@ def main():
     from staticsite.cmd.check import Check
     Check.make_subparser(subparsers)
 
+    from staticsite.cmd.dump import Dump
+    Dump.make_subparser(subparsers)
+
     from staticsite.cmd.dump_meta import DumpMeta
     DumpMeta.make_subparser(subparsers)
 
