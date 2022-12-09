@@ -1,12 +1,16 @@
-import subprocess
-from .command import Command, Fail, Success
-from staticsite.utils import images
-from staticsite.cache import DisabledCache
-from staticsite.utils import yaml_codec as yaml
-from staticsite.metadata import Meta
-import shlex
-import tempfile
+from __future__ import annotations
+
 import logging
+import shlex
+import subprocess
+import tempfile
+from typing import Any
+
+from ..cache import DisabledCache
+from ..utils import images
+from ..utils import yaml_codec as yaml
+
+from .command import Command, Fail, Success
 
 log = logging.getLogger("meta")
 
@@ -32,7 +36,7 @@ class Meta(Command):
                 " ".join(shlex.quote(x) for x in cmd), e.returncode))
         return res
 
-    def edit_meta(self, meta: Meta) -> Meta:
+    def edit_meta(self, meta: dict[str, Any]) -> dict[str, Any]:
         """
         Edit the given metadata in an editor
         """
@@ -43,7 +47,7 @@ class Meta(Command):
             with open(fd.name, "rt") as newfd:
                 return yaml.load(newfd)
 
-    def save_changes(self, old_meta: Meta, new_meta: Meta):
+    def save_changes(self, old_meta: dict[str, Any], new_meta: dict[str, Any]):
         # Compute and store the changes
         changed = {}
         removed = []

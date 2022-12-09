@@ -63,8 +63,8 @@ class LinkIndexPage(Page):
             pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories
-        pages.sort(key=lambda x: x.meta["title"])
-        self.meta["pages"] = pages
+        pages.sort(key=lambda x: x.title)
+        self.pages = pages
         self.links = self.feature_links.links
 
 
@@ -78,9 +78,9 @@ class LinksTagPage(Page):
     def __init__(self, *args, **kw):
         links = kw.pop("links", None)
         super().__init__(*args, **kw)
-        self.meta["syndicated"] = False
+        self.syndicated = False
         if links is None:
-            self.links = LinkCollection([Link(link) for link in self.meta["links"]])
+            self.links = LinkCollection([Link(link) for link in self.links])
         else:
             self.links = links
 

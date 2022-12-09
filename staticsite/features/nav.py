@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import metadata, fields
 from staticsite.feature import Feature
-from staticsite.page import PageNotFoundError
 
 if TYPE_CHECKING:
     from staticsite.page import Page
@@ -82,20 +81,11 @@ class Nav(Feature):
             if (nav := page.nav) is None:
                 continue
 
-            # Resolve everything as pages
-            this_nav = []
-            for path in nav:
-                try:
-                    this_nav.append(page.resolve_path(path))
-                except PageNotFoundError as e:
-                    log.warn("%s: %s", page, e)
-
-            # print(f"{page!r} nav={this_nav!r}")
+            # Resolve paths to target pages
+            nav._resolve()
 
             # Build list of target pages
-            nav_pages.update(this_nav)
-
-            page.nav = this_nav
+            nav_pages.update(nav.resolved)
 
         # Make sure nav_title is filled
         for page in nav_pages:
