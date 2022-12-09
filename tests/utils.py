@@ -161,9 +161,9 @@ class ExampleSite(MockSiteBase):
 
 class MockSiteTestMixin:
     @contextmanager
-    def site(self, mocksite: Union[MockSite, MockFiles]):
+    def site(self, mocksite: Union[MockSite, MockFiles], **kw):
         if not isinstance(mocksite, MockSite):
-            mocksite = MockSite(mocksite)
+            mocksite = MockSite(mocksite, **kw)
         mocksite.test_case = self
         with mocksite:
             yield mocksite

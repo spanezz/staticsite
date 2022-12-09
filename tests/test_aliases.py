@@ -30,7 +30,10 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
         files = {
             "page.md": {"aliases": ["alias", "/page"]},
         }
-        with self.site(files) as mocksite:
+        with self.site(files, auto_load_site=False) as mocksite:
+            with self.assertLogs(level="WARNING") as out:
+                mocksite.load_site()
+            self.assertEqual(out.output, ["WARNING:aliases:markdown:page.md defines alias '/page' pointing to itself"])
             mocksite.assertPagePaths(("", "page", "alias"))
             page, alias = mocksite.page("page", "alias")
 
