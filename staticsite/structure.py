@@ -25,9 +25,6 @@ class Structure:
         # Root directory of the site
         self.root: Node
 
-        # Site pages indexed by site_path
-        self.pages: dict[str, Page] = {}
-
         # Site pages that have the given metadata
         self.pages_by_metadata: dict[str, list[Page]] = defaultdict(list)
 
@@ -49,17 +46,6 @@ class Structure:
         """
         Register a new page in the site
         """
-        # Mount page by site path
-        site_path = page.site_path
-        old = self.pages.get(site_path)
-        if old is not None:
-            if old.TYPE == "asset" and page.TYPE == "asset":
-                # First one wins, to allow overriding of assets in theme
-                pass
-            else:
-                log.warn("%s: page %r replaces page %r", site_path, page, old)
-        self.pages[site_path] = page
-
         # Also group pages by tracked metadata
         for tracked in self.tracked_metadata:
             if tracked in page.__dict__:
