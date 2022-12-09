@@ -326,13 +326,6 @@ class Site:
         """
         Check if this page should be ignored and not added to the site
         """
-        from .page import PageValidationError
-        try:
-            page.validate()
-        except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
-            return True
-
         if not self.settings.DRAFT_MODE and page.draft:
             log.info("%s: page is still a draft: skipping", page)
             return True

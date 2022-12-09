@@ -248,6 +248,14 @@ class Node(SiteElement):
         except SkipPage:
             return None
 
+    def _validate_page(self, page: Page):
+        from .page import PageValidationError
+        try:
+            page.validate()
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            raise SkipPage()
+
     def _create_index_page(
             self, *,
             page_cls: Type[Page],
@@ -278,6 +286,7 @@ class Node(SiteElement):
             created_from=created_from,
             leaf=False,
             directory_index=directory_index, meta_values=meta_values, **kw)
+        self._validate_page(page)
         if self.site.is_page_ignored(page):
             raise SkipPage()
 
@@ -323,6 +332,7 @@ class Node(SiteElement):
             search_root_node=self,
             leaf=True,
             directory_index=False, meta_values=meta_values, **kw)
+        self._validate_page(page)
         if self.site.is_page_ignored(page):
             raise SkipPage()
 
