@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import logging
 
-from staticsite import fields, metadata, node
+from staticsite import fields, metadata
+from staticsite.node import Path
 from staticsite.feature import Feature
 from staticsite.page import Page
 
@@ -40,11 +41,20 @@ class AliasesFeature(Feature):
                 continue
 
             for alias in aliases:
-                self.site.root.create_page(
+                path = Path.from_string(alias)
+                node = self.site.root.at_path(path.dir)
+                subpath = Path((path.name,))
+                if (old := node.lookup_page(subpath)):
+                    if old == page:
+                        log.warning("%r defines alias %r pointing to itself", page, alias)
+                    else:
+                        log.warning("%r defines alias %r pointing to existing page %r", page, alias, old)
+                    continue
+                node.create_page(
                         page_cls=AliasPage,
                         created_from=page,
                         meta_values={"page": page},
-                        path=node.Path.from_string(alias))
+                        path=subpath)
 
 
 class AliasPage(Page):

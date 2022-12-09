@@ -47,6 +47,20 @@ class Path(tuple[str]):
         # TODO: check if it's worth making this a cached_property
         return Path(self[1:])
 
+    @property
+    def dir(self) -> Path:
+        """
+        Return the path with all components except last
+        """
+        return Path(self[:-1])
+
+    @property
+    def name(self) -> str:
+        """
+        Return the last component of the path
+        """
+        return self[-1]
+
     @classmethod
     def from_string(cls, path: str) -> "Path":
         """
@@ -243,6 +257,7 @@ class Node(SiteElement):
             meta_values: Optional[dict[str, Any]] = None,
             created_from: Optional[Page] = None,
             **kw):
+
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:

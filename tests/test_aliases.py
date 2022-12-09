@@ -25,3 +25,22 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(alias2.build_path, "test/alias/index.html")
             self.assertEqual(alias2.template, "redirect.html")
             self.assertIsNone(alias2.aliases)
+
+    def test_conflict(self):
+        files = {
+            "page.md": {"aliases": ["alias", "/page"]},
+        }
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths(("", "page", "alias"))
+            page, alias = mocksite.page("page", "alias")
+
+            self.assertEqual(page.TYPE, "markdown")
+            self.assertEqual(page.node.compute_path(), "page")
+            self.assertEqual(page.build_path, "page/index.html")
+            self.assertEqual(page.aliases, ["alias", "/page"])
+
+            self.assertEqual(alias.node.compute_path(), "alias")
+            self.assertEqual(alias.build_path, "alias/index.html")
+            self.assertEqual(alias.template, "redirect.html")
+            self.assertEqual(alias.page, page)
+            self.assertIsNone(alias.aliases)
