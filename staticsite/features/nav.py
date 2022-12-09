@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
-from staticsite import metadata, fields
+from staticsite import fields, metadata
 from staticsite.feature import Feature
+from staticsite.page import PageNotFoundError
 
 if TYPE_CHECKING:
     from staticsite.page import Page
@@ -21,7 +22,17 @@ class NavData:
     def _resolve(self):
         if self.resolved is not None:
             return
-        self.resolved = [self.page.resolve_path(path) for path in self.paths]
+        self.resolved = []
+        for path in self.paths:
+            try:
+                page = self.page.resolve_path(path)
+            except PageNotFoundError as e:
+                log.warning("%r: skipping page in nav: %s", self.page, e)
+                continue
+            if page is None:
+                log.warning("%r: path %r resolved as None: skipping", self.page, path)
+                continue
+            self.resolved.append(page)
 
     def __iter__(self):
         self._resolve()
