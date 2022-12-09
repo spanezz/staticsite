@@ -18,7 +18,7 @@ class TestSeries(test_utils.MockSiteTestMixin, TestCase):
                             "series_title": "Series A part Two"},
             "seriesa4.md": {"date": dt(2016, 1, 4), "series": "seriesa", "title": "A4"},
             "seriesb1.md": {"date": dt(2016, 1, 1), "series": "seriesb",
-                            "title": "Series B", "series_title": "Series B part One"},
+                            "title": "Series B Intro", "series_title": "Series B"},
             "seriesb2.md": {"date": dt(2016, 1, 2), "series": "seriesb", "title": "B2"},
             "seriesc1.md": {"date": dt(2016, 1, 1), "title": "Series C", "series": "seriesc"},
             "noseries.md": {"date": dt(2016, 1, 1), "title": "Other things"},
@@ -47,6 +47,14 @@ class TestSeries(test_utils.MockSiteTestMixin, TestCase):
             self.assertEquals(series.categories["seriesc"].pages, [seriesc1])
 
             # Check computed series metadata
+            self.assertEqual(series.categories["seriesa"].series_info, {
+                "pages": [seriesa1, seriesa2, seriesa3, seriesa4],
+                "length": 4,
+                "first": seriesa1,
+                "last": seriesa4,
+                "title": "Series A",
+            })
+
             s = series.categories["seriesa"].sequence(seriesa1)
             self.assertEquals(s["title"], "Series A")
             self.assertEquals(s["prev"], None)
@@ -83,8 +91,16 @@ class TestSeries(test_utils.MockSiteTestMixin, TestCase):
             self.assertEquals(s["index"], 4)
             self.assertEquals(s["length"], 4)
 
+            self.assertEqual(series.categories["seriesb"].series_info, {
+                "pages": [seriesb1, seriesb2],
+                "length": 2,
+                "first": seriesb1,
+                "last": seriesb2,
+                "title": "Series B",
+            })
+
             s = series.categories["seriesb"].sequence(seriesb1)
-            self.assertEquals(s["title"], "Series B part One")
+            self.assertEquals(s["title"], "Series B")
             self.assertEquals(s["prev"], None)
             self.assertEquals(s["next"], seriesb2)
             self.assertEquals(s["first"], seriesb1)
@@ -93,7 +109,7 @@ class TestSeries(test_utils.MockSiteTestMixin, TestCase):
             self.assertEquals(s["length"], 2)
 
             s = series.categories["seriesb"].sequence(seriesb2)
-            self.assertEquals(s["title"], "Series B part One")
+            self.assertEquals(s["title"], "Series B")
             self.assertEquals(s["prev"], seriesb1)
             self.assertEquals(s["next"], None)
             self.assertEquals(s["first"], seriesb1)

@@ -49,7 +49,11 @@ class Taxonomy:
         # Metadata for category pages
         if category is not None:
             self.category_meta.update(category)
-        self.category_meta.setdefault("template_title", "{{meta.name}}")
+        self.category_meta.setdefault("template_title", "{{page.name}}")
+
+        # Metadata for archive pages
+        if archive is not None:
+            self.archive_meta.update(archive)
 
     def create_index(self, node: Node) -> TaxonomyPage:
         """
@@ -85,6 +89,7 @@ class Taxonomy:
 
         if syndication is not None:
             category_meta["syndication"] = syndication
+            category_meta["syndication"].archive.update(self.archive_meta)
 
         # Don't auto-add feeds for the tag syndication pages
         syndication.add_to = False
@@ -142,7 +147,17 @@ class Taxonomy:
         self.index.pages = list(self.category_pages.values())
 
 
-class TaxonomyPageMixin(metaclass=metadata.FieldsMetaclass):
+class BaseTaxonomyPageMixin(metaclass=metadata.FieldsMetaclass):
+    series_title = fields.Field(doc="""
+        Series title from this page onwards.
+
+        If this page is part of a series, and it defines `series_title`, then
+        the series title will be changed to this, from this page onwards, but
+        not for the previous pages
+    """)
+
+
+class TaxonomyPageMixin(BaseTaxonomyPageMixin):
     """
     Base class for dynamically generated taxonomy page mixins
     """
@@ -341,6 +356,7 @@ class CategoryPage(Page):
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
+    @functools.cached_property
     def series_info(self):
         """
         Return a dict describing this category as a series
@@ -349,7 +365,7 @@ class CategoryPage(Page):
         # Look for the last defined series title, defaulting to the title of
         # the first page in the series.
         pages = self.pages
-        series_title = pages[0].title
+        series_title = pages[0].series_title or pages[0].title
         return {
             # Array with all the pages in the series
             "pages": pages,
