@@ -119,12 +119,6 @@ class Bool(Field):
         else:
             raise ValueError(f"{val!r} is not a valid value for a bool field")
 
-    def fill_new(self, obj: FieldContainer, parent: Optional[FieldContainer] = None):
-        if (val := obj.__dict__.get(self.name)) is not None:
-            obj.__dict__[self.name] = self._clean(obj, val)
-        elif self.default is not None:
-            obj.__dict__[self.name] = self._clean(obj, self.default)
-
 
 class FieldsMetaclass(type):
     """
