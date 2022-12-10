@@ -60,8 +60,6 @@ class PageDate(fields.Date):
     def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
         if (date := obj.__dict__.get(self.name)):
             obj.__dict__[self.name] = obj.site.clean_date(date)
-        elif parent and (date := parent.__dict__.get(self.name)):
-            obj.__dict__[self.name] = obj.site.clean_date(date)
         elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
             obj.__dict__[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
         else:
