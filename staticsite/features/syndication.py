@@ -110,16 +110,16 @@ class Syndication:
 
         page_name, ext = os.path.splitext(self.index.dst)
 
-        meta_values = self.default_meta
-        meta_values["pages"] = self.pages
-        meta_values["index"] = self.index
+        kwargs = self.default_meta
+        kwargs["pages"] = self.pages
+        kwargs["index"] = self.index
 
         # RSS feed
         rss_page = self.index.node.create_page(
                 created_from=self.index,
                 page_cls=RSSPage,
-                meta_values=meta_values,
-                dst=f"{page_name}.{RSSPage.TYPE}")
+                dst=f"{page_name}.{RSSPage.TYPE}",
+                **kwargs)
         self.rss_page = rss_page
         log.debug("%s: adding syndication page for %s", rss_page, self.index)
         # print(f"  rss_page {rss_page.meta=!r}")
@@ -128,8 +128,8 @@ class Syndication:
         atom_page = self.index.node.create_page(
                 created_from=self.index,
                 page_cls=AtomPage,
-                meta_values=meta_values,
-                dst=f"{page_name}.{AtomPage.TYPE}")
+                dst=f"{page_name}.{AtomPage.TYPE}",
+                **kwargs)
         self.atom_page = atom_page
         log.debug("%s: adding syndication page for %s", atom_page, self.index)
 
@@ -148,8 +148,9 @@ class Syndication:
         self.archive_page = self.index.node.create_page(
                 created_from=self.index,
                 page_cls=ArchivePage,
-                meta_values=self.archive,
-                path=Path(("archive",)))
+                path=Path(("archive",)),
+                **self.archive,
+                )
         self.archive_page.add_related("rss_feed", self.rss_page)
         self.archive_page.add_related("atom_feed", self.atom_page)
 

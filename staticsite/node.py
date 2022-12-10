@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, TextIO, Type, Union
+from typing import TYPE_CHECKING, Generator, Optional, Sequence, TextIO, Type, Union
 
 from . import fields
 from .site import SiteElement, Path
@@ -186,7 +186,6 @@ class Node(SiteElement):
             path: Optional[Path] = None,
             dst: Optional[str] = None,
             directory_index: bool = False,
-            meta_values: Optional[dict[str, Any]] = None,
             **kw):
         """
         Create a page of the given type, attaching it at the given path
@@ -199,12 +198,6 @@ class Node(SiteElement):
 
         if dst is None and not directory_index and not path:
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
-
-        # TODO: remove
-        if meta_values:
-            for name in kw.keys() & meta_values.keys():
-                print(f"{name} for {kw['page_cls'].__name__} set in {kw[name]=!r} and in {meta_values[name]=!r}")
-            kw.update(meta_values)
 
         # TODO: move site.is_page_ignored here?
         try:

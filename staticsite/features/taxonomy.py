@@ -63,10 +63,10 @@ class Taxonomy:
         self.index = node.create_page(
             page_cls=TaxonomyPage,
             src=self.src,
-            meta_values=self.index_meta,
             name=self.name,
             directory_index=True,
-            path=Path((self.name,)))
+            path=Path((self.name,)),
+            **self.index_meta)
         return self.index
 
     def create_category_page(self, name: str, pages: List[Page]) -> CategoryPage:
@@ -107,10 +107,9 @@ class Taxonomy:
         return self.index.node.create_page(
             created_from=self.index,
             page_cls=CategoryPage,
-            meta_values=category_meta,
             name=name,
-            path=Path((name,))
-        )
+            path=Path((name,)),
+            **category_meta)
 
     def generate_pages(self):
         self.category_meta["taxonomy"] = self.index
@@ -215,7 +214,7 @@ class TaxonomyFeature(Feature):
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             if not fname.endswith(".taxonomy"):
                 continue
             taken.append(fname)
@@ -227,9 +226,9 @@ class TaxonomyFeature(Feature):
             except Exception:
                 log.exception("%s: cannot parse taxonomy information", src.relpath)
                 continue
-            meta_values.update(fm_meta)
+            kwargs.update(fm_meta)
 
-            taxonomy.update_meta(**meta_values)
+            taxonomy.update_meta(**kwargs)
             pages.append(taxonomy.create_index(node))
 
         for fname in taken:

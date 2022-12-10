@@ -221,7 +221,7 @@ class MarkdownPages(Feature):
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             if not fname.endswith(".md"):
                 continue
             taken.append(fname)
@@ -233,7 +233,7 @@ class MarkdownPages(Feature):
                 log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
                 continue
 
-            meta_values.update(fm_meta)
+            kwargs.update(fm_meta)
 
             if (directory_index := fname in ("index.md", "README.md")):
                 path = Path()
@@ -244,11 +244,11 @@ class MarkdownPages(Feature):
             page = node.create_page(
                     page_cls=MarkdownPage,
                     src=src,
-                    meta_values=meta_values,
                     feature=self,
                     body=body,
                     directory_index=directory_index,
-                    path=path)
+                    path=path,
+                    **kwargs)
             pages.append(page)
 
         for fname in taken:

@@ -154,7 +154,7 @@ class RestructuredText(Feature):
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             if not fname.endswith(".rst"):
                 continue
             taken.append(fname)
@@ -166,7 +166,7 @@ class RestructuredText(Feature):
                 log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
                 continue
 
-            meta_values.update(fm_meta)
+            kwargs.update(fm_meta)
 
             if (directory_index := fname in ("index.rst", "README.rst")):
                 path = Path()
@@ -176,11 +176,11 @@ class RestructuredText(Feature):
             page = node.create_page(
                     page_cls=RstPage,
                     src=src,
-                    meta_values=meta_values,
                     feature=self,
                     doctree_scan=doctree_scan,
                     directory_index=directory_index,
-                    path=path)
+                    path=path,
+                    **kwargs)
             pages.append(page)
 
         for fname in taken:
