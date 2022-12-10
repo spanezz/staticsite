@@ -19,14 +19,14 @@ description: "Index of all tags in the site."
 # Category metadata is used for each tag page
 category:
   # template: taxonomy/category.html
-  template_title: "Latest posts for tag <strong>{{meta.name}}</strong>"
-  template_description: "Most recent posts with tag <strong>{{meta.name}}</strong>"
+  template_title: "Latest posts for tag <strong>{{page.name}}</strong>"
+  template_description: "Most recent posts with tag <strong>{{page.name}}</strong>"
   syndication:
-    template_title: "{{meta.site_name}}: posts with tag {{meta.index.name}}"
-    template_description: "{{meta.site_name}}: most recent posts with tag {{meta.index.name}}"
+    template_title: "{{page.meta.site_name}}: posts with tag {{page.meta.index.name}}"
+    template_description: "{{page.meta.site_name}}: most recent posts with tag {{page.meta.index.name}}"
 
 # Archive metadata is used for each tag archive page
 archive:
   # template: taxonomy/archive.html
-  template_title: "Archive of posts for tag <strong>{{meta.created_from.name}}</strong>"
-  template_description: "Archive of all posts with tag <strong>{{meta.created_from.name}}</strong>"
+  template_title: "Archive of posts for tag <strong>{{page.created_from.name}}</strong>"
+  template_description: "Archive of all posts with tag <strong>{{page.created_from.name}}</strong>"

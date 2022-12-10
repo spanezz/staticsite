@@ -2,19 +2,25 @@
 
 # New in UNRELEASED
 
+* Breaking changes:
+   * All templates: `url_for` in templates now requires `static=True` to refer
+     to static assets, whose location may change based on
+     `settings.STATIC_PATH`. Default templates have been fixed accordingly
+   * Alias pages: alias handling has been refactored, and they are now rendered
+     as first-class pages. In its template, what was `{{url_for(page)}}` to
+     refer to the defining page, now needs to be `{{url_for(page.meta.page)}}`.
+     The `render.html` template has been changed accordingly.
+   * link page templates: `page.links` becomes `page.link_collection`.
+     `data-links.html` has been changed accordingly.
+   * dir page templates: `site_path` has disappeared from page metadata.
+     Basename is now accessible as `page.node.name`
+     `dir.html` has been changed accordingly.
+   * All templates: `category_page.series_info()` is now
+     `category_page.series_info`. `lib/blog.html` has been changed accordingly.
+   * The feature plugin system has been significantly redesigned. Get in touch
+     if you have custom plugins, and I can help with porting
 * New template filter `next_month` that given a date returns the date of the
   beginning of the following month
-* ``page`` is not available anymore in templates within the `front_matter` of
-  pages. Use `{{meta.…}}` instead of `{{page.meta.…}}`. `name` and
-  `created_from` have been moved to `meta` to make them available. This avoids
-  requiring a Page object in order to create its metadata.
-* Alias handling has been refactored, and they are now rendered as first-class
-  pages. In its template, what was `{{url_for(page)}}` to refer to the defining
-  page, now needs to be `{{url_for(page.meta.page)}}`. The `render.html`
-  template has been changed accordingly.
-* `url_for` in templates now requires `static=True` to refer to static assets,
-  whose location may change based on `settings.STATIC_PATH`. Default templates
-  have been fixed accordingly
 
 # New in version 1.6
 

@@ -11,8 +11,8 @@
     </tr>
   </thead>
   <tbody>
-  {% if page.parent %}
-  {% with parent = page.parent %}
+  {% if page.meta.parent %}
+  {% with parent = page.meta.parent %}
   <tr>
     <td><a href="{{url_for(parent)}}">{{parent.meta.date.strftime("%Y-%m-%d")}}</a></td>
     <td><a href="{{url_for(parent)}}">.. {% if parent.node.name %}({{parent.node.name}}){% endif %}</a></td>
