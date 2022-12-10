@@ -175,10 +175,11 @@ class Syndication:
         self.pages.sort(key=lambda p: p.syndication_date, reverse=True)
 
         # Compute dates for generated pages
-        max_date = max(p.date for p in self.pages)
-        self.rss_page.date = max_date
-        self.atom_page.date = max_date
-        self.archive_page.date = max_date
+        if self.pages:
+            max_date = max(p.date for p in self.pages)
+            self.rss_page.date = max_date
+            self.atom_page.date = max_date
+            self.archive_page.date = max_date
 
     def process_add_to(self):
         """
