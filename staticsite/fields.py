@@ -117,6 +117,25 @@ class Bool(Field):
             raise ValueError(f"{val!r} is not a valid value for a bool field")
 
 
+class Dict(Field):
+    """
+    Make sure the field is a dict
+    """
+    def __get__(self, obj: FieldContainer, type: Type = None) -> Any:
+        if (value := obj.__dict__.get(self.name)) is None:
+            value = {}
+            obj.__dict__[self.name] = value
+        return value
+
+    def _clean(self, obj: FieldContainer, value: Any) -> Any:
+        """
+        Hook to allow to clean values before set
+        """
+        if isinstance(value, dict):
+            return value
+        raise ValueError(f"{value!r} is not a valid value for a dict field")
+
+
 class FieldsMetaclass(type):
     """
     Allow a class to have a set of Field members, defining self-documenting
