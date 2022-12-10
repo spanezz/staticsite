@@ -45,13 +45,6 @@ class Field:
     def __set__(self, obj: FieldContainer, value: Any) -> None:
         obj.__dict__[self.name] = self._clean(obj, value)
 
-    def fill_new(self, obj: FieldContainer, parent: Optional[FieldContainer] = None):
-        """
-        Compute values for the meta element of a newly created FieldContainer
-        """
-        # By default, nothing to do
-        pass
-
     def _clean(self, obj: FieldContainer, value: Any) -> Any:
         """
         Hook to allow to clean values before set
@@ -64,16 +57,20 @@ class Inherited(Field):
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
     """
-
     def get_notes(self):
         yield from super().get_notes()
         yield "Inherited from parent pages"
 
-    def fill_new(self, obj: FieldContainer, parent: Optional[FieldContainer] = None):
-        if parent is None:
-            return
-        if self.name not in obj.__dict__ and self.name in parent.__dict__:
-            obj.__dict__[self.name] = parent.__dict__[self.name]
+    def __get__(self, obj: FieldContainer, type: Type = None) -> Any:
+        if self.name not in obj.__dict__:
+            if obj._parent is not None and self.name in obj._parent._fields:
+                value = getattr(obj._parent, self.name)
+            else:
+                value = self.default
+            obj.__dict__[self.name] = value
+            return value
+        else:
+            return obj.__dict__[self.name]
 
 
 class TemplateInherited(Inherited):
@@ -156,12 +153,10 @@ class FieldContainer(metaclass=FieldsMetaclass):
         # Reference to Site, so that fields can access configuration, template
         # compilers, and so on
         self.site = site
+        # Reference to parent, for field inheritance
+        self._parent = parent
 
         self.update_fields(kw)
-
-        # Call fields to fill in computed fields
-        for field in self._fields.values():
-            field.fill_new(self, parent)
 
     def update_fields(self, values: dict[str, Any]):
         for name, value in values.items():
