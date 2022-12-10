@@ -78,7 +78,6 @@ class Taxonomy:
 
         # Create category page
         category_meta = dict(self.category_meta)
-        category_meta["name"] = name
         category_meta["pages"] = pages
         category_meta["date"] = pages[-1].date
 

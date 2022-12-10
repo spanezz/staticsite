@@ -242,6 +242,8 @@ class Node(SiteElement):
             search_root_node = self.parent
 
         # TODO: warn of conflicts
+        for name in kw.keys() & meta_values.keys():
+            print(f"{name} for {page_cls.__name__} set in {kw[name]=!r} and in {meta_values[name]=!r}")
         kw.update(meta_values)
 
         # Create the page
@@ -288,6 +290,8 @@ class Node(SiteElement):
                         **kw)
 
         # TODO: warn of conflicts
+        for name in kw.keys() & meta_values.keys():
+            print(f"{name} for {page_cls.__name__} set in {kw[name]=!r} and in {meta_values[name]=!r}")
         kw.update(meta_values)
 
         # Create the page
