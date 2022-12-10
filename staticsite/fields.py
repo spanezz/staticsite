@@ -58,15 +58,6 @@ class Field:
         """
         return value
 
-    def set(self, obj: FieldContainer, values: dict[str, Any]):
-        """
-        Set metadata values in obj from values
-        """
-        # By default, plain assignment
-        if self.name in values:
-            if (cleaned_value := self._clean(obj, values[self.name])) is not None:
-                obj.__dict__[self.name] = cleaned_value
-
 
 class Inherited(Field):
     """
@@ -172,16 +163,15 @@ class FieldContainer(metaclass=FieldsMetaclass):
         # compilers, and so on
         self.site = site
 
-        for name, value in kw.items():
-            if name in self._fields:
-                setattr(self, name, value)
-            else:
-                log.warning("%r: setting unknown field %s=%r", self, name, value)
+        self.update_fields(kw)
 
         # Call fields to fill in computed fields
         for field in self._fields.values():
             field.fill_new(self, parent)
 
     def update_fields(self, values: dict[str, Any]):
-        for field in self._fields.values():
-            field.set(self, values)
+        for name, value in values.items():
+            if name in self._fields:
+                setattr(self, name, value)
+            else:
+                log.warning("%r: setting unknown field %s=%r", self, name, value)
