@@ -44,13 +44,13 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             'site_path': 'about',
             "build_path": "about/index.html",
             "meta": {
-                "date": '2020-02-01 17:00:00+01:00',
+                "date": '2019-06-01 12:30:00+02:00',
                 "draft": False,
                 'author': "Test User",
-                'copyright': '© 2020 Test User',
+                'copyright': '© 2019 Test User',
                 'indexed': True,
                 'syndicated': True,
-                "syndication_date": '2020-02-01 17:00:00+01:00',
+                "syndication_date": '2019-06-01 12:30:00+02:00',
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',
                 'template': 'page.html',
@@ -71,10 +71,10 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             'site_path': '',
             "build_path": "index.html",
             "meta": {
-                "date": '2020-02-01 17:00:00+01:00',
+                "date": '2019-12-30 17:30:00+01:00',
                 "draft": False,
                 'author': "Test User",
-                'copyright': '© 2020 Test User',
+                'copyright': '© 2019 Test User',
                 'indexed': True,
                 'syndicated': True,
                 'syndication': {
@@ -89,7 +89,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                     'pages': ['MarkdownPage(posts/example)'],
                     'rss_page': 'RSSPage(index.rss)'
                 },
-                'syndication_date': '2020-02-01 17:00:00+01:00',
+                "syndication_date": '2019-06-01 12:30:00+02:00',
                 'pages': ['MarkdownPage(posts/example)'],
                 'site_name': 'My example blog',
                 'site_url': 'https://www.example.org',

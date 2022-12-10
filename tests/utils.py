@@ -53,6 +53,7 @@ class MockSiteBase:
         self.generation_time: Optional[int] = 1559385000
 
         # Mock stat to return this mtime for files scanned during site load
+        # date +%s --date="2019-06-01 12:30"
         self.mock_file_mtime: Optional[int] = 1559385000
 
         self.root = self.stack.enter_context(tempfile.TemporaryDirectory())

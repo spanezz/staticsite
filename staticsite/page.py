@@ -57,13 +57,14 @@ class PageDate(fields.Date):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (date := obj.__dict__.get(self.name)):
-            obj.__dict__[self.name] = obj.site.clean_date(date)
-        elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
-            obj.__dict__[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
-        else:
-            obj.__dict__[self.name] = obj.site.generation_time
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (date := page.__dict__.get(self.name)) is None:
+            if (src := page.src) is not None and src.stat is not None:
+                date = page.site.localized_timestamp(src.stat.st_mtime)
+            else:
+                date = page.site.generation_time
+            page.__dict__[self.name] = date
+        return date
 
 
 class Draft(fields.Field):
