@@ -150,7 +150,9 @@ class Site:
     LOAD_STEP_DIRS = 3
     LOAD_STEP_CONTENTS = 4
     LOAD_STEP_ORGANIZE = 5
-    LOAD_STEP_ALL = LOAD_STEP_ORGANIZE
+    LOAD_STEP_GENERATE = 6
+    LOAD_STEP_CROSSREFERENCE = 6
+    LOAD_STEP_ALL = LOAD_STEP_CROSSREFERENCE
 
     def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):
         from .feature import Features
@@ -395,9 +397,23 @@ class Site:
             return
 
         if self.last_load_step < self.LOAD_STEP_ORGANIZE:
-            with timings("Analyzed contents in %fs"):
+            with timings("Organized contents in %fs"):
                 self._organize()
             self.last_load_step = self.LOAD_STEP_ORGANIZE
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_GENERATE:
+            with timings("Generated new contents in %fs"):
+                self._generate()
+            self.last_load_step = self.LOAD_STEP_GENERATE
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_CROSSREFERENCE:
+            with timings("Cross-referenced contents in %fs"):
+                self._crossreference()
+            self.last_load_step = self.LOAD_STEP_CROSSREFERENCE
         if until <= self.last_load_step:
             return
 
@@ -413,14 +429,29 @@ class Site:
 
     def _organize(self):
         """
-        Iterate through all Pages in the site to build aggregated content like
-        taxonomies and directory indices.
-
-        Call this after all Pages have been added to the site.
+        Call features to organize the pages that have just been loaded from
+        sources
         """
         # Call analyze hook on features
         for feature in self.features.ordered():
             feature.organize()
+
+    def _generate(self):
+        """
+        Call features to generate new pages
+        """
+        # Call analyze hook on features
+        for feature in self.features.ordered():
+            feature.generate()
+
+    def _crossreference(self):
+        """
+        Call features to cross-reference pages after the site structure has
+        been finalized
+        """
+        # Call analyze hook on features
+        for feature in self.features.ordered():
+            feature.crossreference()
 
     def slugify(self, text):
         """
