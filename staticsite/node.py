@@ -200,13 +200,18 @@ class Node(SiteElement):
         if dst is None and not directory_index and not path:
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
+        # TODO: remove
+        if meta_values:
+            for name in kw.keys() & meta_values.keys():
+                print(f"{name} for {kw['page_cls'].__name__} set in {kw[name]=!r} and in {meta_values[name]=!r}")
+            kw.update(meta_values)
+
         # TODO: move site.is_page_ignored here?
         try:
             if dst:
-                return self._create_leaf_page(dst=dst, path=path, meta_values=meta_values or {}, **kw)
+                return self._create_leaf_page(dst=dst, path=path, **kw)
             else:
-                return self._create_index_page(
-                        path=path, directory_index=directory_index, meta_values=meta_values or {}, **kw)
+                return self._create_index_page(path=path, directory_index=directory_index,  **kw)
         except SkipPage:
             return None
 
@@ -224,7 +229,6 @@ class Node(SiteElement):
             src: Optional[file.File] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
-            meta_values: Optional[dict[str, Any]],
             created_from: Optional[Page] = None,
             **kw):
 
@@ -233,18 +237,13 @@ class Node(SiteElement):
             with self.tentative_child(path.head) as node:
                 return node._create_index_page(
                         page_cls=page_cls, src=src, path=path.tail,
-                        meta_values=meta_values, created_from=created_from,
+                        created_from=created_from,
                         **kw)
 
         if directory_index:
             search_root_node = self
         else:
             search_root_node = self.parent
-
-        # TODO: warn of conflicts
-        for name in kw.keys() & meta_values.keys():
-            print(f"{name} for {page_cls.__name__} set in {kw[name]=!r} and in {meta_values[name]=!r}")
-        kw.update(meta_values)
 
         # Create the page
         page = self.site.features.get_page_class(page_cls)(
@@ -278,7 +277,6 @@ class Node(SiteElement):
             src: Optional[file.File] = None,
             dst: str,
             path: Optional[Path] = None,
-            meta_values: Optional[dict[str, Any]],
             created_from: Optional[Page] = None,
             **kw):
         if path:
@@ -286,13 +284,8 @@ class Node(SiteElement):
             with self.tentative_child(path.head) as node:
                 return node._create_leaf_page(
                         page_cls=page_cls, src=src, dst=dst, path=path.tail,
-                        meta_values=meta_values, created_from=created_from,
+                        created_from=created_from,
                         **kw)
-
-        # TODO: warn of conflicts
-        for name in kw.keys() & meta_values.keys():
-            print(f"{name} for {page_cls.__name__} set in {kw[name]=!r} and in {meta_values[name]=!r}")
-        kw.update(meta_values)
 
         # Create the page
         page = self.site.features.get_page_class(page_cls)(
