@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Type
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -42,9 +42,15 @@ class TemplateField(fields.Field):
     """
     Template name or compiled template, taking its default value from Page.TEMPLATE
     """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if self.name not in obj.__dict__ and (val := getattr(obj, "TEMPLATE", None)):
-            obj.__dict__[self.name] = val
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if self.name not in page.__dict__:
+            if (val := getattr(page, "TEMPLATE", None)):
+                page.__dict__[self.name] = val
+                return val
+            else:
+                return self.default
+        else:
+            return page.__dict__[self.name]
 
 
 class PageDate(fields.Date):
@@ -66,14 +72,13 @@ class Draft(fields.Field):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        # if obj.__class__.__name__ not in ("Asset", "Node"):
-        #     print(f"MetadataDraft {obj.__class__=} {obj.__dict__=} {obj.site.generation_time=}"
-        #           f" {obj.__dict__['date'] > obj.site.generation_time}")
-        if (value := obj.__dict__.get(self.name)) is None:
-            obj.__dict__[self.name] = obj.__dict__["date"] > obj.site.generation_time
-        elif not isinstance(value, bool):
-            obj.__dict__[self.name] = bool(value)
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            value = page.date > page.site.generation_time
+            page.__dict__[self.name] = value
+            return value
+        else:
+            return value
 
 
 class Meta:
