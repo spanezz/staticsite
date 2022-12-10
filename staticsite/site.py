@@ -151,7 +151,7 @@ class Site:
     LOAD_STEP_CONTENTS = 4
     LOAD_STEP_ORGANIZE = 5
     LOAD_STEP_GENERATE = 6
-    LOAD_STEP_CROSSREFERENCE = 6
+    LOAD_STEP_CROSSREFERENCE = 7
     LOAD_STEP_ALL = LOAD_STEP_CROSSREFERENCE
 
     def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):

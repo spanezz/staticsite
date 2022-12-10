@@ -123,7 +123,7 @@ class Images(Feature):
 
         return pages
 
-    def organize(self):
+    def crossreference(self):
         # Resolve image from strings to Image pages
         for page in self.site.features.pages_by_metadata["image"]:
             val = page.image

@@ -208,7 +208,7 @@ class Links(Feature):
 
         # Call analyze on all .links pages, to populate them
         for index in self.indices:
-            index.analyze()
+            index.organize()
 
     def add_site_commands(self, subparsers):
         super().add_site_commands(subparsers)

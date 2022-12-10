@@ -254,7 +254,7 @@ class TaxonomyFeature(Feature):
             return taxonomy.index
         return None
 
-    def organize(self):
+    def generate(self):
         # Call analyze on all taxonomy pages, to populate them by scanning
         # site pages
         for taxonomy in self.taxonomies.values():

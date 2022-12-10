@@ -32,9 +32,11 @@ class RelatedFeature(Feature):
         super().__init__(*args, **kw)
         self.page_mixins.append(RelatedPageMixin)
 
-    def organize(self):
+    def crossreference(self):
         # Expand pages expressions
         # TODO: redo this using a tracked metadata
+        # TODO: or check if this is still needed at all, since page.related can
+        # be filled with Page entries instead of paths
         for page in self.site.iter_pages(static=False):
             if (related := page.related) is None:
                 related = {}

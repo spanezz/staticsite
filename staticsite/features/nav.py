@@ -84,7 +84,7 @@ class Nav(Feature):
         self.page_mixins.append(NavPageMixin)
         self.site.features.add_tracked_metadata("nav")
 
-    def organize(self):
+    def crossreference(self):
         # Expand pages expressions
         nav_pages: set[Page] = set()
 
