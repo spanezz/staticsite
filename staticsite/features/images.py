@@ -129,7 +129,9 @@ class Images(Feature):
             val = page.image
             if isinstance(val, str):
                 page.image = page.resolve_path(val)
-                # TODO: warn if val is not an Image page?
+                if page.image.TYPE != "image":
+                    log.warning("%s: image field resolves to %s which is not an image page",
+                                self, page.image)
 
         # If an image exists with the same basename as a page, auto-add an
         # "image" metadata to it
