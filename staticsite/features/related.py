@@ -32,7 +32,7 @@ class RelatedFeature(Feature):
         super().__init__(*args, **kw)
         self.page_mixins.append(RelatedPageMixin)
 
-    def analyze(self):
+    def organize(self):
         # Expand pages expressions
         # TODO: redo this using a tracked metadata
         for page in self.site.iter_pages(static=False):

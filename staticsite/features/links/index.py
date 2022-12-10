@@ -38,7 +38,7 @@ class LinkIndexPage(Page):
 #        res["category_meta"] = dump_meta(self.category_meta)
 #        return res
 
-    def analyze(self):
+    def organize(self):
         pages = []
         for tag, links in self.feature_links.by_tag.items():
             name = tag + "-links"

@@ -343,7 +343,7 @@ class SyndicationFeature(Feature):
             log.warn("%s: %s", context.name, e)
             return []
 
-    def analyze(self):
+    def organize(self):
         # Build syndications from pages with a 'syndication' metadata
         for page in self.site.features.pages_by_metadata["syndication"]:
             # The syndication header is the base for the feed pages's metadata,

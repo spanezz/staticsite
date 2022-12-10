@@ -93,7 +93,7 @@ class Feature:
         """
         return None
 
-    def analyze(self):
+    def organize(self):
         """
         Hook called after all the pages have been loaded
         """

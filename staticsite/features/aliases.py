@@ -34,7 +34,7 @@ class AliasesFeature(Feature):
         self.page_mixins.append(AliasesPageMixin)
         self.site.features.add_tracked_metadata("aliases")
 
-    def analyze(self):
+    def organize(self):
         # Build alias pages from pages with an 'aliases' metadata
         for page in self.site.features.pages_by_metadata["aliases"]:
             if not (aliases := page.aliases):

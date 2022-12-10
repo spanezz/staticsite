@@ -25,7 +25,7 @@ class Hello(Feature):
         # pointing to the Page object being rendered.
         return context.page.meta.get("hello", "oddly, no hello here")
 
-    def analyze(self):
+    def organize(self):
         # Add a 'hello' metadata element to all pages
         # This runs after 'taxonomies' and 'dirs', so it also annotates the
         # pages they generate

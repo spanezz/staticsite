@@ -34,7 +34,7 @@ class PagesFeature(Feature):
         self.page_mixins = (PagesPageMixin,)
         self.site.features.add_tracked_metadata("pages")
 
-    def analyze(self):
+    def organize(self):
         # Expand pages expressions
         for page in self.site.features.pages_by_metadata["pages"]:
             query = page.pages

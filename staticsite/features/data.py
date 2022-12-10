@@ -123,7 +123,7 @@ class DataPages(Feature):
             return None
         return DataArchetype(archetypes, relpath, self, fmt)
 
-    def analyze(self):
+    def organize(self):
         # Dispatch pages by type
         for page in self.site.features.pages_by_metadata["data_type"]:
             data_type = page.data_type

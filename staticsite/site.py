@@ -149,8 +149,8 @@ class Site:
     LOAD_STEP_THEME = 2
     LOAD_STEP_DIRS = 3
     LOAD_STEP_CONTENTS = 4
-    LOAD_STEP_ANALYZE = 5
-    LOAD_STEP_ALL = LOAD_STEP_ANALYZE
+    LOAD_STEP_ORGANIZE = 5
+    LOAD_STEP_ALL = LOAD_STEP_ORGANIZE
 
     def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):
         from .feature import Features
@@ -394,10 +394,10 @@ class Site:
         if until <= self.last_load_step:
             return
 
-        if self.last_load_step < self.LOAD_STEP_ANALYZE:
+        if self.last_load_step < self.LOAD_STEP_ORGANIZE:
             with timings("Analyzed contents in %fs"):
-                self._analyze()
-            self.last_load_step = self.LOAD_STEP_ANALYZE
+                self._organize()
+            self.last_load_step = self.LOAD_STEP_ORGANIZE
         if until <= self.last_load_step:
             return
 
@@ -411,7 +411,7 @@ class Site:
 
         return False
 
-    def _analyze(self):
+    def _organize(self):
         """
         Iterate through all Pages in the site to build aggregated content like
         taxonomies and directory indices.
@@ -420,7 +420,7 @@ class Site:
         """
         # Call analyze hook on features
         for feature in self.features.ordered():
-            feature.analyze()
+            feature.organize()
 
     def slugify(self, text):
         """

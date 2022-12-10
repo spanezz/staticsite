@@ -193,7 +193,7 @@ class Links(Feature):
         page = context.parent["page"]
         return page.url_for(dest)
 
-    def analyze(self):
+    def organize(self):
         # Index of all links
         self.links = LinkCollection()
 
