@@ -71,7 +71,7 @@ class J2Pages(Feature):
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:
                 if pattern.match(fname):
@@ -87,22 +87,19 @@ class J2Pages(Feature):
 
             front_matter = load_front_matter(template)
             if front_matter:
-                meta_values.update(front_matter)
+                kwargs.update(front_matter)
 
-            if (directory_index := fname == "index.html"):
-                dst = None
-            else:
+            if not (directory_index := fname == "index.html"):
                 # Is this still needed?
                 fname = fname.replace(".j2", "")
-                dst = fname
+                kwargs["dst"] = fname
 
             page = node.create_page(
                     page_cls=J2Page,
                     src=src,
-                    dst=dst,
-                    meta_values=meta_values,
                     template=template,
-                    directory_index=directory_index)
+                    directory_index=directory_index,
+                    **kwargs)
             pages.append(page)
             taken.append(fname)
 

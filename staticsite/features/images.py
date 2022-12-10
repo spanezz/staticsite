@@ -67,7 +67,7 @@ class Images(Feature):
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             base, ext = os.path.splitext(fname)
             mimetype = mimetypes.types_map.get(ext)
             if mimetype is None:
@@ -79,28 +79,28 @@ class Images(Feature):
             taken.append(fname)
 
             img_meta = self.scanner.scan(src, mimetype)
-            meta_values.update(img_meta)
+            kwargs.update(img_meta)
 
             page = node.create_page(
                 page_cls=Image,
                 src=src,
-                meta_values=meta_values,
                 mimetype=mimetype,
-                dst=fname)
+                dst=fname,
+                **kwargs)
             pages.append(page)
 
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
             if image_sizes:
                 for name, info in image_sizes.items():
-                    width = meta_values.get("width")
+                    width = kwargs.get("width")
                     if width is None:
                         # SVG images, for example, don't have width
                         continue
                     if info["width"] >= width:
                         continue
-                    rel_meta = dict(info)
-                    rel_meta["related"] = {}
+                    rel_kwargs = dict(info)
+                    rel_kwargs["related"] = {}
 
                     base, ext = os.path.splitext(fname)
                     scaled_fname = f"{base}-{name}{ext}"
@@ -109,11 +109,11 @@ class Images(Feature):
                         page_cls=ScaledImage,
                         src=src,
                         created_from=page,
-                        meta_values=rel_meta,
                         mimetype=mimetype,
                         name=name,
                         info=info,
-                        dst=scaled_fname)
+                        dst=scaled_fname,
+                        **rel_kwargs)
                     pages.append(scaled)
 
             self.images.add(page)

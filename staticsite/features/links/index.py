@@ -19,12 +19,11 @@ class LinkIndexPage(Page):
     site
     """
     TYPE = "links_index"
+    TEMPLATE = "data-links.html"
 
     def __init__(self, *args, name: str, links: Links, **kw):
-        meta_values = kw["meta_values"]
-        meta_values.setdefault("template", "data-links.html")
-        meta_values.setdefault("nav_title", name.capitalize())
-        meta_values.setdefault("title", "All links shared in the site")
+        kw.setdefault("nav_title", name.capitalize())
+        kw.setdefault("title", "All links shared in the site")
         super().__init__(*args, **kw)
         # Reference to the Feature with the aggregated link collection
         self.feature_links = links
@@ -52,11 +51,8 @@ class LinkIndexPage(Page):
             page = sub.create_page(
                     created_from=self,
                     page_cls=LinksTagPage,
-                    meta_values={
-                        "data_type": "links",
-                        "title": f"{tag} links",
-                        "links": links,
-                    },
+                    data_type="links",
+                    title=f"{tag} links",
                     links=links,
                     directory_index=True)
             self.by_tag[tag] = page

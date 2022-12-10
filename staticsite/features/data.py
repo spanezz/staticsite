@@ -68,7 +68,7 @@ class DataPages(Feature):
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken = []
         pages = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             mo = re_ext.search(fname)
             if not mo:
                 continue
@@ -94,7 +94,7 @@ class DataPages(Feature):
                 continue
 
             page_name = fname[:-len(mo.group(0))]
-            meta_values.update(fm_meta)
+            kwargs.update(fm_meta)
 
             if (directory_index := page_name == "index"):
                 path = Path()
@@ -104,9 +104,9 @@ class DataPages(Feature):
             page = node.create_page(
                 page_cls=self.page_class_by_type.get(data_type, DataPage),
                 src=src,
-                meta_values=meta_values,
                 directory_index=directory_index,
-                path=path)
+                path=path,
+                **kwargs)
             pages.append(page)
 
         for fname in taken:

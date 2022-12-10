@@ -121,7 +121,7 @@ class Links(Feature):
         """
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, (meta_values, src) in files.items():
+        for fname, (kwargs, src) in files.items():
             if not fname.endswith(".links"):
                 continue
             taken.append(fname)
@@ -133,15 +133,15 @@ class Links(Feature):
             except Exception:
                 log.exception("%s: cannot parse taxonomy information", src.relpath)
                 continue
-            meta_values.update(fm_meta)
+            kwargs.update(fm_meta)
 
             page = node.create_page(
                     page_cls=LinkIndexPage,
                     src=src,
-                    meta_values=meta_values,
                     name=name,
                     links=self,
-                    path=Path((name,)))
+                    path=Path((name,)),
+                    **kwargs)
             pages.append(page)
 
             self.indices.append(page)
