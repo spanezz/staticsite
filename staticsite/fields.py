@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import inspect
+import logging
 from typing import TYPE_CHECKING, Any, Optional, Type
 
 import jinja2
 
 if TYPE_CHECKING:
     from .site import Site
+
+log = logging.getLogger("fields")
 
 
 class Field:
@@ -169,10 +172,11 @@ class FieldContainer(metaclass=FieldsMetaclass):
         # compilers, and so on
         self.site = site
 
-        if kw:
-            self.update_meta(kw)
-            # TODO: make update_meta pop values, then warn here about the
-            # values that are left and will be ignored
+        for name, value in kw.items():
+            if name in self._fields:
+                setattr(self, name, value)
+            else:
+                log.warning("%r: setting unknown field %s=%r", self, name, value)
 
         # Call fields to fill in computed fields
         for field in self._fields.values():
