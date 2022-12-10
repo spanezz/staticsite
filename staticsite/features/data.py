@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, Any
 
 import jinja2
 
-from staticsite import Feature, Page, fields
+from staticsite import fields
 from staticsite.archetypes import Archetype
+from staticsite.feature import Feature
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
-from staticsite.page_filter import PageFilter
+from staticsite.page_filter import Page, PageFilter
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:

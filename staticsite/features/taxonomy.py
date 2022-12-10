@@ -6,10 +6,11 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
-from staticsite import Page, fields
+from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
+from staticsite.page import Page
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:

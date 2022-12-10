@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Union
 
 import jinja2
 
-from staticsite import fields, metadata
+from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.node import Path
 from staticsite.page import Page, PageNotFoundError
@@ -197,8 +197,8 @@ class SyndicatedPageError(Exception):
 
 
 class SyndicationField(fields.Field):
-    def _clean(self, obj: metadata.SiteElement, value: Any) -> Syndication:
-        return Syndication.clean_value(obj, value)
+    def _clean(self, page: Page, value: Any) -> Syndication:
+        return Syndication.clean_value(page, value)
 
 
 class SyndicationPageMixin(metaclass=fields.FieldsMetaclass):

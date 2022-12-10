@@ -11,10 +11,9 @@ from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 import dateutil.parser
 import pytz
 
-from . import fstree, structure
+from . import fields, fstree, structure
 from .cache import Caches, DisabledCaches
 from .file import File
-from .node import Path
 from .settings import Settings
 from .utils import timings
 
@@ -23,6 +22,106 @@ if TYPE_CHECKING:
     from .page import Page
 
 log = logging.getLogger("site")
+
+
+class Path(tuple[str]):
+    """
+    Path in the site, split into components
+    """
+    re_pathsep = re.compile(re.escape(os.sep) + "+")
+
+    @property
+    def head(self) -> str:
+        """
+        Return the first element in the path
+        """
+        return self[0]
+
+    @property
+    def tail(self) -> Path:
+        """
+        Return the Path after the first element
+        """
+        # TODO: check if it's worth making this a cached_property
+        return Path(self[1:])
+
+    @property
+    def dir(self) -> Path:
+        """
+        Return the path with all components except last
+        """
+        return Path(self[:-1])
+
+    @property
+    def name(self) -> str:
+        """
+        Return the last component of the path
+        """
+        return self[-1]
+
+    @classmethod
+    def from_string(cls, path: str) -> "Path":
+        """
+        Split a string into a path
+        """
+        return cls(cls.re_pathsep.split(path.strip(os.sep)))
+
+
+class SiteElement(fields.FieldContainer):
+    """
+    Common fields for site elements
+    """
+
+    site_name = fields.Inherited(doc="""
+        Name of the site. If missing, it defaults to the title of the toplevel index
+        page. If missing, it defaults to the name of the content directory.
+    """)
+    site_url = fields.Inherited(doc="""
+        Base URL for the site, used to generate an absolute URL to the page.
+    """)
+    author = fields.Inherited(doc="""
+        A string with the name of the author for this page.
+
+        SITE_AUTHOR is used as a default if found in settings.
+
+        If not found, it defaults to the current user's name.
+    """)
+
+    template_copyright = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `copyright` when it is not explicitly set.
+
+        The template context will have `page` available, with the current page. The
+        result of the template will not be further escaped, so you can use HTML markup
+        in it.
+
+        If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
+    """)
+
+    template_title = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `title` when it is not explicitly set.
+
+        The template context will have `page` available, with the current page.
+        The result of the template will not be further escaped, so you can use
+        HTML markup in it.
+    """)
+
+    template_description = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `description` when it is not
+        explicitly set.
+
+        The template context will have `page` available, with the current page.
+        The result of the template will not be further escaped, so you can use
+        HTML markup in it.
+    """)
+
+    asset = fields.Inherited(doc="""
+        If set to True for a file (for example, by a `file:` pattern in a directory
+        index), the file is loaded as a static asset, regardless of whether a feature
+        would load it.
+
+        If set to True in a directory index, the directory and all its subdirectories
+        are loaded as static assets, without the interventions of features.
+    """)
 
 
 class Site:

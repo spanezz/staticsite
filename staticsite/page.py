@@ -10,7 +10,7 @@ import jinja2
 import markupsafe
 
 from . import fields
-from .metadata import SiteElement
+from .site import SiteElement
 from .node import Path
 from .render import RenderedString
 

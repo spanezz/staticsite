@@ -11,9 +11,10 @@ import docutils.nodes
 import docutils.writers.html5_polyglot
 import jinja2
 
-from staticsite import Feature, Page
-from staticsite.node import Node, Path
 from staticsite.archetypes import Archetype
+from staticsite.feature import Feature
+from staticsite.node import Node, Path
+from staticsite.page import Page
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:

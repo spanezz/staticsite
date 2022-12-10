@@ -7,11 +7,12 @@ import io
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
 
 import pytz
 
-from .. import page
+if TYPE_CHECKING:
+    from ..page import page
 
 log = logging.getLogger("utils")
 
@@ -70,7 +71,7 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
     """
     import jinja2
 
-    from .. import Page
+    from ..page import Page
     if val in (None, True, False) or isinstance(val, (int, float)):
         return val
     elif isinstance(val, str):

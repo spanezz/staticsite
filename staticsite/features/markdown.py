@@ -11,10 +11,10 @@ import jinja2
 import markdown
 import markupsafe
 
-from staticsite import Feature, Page
+from staticsite.feature import Feature
 from staticsite.archetypes import Archetype
 from staticsite.node import Path
-from staticsite.page import PageNotFoundError
+from staticsite.page import Page, PageNotFoundError
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:

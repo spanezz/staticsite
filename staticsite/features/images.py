@@ -6,7 +6,9 @@ import mimetypes
 import os
 from typing import TYPE_CHECKING, Any
 
-from staticsite import Feature, Page, fields
+from staticsite import fields
+from staticsite.feature import Feature
+from staticsite.page import Page
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 

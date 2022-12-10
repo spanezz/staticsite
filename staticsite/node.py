@@ -3,11 +3,10 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
-import re
 from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, TextIO, Type, Union
 
 from . import fields
-from .metadata import SiteElement
+from .site import SiteElement, Path
 
 if TYPE_CHECKING:
     from . import file
@@ -18,55 +17,11 @@ if TYPE_CHECKING:
 log = logging.getLogger("structure")
 
 
-re_pathsep = re.compile(re.escape(os.sep) + "+")
-
-
 class SkipPage(Exception):
     """
     Exception raised when a page should not be added to the site
     """
     pass
-
-
-class Path(tuple[str]):
-    """
-    Path in the site, split into components
-    """
-    @property
-    def head(self) -> str:
-        """
-        Return the first element in the path
-        """
-        return self[0]
-
-    @property
-    def tail(self) -> Path:
-        """
-        Return the Path after the first element
-        """
-        # TODO: check if it's worth making this a cached_property
-        return Path(self[1:])
-
-    @property
-    def dir(self) -> Path:
-        """
-        Return the path with all components except last
-        """
-        return Path(self[:-1])
-
-    @property
-    def name(self) -> str:
-        """
-        Return the last component of the path
-        """
-        return self[-1]
-
-    @classmethod
-    def from_string(cls, path: str) -> "Path":
-        """
-        Split a string into a path
-        """
-        return cls(re_pathsep.split(path.strip(os.sep)))
 
 
 class Node(SiteElement):

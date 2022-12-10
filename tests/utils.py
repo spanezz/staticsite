@@ -14,9 +14,10 @@ from unittest import TestCase, mock
 
 import pytz
 
-import staticsite
 from staticsite.cmd.build import Builder
+from staticsite.file import File
 from staticsite.settings import Settings
+from staticsite.site import Site
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -61,8 +62,8 @@ class MockSiteBase:
         raise NotImplementedError(f"{self.__class__.__name__}.populate_workdir not implemented")
 
     @cached_property
-    def site(self) -> staticsite.Site:
-        return staticsite.Site(
+    def site(self) -> Site:
+        return Site(
                 self.settings,
                 generation_time=(
                     datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
@@ -72,7 +73,7 @@ class MockSiteBase:
     def build_root(self) -> str:
         return self.stack.enter_context(tempfile.TemporaryDirectory())
 
-    def load_site(self, until=staticsite.Site.LOAD_STEP_ALL):
+    def load_site(self, until=Site.LOAD_STEP_ALL):
         if self.mock_file_mtime:
             overrides = {"st_mtime": self.mock_file_mtime}
         else:
@@ -92,11 +93,11 @@ class MockSiteBase:
         self.builder = Builder(self.site)
         self.builder.write()
 
-    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
+    def page(self, *paths: tuple[str]) -> tuple[Page]:
         """
         Ensure the site has the given page, by path, and return it
         """
-        res: list[staticsite.Page] = []
+        res: list[Page] = []
         for path in paths:
             page = self.site.find_page(path)
             if page is None:
@@ -274,7 +275,7 @@ def mock_file_stat(overrides: Optional[dict[int, Any]]):
         return
 
     real_stat = os.stat
-    real_file_from_dir_entry = staticsite.File.from_dir_entry
+    real_file_from_dir_entry = File.from_dir_entry
 
     # See https://www.peterbe.com/plog/mocking-os.stat-in-python
     def mock_stat(*args, **kw):
@@ -288,7 +289,7 @@ def mock_file_stat(overrides: Optional[dict[int, Any]]):
         st = list(res.stat)
         for k, v in overrides.items():
             st[getattr(stat, k.upper())] = v
-        res = staticsite.File(res.relpath, res.abspath, os.stat_result(st))
+        res = File(res.relpath, res.abspath, os.stat_result(st))
         return res
 
     with mock.patch("staticsite.file.os.stat", new=mock_stat):
@@ -368,7 +369,7 @@ class SiteTestMixin:
         self.mocksite.test_case = None
         super().tearDown()
 
-    def page(self, *paths: tuple[str]) -> tuple[staticsite.Page]:
+    def page(self, *paths: tuple[str]) -> tuple[Page]:
         """
         Ensure the site has the given page, by path, and return it
         """

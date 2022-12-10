@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
-from staticsite import fields, metadata
+from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.page import PageNotFoundError
 
@@ -48,11 +48,11 @@ class NavField(fields.Inherited):
         kw.setdefault("default", ())
         super().__init__(**kw)
 
-    def _clean(self, obj: metadata.SiteElement, value: Any) -> NavData:
+    def _clean(self, page: Page, value: Any) -> NavData:
         """
         Set metadata values in obj from values
         """
-        return NavData(obj, value)
+        return NavData(page, value)
 
 
 class NavMixin(metaclass=fields.FieldsMetaclass):

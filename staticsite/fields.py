@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Optional, Type
 import jinja2
 
 if TYPE_CHECKING:
-    from .metadata import SiteElement
+    from .site import Site
 
 
 class Field:
@@ -33,29 +33,29 @@ class Field:
     def get_notes(self):
         return ()
 
-    def __set_name__(self, owner: Type[SiteElement], name: str) -> None:
+    def __set_name__(self, owner: Type[FieldContainer], name: str) -> None:
         self.name = name
 
-    def __get__(self, obj: SiteElement, type: Type = None) -> Any:
+    def __get__(self, obj: FieldContainer, type: Type = None) -> Any:
         return obj.__dict__.get(self.name, self.default)
 
-    def __set__(self, obj: SiteElement, value: Any) -> None:
+    def __set__(self, obj: FieldContainer, value: Any) -> None:
         obj.__dict__[self.name] = self._clean(obj, value)
 
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
+    def fill_new(self, obj: FieldContainer, parent: Optional[FieldContainer] = None):
         """
-        Compute values for the meta element of a newly created SiteElement
+        Compute values for the meta element of a newly created FieldContainer
         """
         # By default, nothing to do
         pass
 
-    def _clean(self, obj: SiteElement, value: Any) -> Any:
+    def _clean(self, obj: FieldContainer, value: Any) -> Any:
         """
         Hook to allow to clean values before set
         """
         return value
 
-    def set(self, obj: SiteElement, values: dict[str, Any]):
+    def set(self, obj: FieldContainer, values: dict[str, Any]):
         """
         Set metadata values in obj from values
         """
@@ -75,7 +75,7 @@ class Inherited(Field):
         yield from super().get_notes()
         yield "Inherited from parent pages"
 
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
+    def fill_new(self, obj: FieldContainer, parent: Optional[FieldContainer] = None):
         if parent is None:
             return
         if self.name not in obj.__dict__ and self.name in parent.__dict__:
@@ -88,7 +88,7 @@ class TemplateInherited(Inherited):
     other files in directories and subdirectories.
     """
 
-    def _clean(self, obj: SiteElement, value: Any) -> jinja2.Template:
+    def _clean(self, obj: FieldContainer, value: Any) -> jinja2.Template:
         # Make sure the template is compiled
         if isinstance(value, jinja2.Template):
             return value
@@ -102,7 +102,7 @@ class Date(Field):
     """
     Field containing a date
     """
-    def _clean(self, obj: SiteElement, value: Any) -> jinja2.Template:
+    def _clean(self, obj: FieldContainer, value: Any) -> jinja2.Template:
         return obj.site.clean_date(value)
 
 
@@ -117,7 +117,7 @@ class Bool(Field):
         super().__init__(**kw)
         self.default = default
 
-    def _clean(self, obj: SiteElement, val: Any) -> bool:
+    def _clean(self, obj: FieldContainer, val: Any) -> bool:
         if val in (True, False):
             return val
         elif isinstance(val, str):
@@ -125,7 +125,7 @@ class Bool(Field):
         else:
             raise ValueError(f"{val!r} is not a valid value for a bool field")
 
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
+    def fill_new(self, obj: FieldContainer, parent: Optional[FieldContainer] = None):
         if (val := obj.__dict__.get(self.name)) is not None:
             obj.__dict__[self.name] = self._clean(obj, val)
         elif self.default is not None:
@@ -157,3 +157,26 @@ class FieldsMetaclass(type):
         res = super().__new__(cls, name, bases, dct)
         res._fields = _fields
         return res
+
+
+class FieldContainer(metaclass=FieldsMetaclass):
+    def __init__(
+            self,
+            site: Site, *,
+            parent: Optional[FieldContainer] = None,
+            meta_values: Optional[dict[str, Any]] = None):
+        # Pointer to the root structure
+        self.site = site
+
+        if meta_values:
+            self.update_meta(meta_values)
+            # TODO: make update_meta pop values, then warn here about the
+            # values that are left and will be ignored
+
+        # Call fields to fill in computed fields
+        for field in self._fields.values():
+            field.fill_new(self, parent)
+
+    def update_meta(self, values: dict[str, Any]):
+        for field in self._fields.values():
+            field.set(self, values)

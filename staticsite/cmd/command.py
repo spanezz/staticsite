@@ -1,10 +1,13 @@
 from __future__ import annotations
-from typing import Optional
-from staticsite import Site, Settings
-from staticsite.utils import timings
-import sys
-import os
+
 import logging
+import os
+import sys
+from typing import Optional
+
+from staticsite.site import Site
+from staticsite.settings import Settings
+from staticsite.utils import timings
 
 log = logging.getLogger("command")
 
