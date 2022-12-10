@@ -172,7 +172,7 @@ class J2Page(RenderPartialTemplateMixin, Page):
 
     def __init__(self, *args, template: jinja2.Template, **kw):
         # Indexed by default
-        kw["meta_values"].setdefault("indexed", True)
+        kw.setdefault("indexed", True)
         super().__init__(*args, **kw)
 
         self.template = template

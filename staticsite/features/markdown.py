@@ -350,7 +350,7 @@ class MarkdownPage(Page):
 
     def __init__(self, *args, feature: MarkdownPages, body: List[str], **kw):
         # Indexed by default
-        kw["meta_values"].setdefault("indexed", True)
+        kw.setdefault("indexed", True)
         super().__init__(*args, **kw)
 
         # Shared markdown environment

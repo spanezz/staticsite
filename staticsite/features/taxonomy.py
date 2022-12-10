@@ -273,8 +273,7 @@ class TaxonomyPage(Page):
     taxonomy = fields.Field(doc="Structured taxonomy information")
 
     def __init__(self, *args, name: str, **kw):
-        meta_values = kw["meta_values"]
-        meta_values.setdefault("nav_title", name.capitalize())
+        kw.setdefault("nav_title", name.capitalize())
         super().__init__(*args, **kw)
 
         # Taxonomy name (e.g. "tags")

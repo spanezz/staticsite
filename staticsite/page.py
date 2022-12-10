@@ -191,15 +191,15 @@ It defaults to false, or true if `meta.date` is in the future.
 
     def __init__(
             self, site: Site, *,
-            meta_values: dict[str, Any],
             node: Node,
             created_from: Optional[Page] = None,
             search_root_node: Node,
             src: Optional[File] = None,
             dst: str,
             leaf: bool,
-            directory_index: bool = False):
-        super().__init__(site, parent=created_from or node, **meta_values)
+            directory_index: bool = False,
+            **kw):
+        super().__init__(site, parent=created_from or node, **kw)
         # Read-only, dict-like accessor to the page's fields
         self.meta: Meta = Meta(self)
         # Node where this page is installed in the rendered structure

@@ -170,11 +170,10 @@ class DataPage(RenderPartialTemplateMixin, Page):
 
     def __init__(self, site, **kw):
         # Indexed by default
-        meta_values = kw["meta_values"]
-        meta_values.setdefault("indexed", True)
-        if "template" not in meta_values:
-            meta_values["template"] = site.theme.jinja2.select_template(
-                    [f"data-{meta_values['data_type']}.html", "data.html"])
+        kw.setdefault("indexed", True)
+        if "template" not in kw:
+            kw["template"] = site.theme.jinja2.select_template(
+                    [f"data-{kw['data_type']}.html", "data.html"])
         super().__init__(site, **kw)
 
 

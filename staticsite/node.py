@@ -241,13 +241,16 @@ class Node(SiteElement):
         else:
             search_root_node = self.parent
 
+        # TODO: warn of conflicts
+        kw.update(meta_values)
+
         # Create the page
         page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst="index.html", node=self,
             search_root_node=search_root_node,
             created_from=created_from,
             leaf=False,
-            directory_index=directory_index, meta_values=meta_values, **kw)
+            directory_index=directory_index, **kw)
         self._validate_page(page)
         if self.site.is_page_ignored(page):
             raise SkipPage()
@@ -284,6 +287,9 @@ class Node(SiteElement):
                         meta_values=meta_values, created_from=created_from,
                         **kw)
 
+        # TODO: warn of conflicts
+        kw.update(meta_values)
+
         # Create the page
         page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst=dst,
@@ -293,7 +299,7 @@ class Node(SiteElement):
             created_from=created_from,
             search_root_node=self,
             leaf=True,
-            directory_index=False, meta_values=meta_values, **kw)
+            directory_index=False, **kw)
         self._validate_page(page)
         if self.site.is_page_ignored(page):
             raise SkipPage()
