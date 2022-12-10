@@ -121,6 +121,9 @@ class PageTree(Tree):
         # Rules for assigning metadata to files
         self.file_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
 
+        # Allow list of field names that can be used in nodes
+        self.node_fields = frozenset(site.root._fields.keys())
+
     def _take_dir_rules(self, meta: dict[str, Any]):
         """
         Remove file and directory rules from the meta dict, and compile them
@@ -151,7 +154,13 @@ class PageTree(Tree):
             meta = feature.load_dir_meta(self)
             if meta is not None:
                 self._take_dir_rules(meta)
-                res.update(meta)
+                # Since we are loading metadata from index pages, here we
+                # ignore fields that are not relevant for Node
+                for k, v in meta.items():
+                    if k in self.node_fields:
+                        res[k] = v
+                    else:
+                        res[k] = v
         return res
 
     def _scandir(self):
