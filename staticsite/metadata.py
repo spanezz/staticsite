@@ -32,16 +32,6 @@ class SiteElement(metaclass=fields.FieldsMetaclass):
         If not found, it defaults to the current user's name.
     """)
 
-    date = fields.ElementDate(doc="""
-        Publication date for the page.
-
-        A python datetime object, timezone aware. If the date is in the future when
-        `ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
-        --draft` to also consider draft pages.
-
-        If missing, the modification time of the file is used.
-    """)
-
     template_copyright = fields.TemplateInherited(doc="""
         jinja2 template to use to generate `copyright` when it is not explicitly set.
 
@@ -77,13 +67,6 @@ class SiteElement(metaclass=fields.FieldsMetaclass):
         If set to True in a directory index, the directory and all its subdirectories
         are loaded as static assets, without the interventions of features.
     """)
-
-    draft = fields.Draft(doc="""
-If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
-
-It defaults to false, or true if `meta.date` is in the future.
-""")
 
     def __init__(
             self,

@@ -106,21 +106,6 @@ class Date(Field):
         return obj.site.clean_date(value)
 
 
-class ElementDate(Date):
-    """
-    Make sure, on page load, that the element is a valid aware datetime object
-    """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        if (date := obj.__dict__.get(self.name)):
-            obj.__dict__[self.name] = obj.site.clean_date(date)
-        elif parent and (date := parent.__dict__.get(self.name)):
-            obj.__dict__[self.name] = obj.site.clean_date(date)
-        elif (src := getattr(obj, "src", None)) is not None and src.stat is not None:
-            obj.__dict__[self.name] = obj.site.localized_timestamp(src.stat.st_mtime)
-        else:
-            obj.__dict__[self.name] = obj.site.generation_time
-
-
 class Bool(Field):
     """
     Make sure the field is a bool, possibly with a default value
@@ -145,20 +130,6 @@ class Bool(Field):
             obj.__dict__[self.name] = self._clean(obj, val)
         elif self.default is not None:
             obj.__dict__[self.name] = self._clean(obj, self.default)
-
-
-class Draft(Field):
-    """
-    Make sure the draft exists and is a bool, computed according to the date
-    """
-    def fill_new(self, obj: SiteElement, parent: Optional[SiteElement] = None):
-        # if obj.__class__.__name__ not in ("Asset", "Node"):
-        #     print(f"MetadataDraft {obj.__class__=} {obj.__dict__=} {obj.site.generation_time=}"
-        #           f" {obj.__dict__['date'] > obj.site.generation_time}")
-        if (value := obj.__dict__.get(self.name)) is None:
-            obj.__dict__[self.name] = obj.__dict__["date"] > obj.site.generation_time
-        elif not isinstance(value, bool):
-            obj.__dict__[self.name] = bool(value)
 
 
 class FieldsMetaclass(type):
