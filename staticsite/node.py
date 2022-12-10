@@ -208,14 +208,6 @@ class Node(SiteElement):
         except SkipPage:
             return None
 
-    def _validate_page(self, page: Page):
-        from .page import PageValidationError
-        try:
-            page.validate()
-        except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
-            raise SkipPage()
-
     def _create_index_page(
             self, *,
             page_cls: Type[Page],
@@ -224,6 +216,7 @@ class Node(SiteElement):
             directory_index: bool = False,
             created_from: Optional[Page] = None,
             **kw):
+        from .page import PageValidationError
 
         if path:
             # If a subpath is requested, delegate to subnodes
@@ -239,13 +232,16 @@ class Node(SiteElement):
             search_root_node = self.parent
 
         # Create the page
-        page = self.site.features.get_page_class(page_cls)(
-            site=self.site, src=src, dst="index.html", node=self,
-            search_root_node=search_root_node,
-            created_from=created_from,
-            leaf=False,
-            directory_index=directory_index, **kw)
-        self._validate_page(page)
+        try:
+            page = self.site.features.get_page_class(page_cls)(
+                site=self.site, src=src, dst="index.html", node=self,
+                search_root_node=search_root_node,
+                created_from=created_from,
+                leaf=False,
+                directory_index=directory_index, **kw)
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            raise SkipPage()
         if self.site.is_page_ignored(page):
             raise SkipPage()
 
@@ -272,6 +268,8 @@ class Node(SiteElement):
             path: Optional[Path] = None,
             created_from: Optional[Page] = None,
             **kw):
+        from .page import PageValidationError
+
         if path:
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
@@ -281,14 +279,17 @@ class Node(SiteElement):
                         **kw)
 
         # Create the page
-        page = self.site.features.get_page_class(page_cls)(
-            site=self.site, src=src, dst=dst,
-            node=self,
-            created_from=created_from,
-            search_root_node=self,
-            leaf=True,
-            directory_index=False, **kw)
-        self._validate_page(page)
+        try:
+            page = self.site.features.get_page_class(page_cls)(
+                site=self.site, src=src, dst=dst,
+                node=self,
+                created_from=created_from,
+                search_root_node=self,
+                leaf=True,
+                directory_index=False, **kw)
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            raise SkipPage()
         if self.site.is_page_ignored(page):
             raise SkipPage()
 

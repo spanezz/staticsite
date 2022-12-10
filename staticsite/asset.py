@@ -23,10 +23,5 @@ class Asset(Page):
         self.name = name
         self.ready_to_render = True
 
-    def validate(self):
-        # Disable the default page validation: the constructor does all that is
-        # needed
-        pass
-
     def render(self, **kw) -> RenderedElement:
         return RenderedFile(self.src)

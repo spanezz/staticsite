@@ -308,16 +308,6 @@ It defaults to false, or true if `meta.date` is in the future.
             return
         related[name] = page
 
-    def validate(self):
-        """
-        Enforce common meta invariants.
-
-        Performs validation and completion of metadata.
-
-        Raises PageValidationError or one of its subclasses of the page should
-        not be added to the site.
-        """
-
     @cached_property
     def page_template(self):
         template = self.meta["template"]
