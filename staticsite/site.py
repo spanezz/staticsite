@@ -192,15 +192,6 @@ class Site:
         # Set to True when feature constructors have been called
         self.stage_features_constructed = False
 
-        # Set to True when content directories have been scanned
-        self.stage_content_directory_scanned = False
-
-        # Set to True when content directories have been loaded
-        self.stage_content_directory_loaded = False
-
-        # Set to True when pages have been analyzed
-        self.stage_pages_analyzed = False
-
         # Theme used to render pages
         self.theme = None
 
@@ -332,8 +323,6 @@ class Site:
         # Notify Features that contents have been scanned
         self.features.contents_scanned()
 
-        self.stage_content_directory_scanned = True
-
     def scan_tree(self, src: File, meta: dict[str, Any], toplevel: bool = False) -> fstree.Tree:
         """
         Scan the contents of the given directory, adding it to self.fstrees
@@ -354,9 +343,6 @@ class Site:
         """
         Load site page and assets from scanned content roots.
         """
-        if not self.stage_content_directory_scanned:
-            log.warn("load_content called before site features have been loaded")
-
         # Turn scanned filesytem information into site structure
         for abspath, tree in self.fstrees.items():
             # print(f"* tree {tree.src.relpath}")
@@ -372,14 +358,6 @@ class Site:
             # Populate node from tree
             with tree.open_tree():
                 tree.populate_node(node)
-
-            # print("Populated as:")
-            # node.print()
-
-        self.stage_content_directory_loaded = True
-
-        # print("Final site structure:")
-        # self.root.print()
 
     def load(self, until: int = LOAD_STEP_ALL):
         """
@@ -440,14 +418,9 @@ class Site:
 
         Call this after all Pages have been added to the site.
         """
-        if not self.stage_content_directory_loaded:
-            log.warn("analyze called before loading site contents")
-
         # Call analyze hook on features
         for feature in self.features.ordered():
             feature.analyze()
-
-        self.stage_pages_analyzed = True
 
     def slugify(self, text):
         """
