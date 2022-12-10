@@ -4,7 +4,6 @@ import datetime
 import logging
 import os
 import re
-import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 
@@ -240,14 +239,6 @@ class Site:
                 self.root.lookup(Path.from_string(self.settings.STATIC_PATH)),
             )
         yield from self.root.iter_pages(prune=prune)
-
-    @property
-    def pages_by_metadata(self):
-        """
-        Compatibility accessor for features.pages_by_metadata
-        """
-        warnings.warn("use site.features.pages_by_metadata instead of site.pages_by_metadata", DeprecationWarning)
-        return self.features.pages_by_metadata
 
     @cached_property
     def archetypes(self) -> "archetypes.Archetypes":

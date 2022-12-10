@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import sys
-import warnings
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Set, Type
 
@@ -99,13 +98,6 @@ class Feature:
         Hook called after all the pages have been loaded
         """
         pass
-
-    def finalize(self):
-        """
-        Hook called after all the pages have been loaded
-        """
-        warnings.warn("use Feature.analyze instead of Feature.finalize", DeprecationWarning)
-        self.analyze()
 
     def add_site_commands(self, subparsers):
         """
