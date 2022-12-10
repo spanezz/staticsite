@@ -207,7 +207,7 @@ class PageTree(Tree):
     def populate_node(self, node: Node):
         # print(f"PageTree.populate_node {self.src.relpath=} {self.meta=}")
         # Add the metadata scanned for this directory
-        node.update_meta(self.meta)
+        node.update_fields(self.meta)
 
         # Compute metadata for files
         files_meta: dict[str, tuple[dict[str, Any], File]] = {}
@@ -246,7 +246,7 @@ class PageTree(Tree):
             dir_node = node.child(name)
             for pattern, dmeta in self.dir_rules:
                 if pattern.match(name):
-                    dir_node.update_meta(dmeta)
+                    dir_node.update_fields(dmeta)
 
             with self.open_subtree(name, tree):
                 tree.populate_node(dir_node)
@@ -288,7 +288,7 @@ class AssetTree(Tree):
 
     def populate_node(self, node: Node):
         # Add the metadata scanned for this directory
-        node.update_meta(self.meta)
+        node.update_fields(self.meta)
 
         # Load every file as an asset
         for fname, src in self.files.items():

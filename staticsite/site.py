@@ -71,14 +71,15 @@ class SiteElement(fields.FieldContainer):
     """
     Common fields for site elements
     """
-
     site_name = fields.Inherited(doc="""
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
     """)
+
     site_url = fields.Inherited(doc="""
         Base URL for the site, used to generate an absolute URL to the page.
     """)
+
     author = fields.Inherited(doc="""
         A string with the name of the author for this page.
 
@@ -318,7 +319,7 @@ class Site:
 
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
-        self.root.update_meta(tree.meta)
+        self.root.update_fields(tree.meta)
 
         if self.root.site_name is None:
             # If we still have no idea of site names, use the root directory's name

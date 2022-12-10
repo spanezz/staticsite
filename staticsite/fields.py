@@ -182,6 +182,6 @@ class FieldContainer(metaclass=FieldsMetaclass):
         for field in self._fields.values():
             field.fill_new(self, parent)
 
-    def update_meta(self, values: dict[str, Any]):
+    def update_fields(self, values: dict[str, Any]):
         for field in self._fields.values():
             field.set(self, values)
