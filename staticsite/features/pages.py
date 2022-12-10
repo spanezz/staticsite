@@ -4,12 +4,11 @@ import logging
 
 from staticsite import fields
 from staticsite.feature import Feature
-from staticsite.metadata import FieldsMetaclass
 
 log = logging.getLogger("pages")
 
 
-class PagesPageMixin(metaclass=FieldsMetaclass):
+class PagesPageMixin(metaclass=fields.FieldsMetaclass):
     pages = fields.Field(structure=True, doc="""
         The `pages` metadata can use to select a set of pages shown by the current
         page. Although default `page.html` template will not do anything with them,

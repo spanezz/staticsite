@@ -8,7 +8,6 @@ import jinja2
 
 from staticsite import fields, metadata
 from staticsite.feature import Feature
-from staticsite.metadata import FieldsMetaclass
 from staticsite.node import Path
 from staticsite.page import Page, PageNotFoundError
 from staticsite.utils import arrange
@@ -202,7 +201,7 @@ class SyndicationField(fields.Field):
         return Syndication.clean_value(obj, value)
 
 
-class SyndicationPageMixin(metaclass=FieldsMetaclass):
+class SyndicationPageMixin(metaclass=fields.FieldsMetaclass):
     syndication = SyndicationField(structure=True, doc="""
         Defines syndication for the contents of this page.
 

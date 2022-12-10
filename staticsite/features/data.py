@@ -12,7 +12,6 @@ import jinja2
 from staticsite import Feature, Page, fields
 from staticsite.archetypes import Archetype
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
-from staticsite.metadata import FieldsMetaclass
 from staticsite.node import Node, Path
 from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
@@ -26,7 +25,7 @@ log = logging.getLogger("data")
 re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
-class DataPageMixin(metaclass=FieldsMetaclass):
+class DataPageMixin(metaclass=fields.FieldsMetaclass):
     data_type = fields.Field(doc="""
         Type of data for this file.
 

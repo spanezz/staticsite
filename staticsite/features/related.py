@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 
-from staticsite import fields, metadata
+from staticsite import fields
 from staticsite.feature import Feature
 
 log = logging.getLogger("related")
 
 
-class RelatedPageMixin(metaclass=metadata.FieldsMetaclass):
+class RelatedPageMixin(metaclass=fields.FieldsMetaclass):
     related = fields.Field(structure=True, doc="""
         Dict of pages related to this page.
 

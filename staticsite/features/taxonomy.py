@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
-from staticsite import Page, fields, metadata
+from staticsite import Page, fields
 from staticsite.feature import Feature
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
@@ -147,7 +147,7 @@ class Taxonomy:
         self.index.pages = list(self.category_pages.values())
 
 
-class BaseTaxonomyPageMixin(metaclass=metadata.FieldsMetaclass):
+class BaseTaxonomyPageMixin(metaclass=fields.FieldsMetaclass):
     series_title = fields.Field(doc="""
         Series title from this page onwards.
 

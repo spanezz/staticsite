@@ -7,7 +7,6 @@ import os
 from typing import TYPE_CHECKING, Any
 
 from staticsite import Feature, Page, fields
-from staticsite.metadata import FieldsMetaclass
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -25,7 +24,7 @@ def basename_no_ext(pathname: str) -> str:
     return os.path.splitext(os.path.basename(pathname))[0]
 
 
-class ImagePageMixin(metaclass=FieldsMetaclass):
+class ImagePageMixin(metaclass=fields.FieldsMetaclass):
     image = fields.Field(doc="""
         Image used for this post.
 

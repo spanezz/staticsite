@@ -55,7 +55,7 @@ class NavField(fields.Inherited):
         return NavData(obj, value)
 
 
-class NavMixin(metaclass=metadata.FieldsMetaclass):
+class NavMixin(metaclass=fields.FieldsMetaclass):
     nav = NavField(structure=True, doc="""
         List of page paths, relative to the page defining the nav element, that
         are used for the navbar.

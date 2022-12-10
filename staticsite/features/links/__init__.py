@@ -12,7 +12,6 @@ from staticsite.feature import Feature
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
-from staticsite.metadata import FieldsMetaclass
 from staticsite.node import Node, Path
 from staticsite.page_filter import PageFilter
 
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("links")
 
 
-class LinksPageMixin(metaclass=FieldsMetaclass):
+class LinksPageMixin(metaclass=fields.FieldsMetaclass):
     links = fields.Field(doc="""
         Extra metadata for external links.
 

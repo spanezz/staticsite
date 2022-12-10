@@ -11,34 +11,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("metadata")
 
 
-class FieldsMetaclass(type):
-    """
-    Allow a class to have a set of Field members, defining self-documenting
-    metadata elements
-    """
-    def __new__(cls, name, bases, dct):
-        _fields = {}
-
-        # Add fields from subclasses
-        for b in bases:
-            if (b_fields := getattr(b, "_fields", None)):
-                _fields.update(b_fields)
-
-        # Add fields from the class itself
-        for field_name, val in dct.items():
-            if isinstance(val, fields.Field):
-                # Store its description in the Model _meta
-                _fields[field_name] = val
-            else:
-                # Leave untouched
-                continue
-
-        res = super().__new__(cls, name, bases, dct)
-        res._fields = _fields
-        return res
-
-
-class SiteElement(metaclass=FieldsMetaclass):
+class SiteElement(metaclass=fields.FieldsMetaclass):
     """
     Functionality to expose a `meta` member giving dict-like access to Metadata
     fields

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from staticsite import fields, metadata
+from staticsite import fields
 from staticsite.node import Path
 from staticsite.feature import Feature
 from staticsite.page import Page
@@ -11,7 +11,7 @@ from staticsite.page import Page
 log = logging.getLogger("aliases")
 
 
-class AliasesPageMixin(metaclass=metadata.FieldsMetaclass):
+class AliasesPageMixin(metaclass=fields.FieldsMetaclass):
     aliases = fields.Field(structure=True, doc="""
         Relative paths in the destination directory where the page should also show up.
         [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain

@@ -159,3 +159,30 @@ class Draft(Field):
             obj.__dict__[self.name] = obj.__dict__["date"] > obj.site.generation_time
         elif not isinstance(value, bool):
             obj.__dict__[self.name] = bool(value)
+
+
+class FieldsMetaclass(type):
+    """
+    Allow a class to have a set of Field members, defining self-documenting
+    metadata elements
+    """
+    def __new__(cls, name, bases, dct):
+        _fields = {}
+
+        # Add fields from subclasses
+        for b in bases:
+            if (b_fields := getattr(b, "_fields", None)):
+                _fields.update(b_fields)
+
+        # Add fields from the class itself
+        for field_name, val in dct.items():
+            if isinstance(val, Field):
+                # Store its description in the Model _meta
+                _fields[field_name] = val
+            else:
+                # Leave untouched
+                continue
+
+        res = super().__new__(cls, name, bases, dct)
+        res._fields = _fields
+        return res
