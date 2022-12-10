@@ -67,7 +67,7 @@ class PageDate(fields.Date):
         return date
 
 
-class Draft(fields.Field):
+class Draft(fields.Bool):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
@@ -78,6 +78,38 @@ class Draft(fields.Field):
             return value
         else:
             return value
+
+
+class RenderedField(fields.Field):
+    """
+    Make sure the draft exists and is a bool, computed according to the date
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            if (tpl := getattr(page, "template_" + self.name, None)):
+                # If a template exists, render it
+                # TODO: remove meta= and make it compatibile again with stable staticsite
+                value = markupsafe.Markup(tpl.render(meta=page.meta, page=page))
+            else:
+                value = self.default
+            self.__dict__[self.name] = value
+        return value
+
+
+class RenderedTitleField(fields.Field):
+    """
+    Make sure the draft exists and is a bool, computed according to the date
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            if (tpl := getattr(page, "template_" + self.name, None)):
+                # If a template exists, render it
+                # TODO: remove meta= and make it compatibile again with stable staticsite
+                value = markupsafe.Markup(tpl.render(meta=page.meta, page=page))
+            else:
+                value = page.site_name
+            self.__dict__[self.name] = value
+        return value
 
 
 class Meta:
@@ -155,12 +187,12 @@ class Page(SiteElement):
         Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
     """)
 
-    copyright = fields.Field(doc="""
+    copyright = RenderedField(doc="""
         Copyright notice for the page. If missing, it's generated using
         `template_copyright`.
     """)
 
-    title = fields.Field(doc="""
+    title = RenderedTitleField(doc="""
         Page title.
 
         If missing:
@@ -174,7 +206,7 @@ class Page(SiteElement):
          * if still no title can be found, the site name is used as a default.
     """)
 
-    description = fields.Field(doc="""
+    description = RenderedField(doc="""
         The page description. If omitted, the page will have no description.
     """)
 
@@ -241,6 +273,10 @@ It defaults to false, or true if `meta.date` is in the future.
         # External links found when rendering the page
         self.rendered_external_links: set[str] = set()
 
+        # Check the existence of other mandatory fields
+        if self.site_url is None:
+            raise PageMissesFieldError(self, "site_url")
+
     @property
     def site_path(self) -> str:
         """
@@ -281,23 +317,6 @@ It defaults to false, or true if `meta.date` is in the future.
         Raises PageValidationError or one of its subclasses of the page should
         not be added to the site.
         """
-        # Check the existence of other mandatory fields
-        if self.site_url is None:
-            raise PageMissesFieldError(self, "site_url")
-
-        # Render template_* fields
-        for name in ('title', 'copyright', 'description'):
-            if getattr(self, name, None):
-                # If we have a value set, use it
-                continue
-            if (tpl := getattr(self, "template_" + name, None)):
-                # If a template exists, render it
-                # TODO: remove meta= and make it compatibile again with stable staticsite
-                setattr(self, name, markupsafe.Markup(tpl.render(meta=self.meta, page=self)))
-
-        # title must exist
-        if self.title is None:
-            self.title = self.site_name
 
     @cached_property
     def page_template(self):
