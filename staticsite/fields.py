@@ -164,12 +164,13 @@ class FieldContainer(metaclass=FieldsMetaclass):
             self,
             site: Site, *,
             parent: Optional[FieldContainer] = None,
-            meta_values: Optional[dict[str, Any]] = None):
-        # Pointer to the root structure
+            **kw):
+        # Reference to Site, so that fields can access configuration, template
+        # compilers, and so on
         self.site = site
 
-        if meta_values:
-            self.update_meta(meta_values)
+        if kw:
+            self.update_meta(kw)
             # TODO: make update_meta pop values, then warn here about the
             # values that are left and will be ignored
 

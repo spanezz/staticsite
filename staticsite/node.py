@@ -181,7 +181,13 @@ class Node(SiteElement):
         else:
             return os.path.join(self.parent.compute_path(), self.name)
 
-    def create_page(self, path: Optional[Path] = None, dst: Optional[str] = None, directory_index: bool = False, **kw):
+    def create_page(
+            self,
+            path: Optional[Path] = None,
+            dst: Optional[str] = None,
+            directory_index: bool = False,
+            meta_values: Optional[dict[str, Any]] = None,
+            **kw):
         """
         Create a page of the given type, attaching it at the given path
         """
@@ -197,9 +203,10 @@ class Node(SiteElement):
         # TODO: move site.is_page_ignored here?
         try:
             if dst:
-                return self._create_leaf_page(dst=dst, path=path, **kw)
+                return self._create_leaf_page(dst=dst, path=path, meta_values=meta_values or {}, **kw)
             else:
-                return self._create_index_page(path=path, directory_index=directory_index, **kw)
+                return self._create_index_page(
+                        path=path, directory_index=directory_index, meta_values=meta_values or {}, **kw)
         except SkipPage:
             return None
 
@@ -217,7 +224,7 @@ class Node(SiteElement):
             src: Optional[file.File] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
-            meta_values: Optional[dict[str, Any]] = None,
+            meta_values: Optional[dict[str, Any]],
             created_from: Optional[Page] = None,
             **kw):
 
@@ -266,7 +273,7 @@ class Node(SiteElement):
             src: Optional[file.File] = None,
             dst: str,
             path: Optional[Path] = None,
-            meta_values: Optional[dict[str, Any]] = None,
+            meta_values: Optional[dict[str, Any]],
             created_from: Optional[Page] = None,
             **kw):
         if path:

@@ -199,7 +199,7 @@ It defaults to false, or true if `meta.date` is in the future.
             dst: str,
             leaf: bool,
             directory_index: bool = False):
-        super().__init__(site, parent=created_from or node, meta_values=meta_values)
+        super().__init__(site, parent=created_from or node, **meta_values)
         # Read-only, dict-like accessor to the page's fields
         self.meta: Meta = Meta(self)
         # Node where this page is installed in the rendered structure
