@@ -56,7 +56,7 @@ class Images(Feature):
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
         self.page_mixins.append(ImagePageMixin)
-        self.site.structure.add_tracked_metadata("image")
+        self.site.features.add_tracked_metadata("image")
         # Nodes that contain images
         self.images: set[Image] = set()
 
@@ -125,7 +125,7 @@ class Images(Feature):
 
     def analyze(self):
         # Resolve image from strings to Image pages
-        for page in self.site.structure.pages_by_metadata["image"]:
+        for page in self.site.features.pages_by_metadata["image"]:
             val = page.image
             if isinstance(val, str):
                 page.image = page.resolve_path(val)

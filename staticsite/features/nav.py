@@ -82,13 +82,13 @@ class Nav(Feature):
         super().__init__(*args, **kw)
         self.node_mixins.append(NavMixin)
         self.page_mixins.append(NavPageMixin)
-        self.site.structure.add_tracked_metadata("nav")
+        self.site.features.add_tracked_metadata("nav")
 
     def analyze(self):
         # Expand pages expressions
         nav_pages: set[Page] = set()
 
-        for page in self.site.structure.pages_by_metadata["nav"]:
+        for page in self.site.features.pages_by_metadata["nav"]:
             if (nav := page.nav) is None:
                 continue
 

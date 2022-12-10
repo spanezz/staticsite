@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 import dateutil.parser
 import pytz
 
-from . import fields, fstree, structure
+from . import fields, fstree
 from .cache import Caches, DisabledCaches
 from .file import File
 from .settings import Settings
@@ -184,9 +184,6 @@ class Site:
         # Filesystem trees scanned by the site
         self.fstrees: dict[str, fstree.Tree] = {}
 
-        # Structure of pages in the site
-        self.structure = structure.Structure(self)
-
         # Root directory of the site
         self.root: Node
 
@@ -247,10 +244,10 @@ class Site:
     @property
     def pages_by_metadata(self):
         """
-        Compatibility accessor for structure.pages_by_metadata
+        Compatibility accessor for features.pages_by_metadata
         """
-        warnings.warn("use site.structure.pages_by_metadata instead of site.pages_by_metadata", DeprecationWarning)
-        return self.structure.pages_by_metadata
+        warnings.warn("use site.features.pages_by_metadata instead of site.pages_by_metadata", DeprecationWarning)
+        return self.features.pages_by_metadata
 
     @cached_property
     def archetypes(self) -> "archetypes.Archetypes":

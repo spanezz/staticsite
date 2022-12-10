@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .page import Page
     from .site import Site
 
-log = logging.getLogger("structure")
+log = logging.getLogger("node")
 
 
 class SkipPage(Exception):
@@ -257,7 +257,7 @@ class Node(SiteElement):
                 log.warn("%s: page %r replaces page %r", self.compute_path(), page, self.page)
 
         self.page = page
-        self.site.structure.index(page)
+        self.site.features.examine_new_page(page)
         # if page.directory_index is False:
         #     print(f"{page=!r} dst is not set but page is not a directory index")
 
@@ -283,8 +283,6 @@ class Node(SiteElement):
         # Create the page
         page = self.site.features.get_page_class(page_cls)(
             site=self.site, src=src, dst=dst,
-            # TODO: switch to just self once we get rid of structure.pages:
-            # this is only needed to get a good site_path there
             node=self,
             created_from=created_from,
             search_root_node=self,
@@ -302,7 +300,7 @@ class Node(SiteElement):
                 log.warn("%s: page %r replaces page %r", self.compute_path(), page, old)
 
         self.build_pages[dst] = page
-        self.site.structure.index(page)
+        self.site.features.examine_new_page(page)
         return page
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:

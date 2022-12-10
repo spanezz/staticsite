@@ -306,7 +306,7 @@ class SyndicationFeature(Feature):
         super().__init__(*args, **kw)
         self.page_mixins.append(SyndicationPageMixin)
         self.site.features["rst"].yaml_tags.add("syndication")
-        self.site.structure.add_tracked_metadata("syndication")
+        self.site.features.add_tracked_metadata("syndication")
         self.syndications = []
         self.j2_globals["syndicated_pages"] = self.jinja2_syndicated_pages
 
@@ -345,7 +345,7 @@ class SyndicationFeature(Feature):
 
     def analyze(self):
         # Build syndications from pages with a 'syndication' metadata
-        for page in self.site.structure.pages_by_metadata["syndication"]:
+        for page in self.site.features.pages_by_metadata["syndication"]:
             # The syndication header is the base for the feed pages's metadata,
             # and is added as 'syndication' to all the pages that get the feed
             # links

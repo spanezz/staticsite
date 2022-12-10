@@ -32,11 +32,11 @@ class PagesFeature(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.page_mixins = (PagesPageMixin,)
-        self.site.structure.add_tracked_metadata("pages")
+        self.site.features.add_tracked_metadata("pages")
 
     def analyze(self):
         # Expand pages expressions
-        for page in self.site.structure.pages_by_metadata["pages"]:
+        for page in self.site.features.pages_by_metadata["pages"]:
             query = page.pages
             if isinstance(query, str):
                 query = {"path": query}

@@ -32,11 +32,11 @@ class AliasesFeature(Feature):
         super().__init__(*args, **kw)
         self.site.features["rst"].yaml_tags.add("aliases")
         self.page_mixins.append(AliasesPageMixin)
-        self.site.structure.add_tracked_metadata("aliases")
+        self.site.features.add_tracked_metadata("aliases")
 
     def analyze(self):
         # Build alias pages from pages with an 'aliases' metadata
-        for page in self.site.structure.pages_by_metadata["aliases"]:
+        for page in self.site.features.pages_by_metadata["aliases"]:
             if not (aliases := page.aliases):
                 continue
 

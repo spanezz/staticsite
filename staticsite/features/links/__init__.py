@@ -105,7 +105,7 @@ class Links(Feature):
         self.data.register_page_class("links", LinksPage)
 
         # Collect 'links' metadata
-        self.site.structure.add_tracked_metadata("links")
+        self.site.features.add_tracked_metadata("links")
 
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
@@ -199,7 +199,7 @@ class Links(Feature):
 
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
-        for page in self.site.structure.pages_by_metadata["links"]:
+        for page in self.site.features.pages_by_metadata["links"]:
             for link in page.links:
                 link = Link(link)
                 self.links.append(link)

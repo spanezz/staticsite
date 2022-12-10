@@ -116,7 +116,7 @@ class Taxonomy:
 
         # Group pages by category
         by_category: dict[str, list[Page]] = defaultdict(list)
-        for page in self.index.site.structure.pages_by_metadata[self.name]:
+        for page in self.index.site.features.pages_by_metadata[self.name]:
             categories = getattr(page, self.name, None)
             if not categories:
                 continue
@@ -134,7 +134,7 @@ class Taxonomy:
             self.category_pages[category] = self.create_category_page(category, pages)
 
         # Replace category names with category pages in each categorized page
-        for page in self.index.site.structure.pages_by_metadata[self.name]:
+        for page in self.index.site.features.pages_by_metadata[self.name]:
             if not (categories := getattr(page, self.name, None)):
                 continue
             setattr(page, self.name, [self.category_pages[c] for c in categories])
@@ -198,7 +198,7 @@ class TaxonomyFeature(Feature):
                 element.
             """)}))
         self.known_taxonomies.add(name)
-        self.site.structure.add_tracked_metadata(name)
+        self.site.features.add_tracked_metadata(name)
         self.taxonomies[name] = Taxonomy(name=name, src=src)
 
     def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:

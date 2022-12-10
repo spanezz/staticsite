@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING, Optional, Any
-from staticsite import structure
+from staticsite import node
 from staticsite.page import Page
 from staticsite.feature import Feature
 from staticsite.utils import front_matter
@@ -63,7 +63,7 @@ class J2Pages(Feature):
 
     def load_dir(
             self,
-            node: structure.Node,
+            node: node.Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         # Precompile JINJA2_PAGES patterns

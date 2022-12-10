@@ -56,7 +56,7 @@ class DataPages(Feature):
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
         self.page_mixins.append(DataPageMixin)
-        self.site.structure.add_tracked_metadata("data_type")
+        self.site.features.add_tracked_metadata("data_type")
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
@@ -125,7 +125,7 @@ class DataPages(Feature):
 
     def analyze(self):
         # Dispatch pages by type
-        for page in self.site.structure.pages_by_metadata["data_type"]:
+        for page in self.site.features.pages_by_metadata["data_type"]:
             data_type = page.data_type
             self.by_type[data_type].append(page)
 
