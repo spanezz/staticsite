@@ -1,8 +1,9 @@
 from __future__ import annotations
-from unittest import TestCase
-import re
-from . import utils as test_utils
 
+import re
+from unittest import TestCase
+
+from . import utils as test_utils
 
 BASE_FILES = {
     "blog/post1.rst": """

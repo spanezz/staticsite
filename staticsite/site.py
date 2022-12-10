@@ -125,6 +125,19 @@ class SiteElement(fields.FieldContainer):
     """)
 
 
+class RootNodeFields(metaclass=fields.FieldsMetaclass):
+    """
+    Extra fields for the root node
+    """
+    title = fields.Field(doc="""
+        Title used as site name.
+
+        This only makes sense for the root node of the site hierarchy, and
+        takes the value from the title of the root index page. If set, and the
+        site name is not set by other means, it is used to give the site a name.
+    """)
+
+
 class Site:
     """
     A staticsite site.
@@ -311,7 +324,7 @@ class Site:
             return
 
         # Create root node
-        self.root = self.features.get_node_class()(self, "")
+        self.root = type("RootNode", (RootNodeFields, self.features.get_node_class(),), {})(self, "")
 
         # Scan the main content filesystem
         src = File.with_stat("", os.path.abspath(self.content_root))

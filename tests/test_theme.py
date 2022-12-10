@@ -15,9 +15,7 @@ class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
     def test_no_site_root(self):
         files = {
             ".staticsite": {
-                "site": {
-                    "site_url": "https://www.example.org",
-                },
+                "site_url": "https://www.example.org",
             },
             "page1.md": {},
             "dir/page2.md": {},

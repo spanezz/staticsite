@@ -159,8 +159,6 @@ class PageTree(Tree):
                 for k, v in meta.items():
                     if k in self.node_fields:
                         res[k] = v
-                    else:
-                        res[k] = v
         return res
 
     def _scandir(self):

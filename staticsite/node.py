@@ -334,7 +334,7 @@ class Node(SiteElement):
             return
 
         try:
-            node = self.__class__(site=self.site, name=name, parent=self)
+            node = self.site.features.get_node_class()(site=self.site, name=name, parent=self)
             self.sub[name] = node
             yield node
         except Exception:
@@ -348,7 +348,7 @@ class Node(SiteElement):
         if (node := self.sub.get(name)):
             return node
 
-        node = self.__class__(site=self.site, name=name, parent=self)
+        node = self.site.features.get_node_class()(site=self.site, name=name, parent=self)
         self.sub[name] = node
         return node
 
