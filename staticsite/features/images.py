@@ -162,6 +162,10 @@ class Images(Feature):
 class Image(Page):
     TYPE = "image"
 
+    lat = fields.Field(doc="Image latitude")
+    lon = fields.Field(doc="Image longitude")
+    image_orientation = fields.Field(doc="Image orientation")
+
     def __init__(self, *args, mimetype: str = None, **kw):
         super().__init__(*args, **kw)
         self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
