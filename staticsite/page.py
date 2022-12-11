@@ -112,6 +112,76 @@ class RenderedTitleField(fields.Field):
         return value
 
 
+class Related:
+    """
+    Container for related pages
+    """
+    def __init__(self, page: Page):
+        self.page = page
+        self.pages: dict[str, Union[str, Page]] = {}
+
+    def __repr__(self):
+        return f"Related({self.page!r}, {self.pages!r}))"
+
+    def __str__(self):
+        return self.pages.__str__()
+
+    def __getitem__(self, name: str):
+        if (val := self.pages.get(name)) is None:
+            pass
+        elif isinstance(val, str):
+            val = self.page.resolve_path(val)
+            self.pages[name] = val
+        return val
+
+    def __setitem__(self, name: str, page: Union[str, Page]):
+        if (old := self.pages.get(name)) is not None and old != self.page:
+            log.warn("%s: attempt to set related.%s to %r but it was already %r",
+                     self, name, page, old)
+            return
+        self.pages[name] = page
+
+    def to_dict(self):
+        return self.pages
+
+    def get(self, *args):
+        return self.pages.get(*args)
+
+    def keys(self):
+        return self.pages.keys()
+
+    def values(self):
+        return self.pages.values()
+
+    def items(self):
+        return self.pages.items()
+
+    def __eq__(self, obj: Any) -> bool:
+        if isinstance(obj, Related):
+            return self.page == obj.page and self.pages == obj.pages
+        elif isinstance(obj, dict):
+            return self.pages == obj
+        elif obj is None:
+            return False
+        else:
+            return False
+
+
+class RelatedField(fields.Field):
+    """
+    Contains related pages indexed by name
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            value = Related(page)
+            page.__dict__[self.name] = value
+        return value
+
+    def __set__(self, page: Page, value: Any) -> None:
+        related = self.__get__(page)
+        related.pages.update(value)
+
+
 class Meta:
     """
     Read-only dict accessor to Page's fields
@@ -124,7 +194,9 @@ class Meta:
             raise KeyError(key)
 
         try:
-            return getattr(self._page, key)
+            res = getattr(self._page, key)
+            # print(f"{self._page!r} meta[{key!r}] = {res!r}")
+            return res
         except AttributeError:
             raise KeyError(key)
 
@@ -225,7 +297,7 @@ It defaults to false, or true if `meta.date` is in the future.
         [reStructuredText](rst.rst), and [data](data.md) pages.
     """)
 
-    related = fields.Dict(structure=True, doc="""
+    related = RelatedField(structure=True, doc="""
         Dict of pages related to this page.
 
         Dict values will be resolved as pages.
@@ -299,14 +371,7 @@ It defaults to false, or true if `meta.date` is in the future.
         """
         Set the page as meta.related.name
         """
-        if (related := self.related) is None:
-            self.related = related = {}
-        old = related.get(name)
-        if old is not None and old != page:
-            log.warn("%s: attempt to set related.%s to %r but it was already %r",
-                     self, name, page, old)
-            return
-        related[name] = page
+        self.related[name] = page
 
     @cached_property
     def page_template(self):
