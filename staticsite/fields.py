@@ -182,4 +182,4 @@ class FieldContainer(metaclass=FieldsMetaclass):
             if name in self._fields:
                 setattr(self, name, value)
             else:
-                log.warning("%r: setting unknown field %s=%r", self, name, value, stack_info=True)
+                log.warning("%r: setting unknown field %s=%r", self, name, value)
