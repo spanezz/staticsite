@@ -313,7 +313,9 @@ class Site:
 
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
-        self.root.update_fields(tree.meta)
+        for k, v in tree.meta.items():
+            if k in self.root._fields:
+                setattr(self.root, k, v)
 
         if self.root.site_name is None:
             # If we still have no idea of site names, use the root directory's name

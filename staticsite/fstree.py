@@ -121,9 +121,6 @@ class PageTree(Tree):
         # Rules for assigning metadata to files
         self.file_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
 
-        # Allow list of field names that can be used in nodes
-        self.node_fields = frozenset(site.root._fields.keys())
-
     def _take_dir_rules(self, meta: dict[str, Any]):
         """
         Remove file and directory rules from the meta dict, and compile them
@@ -154,11 +151,7 @@ class PageTree(Tree):
             meta = feature.load_dir_meta(self)
             if meta is not None:
                 self._take_dir_rules(meta)
-                # Since we are loading metadata from index pages, here we
-                # ignore fields that are not relevant for Node
-                for k, v in meta.items():
-                    if k in self.node_fields:
-                        res[k] = v
+                res.update(meta)
         return res
 
     def _scandir(self):
@@ -205,7 +198,13 @@ class PageTree(Tree):
     def populate_node(self, node: Node):
         # print(f"PageTree.populate_node {self.src.relpath=} {self.meta=}")
         # Add the metadata scanned for this directory
-        node.update_fields(self.meta)
+
+        # Since we are loading metadata from index pages, here we
+        # ignore fields that are not relevant for Node, that may have been
+        # loaded from its index page
+        for k, v in self.meta.items():
+            if k in node._fields:
+                setattr(node, k, v)
 
         # Compute metadata for files
         files_meta: dict[str, tuple[dict[str, Any], File]] = {}
@@ -286,7 +285,9 @@ class AssetTree(Tree):
 
     def populate_node(self, node: Node):
         # Add the metadata scanned for this directory
-        node.update_fields(self.meta)
+        for k, v in self.meta.items():
+            if k in node._fields:
+                setattr(node, k, v)
 
         # Load every file as an asset
         for fname, src in self.files.items():
