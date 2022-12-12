@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
 from staticsite.feature import Feature
-from staticsite.file import File
 from staticsite.page import Page
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
@@ -181,10 +180,10 @@ class RenderedScaledImage(RenderedElement):
         self.width = width
         self.height = height
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[File]):
-        # if os.access(name, dir_fd=dir_fd, mode=os.W_OK):
-        #     return
-        # TODO: if target exists and mtime is ok, keep it
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
+        # If target exists and mtime is ok, keep it
+        if old and old.st_mtime >= self.src.stat.st_mtime:
+            return
         import PIL
         with PIL.Image.open(self.src.abspath) as img:
             img = img.resize((self.width, self.height))

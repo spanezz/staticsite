@@ -12,7 +12,7 @@ class RenderedElement:
     """
     Abstract interface for a rendered site page
     """
-    def write(self, *, name: str, dir_fd: int, old: Optional[File]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
         """
         Write the rendered contents to the given file
         """
@@ -38,7 +38,7 @@ class RenderedFile(RenderedElement):
     def __init__(self, src: File):
         self.src = src
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[File]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
         try:
             st = os.stat(name, dir_fd=dir_fd)
         except FileNotFoundError:
@@ -64,7 +64,7 @@ class RenderedString(RenderedElement):
         else:
             self.buf = s.encode("utf-8")
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[File]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
         with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
             out.write(self.buf)
 

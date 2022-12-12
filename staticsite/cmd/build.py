@@ -75,8 +75,8 @@ class RenderDirectory:
         self.dir_fd = dir_fd
 
         # Scan directory contents
-        self.old_dirs: dict[str, File] = {}
-        self.old_files: dict[str, File] = {}
+        self.old_dirs: dict[str, os.stat_result] = {}
+        self.old_files: dict[str, os.stat_result] = {}
         with os.scandir(dir_fd) as entries:
             for de in entries:
                 if de.is_dir():
