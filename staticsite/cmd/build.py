@@ -10,6 +10,7 @@ from collections import Counter
 from typing import TYPE_CHECKING, Generator, Optional
 
 from .. import utils
+from ..file import File
 from ..node import Path
 from .command import Fail, SiteCommand
 
@@ -74,15 +75,14 @@ class RenderDirectory:
         self.dir_fd = dir_fd
 
         # Scan directory contents
-        # TODO: do also stat() to be able to skip rendering of needed
-        self.old_dirs: set[str] = set()
-        self.old_files: set[str] = set()
+        self.old_dirs: dict[str, File] = {}
+        self.old_files: dict[str, File] = {}
         with os.scandir(dir_fd) as entries:
             for de in entries:
                 if de.is_dir():
-                    self.old_dirs.add(de.name)
+                    self.old_dirs[de.name] = de.stat()
                 else:
-                    self.old_files.add(de.name)
+                    self.old_files[de.name] = de.stat()
 
     @classmethod
     @contextlib.contextmanager
@@ -100,34 +100,43 @@ class RenderDirectory:
         with utils.open_dir_fd(name, dir_fd=self.dir_fd) as subdir_fd:
             yield RenderDirectory(self.root, subpath, subdir_fd)
 
-    def prepare_subdir(self, name: str):
+    def prepare_subdir(self, name: str) -> Optional[File]:
         """
-        Prepare for rendering a subdirectory
+        Prepare for rendering a subdirectory.
+
+        Return a File object corresponding to an existing directory entry
         """
         if name in self.old_dirs:
             # Directory already existed: reuse it
-            self.old_dirs.discard(name)
+            return self.old_dirs.pop(name)
         elif name in self.old_files:
             # There was a file at this location: delete it
-            self.old_files.discard(name)
+            self.old_files.pop(name, None)
             os.unlink(name, dir_fd=self.dir_fd)
             os.mkdir(name, dir_fd=self.dir_fd)
+            return None
         else:
             # There was nothing: create the directory
             os.mkdir(name, dir_fd=self.dir_fd)
+            return None
 
-    def prepare_file(self, name: str):
+    def prepare_file(self, name: str) -> Optional[File]:
         """
         Prepare for rendering a file
+
+        Return a File object corresponding to an existing directory entry
         """
         if name in self.old_dirs:
             # There is a directory instead: remove it
-            self.old_dirs.discard(name)
+            self.old_dirs.pop(name, None)
             # FIXME: from Python 3.11, rmtree supports dir_fd
             shutil.rmtree(os.path.join(self.root, self.relpath, name))
+            return None
         elif name in self.old_files:
             # There is a file at this location: it will be overwritten
-            self.old_files.discard(name)
+            return self.old_files.pop(name)
+        else:
+            return None
 
     def cleanup_leftovers(self):
         """
@@ -243,7 +252,7 @@ class Builder:
         for name, page in node.build_pages.items():
             if self.type_filter and page.TYPE != self.type_filter:
                 continue
-            render_dir.prepare_file(name)
+            old_file = render_dir.prepare_file(name)
             with stats.collect(page):
                 try:
                     rendered = page.render()
@@ -254,7 +263,7 @@ class Builder:
                     self.has_errors = True
                 else:
                     # log.debug("write_subtree relpath:%s render %s %s", render_dir.relpath, page.TYPE, name)
-                    rendered.write(name, dir_fd=render_dir.dir_fd)
+                    rendered.write(name=name, dir_fd=render_dir.dir_fd, old=old_file)
                 self.build_log[os.path.join(render_dir.relpath, name)] = page
 
         if node.sub:
