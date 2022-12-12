@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, BinaryIO, Tuple
 
 import docutils.core
 import docutils.io
@@ -82,7 +82,7 @@ class RestructuredText(Feature):
         self.yaml_tags = {"files", "dirs"}
         self.yaml_tags_filled = False
 
-    def parse_rest(self, fd, remove_docinfo=True):
+    def parse_rest(self, fd: BinaryIO, remove_docinfo=True):
         """
         Parse a rest document.
 
@@ -91,8 +91,7 @@ class RestructuredText(Feature):
             * the doctree with the docinfo removed
         """
         # Parse input into doctree
-        doctree = docutils.core.publish_doctree(
-                fd, source_class=docutils.io.FileInput, settings_overrides={"input_encoding": "unicode"})
+        doctree = docutils.core.publish_doctree(fd, source_class=docutils.io.FileInput)
 
         doctree_scan = DoctreeScan(doctree, remove_docinfo=remove_docinfo)
 
@@ -177,6 +176,7 @@ class RestructuredText(Feature):
                     page_cls=RstPage,
                     src=src,
                     feature=self,
+                    front_matter=fm_meta,
                     doctree_scan=doctree_scan,
                     directory_index=directory_index,
                     path=path,
@@ -190,7 +190,7 @@ class RestructuredText(Feature):
 
     def load_file_meta(self, directory: fstree.Tree, fname: str) -> Tuple[dict[str, Any], DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
-        with directory.open(fname, "rt") as fd:
+        with directory.open(fname, "rb") as fd:
             meta, doctree_scan = self.parse_rest(fd)
 
         return meta, doctree_scan
@@ -248,16 +248,26 @@ class RestArchetype(Archetype):
 class RstPage(Page):
     TYPE = "rst"
 
-    def __init__(self, *args, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
+    def __init__(self, *, front_matter: dict[str, Any], feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
         # Indexed by default
         kw.setdefault("indexed", True)
-        super().__init__(*args, **kw)
+        super().__init__(**kw)
+
+        # Raw front matter, to use to check for changes in sources
+        self.front_matter = front_matter
 
         # Shared RestructuredText environment
         self.rst = feature
 
         # Document doctree root node
         self.doctree_scan = doctree_scan
+
+    def front_matter_changed(self, fd: BinaryIO) -> bool:
+        """
+        Check if the front matter read from fd is different from ours
+        """
+        meta, doctree_scan = self.rst.parse_rest(fd)
+        return self.front_matter != meta
 
     def check(self, checker):
         self._render_page()

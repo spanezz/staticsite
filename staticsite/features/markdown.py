@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -245,6 +245,7 @@ class MarkdownPages(Feature):
                     page_cls=MarkdownPage,
                     src=src,
                     feature=self,
+                    front_matter=fm_meta,
                     body=body,
                     directory_index=directory_index,
                     path=path,
@@ -281,22 +282,30 @@ class MarkdownPages(Feature):
 
         # Parse separating front matter and markdown content
         with directory.open(fname, "rb") as fd:
-            fmt, meta, body = front_matter.read_markdown_partial(fd)
+            return self.read_file_meta(fd)
 
-            body = list(body)
+    def read_file_meta(self, fd: BinaryIO) -> tuple[dict[str, Any], list[str]]:
+        """
+        Load metadata for a file.
 
-            # Remove leading empty lines
+        Returns the metadata and the markdown lines for the rest of the file
+        """
+        fmt, meta, body = front_matter.read_markdown_partial(fd)
+
+        body = list(body)
+
+        # Remove leading empty lines
+        while body and not body[0]:
+            body.pop(0)
+
+        # Read title from first # title if not specified in metadata
+        if not meta.get("title", ""):
+            if body and body[0].startswith("# "):
+                meta["title"] = body.pop(0)[2:].strip()
+
+            # Remove leading empty lines again
             while body and not body[0]:
                 body.pop(0)
-
-            # Read title from first # title if not specified in metadata
-            if not meta.get("title", ""):
-                if body and body[0].startswith("# "):
-                    meta["title"] = body.pop(0)[2:].strip()
-
-                # Remove leading empty lines again
-                while body and not body[0]:
-                    body.pop(0)
 
         return meta, body
 
@@ -348,10 +357,13 @@ class MarkdownPage(Page):
     # Match a Markdown divider line
     re_divider = re.compile(r"^____+$")
 
-    def __init__(self, *args, feature: MarkdownPages, body: List[str], **kw):
+    def __init__(self, *, front_matter: dict[str, Any], feature: MarkdownPages, body: List[str], **kw):
         # Indexed by default
         kw.setdefault("indexed", True)
-        super().__init__(*args, **kw)
+        super().__init__(**kw)
+
+        # Raw front matter, to use to check for changes in sources
+        self.front_matter = front_matter
 
         # Shared markdown environment
         self.mdpages = feature
@@ -374,6 +386,16 @@ class MarkdownPage(Page):
             self.content_has_split = False
             self.body_start = body
             self.body_rest = None
+
+    def front_matter_changed(self, fd: BinaryIO) -> bool:
+        """
+        Check if the front matter read from fd is different from ours
+        """
+        # TODO: refactor read_file_meta to skip reading the body if we don't
+        # need it, but still parse until the title if the front matter doesn't
+        # have one
+        meta, body = self.mdpages.read_file_meta(fd)
+        return self.front_matter != meta
 
     def check(self, checker):
         self.render()

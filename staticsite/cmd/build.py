@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import io
 import locale
 import logging
 import os
@@ -9,12 +10,15 @@ import time
 from collections import Counter
 from typing import TYPE_CHECKING, Generator, Optional
 
+import git
+
 from .. import utils
 from ..file import File
 from ..node import Path
 from .command import Fail, SiteCommand
 
 if TYPE_CHECKING:
+    from ..cache import Cache
     from ..node import Node
     from ..page import Page
     from ..site import Site
@@ -34,15 +38,20 @@ class Build(SiteCommand):
                             help="render only pages under this path")
         parser.add_argument("--fail-fast", action="store_true",
                             help="fail the first time a page gives an error in rendering")
+        parser.add_argument("-f", "--full", action="store_true",
+                            help="always do a full rebuild")
         return parser
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        self.site: Site
 
     def run(self):
         self.site = self.load_site()
         self.builder = Builder(
-                self.site, type_filter=self.args.type, path_filter=self.args.path, fail_fast=self.args.fail_fast)
+                self.site, type_filter=self.args.type,
+                path_filter=self.args.path, fail_fast=self.args.fail_fast,
+                full=self.args.full)
         self.builder.write()
         if self.builder.has_errors:
             return 1
@@ -156,7 +165,8 @@ class Builder:
             site: Site,
             type_filter: Optional[str] = None,
             path_filter: Optional[str] = None,
-            fail_fast: bool = False):
+            fail_fast: bool = False,
+            full: bool = True):
         self.site = site
         self.type_filter = type_filter
         self.path_filter = path_filter
@@ -168,12 +178,135 @@ class Builder:
         # Logs which pages have been rendered and to which path
         self.build_log: dict[str, Page] = {}
         self.fail_fast = fail_fast
+        self.full = full
         self.has_errors = False
+
+        # Git repository holding the source contents
+        self.repo: Optional[git.Repo] = None
+
+        # Cache with last build information
+        self.build_cache: Optional[Cache] = None
+
+        # Relative path of contents from the root of the git working dir
+        self.content_relpath: Optional[str] = None
+
+        # Git shasum of the last build
+        self.old_hexsha: Optional[str] = None
+        # Git shasum of this build
+        self.new_hexsha: Optional[str] = None
+        # Files that were dirty in the last run, which means their rendered
+        # version might not reflect the source currently in git
+        self.files_dirty_in_last_run: set[str] = set()
+        # Files committed in git that changed since the last build
+        self.files_changed_in_git: set[str] = set()
+        # Files in the working directory that have uncommitted changes
+        self.files_changed_in_workdir: set[str] = set()
+
+    def scan_changes(self) -> list[str]:
+        """
+        List files that have changed since the last render
+        """
+        # Find git repository
+        try:
+            self.repo = git.Repo(self.site.content_root, search_parent_directories=True)
+            log.info("Contents is stored in git at %s", self.repo.working_tree_dir)
+        except git.exc.NoSuchPathError:
+            log.info("Contents is not stored in git")
+            self.repo = None
+            return None
+
+        # Find information about the last render run
+        self.build_cache = self.site.caches.get("build")
+
+        self.old_hexsha = self.build_cache.get("git_hexsha")
+        # self.old_hexsha = "86fd0905c7ca7251f73bddd67248443545ebaab5"
+
+        if (old_dirty := self.build_cache.get("git_dirty")) is not None:
+            self.files_dirty_in_last_run.update(old_dirty)
+
+        self.new_hexsha = self.repo.head.commit.hexsha
+
+        # Relative path of contents from the root of the git working dir
+        self.content_relpath = os.path.relpath(self.site.content_root, self.repo.working_tree_dir)
+
+        # Dirty, committed
+        for file in self.repo.index.diff(self.old_hexsha):
+            self.files_changed_in_git.add(os.path.relpath(file.a_path, self.content_relpath))
+        # Dirty, unstaged
+        for file in self.repo.index.diff(None):
+            self.files_changed_in_workdir.add(os.path.relpath(file.a_path, self.content_relpath))
+        # Dirty, staged
+        for file in self.repo.index.diff("HEAD"):
+            self.files_changed_in_workdir.add(os.path.relpath(file.a_path, self.content_relpath))
+
+    def get_incremental_page_set(self) -> Optional[set[Page]]:
+        """
+        Return the set of pages that can be built incrementally, or None if we
+        need a full rebuild
+        """
+        if self.full:
+            return None
+
+        self.scan_changes()
+        if self.files_dirty_in_last_run:
+            # TODO: assume always changed, since we can't tell if
+            # it rendered with a tweaked front matter
+            log.info("Last build had untracked changes, triggering full rebuild")
+            return None
+
+        files_changed = set.union(
+                self.files_changed_in_git,
+                self.files_changed_in_workdir, self.files_changed_in_workdir)
+
+        if not files_changed:
+            log.info("All sources are unchanged")
+            # Empty set, to mean incremental build with no pages changed
+            return set()
+        elif len(files_changed) > 20:
+            log.info("Too many (%d) sources changed, triggering full rebuild", len(files_changed))
+            # Rebuild all after some threshold
+            return None
+        else:
+            # TODO: if it's only rst or markdown, and meta haven't changed,
+            # rebuild only those?
+            tree = self.repo.commit(self.old_hexsha).tree
+            incremental_pages: set[Page] = set()
+            for relpath in files_changed:
+                page = self.site.find_page(relpath)
+                old_blob = tree[os.path.join(self.content_relpath, relpath)]
+                if (fmc := getattr(page, "front_matter_changed", None)) is None:
+                    # TODO: always changed, since we can't compare front matter
+                    log.info("%s: change in complex file, triggering full rebuild", page)
+                    return None
+                else:
+                    # In theory we could read from old_blob.data_stream.stream.
+                    # In practice iterating it line by line hits a
+                    # recursion limit, and it may be a gitpython bug:
+                    # git/cmd.py: CatFileContentStream.__next__ calls next(self)
+                    # TODO: investigate/reporte
+                    # However, data_stream.stream will always read the
+                    # whole page anyway, so we lose nothing in using a
+                    # BytesIO
+                    with io.BytesIO() as fd:
+                        old_blob.stream_data(fd)
+                        fd.seek(0)
+                        if fmc(fd):
+                            log.info("%s: front matter changed, triggering full rebuild", page)
+                            return None
+                        else:
+                            log.info("%s: front matter unchanged, can rebuild incrementally", page)
+                            incremental_pages.add(page)
+
+            return incremental_pages
 
     def write(self):
         """
         Generate output
         """
+        self.incremental_pages = self.get_incremental_page_set()
+        if self.incremental_pages is not None:
+            log.info("Running incremental build with %d changed pages", len(self.incremental_pages))
+
         # Set locale for rendering
         try:
             lname = self.site.settings.LANGUAGES[0]["locale"]
@@ -201,6 +334,11 @@ class Builder:
             #     user  0m5.760s
             #     sys   0m0.468s
             self.write_single_process()
+
+        if not self.has_errors:
+            self.build_cache.put("git_hash", self.new_hexsha)
+            self.build_cache.put("git_dirty", sorted(self.files_changed_in_workdir))
+            # build_cache.put("git_dirty", repo.head.commit.hexsha)
 
 #     def write_multi_process(self, child_count):
 #         log.info("Generating pages using %d child processes", child_count)
@@ -252,7 +390,9 @@ class Builder:
         for name, page in node.build_pages.items():
             if self.type_filter and page.TYPE != self.type_filter:
                 continue
-            old_file = render_dir.prepare_file(name)
+            if (old_file := render_dir.prepare_file(name)) is not None:
+                if self.incremental_pages is not None and page not in self.incremental_pages:
+                    continue
             with stats.collect(page):
                 try:
                     rendered = page.render()

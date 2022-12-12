@@ -354,6 +354,9 @@ class CategoryPage(Page):
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
+    def __hash__(self):
+        return hash((self.taxonomy.name, self.name))
+
     @functools.cached_property
     def series_info(self):
         """
