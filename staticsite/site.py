@@ -221,7 +221,7 @@ class Site:
         """
         return self.root.resolve_path(path)
 
-    def iter_pages(self, static: bool = True) -> Generator[Page, None, None]:
+    def iter_pages(self, static: bool = True, source_only: bool = False) -> Generator[Page, None, None]:
         """
         Iterate all pages in the site
         """
@@ -231,7 +231,7 @@ class Site:
             prune = (
                 self.root.lookup(Path.from_string(self.settings.STATIC_PATH)),
             )
-        yield from self.root.iter_pages(prune=prune)
+        yield from self.root.iter_pages(prune=prune, source_only=source_only)
 
     @cached_property
     def archetypes(self) -> "archetypes.Archetypes":

@@ -373,7 +373,12 @@ class Builder:
             #     sys   0m0.468s
             self.write_single_process()
 
-        # if not self.has_errors:
+        # if self.has_errors:
+        #     # Output directory is partially build, a further build cannot rely on it
+        #     self.build_cache.put("footprints", {})
+        # else:
+        #     footprints = {}
+
         #     self.build_cache.put("git_hash", self.new_hexsha)
         #     self.build_cache.put("git_dirty", sorted(self.files_changed_in_workdir))
         #     # build_cache.put("git_dirty", repo.head.commit.hexsha)

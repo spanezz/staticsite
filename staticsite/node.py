@@ -70,16 +70,19 @@ class Node(SiteElement):
         for name, node in self.sub.items():
             node.print(lead + "+ ", file=file)
 
-    def iter_pages(self, prune: Sequence[Node] = ()) -> Generator[Page, None, None]:
+    def iter_pages(self, prune: Sequence[Node] = (), source_only: bool = False) -> Generator[Page, None, None]:
         """
         Iterate all pages in this subtree
         """
         # Avoid nodes in prune
         if self in prune:
             return
-        yield from self.build_pages.values()
+        if source_only:
+            yield from self.by_src_relpath.values()
+        else:
+            yield from self.build_pages.values()
         for node in self.sub.values():
-            yield from node.iter_pages(prune)
+            yield from node.iter_pages(prune, source_only=source_only)
 
     def lookup(self, path: Path) -> Optional[Node]:
         """
