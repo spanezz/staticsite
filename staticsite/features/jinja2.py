@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING, Optional, Any
 from staticsite import node
-from staticsite.page import SourcePage, Page
+from staticsite.page import SourcePage, Page, ChangeExtent
 from staticsite.feature import Feature
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
@@ -173,6 +173,11 @@ class J2Page(RenderPartialTemplateMixin, SourcePage):
         super().__init__(*args, **kw)
 
         self.template = template
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        # TODO: with some more infrastructure, we can track what pages
+        # contributed the links, and compute something better
+        return ChangeExtent.ALL
 
 
 FEATURES = {

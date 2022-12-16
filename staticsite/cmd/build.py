@@ -10,12 +10,14 @@ import time
 from collections import Counter
 from typing import TYPE_CHECKING, Generator, Optional
 
-# import git
-
 from .. import utils
 from ..file import File
 from ..node import Path
+from ..page import ChangeExtent
 from .command import Fail, SiteCommand
+
+# import git
+
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -427,9 +429,9 @@ class Builder:
             if self.type_filter and page.TYPE != self.type_filter:
                 continue
             if (old_file := render_dir.prepare_file(name)) is not None:
-                pass
-                # if self.incremental_pages is not None and page not in self.incremental_pages:
-                #     continue
+                # TODO: simple minded so far
+                if page.change_extent == ChangeExtent.UNCHANGED:
+                    continue
             with stats.collect(page):
                 try:
                     rendered = page.render()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import enum
 import logging
 import os
 from functools import cached_property
@@ -22,6 +23,18 @@ if TYPE_CHECKING:
     from .site import Site
 
 log = logging.getLogger("page")
+
+
+class ChangeExtent(enum.IntEnum):
+    """
+    What kind of changes happened on this page since last build
+    """
+    # Page is unchanged
+    UNCHANGED = 0
+    # Page changed in contents but not in metadata
+    CONTENTS = 1
+    # Page changed completely
+    ALL = 2
 
 
 class PageNotFoundError(Exception):
@@ -639,13 +652,28 @@ It defaults to false, or true if `meta.date` is in the future.
         #     # TODO: return a "render error" page? But that risks silent errors
         #     return None
 
+    def _compute_change_extent(self) -> ChangeExtent:
+        """
+        Check how much this page has changed since the last build
+        """
+        raise NotImplementedError(f"{self.__class__.__name__}._compute_change_extent not implemented")
+
+    @cached_property
+    def change_extent(self) -> ChangeExtent:
+        """
+        How much this page has changed since the last build
+        """
+        if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
+            raise RuntimeError("Page.change_extent referenced before running page crossreference stage")
+        return self._compute_change_extent()
+
 
 class SourcePage(Page):
     """
     Page loaded from site sources
     """
     old_footprint = fields.Field(internal=True, doc="""
-        Cached get_footprint result from the previous run, or None
+        Cached footprint from the previous run, or None
     """)
 
     def __init__(
@@ -656,16 +684,34 @@ class SourcePage(Page):
         super().__init__(site, parent=node, node=node, **kw)
         self.src = src
 
-    def get_footprint(self) -> dict[str, Any]:
+    def _compute_footprint(self) -> dict[str, Any]:
         """
         Return a dict with information that can be used to evaluate changes in
         incremental builds
         """
+        if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
+            raise RuntimeError("SourcePage._compute_footprint referenced before running page crossreference stage")
         res = {
             "mtime": self.src.stat.st_mtime,
             "size": self.src.stat.st_size,
         }
         return res
+
+    @cached_property
+    def footprint(self) -> dict[str, Any]:
+        """
+        Dict with information that can be used to evaluate changes in
+        incremental builds
+        """
+        return self._compute_footprint()
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        if (old := self.old_footprint) is None:
+            return ChangeExtent.ALL
+        if old.get("mtime") == self.footprint["mtime"] and old.get("size") == self.footprint["size"]:
+            return ChangeExtent.UNCHANGED
+        else:
+            return ChangeExtent.ALL
 
 
 class AutoPage(Page):
@@ -697,8 +743,8 @@ class FrontMatterPage(SourcePage):
         Front matter as parsed by the source file
     """)
 
-    def get_footprint(self) -> dict[str, Any]:
-        res = super().get_footprint()
+    def _compute_footprint(self) -> dict[str, Any]:
+        res = super()._compute_footprint()
         fm = {}
         for k, v in self.front_matter.items():
             if isinstance(v, datetime.datetime):
@@ -707,3 +753,12 @@ class FrontMatterPage(SourcePage):
                 fm[k] = v
         res["fm"] = fm
         return res
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        res = super()._compute_change_extent()
+        if res == ChangeExtent.UNCHANGED:
+            return res
+        if self.footprint["fm"] == self.old_footprint.get("fm"):
+            return ChangeExtent.CONTENTS
+        else:
+            return ChangeExtent.ALL

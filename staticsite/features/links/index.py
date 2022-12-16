@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from staticsite.page import SourcePage, AutoPage
+from staticsite.page import SourcePage, AutoPage, ChangeExtent
 
 from .data import Link, LinkCollection
 
@@ -63,6 +63,11 @@ class LinkIndexPage(SourcePage):
         self.pages = pages
         self.link_collection = self.feature_links.links
 
+    def _compute_change_extent(self) -> ChangeExtent:
+        # TODO: with some more infrastructure, we can track what pages
+        # contributed the links, and compute something better
+        return ChangeExtent.ALL
+
 
 class LinksTagPage(AutoPage):
     """
@@ -83,3 +88,8 @@ class LinksTagPage(AutoPage):
     @property
     def src_abspath(self):
         return None
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        # TODO: with some more infrastructure, we can track what pages
+        # contributed the links, and compute something better
+        return ChangeExtent.ALL

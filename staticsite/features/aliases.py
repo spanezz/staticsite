@@ -5,7 +5,7 @@ import logging
 from staticsite import fields
 from staticsite.node import Path
 from staticsite.feature import Feature
-from staticsite.page import AutoPage
+from staticsite.page import AutoPage, ChangeExtent
 
 
 log = logging.getLogger("aliases")
@@ -65,6 +65,12 @@ class AliasPage(AutoPage):
     page = fields.Field(doc="Page this alias redirects to")
     TYPE = "alias"
     TEMPLATE = "redirect.html"
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        res = self.created_from.change_extent
+        if res == ChangeExtent.CONTENTS:
+            res = ChangeExtent.UNCHANGED
+        return res
 
 
 FEATURES = {

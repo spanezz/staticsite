@@ -9,7 +9,7 @@ import jinja2
 from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.node import Path
-from staticsite.page import AutoPage, Page, PageNotFoundError
+from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent
 from staticsite.utils import arrange
 
 log = logging.getLogger("syndication")
@@ -412,6 +412,12 @@ class SyndicationPage(AutoPage):
         else:
             self.date = self.site.generation_time
 
+    def _compute_change_extent(self) -> ChangeExtent:
+        if self.pages:
+            return max(p.change_extent for p in self.pages)
+        else:
+            return ChangeExtent.ALL
+
 
 class RSSPage(SyndicationPage):
     """
@@ -448,6 +454,12 @@ class ArchivePage(AutoPage):
             self.date = self.site.generation_time
 
         self.created_from.add_related("archive", self)
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        if self.pages:
+            return max(p.change_extent for p in self.pages)
+        else:
+            return ChangeExtent.ALL
 
 
 FEATURES = {

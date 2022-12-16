@@ -197,7 +197,7 @@ class Node(SiteElement):
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
         if self.site.previous_footprints:
-            kw["old_footprint"] = self.site.previous_footprints.get(src.relpath)
+            kw["old_footprint"] = self.site.previous_footprints.pop(src.relpath, None)
 
         # TODO: move site.is_page_ignored here?
         try:

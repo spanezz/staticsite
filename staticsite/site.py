@@ -237,7 +237,7 @@ class Site:
         future builds
         """
         self.footprints = {
-            page.src.relpath: page.get_footprint() for page in self.iter_pages(source_only=True)
+            page.src.relpath: page.footprint for page in self.iter_pages(source_only=True)
         }
         self.build_cache.put("footprints", self.footprints)
 

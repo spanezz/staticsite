@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
 from staticsite.feature import Feature
-from staticsite.page import SourcePage, AutoPage, Page
+from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -214,6 +214,9 @@ class ScaledImage(AutoPage):
 
     def render(self, **kw) -> RenderedElement:
         return RenderedScaledImage(self.created_from.src, self.width, self.height)
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        return self.created_from.change_extent
 
 
 FEATURES = {

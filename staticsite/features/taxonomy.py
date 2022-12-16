@@ -10,7 +10,7 @@ from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
-from staticsite.page import SourcePage, AutoPage, Page
+from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -308,6 +308,11 @@ class TaxonomyPage(SourcePage):
         """
         return heapq.nlargest(count, self.categories.values(), key=lambda c: c.date)
 
+    def _compute_change_extent(self) -> ChangeExtent:
+        # TODO: with some more infrastructure, we can track what pages
+        # contributed the links, and compute something better
+        return ChangeExtent.ALL
+
 
 @functools.total_ordering
 class CategoryPage(AutoPage):
@@ -404,6 +409,11 @@ class CategoryPage(AutoPage):
             "next": pages[idx + 1] if idx < len(pages) - 1 else None,
             "title": series_title,
         }
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        # TODO: with some more infrastructure, we can track what pages
+        # contributed the links, and compute something better
+        return ChangeExtent.ALL
 
 
 class TestTaxonomyPage(TaxonomyPage):

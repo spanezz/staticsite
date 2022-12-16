@@ -3,11 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Optional, Type
 
-from .page import SourcePage, Page
+from .page import SourcePage, Page, ChangeExtent
 from . import fields
 
 if TYPE_CHECKING:
-    from . import file
     from .site import Site
 
 log = logging.getLogger("dir")
@@ -37,17 +36,13 @@ class Dir(SourcePage):
         # Directory name
         self.name: Optional[str] = name
         # Subdirectory of this directory
-        self.subdirs: list["Dir"] = []
-        # Files found in this directory
-        self.files: dict[str, file.File] = {}
+        self.subdirs: list[Page] = []
 
         self.syndicated = False
         self.indexed = False
 
         if self.node.parent:
             self.title = self.name
-
-        self.subdirs: list[Page] = []
 
         pages: list[Page] = []
         for name, sub in self.node.sub.items():
@@ -80,3 +75,14 @@ class Dir(SourcePage):
             self.date = max(date_pages)
         else:
             self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        # Dir has changed if any page referenced changed in metadata
+        res = ChangeExtent.UNCHANGED
+        for subdir in self.subdirs:
+            if subdir.change_extent == ChangeExtent.ALL:
+                res = ChangeExtent.ALL
+        for page in self.pages:
+            if page.change_extent == ChangeExtent.ALL:
+                res = ChangeExtent.ALL
+        return res
