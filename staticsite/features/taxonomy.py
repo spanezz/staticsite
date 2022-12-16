@@ -430,6 +430,8 @@ class CategoryPage(AutoPage):
 
     def _compute_change_extent(self) -> ChangeExtent:
         # No previous footprint
+        if self.created_from.old_footprint is None:
+            return ChangeExtent.ALL
         if (old_footprint := self.created_from.old_footprint.get("taxonomy")) is None:
             return ChangeExtent.ALL
 
