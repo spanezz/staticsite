@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import os
 from functools import cached_property
@@ -673,3 +674,23 @@ class AutoPage(Page):
         super().__init__(site, parent=created_from, created_from=created_from, **kw)
         # TODO: remove this
         self.src = None
+
+
+class FrontMatterPage(SourcePage):
+    """
+    Page with a front matter in its sources
+    """
+    front_matter = fields.Field(doc="""
+        Front matter as parsed by the source file
+    """)
+
+    def get_footprint(self) -> dict[str, Any]:
+        res = super().get_footprint()
+        fm = {}
+        for k, v in self.front_matter.items():
+            if isinstance(v, datetime.datetime):
+                fm[k] = v.strftime("%Y-%m-%d %H:%M:%S %Z")
+            else:
+                fm[k] = v
+        res["fm"] = fm
+        return res

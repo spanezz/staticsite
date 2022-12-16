@@ -18,7 +18,7 @@ from ..node import Path
 from .command import Fail, SiteCommand
 
 if TYPE_CHECKING:
-    # from ..cache import Cache
+    from ..cache import Cache
     from ..node import Node
     from ..page import Page
     from ..site import Site
@@ -184,8 +184,8 @@ class Builder:
         # # Git repository holding the source contents
         # self.repo: Optional[git.Repo] = None
 
-        # # Cache with last build information
-        # self.build_cache: Optional[Cache] = None
+        # Cache with last build information
+        self.build_cache: Optional[Cache] = self.site.caches.get("build")
 
         # # Relative path of contents from the root of the git working dir
         # self.content_relpath: Optional[str] = None
@@ -216,9 +216,6 @@ class Builder:
     #         log.info("Contents is not stored in git")
     #         self.repo = None
     #         return False
-
-    #     # Find information about the last render run
-    #     self.build_cache = self.site.caches.get("build")
 
     #     self.old_hexsha = self.build_cache.get("git_hexsha")
     #     self.old_hexsha = "86fd0905c7ca7251f73bddd67248443545ebaab5"
@@ -373,11 +370,15 @@ class Builder:
             #     sys   0m0.468s
             self.write_single_process()
 
-        # if self.has_errors:
-        #     # Output directory is partially build, a further build cannot rely on it
-        #     self.build_cache.put("footprints", {})
-        # else:
-        #     footprints = {}
+        with utils.timings("Saved build state in %fs"):
+            if self.has_errors:
+                # Output directory is partially build, a further build cannot rely on it
+                footprints = {}
+            else:
+                footprints = {
+                    page.src.relpath: page.get_footprint() for page in self.site.iter_pages(source_only=True)
+                }
+            self.build_cache.put("footprints", footprints)
 
         #     self.build_cache.put("git_hash", self.new_hexsha)
         #     self.build_cache.put("git_dirty", sorted(self.files_changed_in_workdir))

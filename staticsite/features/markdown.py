@@ -14,7 +14,7 @@ import markupsafe
 from staticsite.feature import Feature
 from staticsite.archetypes import Archetype
 from staticsite.node import Path
-from staticsite.page import SourcePage, Page, PageNotFoundError
+from staticsite.page import FrontMatterPage, Page, PageNotFoundError
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -351,19 +351,16 @@ class MarkdownArchetype(Archetype):
         return archetype_meta, post_body
 
 
-class MarkdownPage(SourcePage):
+class MarkdownPage(FrontMatterPage):
     TYPE = "markdown"
 
     # Match a Markdown divider line
     re_divider = re.compile(r"^____+$")
 
-    def __init__(self, *, front_matter: dict[str, Any], feature: MarkdownPages, body: List[str], **kw):
+    def __init__(self, *, feature: MarkdownPages, body: List[str], **kw):
         # Indexed by default
         kw.setdefault("indexed", True)
         super().__init__(**kw)
-
-        # Raw front matter, to use to check for changes in sources
-        self.front_matter = front_matter
 
         # Shared markdown environment
         self.mdpages = feature
@@ -396,11 +393,6 @@ class MarkdownPage(SourcePage):
         # have one
         meta, body = self.mdpages.read_file_meta(fd)
         return self.front_matter != meta
-
-    def get_footprint(self) -> dict[str, Any]:
-        res = super().get_footprint()
-        res["fm"] = self.front_matter
-        return res
 
     def check(self, checker):
         self.render()

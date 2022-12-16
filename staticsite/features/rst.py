@@ -14,7 +14,7 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.node import Node, Path
-from staticsite.page import SourcePage, Page
+from staticsite.page import FrontMatterPage, Page
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
@@ -245,16 +245,13 @@ class RestArchetype(Archetype):
         return meta, rendered
 
 
-class RstPage(SourcePage):
+class RstPage(FrontMatterPage):
     TYPE = "rst"
 
-    def __init__(self, *, front_matter: dict[str, Any], feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
+    def __init__(self, *, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
         # Indexed by default
         kw.setdefault("indexed", True)
         super().__init__(**kw)
-
-        # Raw front matter, to use to check for changes in sources
-        self.front_matter = front_matter
 
         # Shared RestructuredText environment
         self.rst = feature
@@ -268,11 +265,6 @@ class RstPage(SourcePage):
         """
         meta, doctree_scan = self.rst.parse_rest(fd)
         return self.front_matter != meta
-
-    def get_footprint(self) -> dict[str, Any]:
-        res = super().get_footprint()
-        res["fm"] = self.front_matter
-        return res
 
     def check(self, checker):
         self._render_page()
