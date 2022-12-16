@@ -1,9 +1,13 @@
-staticsite (1.6-3) UNRELEASED; urgency=medium
+staticsite (2.0-1) UNRELEASED; urgency=medium
 
+  [ Debian Janitor ]
   * debian/copyright: use spaces rather than tabs to start continuation lines.
   * Bump debhelper from old 12 to 13.
   * Set debhelper-compat version in Build-Depends.
   * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+
+  [ Enrico Zini ]
+  * New upstream version
 
  -- Debian Janitor <janitor@jelmer.uk>  Thu, 03 Nov 2022 07:33:34 -0000
 

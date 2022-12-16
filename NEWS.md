@@ -1,6 +1,6 @@
 # staticsite user-relevant changes
 
-# New in UNRELEASED
+# New in version 2.0
 
 * Breaking changes:
    * All templates: `url_for` in templates now requires `static=True` to refer
