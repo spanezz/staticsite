@@ -285,6 +285,8 @@ class Site:
         self.features.load_default_features()
         # We can now load source files footprint, before theme loads assets
         self.previous_source_footprints = self.build_cache.get("footprints")
+        if self.previous_source_footprints is None:
+            self.previous_source_footprints = {}
 
     def load_theme(self):
         """
