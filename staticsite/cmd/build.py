@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-# import io
 import locale
 import logging
 import os
@@ -15,8 +14,6 @@ from ..file import File
 from ..node import Path
 from ..page import ChangeExtent
 from .command import Fail, SiteCommand
-
-# import git
 
 
 if TYPE_CHECKING:
@@ -182,163 +179,10 @@ class Builder:
         self.full = full
         self.has_errors = False
 
-        # # Git repository holding the source contents
-        # self.repo: Optional[git.Repo] = None
-
-        # self.content_relpath: Optional[str] = None
-
-        # # Git shasum of the last build
-        # self.old_hexsha: Optional[str] = None
-        # # Git shasum of this build
-        # self.new_hexsha: Optional[str] = None
-        # # Files that were added since last build
-        # self.files_added: set[str] = set()
-        # # Files that were removed since last build
-        # self.files_removed: set[str] = set()
-        # # Files that were changed since last build
-        # self.files_changed: set[str] = set()
-
-    # def scan_changes(self) -> bool:
-    #     """
-    #     List files that have changed since the last render.
-
-    #     Returns False if we can't say anything and the whole site needs to be
-    #     rebuilt. Returns True if all change structures have been filled
-    #     """
-    #     # Find git repository
-    #     try:
-    #         self.repo = git.Repo(self.site.content_root, search_parent_directories=True)
-    #         log.info("Contents is stored in git at %s", self.repo.working_tree_dir)
-    #     except git.exc.NoSuchPathError:
-    #         log.info("Contents is not stored in git")
-    #         self.repo = None
-    #         return False
-
-    #     self.old_hexsha = self.build_cache.get("git_hexsha")
-    #     self.old_hexsha = "86fd0905c7ca7251f73bddd67248443545ebaab5"
-    #     if self.old_hexsha is None:
-    #         return False
-
-    #     self.new_hexsha = self.repo.head.commit.hexsha
-
-    #     # Relative path of contents from the root of the git working dir
-    #     self.content_relpath = os.path.relpath(self.site.content_root, self.repo.working_tree_dir)
-
-    #     old_tree = self.repo.commit(self.old_hexsha).tree
-
-    #     # Build an index with the sources to be rendered
-    #     log.info("Timing0")
-    #     new_index = git.IndexFile.from_tree(self.repo, "HEAD")
-    #     log.info("Timing1")
-    #     # FIXME: this takes 5 seconds to run, while it's almost instant with git!
-    #     # FIXME: possibly use git-commit-tree, after git write-tree makes it from the index
-    #     new_index.add(self.site.content_root)
-    #     log.info("Timing2")
-    #     new_index_commit = print(new_index.commit("build TODO: date", head=False, skip_hooks=True))
-    #     log.info("Timing3")
-
-    #     # See what changed
-    #     for file in old_tree.diff(new_index_commit):
-    #         # TODO: filter out things outside of content dir, like archetypes
-    #         if file.a_blob is not None and file.b_blob is None:
-    #             self.files_removed.add(os.path.relpath(file.a_path, self.content_relpath))
-    #         elif file.a_blob is None and file.b_blob is not None:
-    #             self.files_added.add(os.path.relpath(file.b_path, self.content_relpath))
-    #         else:
-    #             self.files_changed.add(os.path.relpath(file.a_path, self.content_relpath))
-
-    #     # TODO: at the end, reference the commit with a staticsite tag or branch
-    #     # TODO: if rendering failed, remove the commit
-
-    #     # after rendering make a commit in git with the last stuff we rendered.
-    #     # Next render, diff from that
-
-    #     # # Dirty, unstaged
-    #     # for file in self.repo.index.diff(None):
-    #     #     if file.a_blob is not None and file.b_blob is None:
-    #     #         print("REMOVED1", file.a_path)
-    #     #     elif file.a_blob is None and file.b_blob is not None:
-    #     #         print("ADDED1", file.a_path)
-    #     #     self.files_changed_in_workdir.add(os.path.relpath(file.a_path, self.content_relpath))
-    #     # # Dirty, staged
-    #     # for file in self.repo.index.diff("HEAD"):
-    #     #     if file.a_blob is not None and file.b_blob is None:
-    #     #         print("REMOVED2", file.a_path)
-    #     #     elif file.a_blob is None and file.b_blob is not None:
-    #     #         print("ADDED2", file.a_path)
-    #     #     self.files_changed_in_workdir.add(os.path.relpath(file.a_path, self.content_relpath))
-
-    #     return True
-
-    # def get_incremental_page_set(self) -> Optional[set[Page]]:
-    #     """
-    #     Return the set of pages that can be built incrementally, or None if we
-    #     need a full rebuild
-    #     """
-    #     if self.full:
-    #         return None
-
-    #     log.info("Scanning for changes using git")
-    #     self.scan_changes()
-    #     if self.files_added or self.files_removed:
-    #         # For now, always rebuild all
-    #         for relpath in self.files_added:
-    #             log.info("%s: file added", relpath)
-    #         for relpath in self.files_removed:
-    #             log.info("%s: file removed", relpath)
-    #         log.info("Files were added or removed: triggering full rebuild")
-    #         return None
-
-    #     if not self.files_changed:
-    #         log.info("All sources are unchanged")
-    #         # Empty set, to mean incremental build with no pages changed
-    #         return set()
-    #     elif len(self.files_changed) > 20:
-    #         log.info("Too many (%d) sources changed, triggering full rebuild", len(self.files_changed))
-    #         # Rebuild all after some threshold
-    #         return None
-    #     else:
-    #         # TODO: if it's only rst or markdown, and meta haven't changed,
-    #         # rebuild only those?
-    #         tree = self.repo.commit(self.old_hexsha).tree
-    #         incremental_pages: set[Page] = set()
-    #         for relpath in self.files_changed:
-    #             log.info("%s: file changed", relpath)
-    #             page = self.site.find_page(relpath)
-    #             old_blob = tree[os.path.join(self.content_relpath, relpath)]
-    #             if (fmc := getattr(page, "front_matter_changed", None)) is None:
-    #                 # TODO: always changed, since we can't compare front matter
-    #                 log.info("%s: change in complex file, triggering full rebuild", page)
-    #                 return None
-    #             else:
-    #                 # In theory we could read from old_blob.data_stream.stream.
-    #                 # In practice iterating it line by line hits a
-    #                 # recursion limit, and it may be a gitpython bug:
-    #                 # git/cmd.py: CatFileContentStream.__next__ calls next(self)
-    #                 # TODO: investigate/reporte
-    #                 # However, data_stream.stream will always read the
-    #                 # whole page anyway, so we lose nothing in using a
-    #                 # BytesIO
-    #                 with io.BytesIO() as fd:
-    #                     old_blob.stream_data(fd)
-    #                     fd.seek(0)
-    #                     if fmc(fd):
-    #                         log.info("%s: front matter changed, triggering full rebuild", page)
-    #                         return None
-    #                     else:
-    #                         log.info("%s: front matter unchanged, can rebuild incrementally", page)
-    #                         incremental_pages.add(page)
-
-    #         return incremental_pages
-
     def write(self):
         """
         Generate output
         """
-        # self.incremental_pages = self.get_incremental_page_set()
-        # if self.incremental_pages is not None:
-        #     log.info("Running incremental build with %d changed pages", len(self.incremental_pages))
-
         # Set locale for rendering
         try:
             lname = self.site.settings.LANGUAGES[0]["locale"]
