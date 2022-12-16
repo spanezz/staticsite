@@ -430,7 +430,7 @@ class Builder:
                 continue
             if (old_file := render_dir.prepare_file(name)) is not None:
                 # TODO: simple minded so far
-                if page.change_extent == ChangeExtent.UNCHANGED:
+                if not self.full and page.change_extent == ChangeExtent.UNCHANGED:
                     continue
             with stats.collect(page):
                 try:
