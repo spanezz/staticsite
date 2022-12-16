@@ -107,7 +107,6 @@ class Images(Feature):
 
                     scaled = node.create_auto_page(
                         page_cls=ScaledImage,
-                        src=src,
                         created_from=page,
                         mimetype=mimetype,
                         name=name,
@@ -214,7 +213,7 @@ class ScaledImage(AutoPage):
         created_from.add_related(name, self)
 
     def render(self, **kw) -> RenderedElement:
-        return RenderedScaledImage(self.src, self.width, self.height)
+        return RenderedScaledImage(self.created_from.src, self.width, self.height)
 
 
 FEATURES = {

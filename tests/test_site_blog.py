@@ -200,10 +200,6 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         })
 
         self.assertEqual(self.page("posts/example-small.jpg").to_dict(), {
-            "src": {
-                "relpath": "posts/example.jpg",
-                "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
-            },
             'site_path': 'posts/example-small.jpg',
             "build_path": "posts/example-small.jpg",
             "meta": {
@@ -229,10 +225,6 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         })
 
         self.assertEqual(self.page("posts/example-thumbnail.jpg").to_dict(), {
-            "src": {
-                "relpath": "posts/example.jpg",
-                "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),
-            },
             'site_path': 'posts/example-thumbnail.jpg',
             "build_path": "posts/example-thumbnail.jpg",
             "meta": {
