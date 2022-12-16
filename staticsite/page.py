@@ -644,6 +644,10 @@ class SourcePage(Page):
     """
     Page loaded from site sources
     """
+    old_footprint = fields.Field(internal=True, doc="""
+        Cached get_footprint result from the previous run, or None
+    """)
+
     def __init__(
             self, site: Site, *,
             node: Node,

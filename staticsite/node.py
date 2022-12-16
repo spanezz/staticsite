@@ -179,6 +179,7 @@ class Node(SiteElement):
 
     def create_source_page(
             self,
+            src: file.File,
             path: Optional[Path] = None,
             dst: Optional[str] = None,
             directory_index: bool = False,
@@ -195,12 +196,15 @@ class Node(SiteElement):
         if dst is None and not directory_index and not path:
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
+        if self.site.previous_footprints:
+            kw["old_footprint"] = self.site.previous_footprints.get(src.relpath)
+
         # TODO: move site.is_page_ignored here?
         try:
             if dst:
-                return self._create_leaf_page(dst=dst, path=path, **kw)
+                return self._create_leaf_page(dst=dst, path=path, src=src, **kw)
             else:
-                return self._create_index_page(path=path, directory_index=directory_index,  **kw)
+                return self._create_index_page(path=path, directory_index=directory_index, src=src, **kw)
         except SkipPage:
             return None
 
