@@ -269,6 +269,11 @@ class RstPage(SourcePage):
         meta, doctree_scan = self.rst.parse_rest(fd)
         return self.front_matter != meta
 
+    def get_footprint(self) -> dict[str, Any]:
+        res = super().get_footprint()
+        res["fm"] = self.front_matter
+        return res
+
     def check(self, checker):
         self._render_page()
 

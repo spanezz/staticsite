@@ -642,6 +642,17 @@ class SourcePage(Page):
         super().__init__(site, parent=node, node=node, **kw)
         self.src = src
 
+    def get_footprint(self) -> dict[str, Any]:
+        """
+        Return a dict with information that can be used to evaluate changes in
+        incremental builds
+        """
+        res = {
+            "mtime": self.src.stat.st_mtime,
+            "size": self.src.stat.st_size,
+        }
+        return res
+
 
 class AutoPage(Page):
     """

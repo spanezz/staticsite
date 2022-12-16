@@ -397,6 +397,11 @@ class MarkdownPage(SourcePage):
         meta, body = self.mdpages.read_file_meta(fd)
         return self.front_matter != meta
 
+    def get_footprint(self) -> dict[str, Any]:
+        res = super().get_footprint()
+        res["fm"] = self.front_matter
+        return res
+
     def check(self, checker):
         self.render()
 
