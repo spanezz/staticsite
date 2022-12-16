@@ -193,6 +193,9 @@ class Node(SiteElement):
         if "meta" in kw:
             raise RuntimeError("do not pass meta to create_page")
 
+        if "created_from" in kw:
+            raise RuntimeError("source page created with 'created_from' set")
+
         if directory_index and dst:
             raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
 
@@ -220,6 +223,9 @@ class Node(SiteElement):
         if "meta" in kw:
             raise RuntimeError("do not pass meta to create_page")
 
+        if "src" in kw:
+            raise RuntimeError("auto page created with 'src' set")
+
         if directory_index and dst:
             raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
 
@@ -238,7 +244,6 @@ class Node(SiteElement):
     def _create_index_page(
             self, *,
             page_cls: Type[Page],
-            src: Optional[file.File] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
             **kw):
@@ -248,7 +253,7 @@ class Node(SiteElement):
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
                 return node._create_index_page(
-                        page_cls=page_cls, src=src, path=path.tail,
+                        page_cls=page_cls, path=path.tail,
                         **kw)
 
         if directory_index:
@@ -259,7 +264,7 @@ class Node(SiteElement):
         # Create the page
         try:
             page = self.site.features.get_page_class(page_cls)(
-                site=self.site, src=src, dst="index.html", node=self,
+                site=self.site, dst="index.html", node=self,
                 search_root_node=search_root_node,
                 leaf=False,
                 directory_index=directory_index, **kw)
@@ -287,7 +292,6 @@ class Node(SiteElement):
     def _create_leaf_page(
             self, *,
             page_cls: Type[Page],
-            src: Optional[file.File] = None,
             dst: str,
             path: Optional[Path] = None,
             **kw):
@@ -297,13 +301,13 @@ class Node(SiteElement):
             # If a subpath is requested, delegate to subnodes
             with self.tentative_child(path.head) as node:
                 return node._create_leaf_page(
-                        page_cls=page_cls, src=src, dst=dst, path=path.tail,
+                        page_cls=page_cls, dst=dst, path=path.tail,
                         **kw)
 
         # Create the page
         try:
             page = self.site.features.get_page_class(page_cls)(
-                site=self.site, src=src, dst=dst,
+                site=self.site, dst=dst,
                 node=self,
                 search_root_node=self,
                 leaf=True,
@@ -338,11 +342,11 @@ class Node(SiteElement):
         Add a directory index to this node
         """
         from . import dirindex
-        return self.create_auto_page(
+        return self.create_source_page(
             page_cls=dirindex.Dir,
             name=self.name,
-            directory_index=True,
-            src=src)
+            src=src,
+            directory_index=True)
 
     @contextlib.contextmanager
     def tentative_child(self, name: str) -> Generator[Node, None, None]:
