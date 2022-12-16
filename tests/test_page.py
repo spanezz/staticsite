@@ -32,8 +32,34 @@ class TestPage(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(lev1page1.resolve_path("lev2/page1.md"), lev2page1)
             self.assertEqual(lev1page1.resolve_path("lev2/page1"), lev2page1)
 
+    def test_meta(self):
+        files = {
+            "index.md": {"title": "test"},
+        }
+        with self.site(files) as mocksite:
+            index = mocksite.page("")
+            # Direct field access
+            self.assertEqual(index.title, "test")
+            self.assertEqual(index.front_matter, {"title": "test"})
+
+            # Dict-like field access via page.meta
+            self.assertIn("title", index.meta)
+            self.assertNotIn("test", index.meta)
+            # Internal fields are hidden
+            self.assertNotIn("front_matter", index.meta)
+
+            self.assertEqual(index.meta["title"], "test")
+            self.assertEqual(index.meta.get("title"), "test")
+
+            with self.assertRaises(KeyError):
+                index.meta["test"]
+            self.assertIsNone(index.meta.get("test"))
+
+            with self.assertRaises(KeyError):
+                index.meta["front_matter"]
+            self.assertIsNone(index.meta.get("front_matter"))
+
     def test_iter_pages(self):
-        self.maxDiff = None
         files = {
             "index.md": {},
             "index.txt": "",

@@ -191,7 +191,10 @@ class Meta:
         self._page = page
 
     def __getitem__(self, key: str) -> Any:
-        if key not in self._page._fields:
+        if (field := self._page._fields.get(key)) is None:
+            raise KeyError(key)
+
+        if field.internal:
             raise KeyError(key)
 
         try:
@@ -202,13 +205,17 @@ class Meta:
             raise KeyError(key)
 
     def __contains__(self, key: str):
-        if key not in self._page._fields:
+        if (field := self._page._fields.get(key)) is None:
+            return False
+        if field.internal:
             return False
 
         return getattr(self._page, key) is not None
 
     def get(self, key: str, default: Any = None) -> Any:
-        if key not in self._page._fields:
+        if (field := self._page._fields.get(key)) is None:
+            return default
+        if field.internal:
             return default
 
         return getattr(self._page, key, default)
@@ -219,7 +226,9 @@ class Meta:
         ones
         """
         res = {}
-        for key in self._page._fields:
+        for key, field in self._page._fields.items():
+            if field.internal:
+                continue
             if (val := getattr(self._page, key)) is not None:
                 res[key] = val
         return res
@@ -680,7 +689,7 @@ class FrontMatterPage(SourcePage):
     """
     Page with a front matter in its sources
     """
-    front_matter = fields.Field(doc="""
+    front_matter = fields.Field(internal=True, doc="""
         Front matter as parsed by the source file
     """)
 

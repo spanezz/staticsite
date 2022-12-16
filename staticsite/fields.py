@@ -20,17 +20,22 @@ class Field:
             self, *,
             default: Any = None,
             structure: bool = False,
+            internal: bool = False,
             doc: str = ""):
         """
         :arg name: name of this metadata element
+        :arg default: default value when this field has not been set
         :arg structure: set to True if this element is a structured value. Set
                         to false if it is a simple value like an integer or
                         string
+        :arg internal: field is for internal use only, and not exported to
+                       pages
         :arg doc: documentation for this metadata element
         """
         self.name: str
         self.default: Any = default
         self.structure: bool = structure
+        self.internal: bool = internal
         self.doc = inspect.cleandoc(doc)
 
     def get_notes(self):
