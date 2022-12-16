@@ -21,6 +21,8 @@
      if you have custom plugins, and I can help with porting
 * New template filter `next_month` that given a date returns the date of the
   beginning of the following month
+* staticsite can now detect changes since the last build and only rebuild the
+  pages that changed!
 
 # New in version 1.6
 
