@@ -10,7 +10,7 @@ from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
-from staticsite.page import Page
+from staticsite.page import SourcePage, AutoPage, Page
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -60,7 +60,7 @@ class Taxonomy:
         """
         Create the index page for this taxonomy
         """
-        self.index = node.create_page(
+        self.index = node.create_source_page(
             page_cls=TaxonomyPage,
             src=self.src,
             name=self.name,
@@ -104,7 +104,7 @@ class Taxonomy:
         #     if archive is not None:
         #         archive.setdefault("template_title", "{{meta.created_from.name}} archive")
 
-        return self.index.node.create_page(
+        return self.index.node.create_auto_page(
             created_from=self.index,
             page_cls=CategoryPage,
             name=name,
@@ -261,7 +261,7 @@ class TaxonomyFeature(Feature):
             taxonomy.generate_pages()
 
 
-class TaxonomyPage(Page):
+class TaxonomyPage(SourcePage):
     """
     Root page for one taxonomy defined in the site
     """
@@ -310,7 +310,7 @@ class TaxonomyPage(Page):
 
 
 @functools.total_ordering
-class CategoryPage(Page):
+class CategoryPage(AutoPage):
     """
     Index page showing all the pages tagged with a given taxonomy item
     """

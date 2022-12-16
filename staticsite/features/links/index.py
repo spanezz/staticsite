@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from staticsite.page import Page
+from staticsite.page import AutoPage, Page
 
 from .data import Link, LinkCollection
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("links")
 
 
-class LinkIndexPage(Page):
+class LinkIndexPage(AutoPage):
     """
     Root page for the browseable archive of annotated external links in the
     site
@@ -48,7 +48,7 @@ class LinkIndexPage(Page):
                 # A page already exists
                 continue
 
-            page = sub.create_page(
+            page = sub.create_auto_page(
                     created_from=self,
                     page_cls=LinksTagPage,
                     data_type="links",

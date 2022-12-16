@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
 from staticsite.feature import Feature
-from staticsite.page import Page
+from staticsite.page import SourcePage, AutoPage, Page
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -81,7 +81,7 @@ class Images(Feature):
             img_meta = self.scanner.scan(src, mimetype)
             kwargs.update(img_meta)
 
-            page = node.create_page(
+            page = node.create_source_page(
                 page_cls=Image,
                 src=src,
                 mimetype=mimetype,
@@ -105,7 +105,7 @@ class Images(Feature):
                     base, ext = os.path.splitext(fname)
                     scaled_fname = f"{base}-{name}{ext}"
 
-                    scaled = node.create_page(
+                    scaled = node.create_auto_page(
                         page_cls=ScaledImage,
                         src=src,
                         created_from=page,
@@ -159,7 +159,7 @@ class Images(Feature):
                     break
 
 
-class Image(Page):
+class Image(SourcePage):
     TYPE = "image"
 
     lat = fields.Field(doc="Image latitude")
@@ -195,7 +195,7 @@ class RenderedScaledImage(RenderedElement):
             return fd.read()
 
 
-class ScaledImage(Page):
+class ScaledImage(AutoPage):
     TYPE = "image"
 
     def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):

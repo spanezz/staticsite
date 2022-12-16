@@ -14,7 +14,8 @@ from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
-from staticsite.page_filter import Page, PageFilter
+from staticsite.page import SourcePage, Page
+from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
@@ -101,7 +102,7 @@ class DataPages(Feature):
             else:
                 path = Path((page_name,))
 
-            page = node.create_page(
+            page = node.create_source_page(
                 page_cls=self.page_class_by_type.get(data_type, DataPage),
                 src=src,
                 directory_index=directory_index,
@@ -165,7 +166,7 @@ def write_data(fd, data, fmt):
         raise NotImplementedError("data format {} is not supported".format(fmt))
 
 
-class DataPage(RenderPartialTemplateMixin, Page):
+class DataPage(RenderPartialTemplateMixin, SourcePage):
     TYPE = "data"
 
     def __init__(self, site, **kw):

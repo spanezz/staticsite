@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Optional, Type
 
-from .page import Page
+from .page import AutoPage, Page
 from . import fields
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ class ParentField(fields.Field):
         return parent.page
 
 
-class Dir(Page):
+class Dir(AutoPage):
     """
     Page with a directory index
     """

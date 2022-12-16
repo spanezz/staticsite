@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .page import Page
+from .page import SourcePage
 from .render import RenderedElement, RenderedFile
 
 if TYPE_CHECKING:
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .site import Site
 
 
-class Asset(Page):
+class Asset(SourcePage):
     TYPE = "asset"
 
     def __init__(self, site: Site, *, src: file.File, name: str, **kw):

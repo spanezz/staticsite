@@ -14,7 +14,7 @@ import markupsafe
 from staticsite.feature import Feature
 from staticsite.archetypes import Archetype
 from staticsite.node import Path
-from staticsite.page import Page, PageNotFoundError
+from staticsite.page import SourcePage, Page, PageNotFoundError
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -241,7 +241,7 @@ class MarkdownPages(Feature):
                 path = Path((fname[:-3],))
 
             # print("CREAT", fname, directory_index)
-            page = node.create_page(
+            page = node.create_source_page(
                     page_cls=MarkdownPage,
                     src=src,
                     feature=self,
@@ -351,7 +351,7 @@ class MarkdownArchetype(Archetype):
         return archetype_meta, post_body
 
 
-class MarkdownPage(Page):
+class MarkdownPage(SourcePage):
     TYPE = "markdown"
 
     # Match a Markdown divider line

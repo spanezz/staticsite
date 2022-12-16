@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING, Optional, Any
 from staticsite import node
-from staticsite.page import Page
+from staticsite.page import SourcePage, Page
 from staticsite.feature import Feature
 from staticsite.utils import front_matter
 from staticsite.page_filter import compile_page_match
@@ -94,7 +94,7 @@ class J2Pages(Feature):
                 fname = fname.replace(".j2", "")
                 kwargs["dst"] = fname
 
-            page = node.create_page(
+            page = node.create_source_page(
                     page_cls=J2Page,
                     src=src,
                     template=template,
@@ -164,7 +164,7 @@ class RenderPartialTemplateMixin:
             return ""
 
 
-class J2Page(RenderPartialTemplateMixin, Page):
+class J2Page(RenderPartialTemplateMixin, SourcePage):
     TYPE = "jinja2"
 
     def __init__(self, *args, template: jinja2.Template, **kw):

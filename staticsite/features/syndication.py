@@ -9,7 +9,7 @@ import jinja2
 from staticsite import fields
 from staticsite.feature import Feature
 from staticsite.node import Path
-from staticsite.page import Page, PageNotFoundError
+from staticsite.page import AutoPage, Page, PageNotFoundError
 from staticsite.utils import arrange
 
 log = logging.getLogger("syndication")
@@ -111,7 +111,7 @@ class Syndication:
         kwargs["index"] = self.index
 
         # RSS feed
-        rss_page = self.index.node.create_page(
+        rss_page = self.index.node.create_auto_page(
                 created_from=self.index,
                 page_cls=RSSPage,
                 dst=f"{page_name}.{RSSPage.TYPE}",
@@ -121,7 +121,7 @@ class Syndication:
         # print(f"  rss_page {rss_page.meta=!r}")
 
         # Atom feed
-        atom_page = self.index.node.create_page(
+        atom_page = self.index.node.create_auto_page(
                 created_from=self.index,
                 page_cls=AtomPage,
                 dst=f"{page_name}.{AtomPage.TYPE}",
@@ -141,7 +141,7 @@ class Syndication:
 
         self.archive["pages"] = self.pages
         self.archive["index"] = self.index
-        self.archive_page = self.index.node.create_page(
+        self.archive_page = self.index.node.create_auto_page(
                 created_from=self.index,
                 page_cls=ArchivePage,
                 path=Path(("archive",)),
@@ -397,7 +397,7 @@ class SyndicationFeature(Feature):
             syndication.crossreference()
 
 
-class SyndicationPage(Page):
+class SyndicationPage(AutoPage):
     """
     Base class for syndication pages
     """
@@ -429,7 +429,7 @@ class AtomPage(SyndicationPage):
     TEMPLATE = "syndication.atom"
 
 
-class ArchivePage(Page):
+class ArchivePage(AutoPage):
     index = fields.Field(doc="""
         Page that defined the syndication for this feed
     """)

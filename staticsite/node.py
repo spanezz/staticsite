@@ -181,7 +181,34 @@ class Node(SiteElement):
         else:
             return os.path.join(self.parent.compute_path(), self.name)
 
-    def create_page(
+    def create_source_page(
+            self,
+            path: Optional[Path] = None,
+            dst: Optional[str] = None,
+            directory_index: bool = False,
+            **kw):
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        if "meta" in kw:
+            raise RuntimeError("do not pass meta to create_page")
+
+        if directory_index and dst:
+            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
+
+        if dst is None and not directory_index and not path:
+            raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
+
+        # TODO: move site.is_page_ignored here?
+        try:
+            if dst:
+                return self._create_leaf_page(dst=dst, path=path, **kw)
+            else:
+                return self._create_index_page(path=path, directory_index=directory_index,  **kw)
+        except SkipPage:
+            return None
+
+    def create_auto_page(
             self,
             path: Optional[Path] = None,
             dst: Optional[str] = None,
@@ -310,14 +337,14 @@ class Node(SiteElement):
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.create_page(page_cls=Asset, src=src, name=name, dst=name)
+        return self.create_source_page(page_cls=Asset, src=src, name=name, dst=name)
 
     def add_directory_index(self, src: file.File):
         """
         Add a directory index to this node
         """
         from . import dirindex
-        return self.create_page(
+        return self.create_auto_page(
             page_cls=dirindex.Dir,
             name=self.name,
             directory_index=True,

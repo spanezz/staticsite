@@ -5,7 +5,7 @@ import logging
 from staticsite import fields
 from staticsite.node import Path
 from staticsite.feature import Feature
-from staticsite.page import Page
+from staticsite.page import AutoPage
 
 
 log = logging.getLogger("aliases")
@@ -50,7 +50,7 @@ class AliasesFeature(Feature):
                     else:
                         log.warning("%r defines alias %r pointing to existing page %r", page, alias, old)
                     continue
-                node.create_page(
+                node.create_auto_page(
                         page_cls=AliasPage,
                         created_from=page,
                         page=page,
@@ -58,7 +58,7 @@ class AliasesFeature(Feature):
                         path=subpath)
 
 
-class AliasPage(Page):
+class AliasPage(AutoPage):
     """
     Page rendering a redirect to another page
     """

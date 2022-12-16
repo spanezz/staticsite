@@ -14,7 +14,7 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.node import Node, Path
-from staticsite.page import Page
+from staticsite.page import SourcePage, Page
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
@@ -172,7 +172,7 @@ class RestructuredText(Feature):
             else:
                 path = Path((fname[:-4],))
 
-            page = node.create_page(
+            page = node.create_source_page(
                     page_cls=RstPage,
                     src=src,
                     feature=self,
@@ -245,7 +245,7 @@ class RestArchetype(Archetype):
         return meta, rendered
 
 
-class RstPage(Page):
+class RstPage(SourcePage):
     TYPE = "rst"
 
     def __init__(self, *, front_matter: dict[str, Any], feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
