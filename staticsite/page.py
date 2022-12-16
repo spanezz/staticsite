@@ -312,7 +312,6 @@ It defaults to false, or true if `meta.date` is in the future.
     def __init__(
             self, site: Site, *,
             node: Node,
-            created_from: Optional[Page] = None,
             search_root_node: Node,
             src: Optional[File] = None,
             dst: str,
@@ -333,8 +332,6 @@ It defaults to false, or true if `meta.date` is in the future.
         self.search_root_node: Node = search_root_node
         # Name of the file used to render this page on build
         self.dst: str = dst
-        if created_from:
-            self.created_from = created_from
         # Set to True if this page is a directory index. This affects the root
         # of page lookups relative to this page
         self.directory_index: bool = directory_index

@@ -241,7 +241,6 @@ class Node(SiteElement):
             src: Optional[file.File] = None,
             path: Optional[Path] = None,
             directory_index: bool = False,
-            created_from: Optional[Page] = None,
             **kw):
         from .page import PageValidationError
 
@@ -250,7 +249,6 @@ class Node(SiteElement):
             with self.tentative_child(path.head) as node:
                 return node._create_index_page(
                         page_cls=page_cls, src=src, path=path.tail,
-                        created_from=created_from,
                         **kw)
 
         if directory_index:
@@ -263,7 +261,6 @@ class Node(SiteElement):
             page = self.site.features.get_page_class(page_cls)(
                 site=self.site, src=src, dst="index.html", node=self,
                 search_root_node=search_root_node,
-                created_from=created_from,
                 leaf=False,
                 directory_index=directory_index, **kw)
         except PageValidationError as e:
@@ -293,7 +290,6 @@ class Node(SiteElement):
             src: Optional[file.File] = None,
             dst: str,
             path: Optional[Path] = None,
-            created_from: Optional[Page] = None,
             **kw):
         from .page import PageValidationError
 
@@ -302,7 +298,6 @@ class Node(SiteElement):
             with self.tentative_child(path.head) as node:
                 return node._create_leaf_page(
                         page_cls=page_cls, src=src, dst=dst, path=path.tail,
-                        created_from=created_from,
                         **kw)
 
         # Create the page
@@ -310,7 +305,6 @@ class Node(SiteElement):
             page = self.site.features.get_page_class(page_cls)(
                 site=self.site, src=src, dst=dst,
                 node=self,
-                created_from=created_from,
                 search_root_node=self,
                 leaf=True,
                 directory_index=False, **kw)
