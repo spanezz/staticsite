@@ -213,7 +213,33 @@ class Site:
         # Content root for the website
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
 
-        # Register well-known metadata
+        # Cache with last build information
+        self.build_cache = self.caches.get("build")
+
+        # Source page footprints from a previous build
+        self.previous_footprints: dict[str, dict[str, Any]] = self.build_cache.get("footprints")
+
+    def clear_footprints(self):
+        """
+        Clear the previous-build page footprints.
+
+        This is used when something failed during a build, and the build
+        directory is left in an inconsistent state
+        """
+        self.footprints = {}
+        self.build_cache.put("footprints", self.footprints)
+
+    def save_footprints(self):
+        """
+        Save the current set of page footprints as reference for a future build
+
+        This is used after a build completed successfully, to allow incremental
+        future builds
+        """
+        self.footprints = {
+            page.src.relpath: page.get_footprint() for page in self.iter_pages(source_only=True)
+        }
+        self.build_cache.put("footprints", self.footprints)
 
     def find_page(self, path: str):
         """
