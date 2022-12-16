@@ -430,7 +430,7 @@ class CategoryPage(AutoPage):
 
     def _compute_change_extent(self) -> ChangeExtent:
         # No previous footprint
-        if (old_footprint := self.created_from.footprint.get("taxonomy")) is None:
+        if (old_footprint := self.created_from.old_footprint.get("taxonomy")) is None:
             return ChangeExtent.ALL
 
         # This category did not previously exist
@@ -440,7 +440,6 @@ class CategoryPage(AutoPage):
             old_sources = set(old_sources_list)
 
         sources = {page.src.relpath for page in self.pages if getattr(page, "src", None)}
-
         if sources != old_sources:
             # If any page added or removed this category, we rebuild
             return ChangeExtent.ALL
