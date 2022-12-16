@@ -758,7 +758,7 @@ class FrontMatterPage(SourcePage):
         res = super()._compute_change_extent()
         if res == ChangeExtent.UNCHANGED:
             return res
-        if self.footprint["fm"] == self.old_footprint.get("fm"):
+        if self.old_footprint is not None and self.footprint["fm"] == self.old_footprint.get("fm"):
             return ChangeExtent.CONTENTS
         else:
             return ChangeExtent.ALL
