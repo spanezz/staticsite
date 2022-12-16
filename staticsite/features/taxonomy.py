@@ -411,6 +411,25 @@ class CategoryPage(AutoPage):
         }
 
     def _compute_change_extent(self) -> ChangeExtent:
+        # If any page was deleted, we need to rebuild, as it could have had
+        # this category in tags
+        #
+        # TODO: we can inspect front matters of deleted pages, and test this
+        # hypothesis! (note that jinja2 pages currently do not put front matter
+        # in footprint)
+        if self.site.deleted_source_pages():
+            return ChangeExtent.ALL
+
+        # TODO: Here the problem is when a page has removed a tag, we have no
+        # visibility over it.
+        # TODO: Allow features to save their own footprint information?
+        # (dict mapping relpaths to list of tag names)
+
+        # if self.pages:
+        #     return max(p.change_extent for p in self.pages)
+        # else:
+        #     return ChangeExtent.ALL
+
         # TODO: with some more infrastructure, we can track what pages
         # contributed the links, and compute something better
         return ChangeExtent.ALL

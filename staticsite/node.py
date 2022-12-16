@@ -196,8 +196,8 @@ class Node(SiteElement):
         if dst is None and not directory_index and not path:
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
-        if self.site.previous_footprints:
-            kw["old_footprint"] = self.site.previous_footprints.pop(src.relpath, None)
+        if self.site.previous_source_footprints:
+            kw["old_footprint"] = self.site.previous_source_footprints.pop(src.relpath, None)
 
         # TODO: move site.is_page_ignored here?
         try:

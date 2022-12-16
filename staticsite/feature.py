@@ -119,6 +119,19 @@ class Feature:
         """
         pass
 
+    def get_footprint(self) -> dict[str, Any]:
+        """
+        Return information that will be cached until the next build to allow
+        incremental updates
+        """
+        return {}
+
+    def set_previous_footprint(self, footprint: dict[str, Any]):
+        """
+        Notify the feature of a cached footprint from a previous build
+        """
+        pass
+
 
 class Features:
     def __init__(self, site: site.Site):

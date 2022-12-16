@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Generator, Optional, Union
+from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Union
 
 import dateutil.parser
 import pytz
@@ -217,7 +217,7 @@ class Site:
         self.build_cache = self.caches.get("build")
 
         # Source page footprints from a previous build
-        self.previous_footprints: dict[str, dict[str, Any]] = self.build_cache.get("footprints")
+        self.previous_source_footprints: dict[str, dict[str, Any]]
 
     def clear_footprints(self):
         """
@@ -240,6 +240,17 @@ class Site:
             page.src.relpath: page.footprint for page in self.iter_pages(source_only=True)
         }
         self.build_cache.put("footprints", self.footprints)
+        for feature in self.features.ordered():
+            self.build_cache.put(f"footprint_{feature.name}", feature.get_footprint())
+
+    def deleted_source_pages(self) -> Sequence[str]:
+        """
+        Return a sequence with the source relpaths of pages deleted since the
+        last run
+        """
+        # Entries are popped from previous_source_footprints while pages are
+        # loaded, so if any remain it means that those pages have been deleted
+        return self.previous_source_footprints.keys()
 
     def find_page(self, path: str):
         """
@@ -267,6 +278,12 @@ class Site:
         from .archetypes import Archetypes
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
 
+    def load_features(self):
+        """
+        Load default features
+        """
+        self.features.load_default_features()
+
     def load_theme(self):
         """
         Load a theme from the given directory.
@@ -290,6 +307,12 @@ class Site:
             self.theme = Theme.create_legacy(self, candidate_themes)
 
         self.theme.load()
+
+        # We not have the final feature list, we can load old footprints
+        self.previous_source_footprints = self.build_cache.get("footprints")
+        for feature in self.features.ordered():
+            footprint = self.build_cache.get(f"footprint_{feature.name}")
+            feature.set_previous_footprint(footprint if footprint is not None else {})
 
     def _settings_to_meta(self) -> dict[str, Any]:
         """
@@ -398,7 +421,7 @@ class Site:
 
         if self.last_load_step < self.LOAD_STEP_FEATURES:
             with timings("Loaded default features in %fs"):
-                self.features.load_default_features()
+                self.load_features()
             self.last_load_step = self.LOAD_STEP_FEATURES
         if until <= self.last_load_step:
             return
