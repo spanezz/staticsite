@@ -13,7 +13,7 @@ import tornado.httpserver
 import tornado.netutil
 import tornado.websocket
 import tornado.ioloop
-from staticsite import Site
+from staticsite.site import Site
 from staticsite.utils import timings
 from .pagefs import PageFS
 
@@ -166,8 +166,6 @@ class Application(tornado.web.Application):
         self.site = Site(settings=self.site_settings)
         with timings("Loaded site in %fs"):
             self.site.load()
-        with timings("Analysed site tree in %fs"):
-            self.site.analyze()
 
         self.change_monitor.update_watch_dirs(self.get_source_dirs())
 
