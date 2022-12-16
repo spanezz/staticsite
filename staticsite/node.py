@@ -197,6 +197,8 @@ class Node(SiteElement):
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
         if self.site.previous_source_footprints:
+            # TODO: since we pop, we lose fooprint info for assets that replace other assets.
+            # TODO: propagate it when doing the replacement?
             kw["old_footprint"] = self.site.previous_source_footprints.pop(src.relpath, None)
 
         # TODO: move site.is_page_ignored here?
@@ -269,6 +271,7 @@ class Node(SiteElement):
             raise SkipPage()
 
         if self.page is not None:
+            page.old_footprint = self.page.old_footprint
             if self.page.TYPE == "asset" and page.TYPE == "asset":
                 # First one wins, to allow overriding of assets in theme
                 pass
@@ -314,6 +317,7 @@ class Node(SiteElement):
             raise SkipPage()
 
         if (old := self.build_pages.get(dst)):
+            page.old_footprint = old.old_footprint
             if old.TYPE == "asset" and page.TYPE == "asset":
                 # First one wins, to allow overriding of assets in theme
                 pass

@@ -708,7 +708,7 @@ class SourcePage(Page):
     def _compute_change_extent(self) -> ChangeExtent:
         if (old := self.old_footprint) is None:
             return ChangeExtent.ALL
-        if old.get("mtime") == self.footprint["mtime"] and old.get("size") == self.footprint["size"]:
+        if old.get("mtime") >= self.footprint["mtime"] and old.get("size") == self.footprint["size"]:
             return ChangeExtent.UNCHANGED
         else:
             return ChangeExtent.ALL

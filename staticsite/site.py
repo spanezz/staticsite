@@ -283,6 +283,8 @@ class Site:
         Load default features
         """
         self.features.load_default_features()
+        # We can now load source files footprint, before theme loads assets
+        self.previous_source_footprints = self.build_cache.get("footprints")
 
     def load_theme(self):
         """
@@ -308,8 +310,7 @@ class Site:
 
         self.theme.load()
 
-        # We not have the final feature list, we can load old footprints
-        self.previous_source_footprints = self.build_cache.get("footprints")
+        # We not have the final feature list, we can load old feature footprints
         for feature in self.features.ordered():
             footprint = self.build_cache.get(f"footprint_{feature.name}")
             feature.set_previous_footprint(footprint if footprint is not None else {})
