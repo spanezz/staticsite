@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from staticsite import fields
 from staticsite.feature import Feature
+from staticsite.page import ChangeExtent
 
 log = logging.getLogger("pages")
 
@@ -23,6 +25,19 @@ class PagesPageMixin(metaclass=fields.FieldsMetaclass):
 
         See [Selecting pages](page-filter.md) for details.
     """)
+
+    def _compute_footprint(self) -> dict[str, Any]:
+        res = super()._compute_footprint()
+        if self.pages:
+            res["pages"] = [page.src.relpath for page in self.pages if getattr(page, "src", None)]
+        return res
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        res = super()._compute_change_extent()
+        if "footprint" in self._fields and res == ChangeExtent.UNCHANGED:
+            if set(self.footprint.get("pages", ())) != set(self.old_footprint.get("pages", ())):
+                res = ChangeExtent.ALL
+        return res
 
 
 class PagesFeature(Feature):

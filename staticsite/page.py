@@ -656,7 +656,7 @@ It defaults to false, or true if `meta.date` is in the future.
         """
         Check how much this page has changed since the last build
         """
-        raise NotImplementedError(f"{self.__class__.__name__}._compute_change_extent not implemented")
+        return ChangeExtent.UNCHANGED
 
     @cached_property
     def change_extent(self) -> ChangeExtent:
@@ -706,10 +706,11 @@ class SourcePage(Page):
         return self._compute_footprint()
 
     def _compute_change_extent(self) -> ChangeExtent:
+        res = super()._compute_change_extent()
         if (old := self.old_footprint) is None:
             return ChangeExtent.ALL
         if old.get("mtime") >= self.footprint["mtime"] and old.get("size") == self.footprint["size"]:
-            return ChangeExtent.UNCHANGED
+            return res
         else:
             return ChangeExtent.ALL
 

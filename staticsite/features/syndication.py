@@ -413,10 +413,7 @@ class SyndicationPage(AutoPage):
             self.date = self.site.generation_time
 
     def _compute_change_extent(self) -> ChangeExtent:
-        if self.pages:
-            return max(p.change_extent for p in self.pages)
-        else:
-            return ChangeExtent.ALL
+        return self.created_from._compute_change_extent()
 
 
 class RSSPage(SyndicationPage):
@@ -456,10 +453,7 @@ class ArchivePage(AutoPage):
         self.created_from.add_related("archive", self)
 
     def _compute_change_extent(self) -> ChangeExtent:
-        if self.pages:
-            return max(p.change_extent for p in self.pages)
-        else:
-            return ChangeExtent.ALL
+        return self.created_from._compute_change_extent()
 
 
 FEATURES = {

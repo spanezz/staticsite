@@ -176,7 +176,11 @@ class J2Page(RenderPartialTemplateMixin, SourcePage):
 
     def _compute_change_extent(self) -> ChangeExtent:
         # TODO: with some more infrastructure, we can track what pages
-        # contributed the links, and compute something better
+        # contributed the links, and compute something better.
+        #
+        # To track this we need to study the template system to see if there is
+        # a way to find what page filter expressions are used, or what pages
+        # are looked up, during last render.
         return ChangeExtent.ALL
 
 

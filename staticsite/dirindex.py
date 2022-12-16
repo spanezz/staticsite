@@ -78,13 +78,14 @@ class Dir(SourcePage):
             self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
     def _compute_change_extent(self) -> ChangeExtent:
+        res = super()._compute_change_extent()
+
         # Check if pages were deleted in this dir
         for relpath in self.site.deleted_source_pages():
             if os.path.dirname(relpath) == self.src.relpath:
                 return ChangeExtent.ALL
 
         # Dir has changed if any page referenced changed in metadata
-        res = ChangeExtent.UNCHANGED
         for subdir in self.subdirs:
             if subdir.change_extent == ChangeExtent.ALL:
                 res = ChangeExtent.ALL
