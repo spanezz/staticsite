@@ -79,7 +79,7 @@ class Dir(SourcePage):
 
     def _compute_change_extent(self) -> ChangeExtent:
         # Check if pages were deleted in this dir
-        for relpath in self.site.deleted_source_pages:
+        for relpath in self.site.deleted_source_pages():
             if os.path.dirname(relpath) == self.src.relpath:
                 return ChangeExtent.ALL
 

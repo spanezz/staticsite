@@ -308,10 +308,28 @@ class TaxonomyPage(SourcePage):
         """
         return heapq.nlargest(count, self.categories.values(), key=lambda c: c.date)
 
+    def _compute_footprint(self) -> dict[str, Any]:
+        res = super()._compute_footprint()
+        # Map categories to list of page relpaths
+        taxonomy = {}
+        for name, category in self.taxonomy.category_pages.items():
+            taxonomy[name] = [page.src.relpath for page in category.pages if getattr(page, "src", None)]
+        res["taxonomy"] = taxonomy
+        return res
+
     def _compute_change_extent(self) -> ChangeExtent:
-        # TODO: with some more infrastructure, we can track what pages
-        # contributed the links, and compute something better
-        return ChangeExtent.ALL
+        if (old := self.footprint.get("taxonomy")) is None:
+            return ChangeExtent.ALL
+
+        # Check if categories have been added or removed
+        if old.keys() != self.taxonomy.category_pages.keys():
+            return ChangeExtent.ALL
+
+        # Aggregate change extends from category pages
+        if self.taxonomy.category_pages:
+            return max(page.change_extent for page in self.taxonomy.category_pages.values())
+        else:
+            return ChangeExtent.UNCHANGED
 
 
 @functools.total_ordering
@@ -411,28 +429,26 @@ class CategoryPage(AutoPage):
         }
 
     def _compute_change_extent(self) -> ChangeExtent:
-        # If any page was deleted, we need to rebuild, as it could have had
-        # this category in tags
-        #
-        # TODO: we can inspect front matters of deleted pages, and test this
-        # hypothesis! (note that jinja2 pages currently do not put front matter
-        # in footprint)
-        if self.site.deleted_source_pages():
+        # No previous footprint
+        if (old_footprint := self.created_from.footprint.get("taxonomy")) is None:
             return ChangeExtent.ALL
 
-        # TODO: Here the problem is when a page has removed a tag, we have no
-        # visibility over it.
-        # TODO: Allow features to save their own footprint information?
-        # (dict mapping relpaths to list of tag names)
+        # This category did not previously exist
+        if (old_sources_list := old_footprint.get(self.name)) is None:
+            return ChangeExtent.ALL
+        else:
+            old_sources = set(old_sources_list)
 
-        # if self.pages:
-        #     return max(p.change_extent for p in self.pages)
-        # else:
-        #     return ChangeExtent.ALL
+        sources = {page.src.relpath for page in self.pages if getattr(page, "src", None)}
 
-        # TODO: with some more infrastructure, we can track what pages
-        # contributed the links, and compute something better
-        return ChangeExtent.ALL
+        if sources != old_sources:
+            # If any page added or removed this category, we rebuild
+            return ChangeExtent.ALL
+
+        if self.pages:
+            return max(p.change_extent for p in self.pages)
+        else:
+            return ChangeExtent.ALL
 
 
 class TestTaxonomyPage(TaxonomyPage):
