@@ -50,6 +50,8 @@ class Node(SiteElement):
         self.parent: Optional[Node] = parent
         # Index page for this directory, if present
         self.page: Optional[Page] = None
+        # SourcePages in this node indexed by basename(src.relpath)
+        self.by_src_relpath: dict[str, Page] = {}
         # Pages to be rendered at this location
         self.build_pages: dict[str, Page] = {}
         # Subdirectories
@@ -156,19 +158,10 @@ class Node(SiteElement):
             return subnode.page
 
         # Match subpage names and basename of src.relpath in subpages
-        for name, page in self.build_pages.items():
-            # print(f"Node.lookup_page:  build_pages[{name!r}] = {page!r} {page.src=!r}")
-            if name == path.head:
-                return page
-            if page.src and path.head == os.path.basename(page.src.relpath):
-                return page
-
-        # Match basename of src.relpath in subpages
-        for subnode in self.sub.values():
-            # print(f"Node.lookup_page:  sub[{subnode.name!r}] ="
-            #       f" {subnode.page!r} {subnode.page.src.relpath if subnode.page else '--'}")
-            if (page := subnode.page) and (src := page.src) and os.path.basename(src.relpath) == path.head:
-                return page
+        if (page := self.build_pages.get(path.head)) is not None:
+            return page
+        if (page := self.by_src_relpath.get(path.head)) is not None:
+            return page
 
         return None
 
@@ -190,9 +183,6 @@ class Node(SiteElement):
         """
         Create a page of the given type, attaching it at the given path
         """
-        if "meta" in kw:
-            raise RuntimeError("do not pass meta to create_page")
-
         if "created_from" in kw:
             raise RuntimeError("source page created with 'created_from' set")
 
@@ -220,9 +210,6 @@ class Node(SiteElement):
         """
         Create a page of the given type, attaching it at the given path
         """
-        if "meta" in kw:
-            raise RuntimeError("do not pass meta to create_page")
-
         if "src" in kw:
             raise RuntimeError("auto page created with 'src' set")
 
@@ -282,11 +269,12 @@ class Node(SiteElement):
                 log.warn("%s: page %r replaces page %r", self.compute_path(), page, self.page)
 
         self.page = page
+        if (src := kw.get("src")) is not None:
+            search_root_node.by_src_relpath[os.path.basename(src.relpath)] = page
+        self.build_pages["index.html"] = page
         self.site.features.examine_new_page(page)
         # if page.directory_index is False:
         #     print(f"{page=!r} dst is not set but page is not a directory index")
-
-        self.build_pages["index.html"] = page
         return page
 
     def _create_leaf_page(
@@ -326,6 +314,8 @@ class Node(SiteElement):
                 log.warn("%s: page %r replaces page %r", self.compute_path(), page, old)
 
         self.build_pages[dst] = page
+        if (src := kw.get("src")) is not None:
+            self.by_src_relpath[os.path.basename(src.relpath)] = page
         self.site.features.examine_new_page(page)
         return page
 
