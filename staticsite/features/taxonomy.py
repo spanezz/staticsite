@@ -179,8 +179,6 @@ class TaxonomyFeature(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.known_taxonomies = set()
-
         # All TaxonomyPages found
         self.taxonomies: dict[str, Taxonomy] = {}
 
@@ -201,7 +199,6 @@ class TaxonomyFeature(Feature):
                 Setting this as a simple string is the same as setting it as a list of one
                 element.
             """)}))
-        self.known_taxonomies.add(name)
         self.site.features.add_tracked_metadata(name)
         self.taxonomies[name] = Taxonomy(name=name, src=src)
 
