@@ -7,7 +7,7 @@ import os
 from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin
 from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
@@ -26,17 +26,23 @@ def basename_no_ext(pathname: str) -> str:
     return os.path.splitext(os.path.basename(pathname))[0]
 
 
+class ImageField(TrackedFieldMixin, fields.Field):
+    """
+    Image used for this post.
+
+    It is set to a path to an image file relative to the current page.
+
+    During the crossreference phase, it is resolved to the corresponding
+    [image page](images.md).
+
+    If not set, and an image exists with the same name as the page (besides the
+    extension), that image is used.
+    """
+    tracked_by = "images"
+
+
 class ImagePageMixin(metaclass=fields.FieldsMetaclass):
-    image = fields.Field(doc="""
-        Image used for this post.
-
-        It is set to a path to an image file relative to the current page.
-
-        During the analyze phase, it is resolved to the corresponding [image page](images.md).
-
-        If not set, and an image exists with the same name as the page (besides the
-        extension), that image is used.
-    """)
+    image = ImageField()
     width = fields.Field(doc="""
         Image width
     """)
@@ -56,9 +62,12 @@ class Images(Feature):
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
         self.page_mixins.append(ImagePageMixin)
-        self.site.features.add_tracked_metadata("image")
         # Nodes that contain images
         self.images: set[Image] = set()
+        self.tracked_pages: set[Page] = set()
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.tracked_pages.add(obj)
 
     def load_dir(
             self,
@@ -124,7 +133,7 @@ class Images(Feature):
 
     def crossreference(self):
         # Resolve image from strings to Image pages
-        for page in self.site.features.pages_by_metadata["image"]:
+        for page in self.tracked_pages:
             val = page.image
             if isinstance(val, str):
                 page.image = page.resolve_path(val)
