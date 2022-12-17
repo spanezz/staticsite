@@ -317,7 +317,8 @@ class Node(SiteElement):
             raise SkipPage()
 
         if (old := self.build_pages.get(dst)):
-            page.old_footprint = old.old_footprint
+            if (old_footprint := getattr(old, "old_footprint", None)) is not None:
+                page.old_footprint = old_footprint
             if old.TYPE == "asset" and page.TYPE == "asset":
                 # First one wins, to allow overriding of assets in theme
                 pass

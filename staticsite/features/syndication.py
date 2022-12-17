@@ -147,8 +147,9 @@ class Syndication:
                 path=Path(("archive",)),
                 **self.archive,
                 )
-        self.archive_page.add_related("rss_feed", self.rss_page)
-        self.archive_page.add_related("atom_feed", self.atom_page)
+        if self.archive_page is not None:
+            self.archive_page.add_related("rss_feed", self.rss_page)
+            self.archive_page.add_related("atom_feed", self.atom_page)
 
     def crossreference(self):
         """
@@ -177,9 +178,12 @@ class Syndication:
         # Compute dates for generated pages
         if self.pages:
             max_date = max(p.date for p in self.pages)
-            self.rss_page.date = max_date
-            self.atom_page.date = max_date
-            self.archive_page.date = max_date
+            if self.rss_page is not None:
+                self.rss_page.date = max_date
+            if self.atom_page is not None:
+                self.atom_page.date = max_date
+            if self.archive_page is not None:
+                self.archive_page.date = max_date
 
     def process_add_to(self):
         """
