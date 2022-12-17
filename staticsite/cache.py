@@ -3,16 +3,32 @@ from __future__ import annotations
 import json
 import os
 from functools import cached_property
+from typing import Any, Protocol, Type
 
 try:
     import lmdb
+    HAVE_LMDB = True
 except ModuleNotFoundError:
-    lmdb = None
+    HAVE_LMDB = False
 
 
-if lmdb is not None:
-    class Cache:
-        def __init__(self, fname):
+class Cache(Protocol):
+    def __init__(self, fname: str):
+        ...
+
+    def get(self, relpath: str) -> Any:
+        ...
+
+    def put(self, relpath: str, data: Any):
+        ...
+
+
+CacheImplementation: Type[Cache]
+
+
+if HAVE_LMDB:
+    class LMDBCache:
+        def __init__(self, fname: str):
             self.fname = fname + ".lmdb"
 
         @cached_property
@@ -31,11 +47,14 @@ if lmdb is not None:
         def put(self, relpath, data):
             with self.db.begin(write=True) as tr:
                 tr.put(relpath.encode(), json.dumps(data).encode())
+
+    CacheImplementation = LMDBCache
+
 else:
     import dbm
 
-    class Cache:
-        def __init__(self, fname):
+    class DBMCache:
+        def __init__(self, fname: str):
             self.fname = fname
 
         @cached_property
@@ -53,15 +72,20 @@ else:
         def put(self, relpath, data):
             self.db[relpath] = json.dumps(data)
 
+    CacheImplementation = DBMCache
+
 
 class DisabledCache:
     """
     noop render cache, for when caching is disabled
     """
-    def get(self, relpath):
+    def __init__(self, fname: str):
+        self.fname = fname
+
+    def get(self, relpath: str) -> Any:
         return None
 
-    def put(self, relpath, data):
+    def put(self, relpath: str, data: Any):
         pass
 
 
@@ -70,13 +94,13 @@ class Caches:
     Repository of caches that, if kept across site builds, can speed up further
     builds
     """
-    def __init__(self, root):
+    def __init__(self, root: str):
         self.root = root
 
-    def get(self, name):
-        return Cache(os.path.join(self.root, name))
+    def get(self, name: str) -> Cache:
+        return CacheImplementation(os.path.join(self.root, name))
 
 
 class DisabledCaches:
-    def get(self, name):
-        return DisabledCache()
+    def get(self, name: str) -> Cache:
+        return DisabledCache(name)
