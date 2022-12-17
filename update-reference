@@ -1,0 +1,2 @@
+#!/bin/sh
+./ssite dump example/demo/ --reference-documentation
