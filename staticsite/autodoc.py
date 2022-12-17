@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 import os
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Type
 from . import asset
 from . import dirindex
 
@@ -14,6 +14,12 @@ if TYPE_CHECKING:
     from .page import Page
 
 log = logging.getLogger("autodoc")
+
+
+def summary(obj: Any):
+    if obj.__doc__ is None:
+        return f"Missing documentation for {obj!r}"
+    return inspect.cleandoc(obj.__doc__).strip().splitlines()[0]
 
 
 class Autodoc:
@@ -66,25 +72,27 @@ class Autodoc:
             print("* [Site-specific features](feature.md)", file=out)
             print("* [Front Matter](front-matter.md)", file=out)
             print(file=out)
+
             print("## Features", file=out)
             print(file=out)
             for feature in self.site.features.ordered():
-                print(f"* [{feature.name}](features/{feature.name}.md)", file=out)
+                print(f"* [{feature.name}](features/{feature.name}.md): {summary(feature)}", file=out)
             print(file=out)
+
             print("## Page types", file=out)
             print(file=out)
             for name, page_type in by_name.items():
-                print(f"* [{name}](pages/{feature.name}.md)", file=out)
+                print(f"* [{name}](pages/{name}.md): {summary(page_type)}", file=out)
             print(file=out)
+
             print("## Page fields", file=out)
             print(file=out)
             for name, field in sorted(fields.items()):
-                print(f"* [{name}](fields/{feature.name}.md)", file=out)
+                print(f"* [{name}](fields/{name}.md): {field.summary}", file=out)
             print(file=out)
             print("[Back to README](../../README.md)", file=out)
 
             # TODO: * [Common page metadata](metadata.md)
-            # TODO: * [Markdown pages](markdown.md)
             # TODO: * [reStructuredText pages](rst.md)
             # TODO: * [Jinja2 pages](jinja2.md)
             # TODO: * [Data pages](data.md)
@@ -107,7 +115,7 @@ class Autodoc:
         path = os.path.join(self.root, "features")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{feature.name}.md"), "wt") as out:
-            print(f"# {feature.name}", file=out)
+            print(f"# {feature.name}: {summary(feature)}", file=out)
             print(file=out)
 
             if page_types:
@@ -130,12 +138,12 @@ class Autodoc:
         path = os.path.join(self.root, "pages")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:
-            print(f"# {name}", file=out)
+            print(f"# {name}: {summary(page_type)}", file=out)
             print(file=out)
             print("## Fields", file=out)
             print(file=out)
-            for name, field in page_type._fields.items():
-                print(f"* [{name}](../fields/{name}.md", file=out)
+            for name, field in sorted(page_type._fields.items()):
+                print(f"* [{name}](../fields/{name}.md): {field.summary}", file=out)
             print(file=out)
             print("## Documentation", file=out)
             print(file=out)
@@ -147,8 +155,8 @@ class Autodoc:
         path = os.path.join(self.root, "fields")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:
-            print(f"# {name}", file=out)
+            print(f"# {name}: {field.summary}", file=out)
             print(file=out)
-            print(inspect.cleandoc(field.doc), file=out)
+            print(field.doc, file=out)
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
