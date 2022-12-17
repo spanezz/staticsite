@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, List
 import jinja2
 
 from staticsite import fields
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
@@ -21,20 +21,25 @@ if TYPE_CHECKING:
 log = logging.getLogger("links")
 
 
+class LinksField(TrackedFieldMixin, fields.Field):
+    """
+    Extra metadata for external links.
+
+    It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:
+
+    * `title`: str: short title for the link
+    * `url`: str: external URL
+    * `abstract`: str: long description or abstract for the link
+    * `archive`: str: URL to an archived version of the site
+    * `tags`: List[str]: tags for this link
+    * `related`: List[Dict[str, str]]: other related links, as a list of dicts with
+      `title` and `url` keys
+    """
+    tracked_by = "links"
+
+
 class LinksPageMixin(metaclass=fields.FieldsMetaclass):
-    links = fields.Field(doc="""
-        Extra metadata for external links.
-
-        It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:
-
-        * `title`: str: short title for the link
-        * `url`: str: external URL
-        * `abstract`: str: long description or abstract for the link
-        * `archive`: str: URL to an archived version of the site
-        * `tags`: List[str]: tags for this link
-        * `related`: List[Dict[str, str]]: other related links, as a list of dicts with
-          `title` and `url` keys
-    """)
+    links = LinksField()
 
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
@@ -104,11 +109,14 @@ class Links(Feature):
         # when they have a `data_type: links` metadata
         self.data.register_page_class("links", LinksPage)
 
-        # Collect 'links' metadata
-        self.site.features.add_tracked_metadata("links")
-
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
+
+        # Collect pages with 'links' metadata set
+        self.tracked_pages: set[Page] = set()
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.tracked_pages.add(obj)
 
     def load_dir(
             self,
@@ -199,7 +207,7 @@ class Links(Feature):
 
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
-        for page in self.site.features.pages_by_metadata["links"]:
+        for page in self.tracked_pages:
             for link in page.links:
                 link = Link(link)
                 self.links.append(link)

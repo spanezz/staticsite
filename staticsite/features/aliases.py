@@ -41,6 +41,8 @@ class AliasesFeature(Feature):
         super().__init__(*args, **kw)
         self.site.features["rst"].yaml_tags.add("aliases")
         self.page_mixins.append(AliasesPageMixin)
+
+        # Collect pages with 'aliases' metadata set
         self.tracked_pages: set[Page] = set()
 
     def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
