@@ -471,16 +471,6 @@ class Site:
         if until <= self.last_load_step:
             return
 
-    def is_page_ignored(self, page: Page) -> bool:
-        """
-        Check if this page should be ignored and not added to the site
-        """
-        if not self.settings.DRAFT_MODE and page.draft:
-            log.info("%s: page is still a draft: skipping", page)
-            return True
-
-        return False
-
     def _organize(self):
         """
         Call features to organize the pages that have just been loaded from

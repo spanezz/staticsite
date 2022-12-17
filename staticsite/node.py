@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime
 import logging
 import os
 from typing import TYPE_CHECKING, Generator, Optional, Sequence, TextIO, Type, Union
@@ -183,6 +184,7 @@ class Node(SiteElement):
             path: Optional[Path] = None,
             dst: Optional[str] = None,
             directory_index: bool = False,
+            date: Optional[datetime.datetime] = None,
             **kw):
         """
         Create a page of the given type, attaching it at the given path
@@ -201,12 +203,21 @@ class Node(SiteElement):
             # TODO: propagate it when doing the replacement?
             kw["old_footprint"] = self.site.previous_source_footprints.pop(src.relpath, None)
 
-        # TODO: move site.is_page_ignored here?
+        if date is None:
+            date = self.site.localized_timestamp(src.stat.st_mtime)
+        else:
+            date = self.site.clean_date(date)
+
+        # Skip draft pages
+        if date > self.site.generation_time and not self.site.settings.DRAFT_MODE:
+            log.info("%s: page is still a draft: skipping", src.relpath)
+            return None
+
         try:
             if dst:
-                return self._create_leaf_page(dst=dst, path=path, src=src, **kw)
+                return self._create_leaf_page(dst=dst, path=path, src=src, date=date, **kw)
             else:
-                return self._create_index_page(path=path, directory_index=directory_index, src=src, **kw)
+                return self._create_index_page(path=path, directory_index=directory_index, src=src, date=date, **kw)
         except SkipPage:
             return None
 
@@ -228,7 +239,6 @@ class Node(SiteElement):
         if dst is None and not directory_index and not path:
             raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
 
-        # TODO: move site.is_page_ignored here?
         try:
             if dst:
                 return self._create_leaf_page(dst=dst, path=path, **kw)
@@ -266,8 +276,6 @@ class Node(SiteElement):
                 directory_index=directory_index, **kw)
         except PageValidationError as e:
             log.warn("%s: skipping page: %s", e.page, e.msg)
-            raise SkipPage()
-        if self.site.is_page_ignored(page):
             raise SkipPage()
 
         if self.page is not None:
@@ -312,8 +320,6 @@ class Node(SiteElement):
                 directory_index=False, **kw)
         except PageValidationError as e:
             log.warn("%s: skipping page: %s", e.page, e.msg)
-            raise SkipPage()
-        if self.site.is_page_ignored(page):
             raise SkipPage()
 
         if (old := self.build_pages.get(dst)):

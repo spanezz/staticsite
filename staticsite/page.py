@@ -299,13 +299,6 @@ class Page(SiteElement):
         The page description. If omitted, the page will have no description.
     """)
 
-    draft = Draft(doc="""
-If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
-
-It defaults to false, or true if `meta.date` is in the future.
-""")
-
     indexed = fields.Bool(default=False, doc="""
         If true, the page appears in [directory indices](dir.md) and in
         [page filter results](page_filter.md).
@@ -672,6 +665,13 @@ class SourcePage(Page):
     """
     Page loaded from site sources
     """
+    draft = Draft(doc="""
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `meta.date` is in the future.
+""")
+
     old_footprint = fields.Field(internal=True, doc="""
         Cached footprint from the previous run, or None
     """)

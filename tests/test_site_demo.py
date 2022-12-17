@@ -68,7 +68,6 @@ class TestDemo(test_utils.SiteTestMixin, TestCase):
             "meta": {
                 "date": '2016-04-16 10:23:00+02:00',
                 "syndication_date": '2016-04-16 10:23:00+02:00',
-                "draft": False,
                 'index': 'J2Page(blog)',
                 'author': "Example author",
                 'copyright': '© 2016 Example author',

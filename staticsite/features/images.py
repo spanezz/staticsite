@@ -172,7 +172,7 @@ class Image(SourcePage):
 
     def __init__(self, *args, mimetype: str = None, **kw):
         super().__init__(*args, **kw)
-        self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
+        # self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
     def render(self, **kw) -> RenderedElement:
         return RenderedFile(self.src)
