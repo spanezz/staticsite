@@ -1,16 +1,19 @@
 from __future__ import annotations
-from typing import List, Optional, Union, Sequence, Dict, Set, Any
-import jinja2
-import markupsafe
-import os
-import re
+
 import datetime
 import logging
+import os
+import re
 from collections import defaultdict
-from .page import Page, PageNotFoundError
-from .utils import front_matter, arrange
-from .file import File
+from typing import Any, List, Optional, Sequence, Union
+
+import jinja2
+import markupsafe
+
 from . import toposort
+from .file import File
+from .page import Page, PageNotFoundError
+from .utils import arrange, front_matter
 
 log = logging.getLogger("theme")
 
@@ -27,11 +30,11 @@ class Loader:
         # Sequence of search paths to use to resolve theme names
         self.search_paths = search_paths
         # Configurations by name
-        self.configs: Dict[str, dict[str, Any]] = {}
+        self.configs: dict[str, dict[str, Any]] = {}
         # Dependency graph of themes
-        self.deps: Dict[str, Set[str]] = defaultdict(set)
+        self.deps: dict[str, set[str]] = defaultdict(set)
 
-    def load(self, name: str) -> List[dict[str, Any]]:
+    def load(self, name: str) -> list[dict[str, Any]]:
         """
         Load the configuration of the given theme and all its dependencies.
 
@@ -92,7 +95,7 @@ class Loader:
         """
         pathname = os.path.join(root, "config")
         if not os.path.isfile(pathname):
-            config = {}
+            config: dict[str, Any] = {}
         else:
             with open(pathname, "rt") as fd:
                 fmt, config = front_matter.read_whole(fd)
@@ -206,7 +209,7 @@ class Theme:
                 self.meta[key] = config[key]
 
     @classmethod
-    def create(cls, site, name: str, search_paths: Sequence[str] = None) -> "Theme":
+    def create(cls, site, name: str, search_paths: Optional[Sequence[str]] = None) -> "Theme":
         """
         Create a Theme looking up its name in the theme search paths
         """
@@ -314,7 +317,7 @@ class Theme:
         return os.path.basename(val)
 
     @jinja2.pass_context
-    def jinja2_datetime_format(self, context, dt: Union[str, datetime.datetime], format: str = None) -> str:
+    def jinja2_datetime_format(self, context, dt: Union[str, datetime.datetime], format: str) -> str:
         if not isinstance(dt, datetime.datetime):
             import dateutil.parser
             dt = dateutil.parser.parse(dt)
@@ -348,7 +351,7 @@ class Theme:
             return (dt.replace(day=1) + datetime.timedelta(days=40)).replace(
                     day=1, hour=0, minute=0, second=0, microsecond=0)
         elif isinstance(dt, datetime.date):
-            return dt.replace(day=1) + datetime.timedelta(days=40).replace(day=1)
+            return (dt.replace(day=1) + datetime.timedelta(days=40)).replace(day=1)
         else:
             log.warn("%s+%s: invalid datetime %r of type %r: accepted are str, datetime, date",
                      context.parent["page"].src.relpath, context.name, dt, type(dt))
@@ -375,6 +378,7 @@ class Theme:
         cur_page = context.get("page")
         if cur_page is None:
             log.warn("%s+%s: page_for(%s): current page is not defined", cur_page, context.name, arg)
+            # TODO: link to somewhere like a missing page
             return ""
 
         try:
@@ -415,7 +419,7 @@ class Theme:
             path: Union[str, Page],
             type: Optional[str] = None,
             absolute: bool = False,
-            **attrs) -> List[Page]:
+            **attrs) -> str:
         cur_page = context.get("page")
         if cur_page is None:
             log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)

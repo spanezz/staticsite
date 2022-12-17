@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple, Type, Union
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -18,6 +18,8 @@ from staticsite.page import FrontMatterPage, Page, PageNotFoundError
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
+    import urllib.parse
+
     from staticsite import file, fstree
     from staticsite.node import Node
 
@@ -25,14 +27,14 @@ log = logging.getLogger("markdown")
 
 
 class LinkResolver(markdown.treeprocessors.Treeprocessor):
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         self.page: Optional[Page] = None
         self.absolute: bool = False
         self.substituted: Dict[str, str] = {}
         self.external_links: Set[str] = set()
 
-    def set_page(self, page, absolute=False):
+    def set_page(self, page: Page, absolute: bool = False):
         self.page = page
         self.absolute = absolute
         self.substituted = {}
@@ -61,7 +63,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
 
             img.attrib.update(attrs)
 
-    def resolve_page(self, url) -> Tuple[Page, Tuple]:
+    def resolve_page(self, url: str) -> Union[tuple[None, None], tuple[Page, urllib.parse.ParseResult]]:
         from markdown.util import AMP_SUBSTITUTE
         if url.startswith(AMP_SUBSTITUTE):
             # Possibly an overencoded mailto: link.
@@ -76,13 +78,11 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         # If it's an absolute url, leave it unchanged
         if parsed.scheme or parsed.netloc:
             self.external_links.add(url)
-            return None, url
-
-            return None, parsed
+            return None, None
 
         # If it's an anchor inside the page, leave it unchanged
         if not parsed.path:
-            return None, parsed
+            return None, None
 
         # Try with cache
         site_path = self.substituted.get(parsed.path)
@@ -98,14 +98,14 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             page = self.page.resolve_path(parsed.path)
         except PageNotFoundError as e:
             log.warn("%s: %s", self.page, e)
-            return None, parsed
+            return None, None
 
         # Cache the page site_path
         self.substituted[url] = page.site_path
 
         return page, parsed
 
-    def resolve_url(self, url) -> Tuple[Page, str]:
+    def resolve_url(self, url: str) -> Tuple[Page, str]:
         """
         Resolve internal URLs.
 
@@ -166,7 +166,7 @@ class MarkdownPages(Feature):
     def jinja2_markdown(self, context, mdtext):
         return markupsafe.Markup(self.render_snippet(context.parent["page"], mdtext))
 
-    def render_page(self, page: Page, body: List[str], render_type: str, absolute: bool = False):
+    def render_page(self, page: MarkdownPage, body: List[str], render_type: str, absolute: bool = False):
         """
         Render markdown in the context of the given page.
         """
@@ -274,6 +274,8 @@ class MarkdownPages(Feature):
             log.warn("%s: failed to parse front matter", src.relpath)
         else:
             return meta
+
+        return None
 
     def load_file_meta(self, directory: fstree.Tree, fname: str) -> tuple[dict[str, Any], list[str]]:
         """
@@ -489,11 +491,11 @@ class MarkdownPage(FrontMatterPage):
         self.mdpages = feature
 
         # Sequence of lines found in the body before the divider line, if any
-        self.body_start: List[str]
+        self.body_start: list[str]
 
         # Sequence of lines found in the body including and after the divider
         # line, nor None if there is no divider line
-        self.body_rest: Optional[List[str]]
+        self.body_rest: Optional[list[str]]
 
         # Split lead and rest of the post, if a divider line is present
         for idx, line in enumerate(body):
