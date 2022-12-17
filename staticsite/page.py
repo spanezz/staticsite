@@ -534,7 +534,7 @@ class Page(SiteElement):
             # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
             srcsets = []
             for rel in img.related.values():
-                if rel.TYPE != "image":
+                if rel.TYPE not in ("image", "scaledimage"):
                     continue
 
                 if (width := rel.width) is None:

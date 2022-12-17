@@ -133,7 +133,7 @@ class Images(PageTrackingMixin, Feature):
             val = page.image
             if isinstance(val, str):
                 page.image = page.resolve_path(val)
-                if page.image.TYPE != "image":
+                if page.image.TYPE not in ("image", "scaledimage"):
                     log.warning("%s: image field resolves to %s which is not an image page",
                                 self, page.image)
 
@@ -200,7 +200,7 @@ class RenderedScaledImage(RenderedElement):
 
 
 class ScaledImage(AutoPage):
-    TYPE = "image"
+    TYPE = "scaledimage"
 
     def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):
         super().__init__(*args, **kw)

@@ -218,7 +218,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'nav': ['MarkdownPage(about)'],
                 'related': {},
             },
-            "type": "image",
+            "type": "scaledimage",
         })
 
         self.assertEqual(self.page("posts/example-thumbnail.jpg").to_dict(), {
@@ -242,5 +242,5 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
                 'nav': ['MarkdownPage(about)'],
                 'related': {},
             },
-            "type": "image",
+            "type": "scaledimage",
         })
