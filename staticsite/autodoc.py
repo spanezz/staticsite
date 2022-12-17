@@ -74,7 +74,7 @@ class Autodoc:
             print("* [The Site object](site.md)", file=out)
             # print("* [The Page object](page.md)", file=out)
             print("* [Site settings](settings.md)", file=out)
-            # print("* [Source contents](contents.md)", file=out)
+            print("* [Source contents](contents.md)", file=out)
             print("* [Themes](theme.md)", file=out)
             # print("* [Jinja2 templates reference](templates.md)", file=out)
             print("* [Selecting site pages](page-filter.md)", file=out)
