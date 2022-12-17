@@ -153,6 +153,12 @@ class Feature:
         """
         pass
 
+    def get_used_page_types(self) -> list[Type[Page]]:
+        """
+        Return a list of the page types used by this feature
+        """
+        return []
+
     def get_footprint(self) -> dict[str, Any]:
         """
         Return information that will be cached until the next build to allow
@@ -214,7 +220,9 @@ class Features:
         if (final := self.page_classes.get(cls)):
             return final
         # TODO: skip adding mixins to Asset pages?
-        final = type(cls.__name__, tuple(self.page_mixins) + (cls,), {})
+        final = type(cls.__name__, tuple(self.page_mixins) + (cls,), {
+            "__doc__": cls.__doc__, "__module__": cls.__module__
+        })
         self.page_classes[cls] = final
         return final
 

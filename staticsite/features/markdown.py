@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple, Type
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -158,6 +158,9 @@ class MarkdownPages(Feature):
         self.j2_filters["markdown"] = self.jinja2_markdown
 
         self.render_cache = self.site.caches.get("markdown")
+
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [MarkdownPage]
 
     @jinja2.pass_context
     def jinja2_markdown(self, context, mdtext):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, Any, List, Optional, BinaryIO, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, BinaryIO, Tuple, Type
 
 import docutils.core
 import docutils.io
@@ -81,6 +81,9 @@ class RestructuredText(Feature):
         # Names of tags whose content should be parsed as yaml
         self.yaml_tags = {"files", "dirs"}
         self.yaml_tags_filled = False
+
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [RstPage]
 
     def parse_rest(self, fd: BinaryIO, remove_docinfo=True):
         """

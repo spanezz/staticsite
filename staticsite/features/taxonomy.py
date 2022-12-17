@@ -4,7 +4,7 @@ import functools
 import heapq
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedFieldMixin
@@ -187,6 +187,9 @@ class TaxonomyFeature(Feature):
 
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
+
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [TaxonomyPage, CategoryPage]
 
     def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
         self.taxonomies[field.name].pages.add(obj)

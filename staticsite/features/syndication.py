@@ -352,6 +352,9 @@ class SyndicationFeature(PageTrackingMixin, Feature):
         self.syndications = []
         self.j2_globals["syndicated_pages"] = self.jinja2_syndicated_pages
 
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [RSSPage, AtomPage, ArchivePage]
+
     @jinja2.pass_context
     def jinja2_syndicated_pages(self, context, what: Union[str, Page, List[Page], None] = None, limit=None) -> bool:
         """

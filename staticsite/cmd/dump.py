@@ -24,6 +24,9 @@ class Dump(SiteCommand):
                            help="dump information about the built site layout")
         group.add_argument("--changes", action="store_true",
                            help="dump information about pages that changed")
+        group.add_argument("--reference-documentation", action="store", nargs="?",
+                           const="doc/reference", metavar="destdir",
+                           help="regenerate reference documentation")
         return parser
 
     def dump_fstree(self, site: Site):
@@ -48,5 +51,9 @@ class Dump(SiteCommand):
             self.dump_nodes(site)
         elif self.args.changes:
             self.dump_changes(site)
+        elif self.args.reference_documentation:
+            from ..autodoc import Autodoc
+            autodoc = Autodoc(site, self.args.reference_documentation)
+            autodoc.generate()
         else:
             raise Fail("I don't know what to do")
