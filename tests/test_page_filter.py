@@ -4,12 +4,12 @@ from . import utils as test_utils
 from staticsite.page_filter import PageFilter
 
 
-def select(site, *args, **kw):
-    f = PageFilter(site, *args, **kw)
-    return [p.meta["site_path"] for p in f.filter(site.pages.values())]
+def select(mocksite, *args, **kw):
+    f = PageFilter(mocksite.site, *args, **kw)
+    return [p.site_path for p in f.filter()]
 
 
-class TestPageFilter(TestCase):
+class TestPageFilter(test_utils.MockSiteTestMixin, TestCase):
     def test_site(self):
         files = {
             # taxonomies are not findable pages
@@ -18,19 +18,21 @@ class TestPageFilter(TestCase):
             "blog/post1.md": {},
             "blog/post2.md": {},
         }
-        with test_utils.testsite(files) as site:
-            self.assertCountEqual(select(site, path="blog/*"), [
-                "/blog/post1",
-                "/blog/post2",
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths(("", "page", "taxonomies/tags", "blog", "blog/post1", "blog/post2", "taxonomies"))
+
+            self.assertCountEqual(select(mocksite, path="blog/*"), [
+                "blog/post1",
+                "blog/post2",
             ])
 
-            self.assertCountEqual(select(site, path=r"^blog/"), [
-                "/blog/post1",
-                "/blog/post2",
+            self.assertCountEqual(select(mocksite, path=r"^blog/"), [
+                "blog/post1",
+                "blog/post2",
             ])
 
-            self.assertEqual(select(site, path=re.compile(r"^[tp]")), [
-                "/page",
+            self.assertEqual(select(mocksite, path=re.compile(r"^[tp]")), [
+                "page",
             ])
 
     def test_relative(self):
@@ -41,14 +43,12 @@ class TestPageFilter(TestCase):
             "dir/dir/page3.md": {},
             "dir/dir/page4.md": {},
         }
-        with test_utils.testsite(files) as site:
-            page = site.pages["/page"]
-            # dir1 = site.pages["dir"]
-            # dir2 = site.pages["/dir/dir"]
-            page1 = site.pages["/dir/page1"]
-            page2 = site.pages["/dir/page2"]
-            page3 = site.pages["/dir/dir/page3"]
-            page4 = site.pages["/dir/dir/page4"]
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
+                "", "page", "dir", "dir/page1", "dir/page2", "dir/dir",
+                "dir/dir/page3", "dir/dir/page4"))
 
-            self.assertCountEqual(page.meta["pages"], [page1, page2, page3, page4])
-            self.assertCountEqual(page1.meta["pages"], [page3, page4])
+            page, page1, page2, page3, page4 = mocksite.page(
+                    "page", "dir/page1", "dir/page2", "dir/dir/page3", "dir/dir/page4")
+            self.assertCountEqual(page.pages, [page1, page2, page3, page4])
+            self.assertCountEqual(page1.pages, [page3, page4])

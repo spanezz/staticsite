@@ -1,24 +1,24 @@
 from __future__ import annotations
-from typing import List
-from staticsite.page import Page
-from staticsite.feature import Feature
-from staticsite.contents import ContentDir
-from staticsite.utils import front_matter
-from staticsite.page_filter import compile_page_match
-from staticsite.utils.typing import Meta
+
+import logging
+from typing import TYPE_CHECKING, Any, List, Optional, Type
+
 import jinja2
 import markupsafe
-import os
-import logging
+
+from staticsite import node
+from staticsite.feature import Feature
+from staticsite.page import ChangeExtent, Page, SourcePage
+from staticsite.page_filter import compile_page_match
+from staticsite.utils import front_matter
+
+if TYPE_CHECKING:
+    from staticsite import file, fstree
 
 log = logging.getLogger("jinja2")
 
 
-class IgnorePage(Exception):
-    pass
-
-
-def load_front_matter(template: jinja2.Template) -> Meta:
+def load_front_matter(template: jinja2.Template) -> dict[str, Any]:
     """
     Load front matter from a jinja2 template
     """
@@ -51,28 +51,33 @@ class J2Pages(Feature):
 
     See doc/reference/templates.md for details.
     """
-    def load_dir_meta(self, sitedir: ContentDir):
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [J2Page]
+
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         # Load front matter from index.html
-        index = sitedir.files.get("index.html")
-        if index is None:
-            return
+        if (index := directory.files.get("index.html")) is None:
+            return None
 
         try:
             template = self.site.theme.jinja2.get_template("content:" + index.relpath)
         except Exception:
             log.exception("%s: cannot load template", index.relpath)
         else:
-            meta = load_front_matter(template)
-            if meta:
-                return meta
+            if (front_matter := load_front_matter(template)):
+                return front_matter
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(
+            self,
+            node: node.Node,
+            directory: fstree.Tree,
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (kwargs, src) in files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:
                 if pattern.match(fname):
@@ -80,22 +85,32 @@ class J2Pages(Feature):
             else:
                 continue
 
-            meta = sitedir.meta_file(fname)
-            if fname != "index.html":
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname)
-            else:
-                meta["site_path"] = sitedir.meta["site_path"]
-
             try:
-                page = J2Page(self.site, src, meta=meta, dir=sitedir, feature=self)
-            except IgnorePage:
+                template = self.site.theme.jinja2.get_template("content:" + src.relpath)
+            except Exception:
+                log.exception("%s: cannot load template", src.relpath)
                 continue
 
-            taken.append(fname)
+            front_matter = load_front_matter(template)
+            if front_matter:
+                kwargs.update(front_matter)
+
+            if not (directory_index := fname == "index.html"):
+                # Is this still needed?
+                fname = fname.replace(".j2", "")
+                kwargs["dst"] = fname
+
+            page = node.create_source_page(
+                    page_cls=J2Page,
+                    src=src,
+                    template=template,
+                    directory_index=directory_index,
+                    **kwargs)
             pages.append(page)
+            taken.append(fname)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
@@ -155,31 +170,59 @@ class RenderPartialTemplateMixin:
             return ""
 
 
-class J2Page(RenderPartialTemplateMixin, Page):
+class J2Page(RenderPartialTemplateMixin, SourcePage):
+    """
+    Jinja2 pages
+
+    You can put [jinja2 templates](templates.md) in your site contents, and they
+    will be rendered as site pages.
+
+    This can be used to generate complex index pages, blog front pages, and
+    anything else [Jinja2](http://jinja.pocoo.org/) is able to generate.
+
+    You can set `JINJA2_PAGES` in the [site settings](settings.md) to a list of
+    patterns (globs or regexps as in [page filters](page-filter.md)) matching file
+    names to consider jinja2 templates by default. It defaults to
+    `["*.html", "*.j2.*"]`.
+
+    Any file with `.j2.` in their file name will be rendered as a template,
+    stripping `.j2.` in the destination file name.
+
+    For example, `dir/robots.j2.txt` will become `dir/robots.txt` when the site is
+    built.
+
+    ## Front matter
+
+    If a page defines a jinja2 block called `front_matter`, the block is rendered
+    and parsed as front matter.
+
+    **Note**: [jinja2 renders all contents it finds before
+    `{% extends %}`](https://jinja.palletsprojects.com/en/2.10.x/templates/#child-template).
+    To prevent your front matter from ending up in the rendered HTML, place the
+    `front_matter` block after the `{% extends %}` directive, or manage your front
+    matter from [`.staticfile` directory metadata](content.md).
+
+    If you want to use `template_*` entries, you can wrap the front matter around
+    `{% raw %}` to prevent jinja2 from rendering their contents as part of the rest
+    of the template.
+    """
     TYPE = "jinja2"
 
-    def __init__(self, *args, feature: J2Pages, **kw):
+    def __init__(self, *args, template: jinja2.Template, **kw):
+        # Indexed by default
+        kw.setdefault("indexed", True)
         super().__init__(*args, **kw)
 
-        dirname, basename = os.path.split(self.src.relpath)
-        dst_basename = basename.replace(".j2", "")
+        self.template = template
 
-        self.meta["build_path"] = os.path.join(dirname, dst_basename)
-
-        # Indexed by default
-        self.meta.setdefault("indexed", True)
-
-        try:
-            template = self.site.theme.jinja2.get_template("content:" + self.src.relpath)
-        except Exception:
-            log.exception("%s: cannot load template", self.src.relpath)
-            raise IgnorePage
-
-        meta = load_front_matter(template)
-        if meta:
-            self.meta.update(**meta)
-
-        self.meta["template"] = template
+    def _compute_change_extent(self) -> ChangeExtent:
+        # TODO: with some more infrastructure, we can track what pages
+        # contributed the links, and compute something better.
+        #
+        # To track this we need to study the template system to see if there is
+        # a way to find what page filter expressions are used, or what pages
+        # are looked up, during last render.
+        return ChangeExtent.ALL
 
 
 FEATURES = {

@@ -23,13 +23,12 @@ class PageFS:
         self.paths = {}
 
         if site:
-            for page in site.pages.values():
-                for build_path in page.target_relpaths():
-                    self.add_page(page, build_path)
+            for page in site.iter_pages():
+                self.add_page(page, page.build_path)
 
     def add_page(self, page: Page, build_path: str = None):
         if build_path is None:
-            build_path = page.meta["build_path"]
+            build_path = page.build_path
         self.paths[build_path] = page
 
     def get_page(self, relpath: str) -> Tuple[str, Page]:
@@ -62,13 +61,8 @@ class PageFS:
         except locale.Error as e:
             log.warn("%s: cannot set locale to %s: %s", page, lname, e)
 
-        for relpath, rendered in page.render(**kw).items():
-            if relpath == dst_relpath:
-                break
-        else:
-            return None, None
-
-        return relpath, rendered.content()
+        rendered = page.render(**kw)
+        return page.build_path, rendered.content()
 
     def serve_path(self, path, environ, start_response):
         """

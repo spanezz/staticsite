@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Dict, Any, Tuple, BinaryIO, TextIO, Iterable
-from .typing import Meta
 import logging
 import json
 import re
@@ -20,7 +19,7 @@ def write(meta: Dict[str, Any], style: str = "toml") -> str:
     return ""
 
 
-def read_markdown_partial(fd: BinaryIO) -> Tuple[str, Meta, Iterable[str]]:
+def read_markdown_partial(fd: BinaryIO) -> tuple[str, dict[str, Any], Iterable[str]]:
     """
     Parse lines front matter from a markdown file header.
 
@@ -85,7 +84,7 @@ def read_markdown_partial(fd: BinaryIO) -> Tuple[str, Meta, Iterable[str]]:
 re_toml = re.compile(r"^\+\+\+[ \t]*\n(.+?)\n\+\+\+[ \t]*\n$", re.DOTALL)
 
 
-def read_whole(fd: TextIO) -> Tuple[str, Meta]:
+def read_whole(fd: TextIO) -> Tuple[str, dict[str, Any]]:
     """
     Parse lines front matter from a file header.
 
@@ -105,7 +104,7 @@ def read_whole(fd: TextIO) -> Tuple[str, Meta]:
     return "yaml", yaml_codec.loads(content)
 
 
-def read_string(content: str) -> Tuple[str, Meta]:
+def read_string(content: str) -> Tuple[str, dict[str, Any]]:
     """
     Parse lines front matter from a file header.
 

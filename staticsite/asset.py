@@ -1,37 +1,29 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
-from .page import Page
-from .render import RenderedFile
-import os
+
+from .page import SourcePage
+from .render import RenderedElement, RenderedFile
 
 if TYPE_CHECKING:
     from .site import Site
-    from .utils.typing import Meta
-    from .file import File
-    from .contents import Dir
 
 
-class Asset(Page):
+class Asset(SourcePage):
+    """
+    A static asset, copied as is
+    """
     TYPE = "asset"
 
-    def __init__(self, site: Site, src: File, meta: Meta, dir: Dir, name: str):
-        super().__init__(site=site, src=src, meta=meta, dir=dir)
+    def __init__(self, site: Site, *, name: str, **kw):
+        super().__init__(site, **kw)
+        self.date = site.localized_timestamp(self.src.stat.st_mtime)
+        self.title = name
+        self.asset = True
+        self.draft = False
+        self.indexed = False
         self.name = name
-        self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        self.meta["title"] = name
-        self.meta["site_url"] = dir.meta["site_url"]
-        self.meta["site_path"] = os.path.join(dir.meta["site_path"], name)
-        self.meta["build_path"] = self.meta["site_path"].lstrip("/")
-        self.meta["asset"] = True
-        self.meta["draft"] = False
-        self.meta["indexed"] = False
+        self.ready_to_render = True
 
-    def validate(self):
-        # Disable the default page validation: the constructor does all that is
-        # needed
-        pass
-
-    def render(self, **kw):
-        return {
-            self.meta["build_path"]: RenderedFile(self.src),
-        }
+    def render(self, **kw) -> RenderedElement:
+        return RenderedFile(self.src)

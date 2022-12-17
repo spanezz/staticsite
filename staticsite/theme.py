@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional, Union, Sequence, Dict, Set
+from typing import List, Optional, Union, Sequence, Dict, Set, Any
 import jinja2
 import markupsafe
 import os
@@ -9,8 +9,6 @@ import logging
 from collections import defaultdict
 from .page import Page, PageNotFoundError
 from .utils import front_matter, arrange
-from .utils.typing import Meta
-from .metadata import Metadata
 from .file import File
 from . import toposort
 
@@ -29,11 +27,11 @@ class Loader:
         # Sequence of search paths to use to resolve theme names
         self.search_paths = search_paths
         # Configurations by name
-        self.configs: Dict[str, Meta] = {}
+        self.configs: Dict[str, dict[str, Any]] = {}
         # Dependency graph of themes
         self.deps: Dict[str, Set[str]] = defaultdict(set)
 
-    def load(self, name: str) -> List[Meta]:
+    def load(self, name: str) -> List[dict[str, Any]]:
         """
         Load the configuration of the given theme and all its dependencies.
 
@@ -44,7 +42,7 @@ class Loader:
         sorted_names = toposort.sort(self.deps)
         return [self.configs[name] for name in sorted_names]
 
-    def load_legacy(self, path: str) -> List[Meta]:
+    def load_legacy(self, path: str) -> List[dict[str, Any]]:
         """
         Same as load, but start with a path to an initial theme
         """
@@ -88,7 +86,7 @@ class Loader:
 
         raise ThemeNotFoundError(f"Theme {name!r} not found in {self.search_paths!r}")
 
-    def load_config(self, root: str, name: str) -> Meta:
+    def load_config(self, root: str, name: str) -> dict[str, Any]:
         """
         Load the configuration for the given named theme
         """
@@ -158,7 +156,7 @@ class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
 
 
 class Theme:
-    def __init__(self, site, name, configs: List[Meta]):
+    def __init__(self, site, name, configs: List[dict[str, Any]]):
         # Site object
         self.site = site
 
@@ -171,9 +169,6 @@ class Theme:
 
         # Jinja2 Environment
         self.jinja2 = None
-
-        # Cached list of metadata that are templates for other metadata
-        self.metadata_templates: Optional[List[Metadata]] = None
 
         # Compute template lookup paths
         self.template_lookup_paths: List[str] = []
@@ -205,7 +200,7 @@ class Theme:
 
         # Merge theme metadata
         meta_keys = frozenset(("image_sizes",))
-        self.meta: Meta = {}
+        self.meta: dict[str, Any] = {}
         for config in self.configs:
             for key in config.keys() & meta_keys:
                 self.meta[key] = config[key]
@@ -291,9 +286,8 @@ class Theme:
         """
         Load static assets
         """
-        meta = dict(self.site.content_roots[0].meta)
-        meta["asset"] = True
-        meta["site_path"] = site_path = os.path.join(meta["site_path"], self.site.settings.STATIC_PATH)
+        site_path = os.path.join(self.site.root.site_path, self.site.settings.STATIC_PATH)
+        meta = {"asset": True}
 
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
@@ -301,34 +295,20 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            fmeta = dict(meta)
-            fmeta["site_path"] = os.path.join(site_path, name)
             # TODO: make this a child of the previously scanned static
+            meta["site_path"] = os.path.join(site_path, name)
             self.site.scan_tree(
                 src=File.with_stat(name, root),
-                meta=fmeta,
+                meta=meta,
             )
 
         # Load assets from theme directories
+        meta["site_path"] = site_path
         for path in self.theme_static_dirs:
             self.site.scan_tree(
                 src=File.with_stat("", os.path.abspath(path)),
                 meta=meta,
             )
-
-    def precompile_metadata_templates(self, meta: Meta):
-        """
-        Precompile all the elements of the given metadata that are jinja2
-        template strings
-        """
-        if self.metadata_templates is None:
-            self.metadata_templates = [m for m in self.site.metadata.values() if m.type == "jinja2"]
-        for metadata in self.metadata_templates:
-            val = meta.get(metadata.name)
-            if val is None:
-                continue
-            if isinstance(val, str):
-                meta[metadata.name] = self.jinja2.from_string(val)
 
     def jinja2_basename(self, val: str) -> str:
         return os.path.basename(val)
@@ -404,17 +384,18 @@ class Theme:
             return ""
 
     @jinja2.pass_context
-    def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False) -> str:
+    def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False, static=False) -> str:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
         cur_page = context.get("page")
+        # print(f"Theme.jinja2_url_for {cur_page=!r}")
         if cur_page is None:
             log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
             return ""
 
         try:
-            return cur_page.url_for(arg, absolute=absolute)
+            return cur_page.url_for(arg, absolute=absolute, static=static)
         except PageNotFoundError as e:
             log.warn("%s:%s: %s", cur_page, context.name, e)
             return ""

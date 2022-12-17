@@ -1,14 +1,18 @@
 from __future__ import annotations
-from typing import Union, Any, List, Tuple, Set, Dict, Optional
-from .. import page
-import heapq
+
 import contextlib
-import functools
-import time
+import datetime
+import heapq
+import io
 import logging
 import os
+import time
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
+
 import pytz
-import datetime
+
+if TYPE_CHECKING:
+    from ..page import page
 
 log = logging.getLogger("utils")
 
@@ -55,18 +59,19 @@ def timings(fmtstr, *args, **kw):
     The log entry is passed an extra command at the beginning with the elapsed
     time in floating point seconds.
     """
-    start = time.perf_counter()
+    start = time.perf_counter_ns()
     yield
-    end = time.perf_counter()
-    log.info(fmtstr, end - start, *args, extra=kw)
+    end = time.perf_counter_ns()
+    log.info(fmtstr, (end - start) / 1_000_000_000, *args, extra=kw)
 
 
 def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, Dict]:
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """
-    from .. import Page
     import jinja2
+
+    from ..page import Page
     if val in (None, True, False) or isinstance(val, (int, float)):
         return val
     elif isinstance(val, str):
@@ -85,29 +90,6 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
         return str(val)
 
 
-class lazy:
-    """
-    Mark a function as a lazy property.
-
-    The first time the property is run, it is replaced by the value it
-    computed, and turned into a normal member.
-    """
-    # from: https://stackoverflow.com/questions/3012421/python-memoising-deferred-lookup-property-decorator
-    # see also: https://docs.python.org/3/howto/descriptor.html
-
-    def __init__(self, fget):
-        self.fget = fget
-        functools.update_wrapper(self, fget)
-
-    def __get__(self, obj, cls=None):
-        if obj is None:
-            return self
-
-        value = self.fget(obj)
-        setattr(obj, self.fget.__name__, value)
-        return value
-
-
 @contextlib.contextmanager
 def open_dir_fd(path, dir_fd=None):
     """
@@ -118,6 +100,15 @@ def open_dir_fd(path, dir_fd=None):
         yield res
     finally:
         os.close(res)
+
+
+def open_in_dir(name: str, *args, dir_fd: int, **kw):
+    """
+    Open a file contained in this directory
+    """
+    def _file_opener(fname, flags):
+        return os.open(fname, flags, dir_fd=dir_fd)
+    return io.open(name, *args, opener=_file_opener, **kw)
 
 
 def arrange(pages: List[page.Page], sort: str, limit: Optional[int] = None) -> List[page.Page]:

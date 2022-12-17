@@ -1,19 +1,25 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict, Set
-from staticsite import Page, Feature
-from staticsite.page import PageNotFoundError
-from staticsite.utils import front_matter
-from staticsite.archetypes import Archetype
-from staticsite.contents import ContentDir
-from staticsite.utils.typing import Meta
-from urllib.parse import urlparse, urlunparse
-import jinja2
-import markupsafe
-import re
-import os
+
 import io
-import markdown
 import logging
+import os
+import re
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple, Type
+from urllib.parse import urlparse, urlunparse
+
+import jinja2
+import markdown
+import markupsafe
+
+from staticsite.feature import Feature
+from staticsite.archetypes import Archetype
+from staticsite.node import Path
+from staticsite.page import FrontMatterPage, Page, PageNotFoundError
+from staticsite.utils import front_matter
+
+if TYPE_CHECKING:
+    from staticsite import file, fstree
+    from staticsite.node import Node
 
 log = logging.getLogger("markdown")
 
@@ -82,7 +88,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         site_path = self.substituted.get(parsed.path)
         if site_path is not None:
             try:
-                return self.page.site.pages[site_path], parsed
+                return self.page.site.find_page(site_path), parsed
             except KeyError:
                 log.warn("%s: url %s resolved via cache to %s which does not exist in the site. Cache out of date?",
                          self.page, url, site_path)
@@ -95,7 +101,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
             return None, parsed
 
         # Cache the page site_path
-        self.substituted[url] = page.meta["site_path"]
+        self.substituted[url] = page.site_path
 
         return page, parsed
 
@@ -153,6 +159,9 @@ class MarkdownPages(Feature):
 
         self.render_cache = self.site.caches.get("markdown")
 
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [MarkdownPage]
+
     @jinja2.pass_context
     def jinja2_markdown(self, context, mdtext):
         return markupsafe.Markup(self.render_snippet(context.parent["page"], mdtext))
@@ -185,10 +194,7 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         rendered = self.markdown.convert("\n".join(body))
 
-        rendered = self.site.metadata.on_contents_rendered(
-                page, rendered,
-                render_type=render_type,
-                external_links=self.link_resolver.external_links)
+        page.rendered_external_links.update(self.link_resolver.external_links)
 
         self.render_cache.put(cache_key, {
             "mtime": page.src.stat.st_mtime,
@@ -211,54 +217,65 @@ class MarkdownPages(Feature):
         self.markdown.reset()
         return self.markdown.convert(content)
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
+    def load_dir(
+            self,
+            node: Node,
+            directory: fstree.Tree,
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (kwargs, src) in files.items():
             if not fname.endswith(".md"):
                 continue
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
-            if fname not in ("index.md", "README.md"):
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname[:-3])
-            else:
-                meta["site_path"] = sitedir.meta["site_path"]
-
             try:
-                fm_meta, body = self.load_file_meta(sitedir, src, fname)
+                fm_meta, body = self.load_file_meta(directory, fname)
             except Exception as e:
                 log.warn("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
                 log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
                 continue
 
-            meta.update(fm_meta)
+            kwargs.update(fm_meta)
 
-            page = MarkdownPage(self.site, src, meta=meta, dir=sitedir, feature=self, body=body)
+            if (directory_index := fname in ("index.md", "README.md")):
+                path = Path()
+            else:
+                path = Path((fname[:-3],))
+
+            # print("CREAT", fname, directory_index)
+            page = node.create_source_page(
+                    page_cls=MarkdownPage,
+                    src=src,
+                    feature=self,
+                    front_matter=fm_meta,
+                    body=body,
+                    directory_index=directory_index,
+                    path=path,
+                    **kwargs)
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
-    def load_dir_meta(self, sitedir: ContentDir):
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        src = sitedir.files.get("index.md")
-        if src is None:
-            return
+        if (src := directory.files.get("index.md")) is None:
+            return None
 
         try:
-            meta, body = self.load_file_meta(sitedir, src, "index.md")
+            meta, body = self.load_file_meta(directory, "index.md")
         except Exception as e:
             log.debug("%s: failed to parse front matter", src.relpath, exc_info=e)
             log.warn("%s: failed to parse front matter", src.relpath)
         else:
             return meta
 
-    def load_file_meta(self, sitedir, src, fname) -> Tuple[Meta, List[str]]:
+    def load_file_meta(self, directory: fstree.Tree, fname: str) -> tuple[dict[str, Any], list[str]]:
         """
         Load metadata for a file.
 
@@ -267,23 +284,31 @@ class MarkdownPages(Feature):
         # Read the contents
 
         # Parse separating front matter and markdown content
-        with sitedir.open(fname, src, "rb") as fd:
-            fmt, meta, body = front_matter.read_markdown_partial(fd)
+        with directory.open(fname, "rb") as fd:
+            return self.read_file_meta(fd)
 
-            body = list(body)
+    def read_file_meta(self, fd: BinaryIO) -> tuple[dict[str, Any], list[str]]:
+        """
+        Load metadata for a file.
 
-            # Remove leading empty lines
+        Returns the metadata and the markdown lines for the rest of the file
+        """
+        fmt, meta, body = front_matter.read_markdown_partial(fd)
+
+        body = list(body)
+
+        # Remove leading empty lines
+        while body and not body[0]:
+            body.pop(0)
+
+        # Read title from first # title if not specified in metadata
+        if not meta.get("title", ""):
+            if body and body[0].startswith("# "):
+                meta["title"] = body.pop(0)[2:].strip()
+
+            # Remove leading empty lines again
             while body and not body[0]:
                 body.pop(0)
-
-            # Read title from first # title if not specified in metadata
-            if not meta.get("title", ""):
-                if body and body[0].startswith("# "):
-                    meta["title"] = body.pop(0)[2:].strip()
-
-                # Remove leading empty lines again
-                while body and not body[0]:
-                    body.pop(0)
 
         return meta, body
 
@@ -329,19 +354,136 @@ class MarkdownArchetype(Archetype):
         return archetype_meta, post_body
 
 
-class MarkdownPage(Page):
+class MarkdownPage(FrontMatterPage):
+    """
+    Markdown sources
+
+    Markdown files have a `.md` extension and are prefixed by
+    [front matter metadata](../front-matter.md).
+
+    The flavour of markdown is what's supported by
+    [python-markdown](http://pythonhosted.org/Markdown/) with the
+    [Extra](http://pythonhosted.org/Markdown/extensions/extra.html),
+    [CodeHilite](http://pythonhosted.org/Markdown/extensions/code_hilite.html)
+    and [Fenced Code Blocks](http://pythonhosted.org/Markdown/extensions/fenced_code_blocks.html)
+    extensions, and is quite close to
+    [GitHub Flavored Markdown](https://github.github.com/gfm/) or
+    [GitLab Markdown](https://docs.gitlab.com/ee/user/markdown.html).
+
+    `staticsite` adds an extra internal plugin to Python-Markdown to postprocess
+    the page contents to adjust internal links to guarantee that they point where
+    they should.
+
+    Adding a horizontal rule *using underscores* (3 or more underscores), creates a
+    page fold. When rendering the page inline, such as in a blog index page, or in
+    RSS/Atom syndication, the content from the horizontal rule onwards will not be
+    shown.
+
+    If you want to add a horizontal rule without introducing a page fold, use a
+    sequence of three or more asterisks (`***`) or dashes (`---`) instead.
+
+
+    ## Linking to other pages
+
+    Pages can link to other pages via normal Markdown links (`[text](link)`).
+
+    Links that start with a `/` will be rooted at the top of the site contents.
+
+    Relative links are resolved relative to the location of the current page first,
+    and failing that relative to its parent directory, and so on until the root of
+    the site.
+
+    For example, if you have `blog/2016/page.md` that contains a link like
+    `![a photo](images/photo.jpg)`, the link will point to the first of this
+    options that will be found:
+
+    1. `blog/2016/images/photo.jpg`
+    2. `blog/images/photo.jpg`
+    3. `images/photo.jpg`
+
+    This allows one to organise pages pointing to other pages or assets without needing
+    to worry about where they are located in the site.
+
+    You can link to other Markdown pages with the `.md` extension
+    ([like GitHub does](https://help.github.com/articles/relative-links-in-readmes/))
+    or without, as if you were editing a wiki.
+
+    ## Page metadata
+
+    The front matter of the post can be written in
+    [TOML](https://github.com/toml-lang/toml),
+    [YAML](https://en.wikipedia.org/wiki/YAML) or
+    [JSON](https://en.wikipedia.org/wiki/JSON), just like in
+    [Hugo](https://gohugo.io/content/front-matter/).
+
+    Use `---` delimiters to mark YAML front matter. Use `+++` delimiters to mark
+    TOML front matter. Use `{`…`}` delimiters to mark JSON front matter.
+
+    You can also usea [triple-backticks code blocks](https://python-markdown.github.io/extensions/fenced_code_blocks/)
+    first thing in the file to mark front matter, optionally specifying `yaml`,
+    `toml`, or `json` as the format (yaml is used as a default):
+
+    ~~~~{.markdown}
+    ```yaml
+    date: 2020-01-02 12:00
+    ```
+    # My page
+    ~~~~
+
+    If you want to start your markdown content with a code block, add an empty line
+    at the top: front matter detection only happens on the first line of the file.
+
+    See [page metadata](../metadata.md) for a list of commonly used metadata.
+
+
+    ## Extra settings
+
+    Markdown rendering makes use of these settings:
+
+    ### `MARKDOWN_EXTENSIONS`
+
+    Extensions used by python-markdown. Defaults to:
+
+    ```py
+    MARKDOWN_EXTENSIONS = [
+        "markdown.extensions.extra",
+        "markdown.extensions.codehilite",
+        "markdown.extensions.fenced_code",
+    ]
+    ```
+
+    ### `MARKDOWN_EXTENSION_CONFIGS`
+
+    Configuration for markdown extensions. Defaults to:
+
+    ```py
+    MARKDOWN_EXTENSION_CONFIGS = {
+        'markdown.extensions.extra': {
+            'markdown.extensions.footnotes': {
+                # See https://github.com/spanezz/staticsite/issues/13
+                'UNIQUE_IDS': True,
+            },
+        },
+    }
+    ```
+
+    ## Rendering markdown pages
+
+    Besides the usual `meta`, markdown pages have also these attributes:
+
+    * `page.contents`: the Markdown contents rendered as HTML. You may want to use
+      it with the [`|safe` filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#safe)
+      to prevent double escaping
+    """
     TYPE = "markdown"
 
     # Match a Markdown divider line
     re_divider = re.compile(r"^____+$")
 
-    def __init__(self, *args, feature: MarkdownPages, body: List[str], **kw):
-        super().__init__(*args, **kw)
-
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
-
+    def __init__(self, *, feature: MarkdownPages, body: List[str], **kw):
         # Indexed by default
-        self.meta.setdefault("indexed", True)
+        kw.setdefault("indexed", True)
+        super().__init__(**kw)
 
         # Shared markdown environment
         self.mdpages = feature
@@ -364,6 +506,16 @@ class MarkdownPage(Page):
             self.content_has_split = False
             self.body_start = body
             self.body_rest = None
+
+    def front_matter_changed(self, fd: BinaryIO) -> bool:
+        """
+        Check if the front matter read from fd is different from ours
+        """
+        # TODO: refactor read_file_meta to skip reading the body if we don't
+        # need it, but still parse until the title if the front matter doesn't
+        # have one
+        meta, body = self.mdpages.read_file_meta(fd)
+        return self.front_matter != meta
 
     def check(self, checker):
         self.render()

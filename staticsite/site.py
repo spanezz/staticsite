@@ -1,26 +1,140 @@
 from __future__ import annotations
-from typing import Optional, Dict, List, Set, Any, Union, TYPE_CHECKING
-import os
+
 import datetime
-import pytz
-import dateutil.parser
-import re
-from collections import defaultdict
-from .settings import Settings
-from .cache import Caches, DisabledCaches
-from .utils import lazy, open_dir_fd, timings
-from . import metadata
-from .metadata import Metadata
-from . import contents
-from .file import File
 import logging
+import os
+import re
+from functools import cached_property
+from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Union
+
+import dateutil.parser
+import pytz
+
+from . import fields, fstree
+from .cache import Caches, DisabledCaches
+from .file import File
+from .settings import Settings
+from .utils import timings
 
 if TYPE_CHECKING:
+    from .node import Node
     from .page import Page
 
 log = logging.getLogger("site")
 
-Meta = Dict[str, Any]
+
+class Path(tuple[str]):
+    """
+    Path in the site, split into components
+    """
+    re_pathsep = re.compile(re.escape(os.sep) + "+")
+
+    @property
+    def head(self) -> str:
+        """
+        Return the first element in the path
+        """
+        return self[0]
+
+    @property
+    def tail(self) -> Path:
+        """
+        Return the Path after the first element
+        """
+        # TODO: check if it's worth making this a cached_property
+        return Path(self[1:])
+
+    @property
+    def dir(self) -> Path:
+        """
+        Return the path with all components except last
+        """
+        return Path(self[:-1])
+
+    @property
+    def name(self) -> str:
+        """
+        Return the last component of the path
+        """
+        return self[-1]
+
+    @classmethod
+    def from_string(cls, path: str) -> "Path":
+        """
+        Split a string into a path
+        """
+        return cls(cls.re_pathsep.split(path.strip(os.sep)))
+
+
+class SiteElement(fields.FieldContainer):
+    """
+    Common fields for site elements
+    """
+    site_name = fields.Inherited(doc="""
+        Name of the site. If missing, it defaults to the title of the toplevel index
+        page. If missing, it defaults to the name of the content directory.
+    """)
+
+    site_url = fields.Inherited(doc="""
+        Base URL for the site, used to generate an absolute URL to the page.
+    """)
+
+    author = fields.Inherited(doc="""
+        A string with the name of the author for this page.
+
+        SITE_AUTHOR is used as a default if found in settings.
+
+        If not found, it defaults to the current user's name.
+    """)
+
+    template_copyright = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `copyright` when it is not explicitly set.
+
+        The template context will have `page` available, with the current page. The
+        result of the template will not be further escaped, so you can use HTML markup
+        in it.
+
+        If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
+    """)
+
+    template_title = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `title` when it is not explicitly set.
+
+        The template context will have `page` available, with the current page.
+        The result of the template will not be further escaped, so you can use
+        HTML markup in it.
+    """)
+
+    template_description = fields.TemplateInherited(doc="""
+        jinja2 template to use to generate `description` when it is not
+        explicitly set.
+
+        The template context will have `page` available, with the current page.
+        The result of the template will not be further escaped, so you can use
+        HTML markup in it.
+    """)
+
+    asset = fields.Inherited(doc="""
+        If set to True for a file (for example, by a `file:` pattern in a directory
+        index), the file is loaded as a static asset, regardless of whether a feature
+        would load it.
+
+        If set to True in a directory index, the directory and all its subdirectories
+        are loaded as static assets, without the interventions of features.
+    """)
+
+
+class RootNodeFields(metaclass=fields.FieldsMetaclass):
+    """
+    Extra fields for the root node
+    """
+    title = fields.Field(doc="""
+        Title used as site name.
+
+        This only makes sense for the root node of the site hierarchy, and
+        takes the value from the title of the root index page. If set, and the
+        site name is not set by other means, it is used to give the site a name.
+    """)
 
 
 class Site:
@@ -29,8 +143,18 @@ class Site:
 
     This class tracks all resources associated with a site.
     """
+    # Identifiers for steps of the site loading
+    LOAD_STEP_INITIAL = 0
+    LOAD_STEP_FEATURES = 1
+    LOAD_STEP_THEME = 2
+    LOAD_STEP_DIRS = 3
+    LOAD_STEP_CONTENTS = 4
+    LOAD_STEP_ORGANIZE = 5
+    LOAD_STEP_GENERATE = 6
+    LOAD_STEP_CROSSREFERENCE = 7
+    LOAD_STEP_ALL = LOAD_STEP_CROSSREFERENCE
 
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):
         from .feature import Features
 
         # Site settings
@@ -44,33 +168,6 @@ class Site:
         if self.settings.CONTENT is None:
             self.settings.CONTENT = "."
 
-        # Repository of metadata descriptions
-        self.metadata = metadata.Registry(self)
-
-        # Site pages indexed by site_path
-        self.pages: Dict[str, Page] = {}
-
-        # Site pages indexed by src.relpath
-        self.pages_by_src_relpath: Dict[str, Page] = {}
-
-        # Metadata for which we add pages to pages_by_metadata
-        self.tracked_metadata: Set[str] = set()
-
-        # Site pages that have the given metadata
-        self.pages_by_metadata: Dict[str, List[Page]] = defaultdict(list)
-
-        # Set to True when feature constructors have been called
-        self.stage_features_constructed = False
-
-        # Set to True when content directories have been scanned
-        self.stage_content_directory_scanned = False
-
-        # Set to True when content directories have been loaded
-        self.stage_content_directory_loaded = False
-
-        # Set to True when pages have been analyzed
-        self.stage_pages_analyzed = False
-
         # Site time zone
         if settings.TIMEZONE is None:
             from dateutil.tz import tzlocal
@@ -79,7 +176,23 @@ class Site:
             self.timezone = pytz.timezone(settings.TIMEZONE)
 
         # Current datetime
-        self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
+        self.generation_time: datetime.datetime
+        if generation_time is not None:
+            self.generation_time = generation_time.astimezone(self.timezone)
+        else:
+            self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
+
+        # Filesystem trees scanned by the site
+        self.fstrees: dict[str, fstree.Tree] = {}
+
+        # Root directory of the site
+        self.root: Node
+
+        # Last load step performed
+        self.last_load_step = self.LOAD_STEP_INITIAL
+
+        # Set to True when feature constructors have been called
+        self.stage_features_constructed = False
 
         # Theme used to render pages
         self.theme = None
@@ -100,156 +213,80 @@ class Site:
         # Content root for the website
         self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
 
-        # List of content roots scanned for this site
-        self.content_roots: List[contents.Dir] = []
+        # Cache with last build information
+        self.build_cache = self.caches.get("build")
 
-        # Register well-known metadata
-        self.register_metadata(metadata.MetadataDefault("template", default="page.html", doc="""
-Template used to render the page. Defaults to `page.html`, although specific
-pages of some features can default to other template names.
+        # Source page footprints from a previous build
+        self.previous_source_footprints: dict[str, dict[str, Any]]
 
-Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-"""))
-
-        self.register_metadata(metadata.MetadataDate("date", doc="""
-Publication date for the page.
-
-A python datetime object, timezone aware. If the date is in the future when
-`ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
---draft` to also consider draft pages.
-
-If missing, the modification time of the file is used.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("site_name", doc="""
-Name of the site. If missing, it defaults to the title of the toplevel index
-page. If missing, it defaults to the name of the content directory.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("site_url", doc="""
-Base URL for the site, used to generate an absolute URL to the page.
-"""))
-
-        self.register_metadata(metadata.MetadataSitePath("site_path", doc="""
-Where a content directory appears in the site.
-
-By default, is is the `site_path` of the parent directory, plus the directory
-name.
-
-If you are publishing the site at `/prefix` instead of the root of the domain,
-override this with `/prefix` in the content root.
-"""))
-
-        self.register_metadata(metadata.MetadataDraft("draft", doc="""
-If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
-
-It defaults to false, or true if `page.meta.date` is in the future.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("author", doc="""
-            A string with the name of the author for this page.
-
-            SITE_AUTHOR is used as a default if found in settings.
-
-            If not found, it defaults to the current user's name.
-        """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_copyright", template_for="copyright",
-                               doc="""
-If set instead of `copyright`, it is a jinja2 template used to generate the
-copyright information.
-
-The template context will have `page` available, with the current page. The
-result of the template will not be further escaped, so you can use HTML markup
-in it.
-
-If missing, defaults to `"© {{page.meta.date.year}} {{page.meta.author}}"`
-"""))
-        self.register_metadata(metadata.MetadataInherited("copyright", doc="""
-            A string with the copyright information for this page.
-        """))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_title", template_for="title", doc="""
-If set instead of `title`, it is a jinja2 template used to generate the title.
-The template context will have `page` available, with the current page. The
-result of the template will not be further escaped, so you can use HTML markup
-in it.
-"""))
-        self.register_metadata(metadata.MetadataInherited("title", doc="""
-The page title.
-
-If omitted:
-
- * the first title found in the page contents is used.
- * in the case of jinaj2 template pages, the contents of `{% block title %}`,
-   if present, is rendered and used.
- * if the page has no title, the title of directory indices above this page is
-   inherited.
- * if still no title can be found, the site name is used as a default.
-"""))
-        self.register_metadata(metadata.MetadataTemplateInherited("template_description", template_for="description",
-                               doc="""
-If set instead of `description`, it is a jinja2 template used to generate the
-description. The template context will have `page` available, with the current
-page. The result of the template will not be further escaped, so you can use
-HTML markup in it.
-"""))
-        self.register_metadata(metadata.MetadataInherited("description", doc="""
-The page description. If omitted, the page will have no description.
-"""))
-
-        self.register_metadata(Metadata("build_path", doc="""
-Relative path in the build directory for the file that will be written
-when this page gets rendered. For example, `blog/2016/example.md`
-generates `blog/2016/example/index.html`.
-
-If found in pages front matter, it is ignored, and is always computed at page
-load time.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("asset", doc="""
-If set to True for a file (for example, by a `file:` pattern in a directory
-index), the file is loaded as a static asset, regardless of whether a feature
-would load it.
-
-If set to True in a directory index, the directory and all its subdirectories
-are loaded as static assets, without the interventions of features.
-"""))
-
-        self.register_metadata(metadata.MetadataInherited("aliases", doc="""
-Relative paths in the destination directory where the page should also show up.
-[Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
-existing links when moving a page to a different location.
-"""))
-
-        self.register_metadata(metadata.MetadataIndexed("indexed", doc="""
-If true, the page appears in [directory indices](dir.md) and in
-[page filter results](page_filter.md).
-
-It defaults to true at least for [Markdown](markdown.md),
-[reStructuredText](rst.rst), and [data](data.md) pages.
-"""))
-
-    def register_metadata(self, metadata: Metadata):
+    def clear_footprints(self):
         """
-        Add a well-known metadata description to the metadata registry.
+        Clear the previous-build page footprints.
 
-        This can be called safely by feature constructors and features
-        `load_dir_meta` methods.
-
-        After directory metadata have been loaded, this method should not be
-        called anymore.
+        This is used when something failed during a build, and the build
+        directory is left in an inconsistent state
         """
-        if self.stage_content_directory_scanned:
-            log.warn("register_metadata called after content directory has been scanned")
-        self.metadata.add(metadata)
+        self.footprints = {}
+        self.build_cache.put("footprints", self.footprints)
 
-    @lazy
+    def save_footprints(self):
+        """
+        Save the current set of page footprints as reference for a future build
+
+        This is used after a build completed successfully, to allow incremental
+        future builds
+        """
+        self.footprints = {
+            page.src.relpath: page.footprint for page in self.iter_pages(source_only=True)
+        }
+        self.build_cache.put("footprints", self.footprints)
+        for feature in self.features.ordered():
+            self.build_cache.put(f"footprint_{feature.name}", feature.get_footprint())
+
+    def deleted_source_pages(self) -> Sequence[str]:
+        """
+        Return a sequence with the source relpaths of pages deleted since the
+        last run
+        """
+        # Entries are popped from previous_source_footprints while pages are
+        # loaded, so if any remain it means that those pages have been deleted
+        return self.previous_source_footprints.keys()
+
+    def find_page(self, path: str):
+        """
+        Find a page by absolute path in the site
+        """
+        return self.root.resolve_path(path)
+
+    def iter_pages(self, static: bool = True, source_only: bool = False) -> Generator[Page, None, None]:
+        """
+        Iterate all pages in the site
+        """
+        if static:
+            prune = ()
+        else:
+            prune = (
+                self.root.lookup(Path.from_string(self.settings.STATIC_PATH)),
+            )
+        yield from self.root.iter_pages(prune=prune, source_only=source_only)
+
+    @cached_property
     def archetypes(self) -> "archetypes.Archetypes":
         """
         Archetypes defined in the site
         """
         from .archetypes import Archetypes
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
+
+    def load_features(self):
+        """
+        Load default features
+        """
+        self.features.load_default_features()
+        # We can now load source files footprint, before theme loads assets
+        self.previous_source_footprints = self.build_cache.get("footprints")
+        if self.previous_source_footprints is None:
+            self.previous_source_footprints = {}
 
     def load_theme(self):
         """
@@ -275,33 +312,37 @@ It defaults to true at least for [Markdown](markdown.md),
 
         self.theme.load()
 
-    def _settings_to_meta(self) -> Meta:
+        # We not have the final feature list, we can load old feature footprints
+        for feature in self.features.ordered():
+            footprint = self.build_cache.get(f"footprint_{feature.name}")
+            feature.set_previous_footprint(footprint if footprint is not None else {})
+
+    def _settings_to_meta(self) -> dict[str, Any]:
         """
         Build directory metadata based on site settings
         """
-        meta = {
-            "template_copyright": "© {{page.meta.date.year}} {{page.meta.author}}",
+        res = {
+            "template_copyright": "© {{meta.date.year}} {{meta.author}}",
         }
         if self.settings.SITE_URL:
-            meta["site_url"] = self.settings.SITE_URL
+            res["site_url"] = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            meta["site_path"] = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
+            res["site_path"] = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
         else:
-            meta["site_path"] = "/"
+            res["site_path"] = "/"
         if self.settings.SITE_NAME:
-            meta["site_name"] = self.settings.SITE_NAME
+            res["site_name"] = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
-            meta["author"] = self.settings.SITE_AUTHOR
+            res["author"] = self.settings.SITE_AUTHOR
         else:
             import getpass
             import pwd
             user = getpass.getuser()
             pw = pwd.getpwnam(user)
-            meta["author"] = pw.pw_gecos.split(",")[0]
+            res["author"] = pw.pw_gecos.split(",")[0]
 
-        log.debug("Initial settings: %r", meta)
-
-        return meta
+        log.debug("Initial settings: %r", res)
+        return res
 
     def scan_content(self):
         """
@@ -315,117 +356,146 @@ It defaults to true at least for [Markdown](markdown.md),
             log.info("%s: content tree does not exist", self.content_root)
             return
 
-        src = File.with_stat("", os.path.abspath(self.content_root))
-        self.scan_tree(src, meta=self._settings_to_meta())
-        self.theme.scan_assets()
-        self.stage_content_directory_scanned = True
+        # Create root node
+        self.root = type("RootNode", (RootNodeFields, self.features.get_node_class(),), {})(self, "")
 
-    def scan_tree(self, src: File, meta: Meta):
+        # Scan the main content filesystem
+        src = File.with_stat("", os.path.abspath(self.content_root))
+        tree = self.scan_tree(src, self._settings_to_meta(), toplevel=True)
+
+        # Here we may have loaded more site-wide metadata from the root's index
+        # page: incorporate them
+        for k, v in tree.meta.items():
+            if k in self.root._fields:
+                setattr(self.root, k, v)
+
+        if self.root.site_name is None:
+            # If we still have no idea of site names, use the root directory's name
+            self.root.site_name = os.path.basename(tree.src.abspath)
+
+        # Scan asset trees from themes
+        self.theme.scan_assets()
+
+        # Notify Features that contents have been scanned
+        self.features.contents_scanned()
+
+    def scan_tree(self, src: File, meta: dict[str, Any], toplevel: bool = False) -> fstree.Tree:
         """
-        Scan the contents of the given directory, mounting them under the given
-        site_path
+        Scan the contents of the given directory, adding it to self.fstrees
         """
-        # site_path: str = "", asset: bool = False):
-        # TODO: site_path becomes meta.site_root, asset becomes meta.asset?
-        root = contents.Dir.create(self, src, meta=meta)
-        root.site = self
-        self.content_roots.append(root)
-        with open_dir_fd(src.abspath) as dir_fd:
-            root.scan(dir_fd)
+        if meta.get("asset"):
+            tree = fstree.AssetTree(self, src)
+        elif toplevel:
+            tree = fstree.RootPageTree(self, src)
+        else:
+            tree = fstree.PageTree(self, src)
+        tree.meta.update(meta)
+        with tree.open_tree():
+            tree.scan()
+        self.fstrees[src.abspath] = tree
+        return tree
 
     def load_content(self):
         """
         Load site page and assets from scanned content roots.
         """
-        if not self.stage_content_directory_scanned:
-            log.warn("load_content called before site features have been loaded")
+        # Turn scanned filesytem information into site structure
+        for abspath, tree in self.fstrees.items():
+            # print(f"* tree {tree.src.relpath}")
+            # tree.print()
+            # Create root node based on site_path
+            if (site_path := tree.meta.get("site_path")) and site_path.strip("/"):
+                # print(f"Site.load_content populate at {site_path} from {tree.src.abspath}")
+                node = self.root.at_path(Path.from_string(site_path))
+            else:
+                # print(f"Site.load_content populate at <root> from {tree.src.abspath}")
+                node = self.root
 
-        for root in self.content_roots:
-            with open_dir_fd(root.src.abspath) as dir_fd:
-                root.load(dir_fd)
+            # Populate node from tree
+            with tree.open_tree():
+                tree.populate_node(node)
 
-        self.stage_content_directory_loaded = True
-
-    def load(self):
+    def load(self, until: int = LOAD_STEP_ALL):
         """
         Load all site components
         """
-        with timings("Loaded default features in %fs"):
-            self.features.load_default_features()
-        with timings("Loaded theme in %fs"):
-            self.load_theme()
-        with timings("Scanned contents in %fs"):
-            self.scan_content()
-        with timings("Loaded contents in %fs"):
-            self.load_content()
-
-    def add_page(self, page: Page):
-        """
-        Add a Page object to the site.
-
-        Use this only when the normal Site content loading functions are not
-        enough. This is exported as a public function mainly for the benefit of
-        unit tests.
-        """
-        from .page import PageValidationError
-        try:
-            page.validate()
-        except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
+        if until <= self.last_load_step:
             return
 
-        if not self.settings.DRAFT_MODE and page.meta["draft"]:
-            log.info("%s: page is still a draft: skipping", page)
+        if self.last_load_step < self.LOAD_STEP_FEATURES:
+            with timings("Loaded default features in %fs"):
+                self.load_features()
+            self.last_load_step = self.LOAD_STEP_FEATURES
+        if until <= self.last_load_step:
             return
 
-        # Mount page by site path
-        site_path = page.meta["site_path"]
-        old = self.pages.get(site_path)
-        if old is not None:
-            if old.TYPE == "asset" and page.TYPE == "asset":
-                pass
-            # elif old.TYPE == "dir" and page.TYPE not in ("dir", "asset"):
-            #     pass
-            else:
-                log.warn("%s: replacing page %s", page, old)
-        self.pages[site_path] = page
+        if self.last_load_step < self.LOAD_STEP_THEME:
+            with timings("Loaded theme in %fs"):
+                self.load_theme()
+            self.last_load_step = self.LOAD_STEP_THEME
+        if until <= self.last_load_step:
+            return
 
-        # Mount page by src.relpath
-        # Skip pages derived from other pages, or they would overwrite them
-        if page.src is not None and not page.created_from:
-            self.pages_by_src_relpath[page.src.relpath] = page
+        if self.last_load_step < self.LOAD_STEP_DIRS:
+            with timings("Scanned contents in %fs"):
+                self.scan_content()
+            self.last_load_step = self.LOAD_STEP_DIRS
+        if until <= self.last_load_step:
+            return
 
-        # Also group pages by tracked metadata
-        for tracked in page.meta.keys() & self.tracked_metadata:
-            self.pages_by_metadata[tracked].append(page)
+        if self.last_load_step < self.LOAD_STEP_CONTENTS:
+            with timings("Loaded contents in %fs"):
+                self.load_content()
+            self.last_load_step = self.LOAD_STEP_CONTENTS
+        if until <= self.last_load_step:
+            return
 
-    def analyze(self):
+        if self.last_load_step < self.LOAD_STEP_ORGANIZE:
+            with timings("Organized contents in %fs"):
+                self._organize()
+            self.last_load_step = self.LOAD_STEP_ORGANIZE
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_GENERATE:
+            with timings("Generated new contents in %fs"):
+                self._generate()
+            self.last_load_step = self.LOAD_STEP_GENERATE
+        if until <= self.last_load_step:
+            return
+
+        if self.last_load_step < self.LOAD_STEP_CROSSREFERENCE:
+            with timings("Cross-referenced contents in %fs"):
+                self._crossreference()
+            self.last_load_step = self.LOAD_STEP_CROSSREFERENCE
+        if until <= self.last_load_step:
+            return
+
+    def _organize(self):
         """
-        Iterate through all Pages in the site to build aggregated content like
-        taxonomies and directory indices.
-
-        Call this after all Pages have been added to the site.
+        Call features to organize the pages that have just been loaded from
+        sources
         """
-        if not self.stage_content_directory_loaded:
-            log.warn("analyze called before loading site contents")
-
-        # Run metadata on_analyze functions
-        for page in self.pages.values():
-            if page.meta.get("asset", False):
-                continue
-            self.metadata.on_analyze(page)
-
-        # Add missing pages_by_metadata entries in case no matching page were
-        # found for some of them
-        for key in self.tracked_metadata:
-            if key not in self.pages_by_metadata:
-                self.pages_by_metadata[key] = []
-
-        # Call finalize hook on features
+        # Call analyze hook on features
         for feature in self.features.ordered():
-            feature.finalize()
+            feature.organize()
 
-        self.stage_pages_analyzed = True
+    def _generate(self):
+        """
+        Call features to generate new pages
+        """
+        # Call analyze hook on features
+        for feature in self.features.ordered():
+            feature.generate()
+
+    def _crossreference(self):
+        """
+        Call features to cross-reference pages after the site structure has
+        been finalized
+        """
+        # Call analyze hook on features
+        for feature in self.features.ordered():
+            feature.crossreference()
 
     def slugify(self, text):
         """

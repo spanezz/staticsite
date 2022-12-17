@@ -1,10 +1,13 @@
 from __future__ import annotations
-from typing import Optional
-from staticsite import Site, Settings
-from staticsite.utils import timings
-import sys
-import os
+
 import logging
+import os
+import sys
+from typing import Optional
+
+from staticsite.site import Site
+from staticsite.settings import Settings
+from staticsite.utils import timings
 
 log = logging.getLogger("command")
 
@@ -59,8 +62,6 @@ class Command:
         site = Site(settings=self.settings)
         with timings("Loaded site in %fs"):
             site.load()
-        with timings("Analysed site tree in %fs"):
-            site.analyze()
 
         # If --debug=list was requested
         if self.args.debug == "list":

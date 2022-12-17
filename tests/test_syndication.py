@@ -1,8 +1,9 @@
 from __future__ import annotations
-from unittest import TestCase
-import re
-from . import utils as test_utils
 
+import re
+from unittest import TestCase
+
+from . import utils as test_utils
 
 BASE_FILES = {
     "blog/post1.rst": """
@@ -20,7 +21,7 @@ date: 2016-04-17 10:00
 }
 
 
-class TestSyndication(TestCase):
+class TestSyndication(test_utils.MockSiteTestMixin, TestCase):
     def test_simple(self):
         files = dict(BASE_FILES)
         files["blog.md"] = """---
@@ -33,31 +34,32 @@ syndication: yes
 
 text
 """
+        with self.site(files) as mocksite:
+            blog, post1, post2, widget, rss, atom = mocksite.page(
+                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
-        with test_utils.testsite(files) as site:
-            blog = site.pages["/blog"]
-            post1 = site.pages["/blog/post1"]
-            post2 = site.pages["/blog/post2"]
-            widget = site.pages["/blog/widget"]
-            rss = site.pages["/blog/index.rss"]
-            atom = site.pages["/blog/index.atom"]
+            synd = blog.syndication
+            self.assertEqual(synd.pages, [post2, post1])
 
-            synd = blog.meta["syndication"]
-            self.assertEqual(synd["pages"], [post2, post1])
-
-            self.assertNotIn("syndication", post1.meta)
-            self.assertEqual(post1.meta["related"], {
+            self.assertIsNone(post1.syndication)
+            self.assertEqual(post1.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertNotIn("syndication", post2.meta)
-            self.assertEqual(post2.meta["related"], {
+
+            self.assertIsNone(post2.syndication)
+            self.assertEqual(post2.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertEqual(rss.meta["pages"], synd["pages"])
-            self.assertEqual(atom.meta["pages"], synd["pages"])
-            self.assertNotIn("syndication", widget.meta)
+
+            self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(rss.title, blog.title)
+
+            self.assertEqual(atom.pages, synd.pages)
+            self.assertEqual(atom.title, blog.title)
+
+            self.assertIsNone(widget.syndication)
 
     def test_add_to_false(self):
         files = dict(BASE_FILES)
@@ -65,6 +67,7 @@ text
 date: 2016-04-16 10:23:00+02:00
 pages: blog/*
 syndication:
+  title: Syndication
   add_to: no
 ---
 
@@ -72,22 +75,22 @@ syndication:
 
 text
 """
-        with test_utils.testsite(files) as site:
-            blog = site.pages["/blog"]
-            post1 = site.pages["/blog/post1"]
-            post2 = site.pages["/blog/post2"]
-            widget = site.pages["/blog/widget"]
-            rss = site.pages["/blog/index.rss"]
-            atom = site.pages["/blog/index.atom"]
+        with self.site(files) as mocksite:
+            blog, post1, post2, widget, rss, atom = mocksite.page(
+                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
-            synd = blog.meta["syndication"]
-            self.assertEqual(synd["pages"], [post2, post1])
+            synd = blog.syndication
+            self.assertEqual(synd.pages, [post2, post1])
 
-            self.assertNotIn("syndication", post1.meta)
-            self.assertNotIn("syndication", post2.meta)
-            self.assertNotIn("syndication", widget.meta)
-            self.assertEqual(rss.meta["pages"], synd["pages"])
-            self.assertEqual(atom.meta["pages"], synd["pages"])
+            self.assertIsNone(post1.syndication)
+            self.assertIsNone(post2.syndication)
+            self.assertIsNone(widget.syndication)
+
+            self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(rss.title, "Syndication")
+
+            self.assertEqual(atom.pages, synd.pages)
+            self.assertEqual(atom.title, "Syndication")
 
     def test_complex(self):
         files = dict(BASE_FILES)
@@ -103,33 +106,28 @@ syndication:
 
 text
 """
+        with self.site(files) as mocksite:
+            blog, post1, post2, widget, rss, atom = mocksite.page(
+                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
 
-        with test_utils.testsite(files) as site:
-            blog = site.pages["/blog"]
-            post1 = site.pages["/blog/post1"]
-            post2 = site.pages["/blog/post2"]
-            widget = site.pages["/blog/widget"]
-            rss = site.pages["/blog/index.rss"]
-            atom = site.pages["/blog/index.atom"]
+            synd = blog.syndication
+            self.assertEqual(synd.pages, [post2])
 
-            synd = blog.meta["syndication"]
-            self.assertEqual(synd["pages"], [post2])
-
-            self.assertNotIn("syndication", post1.meta)
-            self.assertEqual(post1.meta["related"], {
+            self.assertIsNone(post1.syndication)
+            self.assertEqual(post1.related, {
                 "rss_feed": rss,
                 "atom_feed": atom,
             })
-            self.assertNotIn("syndication", post2.meta)
-            self.assertNotIn("syndication", widget.meta)
-            self.assertEqual(rss.meta["pages"], synd["pages"])
-            self.assertEqual(atom.meta["pages"], synd["pages"])
+            self.assertIsNone(post2.syndication)
+            self.assertIsNone(widget.syndication)
+            self.assertEqual(rss.pages, synd.pages)
+            self.assertEqual(atom.pages, synd.pages)
 
     def test_images(self):
         self.maxDiff = None
         files = {
             "index.md": """---
-date: 2020-01-01 12:00:00+02:00
+date: 2019-01-01 12:00:00+02:00
 syndication: yes
 pages: "blog/*"
 template: blog.html
@@ -138,7 +136,7 @@ template: blog.html
 # Blog
 """,
             "blog/post.md": """---
-date: 2020-01-01 12:00:00+02:00
+date: 2019-01-01 12:00:00+02:00
 ---
 
 # Title
@@ -156,31 +154,31 @@ static char * bottom_active_xpm[] = {
 "@@@@@@@@@@@@@@@@@@@@@@@@"};
 """,
         }
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
+                "",
+                "index.rss",
+                "index.atom",
+                "archive",
+                "blog",
+                "blog/post",
+                "blog/images",
+                "blog/images/photo.xpm",
+            ))
 
-        with test_utils.testsite(files) as site:
-            self.assertCountEqual([x for x in site.pages.keys() if not x.startswith("/static/")], [
-                "/",
-                "/index.rss",
-                "/index.atom",
-                "/archive",
-                "/blog",
-                "/blog/post",
-                "/blog/images/photo.xpm",
-            ])
-
-            post = site.pages["/"]
-            rendered = post.render()["index.html"].buf
+            post = mocksite.page("")
+            rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
 
-            post = site.pages["/blog/post"]
-            rendered = post.render()["blog/post/index.html"].buf
+            post = mocksite.page("blog/post")
+            rendered = post.render().buf
             mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
             self.assertTrue(mo)
             self.assertEqual(mo.group(1), "/blog/images")
 
-            rss = site.pages["/index.rss"]
-            rendered = rss.render()["index.rss"].buf
+            rss = mocksite.page("index.rss")
+            rendered = rss.render().buf
             mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")

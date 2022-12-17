@@ -76,7 +76,7 @@
     </div>
     <ul class="list-group list-group-flush">
       {% for category_page in series.most_recent(5) %}
-        {% with info = category_page.series_info() %}
+        {% with info = category_page.series_info %}
         <li class="list-group-item">
           <a href="{{url_for(category_page)}}">{{info.title}}</a>
         </li>

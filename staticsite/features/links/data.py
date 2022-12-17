@@ -87,19 +87,19 @@ class LinkCollection:
         for tag, card in self.card.most_common():
             if card < 4:
                 break
-            selected = {l.url: l for l in self.links.values() if tag in l.tags}
+            selected = {link.url: link for link in self.links.values() if tag in link.tags}
             if len(selected) == len(self.links):
                 continue
-            seen.update(l.url for l in selected.values())
+            seen.update(link.url for link in selected.values())
             groups.append((tag, LinkCollection(selected)))
 
         groups.sort()
 
-        others = {l.url: l for l in self.links.values() if l.url not in seen}
+        others = {link.url: link for link in self.links.values() if link.url not in seen}
         if others:
             # If all elements in other share a tag, use that instead of None
             other_tag = None
-            common_tags = set.intersection(*(l.tags for l in others.values()))
+            common_tags = set.intersection(*(link.tags for link in others.values()))
             if common_tags:
                 other_tag = sorted(common_tags)[0]
             groups.append((other_tag, LinkCollection(others)))

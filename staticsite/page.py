@@ -1,20 +1,40 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Any, Optional, Union, List
-import os
+
+import datetime
+import enum
 import logging
+import os
+from functools import cached_property
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Type
 from urllib.parse import urlparse, urlunparse
-from .utils import lazy
-from .utils.typing import Meta
-from .render import RenderedString
+
 import jinja2
 import markupsafe
 
+from . import fields
+from .site import SiteElement
+from .node import Path
+from .render import RenderedString
+
 if TYPE_CHECKING:
-    from .site import Site
     from .file import File
-    from .contents import Dir
+    from .node import Node
+    from .render import RenderedElement
+    from .site import Site
 
 log = logging.getLogger("page")
+
+
+class ChangeExtent(enum.IntEnum):
+    """
+    What kind of changes happened on this page since last build
+    """
+    # Page is unchanged
+    UNCHANGED = 0
+    # Page changed in contents but not in metadata
+    CONTENTS = 1
+    # Page changed completely
+    ALL = 2
 
 
 class PageNotFoundError(Exception):
@@ -32,7 +52,202 @@ class PageMissesFieldError(PageValidationError):
         super().__init__(page, f"missing required field meta.{field}")
 
 
-class Page:
+class TemplateField(fields.Field):
+    """
+    Template name or compiled template, taking its default value from Page.TEMPLATE
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if self.name not in page.__dict__:
+            if (val := getattr(page, "TEMPLATE", None)):
+                page.__dict__[self.name] = val
+                return val
+            else:
+                return self.default
+        else:
+            return page.__dict__[self.name]
+
+
+class PageDate(fields.Date):
+    """
+    Make sure, on page load, that the element is a valid aware datetime object
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (date := page.__dict__.get(self.name)) is None:
+            if (src := page.src) is not None and src.stat is not None:
+                date = page.site.localized_timestamp(src.stat.st_mtime)
+            else:
+                date = page.site.generation_time
+            page.__dict__[self.name] = date
+        return date
+
+
+class Draft(fields.Bool):
+    """
+    Make sure the draft exists and is a bool, computed according to the date
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            value = page.date > page.site.generation_time
+            page.__dict__[self.name] = value
+            return value
+        else:
+            return value
+
+
+class RenderedField(fields.Field):
+    """
+    Make sure the draft exists and is a bool, computed according to the date
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            if (tpl := getattr(page, "template_" + self.name, None)):
+                # If a template exists, render it
+                # TODO: remove meta= and make it compatibile again with stable staticsite
+                value = markupsafe.Markup(tpl.render(meta=page.meta, page=page))
+            else:
+                value = self.default
+            self.__dict__[self.name] = value
+        return value
+
+
+class RenderedTitleField(fields.Field):
+    """
+    Make sure the draft exists and is a bool, computed according to the date
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            if (tpl := getattr(page, "template_" + self.name, None)):
+                # If a template exists, render it
+                # TODO: remove meta= and make it compatibile again with stable staticsite
+                value = markupsafe.Markup(tpl.render(meta=page.meta, page=page))
+            else:
+                value = page.site_name
+            self.__dict__[self.name] = value
+        return value
+
+
+class Related:
+    """
+    Container for related pages
+    """
+    def __init__(self, page: Page):
+        self.page = page
+        self.pages: dict[str, Union[str, Page]] = {}
+
+    def __repr__(self):
+        return f"Related({self.page!r}, {self.pages!r}))"
+
+    def __str__(self):
+        return self.pages.__str__()
+
+    def __getitem__(self, name: str):
+        if (val := self.pages.get(name)) is None:
+            pass
+        elif isinstance(val, str):
+            val = self.page.resolve_path(val)
+            self.pages[name] = val
+        return val
+
+    def __setitem__(self, name: str, page: Union[str, Page]):
+        if (old := self.pages.get(name)) is not None and old != self.page:
+            log.warn("%s: attempt to set related.%s to %r but it was already %r",
+                     self, name, page, old)
+            return
+        self.pages[name] = page
+
+    def to_dict(self):
+        return self.pages
+
+    def get(self, *args):
+        return self.pages.get(*args)
+
+    def keys(self):
+        return self.pages.keys()
+
+    def values(self):
+        return self.pages.values()
+
+    def items(self):
+        return self.pages.items()
+
+    def __eq__(self, obj: Any) -> bool:
+        if isinstance(obj, Related):
+            return self.page == obj.page and self.pages == obj.pages
+        elif isinstance(obj, dict):
+            return self.pages == obj
+        elif obj is None:
+            return False
+        else:
+            return False
+
+
+class RelatedField(fields.Field):
+    """
+    Contains related pages indexed by name
+    """
+    def __get__(self, page: Page, type: Type = None) -> Any:
+        if (value := page.__dict__.get(self.name)) is None:
+            value = Related(page)
+            page.__dict__[self.name] = value
+        return value
+
+    def __set__(self, page: Page, value: Any) -> None:
+        related = self.__get__(page)
+        related.pages.update(value)
+
+
+class Meta:
+    """
+    Read-only dict accessor to Page's fields
+    """
+    def __init__(self, page: Page):
+        self._page = page
+
+    def __getitem__(self, key: str) -> Any:
+        if (field := self._page._fields.get(key)) is None:
+            raise KeyError(key)
+
+        if field.internal:
+            raise KeyError(key)
+
+        try:
+            res = getattr(self._page, key)
+            # print(f"{self._page!r} meta[{key!r}] = {res!r}")
+            return res
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: str):
+        if (field := self._page._fields.get(key)) is None:
+            return False
+        if field.internal:
+            return False
+
+        return getattr(self._page, key) is not None
+
+    def get(self, key: str, default: Any = None) -> Any:
+        if (field := self._page._fields.get(key)) is None:
+            return default
+        if field.internal:
+            return default
+
+        return getattr(self._page, key, default)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Return a dict with all the values of this Meta, including the inherited
+        ones
+        """
+        res = {}
+        for key, field in self._page._fields.items():
+            if field.internal:
+                continue
+            if (val := getattr(self._page, key)) is not None:
+                res[key] = val
+        return res
+
+
+class Page(SiteElement):
     """
     A source page in the site.
 
@@ -41,101 +256,141 @@ class Page:
     """
     # Page type
     TYPE: str
+    # Default page template
+    TEMPLATE = "page.html"
+
+    date = PageDate(doc="""
+        Publication date for the page.
+
+        A python datetime object, timezone aware. If the date is in the future when
+        `ssite` runs, the page will be consider a draft and will be ignored. Use `ssite
+        --draft` to also consider draft pages.
+
+        If missing, the modification time of the file is used.
+    """)
+
+    template = TemplateField(doc="""
+        Template used to render the page. Defaults to `page.html`, although specific
+        pages of some features can default to other template names.
+
+        Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+    """)
+
+    copyright = RenderedField(doc="""
+        Copyright notice for the page. If missing, it's generated using
+        `template_copyright`.
+    """)
+
+    title = RenderedTitleField(doc="""
+        Page title.
+
+        If missing:
+
+         * it is generated via template_title, if present
+         * the first title found in the page contents is used.
+         * in the case of jinaj2 template pages, the contents of `{% block title %}`,
+           if present, is rendered and used.
+         * if the page has no title, the title of directory indices above this page is
+           inherited.
+         * if still no title can be found, the site name is used as a default.
+    """)
+
+    description = RenderedField(doc="""
+        The page description. If omitted, the page will have no description.
+    """)
+
+    indexed = fields.Bool(default=False, doc="""
+        If true, the page appears in [directory indices](dir.md) and in
+        [page filter results](page_filter.md).
+
+        It defaults to true at least for [Markdown](markdown.md),
+        [reStructuredText](rst.rst), and [data](data.md) pages.
+    """)
+
+    related = RelatedField(structure=True, doc="""
+        Dict of pages related to this page.
+
+        Dict values will be resolved as pages.
+
+        If there are no related pages, `page.meta.related` will be guaranteed to exist
+        as an empty dictionary.
+
+        Features can add to this. For example, [syndication](syndication.md) can add
+        `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
+    """)
 
     def __init__(
-            self,
-            site: Site,
-            src: Optional[File],
-            meta: Meta,
-            dir: Optional[Dir],
-            created_from: Optional["Page"] = None):
-        # Site for this page
-        self.site = site
-        # contents.Dir which loaded this page, set at load time for non-autogenerated pages
-        self.dir: Optional[Dir] = dir
-        # If this page is autogenerated from another one, parent is the generating page
-        self.created_from: Optional["Page"] = created_from
-        # File object for this page on disk, or None if this is an autogenerated page
-        self.src = src
-        # A dictionary with the page metadata. See the README for documentation
-        # about its contents.
-        self.meta: Meta = meta
+            self, site: Site, *,
+            node: Node,
+            search_root_node: Node,
+            dst: str,
+            leaf: bool,
+            directory_index: bool = False,
+            **kw):
+        # Set these fields early as they are used by __str__/__repr__
+        # Node where this page is installed in the rendered structure
+        self.node: Node = node
+
+        super().__init__(site, **kw)
+
+        # Read-only, dict-like accessor to the page's fields
+        self.meta: Meta = Meta(self)
+        # Node to use as initial node for find_pages
+        self.search_root_node: Node = search_root_node
+        # Name of the file used to render this page on build
+        self.dst: str = dst
+        # Set to True if this page is a directory index. This affects the root
+        # of page lookups relative to this page
+        self.directory_index: bool = directory_index
+        # Set to True if this page is shown as a file url, False if it's shown
+        # as a path url
+        self.leaf: bool = leaf
 
         # True if this page can render a short version of itself
         self.content_has_split = False
 
-    @classmethod
-    def create_from(cls, page: "Page", meta: Meta, **kw):
+        # External links found when rendering the page
+        self.rendered_external_links: set[str] = set()
+
+        # Check the existence of other mandatory fields
+        if self.site_url is None:
+            raise PageMissesFieldError(self, "site_url")
+
+    @property
+    def site_path(self) -> str:
         """
-        Generate this page derived from an existing one
+        Accessor to support the migration away from meta['build_path']
         """
-        # If page is the root dir, it has dir set to None, and we can use it as dir
-        return cls(page.site, page.src, meta, dir=page.dir or page, created_from=page, **kw)
+        # return self.meta["build_path"]
+        if self.leaf:
+            return os.path.join(self.node.compute_path(), self.dst)
+        else:
+            return self.node.compute_path()
+
+    @property
+    def build_path(self) -> str:
+        """
+        Accessor to support the migration away from meta['build_path']
+        """
+        return os.path.join(self.node.compute_path(), self.dst)
 
     def add_related(self, name: str, page: "Page"):
         """
         Set the page as meta.related.name
         """
-        related = self.meta.get("related")
-        if related is None:
-            self.meta["related"] = related = {}
-        old = related.get(name)
-        if old is not None:
-            log.warn("%s: attempt to set related.%s to %r but it was already %r",
-                     self, name, page, old)
-            return
-        related[name] = page
+        self.related[name] = page
 
-    def validate(self):
-        """
-        Enforce common meta invariants.
-
-        Performs validation and completion of metadata.
-
-        Raises PageValidationError or one of its subclasses of the page should
-        not be added to the site.
-        """
-        # Run metadata on load functions
-        self.site.metadata.on_load(self)
-
-        # TODO: move more of this to on_load functions?
-
-        # title must exist
-        if "title" not in self.meta:
-            self.meta["title"] = self.meta["site_name"]
-
-        # Check the existence of other mandatory fields
-        if "site_url" not in self.meta:
-            raise PageMissesFieldError(self, "site_url")
-
-        # Make sure site_path exists and is relative
-        site_path = self.meta.get("site_path")
-        if site_path is None:
-            raise PageMissesFieldError(self, "site_path")
-
-        # Make sure build_path exists and is relative
-        build_path = self.meta.get("build_path")
-        if build_path is None:
-            raise PageMissesFieldError(self, "build_path")
-        if build_path.startswith("/"):
-            self.meta["build_path"] = build_path.lstrip("/")
-
-    @lazy
+    @cached_property
     def page_template(self):
         template = self.meta["template"]
         if isinstance(template, jinja2.Template):
             return template
         return self.site.theme.jinja2.get_template(template)
 
-    @lazy
-    def redirect_template(self):
-        return self.site.theme.jinja2.get_template("redirect.html")
-
     @property
     def date_as_iso8601(self):
         from dateutil.tz import tzlocal
-        ts = self.meta.get("date", None)
-        if ts is None:
+        if (ts := self.date) is None:
             return None
         # TODO: Take timezone from config instead of tzlocal()
         tz = tzlocal()
@@ -161,14 +416,16 @@ class Page:
         If not set, default root to the path of the containing directory for
         this page
         """
-        if root is None and self.dir is not None and self.dir.src.relpath:
-            root = self.dir.src.relpath
+        if root is None:
+            root = self.search_root_node
+
+        # print(f"find_pages {root=}, {path=!r}")
 
         from .page_filter import PageFilter
         f = PageFilter(self.site, path, limit, sort, root=root, **kw)
-        return f.filter(self.site.pages.values())
+        return f.filter()
 
-    def resolve_path(self, target: Union[str, "Page"]) -> "Page":
+    def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
         """
         Return a Page from the site, given a source or site path relative to
         this page.
@@ -179,59 +436,23 @@ class Page:
         if isinstance(target, Page):
             return target
 
-        # Absolute URLs are resolved as is
+        # print(f"Page.resolve_path {self=!r}, {target=!r}")
+        # Find the start node for the search
         if target.startswith("/"):
-            target_relpath = os.path.normpath(target)
-
-            # Try by source path
-            # src.relpath is indexed without leading / in site
-            res = self.site.pages_by_src_relpath.get(target_relpath.lstrip("/"))
-            if res is not None:
-                return res
-
-            # Try by site path
-            res = self.site.pages.get(target_relpath)
-            if res is not None:
-                return res
-
-            # Try adding STATIC_PATH as a compatibility with old links
-            target_relpath = os.path.join(self.site.settings.STATIC_PATH, target_relpath.lstrip("/"))
-
-            # Try by source path
-            res = self.site.pages_by_src_relpath.get(target_relpath)
-            if res is not None:
-                log.warn("%s: please use %s instead of %s", self, target_relpath, target)
-                return res
-
-            log.warn("%s: cannot resolve path %s", self, target)
-            raise PageNotFoundError(f"cannot resolve absolute path {target}")
-
-        # Relative urls are tried based on all path components of this page,
-        # from the bottom up
-
-        # First using the source paths
-        if self.src is not None:
-            if self.dir is None:
-                root = "/"
-            else:
-                root = os.path.join("/", self.dir.src.relpath)
-
-            target_relpath = os.path.normpath(os.path.join(root, target))
-            res = self.site.pages_by_src_relpath.get(target_relpath.lstrip("/"))
-            if res is not None:
-                return res
-
-        # Finally, using the site paths
-        if self.dir is None:
-            root = self.meta["site_path"]
+            root = self.site.root
+            if static:
+                root = root.lookup(Path.from_string(self.site.settings.STATIC_PATH))
         else:
-            root = self.dir.meta["site_path"]
-        target_relpath = os.path.normpath(os.path.join(root, target))
-        res = self.site.pages.get(target_relpath)
-        if res is not None:
-            return res
+            root = self.search_root_node
+        path = Path.from_string(target)
+        # print(f"Page.resolve_path  start from {root.compute_path()!r}, path={path!r}")
 
-        raise PageNotFoundError(f"cannot resolve `{target!r}` relative to `{self!r}`")
+        dst = root.lookup_page(path)
+        # print(f"Page.resolve_path  found {dst=!r}")
+        if dst is None:
+            raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
+        else:
+            return dst
 
     def resolve_url(self, url: str) -> str:
         """
@@ -266,67 +487,70 @@ class Page:
              parsed.params, parsed.query, parsed.fragment)
         )
 
-    def url_for(self, target: Union[str, "Page"], absolute=False) -> str:
+    def url_for(self, target: Union[str, "Page"], absolute=False, static=False) -> str:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
+        # print(f"Page.url_for {self=!r}, {target=!r}")
         page: "Page"
 
         if isinstance(target, str):
-            page = self.resolve_path(target)
+            page = self.resolve_path(target, static=static)
         else:
             page = target
 
+        # print(f"Page.url_for {self=!r}, {target=!r}, {page=!r}")
+
         # If the destination has a different site_url, generate an absolute url
-        if self.meta["site_url"] != page.meta["site_url"]:
+        if self.site_url != page.site_url:
             absolute = True
 
         if absolute:
-            site_url = page.meta["site_url"].rstrip("/")
-            return f"{site_url}{page.meta['site_path']}"
+            site_url = page.site_url.rstrip("/")
+            return f"{site_url}/{page.site_path}"
         else:
-            return page.meta["site_path"]
+            return "/" + page.site_path
 
     def get_img_attributes(
             self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
         """
-        Get <img> attributes into the given dict
+        Given a path to an image page, return a dict with <img> attributes that
+        can be used to refer to it
         """
         img = self.resolve_path(image)
 
         res = {
-            "alt": img.meta["title"],
+            "alt": img.title,
         }
 
         if type is not None:
             # If a specific version is required, do not use srcset
-            rel = img.meta["related"].get(type, img)
-            res["width"] = str(rel.meta["width"])
-            res["height"] = str(rel.meta["height"])
+            rel = img.related.get(type, img)
+            res["width"] = str(rel.width)
+            res["height"] = str(rel.height)
             res["src"] = self.url_for(rel, absolute=absolute)
         else:
             # https://developers.google.com/web/ilt/pwa/lab-responsive-images
             # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
             srcsets = []
-            for rel in img.meta["related"].values():
-                if rel.TYPE != "image":
+            for rel in img.related.values():
+                if rel.TYPE not in ("image", "scaledimage"):
                     continue
 
-                width = rel.meta.get("width")
-                if width is None:
+                if (width := rel.width) is None:
                     continue
 
                 url = self.url_for(rel, absolute=absolute)
                 srcsets.append(f"{markupsafe.escape(url)} {width}w")
 
             if srcsets:
-                width = img.meta["width"]
+                width = img.width
                 srcsets.append(f"{markupsafe.escape(self.url_for(img))} {width}w")
                 res["srcset"] = ", ".join(srcsets)
                 res["src"] = self.url_for(img, absolute=absolute)
             else:
-                res["width"] = str(img.meta["width"])
-                res["height"] = str(img.meta["height"])
+                res["width"] = str(img.width)
+                res["height"] = str(img.height)
                 res["src"] = self.url_for(img, absolute=absolute)
 
         return res
@@ -334,20 +558,20 @@ class Page:
     def check(self, checker):
         pass
 
-    def target_relpaths(self):
-        res = [self.meta["build_path"]]
-        for relpath in self.meta.get("aliases", ()):
-            res.append(os.path.join(relpath, "index.html"))
-        return res
-
     def __str__(self):
-        return self.meta["site_path"]
+        if hasattr(self, "src"):
+            return self.site_path
+        else:
+            return self.TYPE
 
     def __repr__(self):
-        if self.src:
-            return f"{self.TYPE}:{self.src.relpath}"
+        if hasattr(self, "src"):
+            if self.src:
+                return f"{self.TYPE}:{self.src.relpath}"
+            else:
+                return f"{self.TYPE}:auto:{self.site_path}"
         else:
-            return f"{self.TYPE}:auto:{self.meta['site_path']}"
+            return self.TYPE
 
     @jinja2.pass_context
     def html_full(self, context, **kw) -> str:
@@ -391,6 +615,8 @@ class Page:
         res = {
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
+            "site_path": self.site_path,
+            "build_path": self.build_path,
         }
         if self.src:
             res["src"] = {
@@ -399,18 +625,8 @@ class Page:
             }
         return res
 
-    def render(self, **kw):
-        res = {
-            self.meta["build_path"]: RenderedString(self.html_full(kw)),
-        }
-
-        aliases = self.meta.get("aliases", ())
-        if aliases:
-            for relpath in aliases:
-                html = self.render_template(self.redirect_template, template_args=kw)
-                res[os.path.join(relpath, "index.html")] = RenderedString(html)
-
-        return res
+    def render(self, **kw) -> RenderedElement:
+        return RenderedString(self.html_full(kw))
 
     def render_template(self, template: jinja2.Template, template_args: Dict[Any, Any] = None) -> str:
         """
@@ -419,10 +635,131 @@ class Page:
         if template_args is None:
             template_args = {}
         template_args["page"] = self
-        try:
-            return template.render(**template_args)
-        except jinja2.TemplateError as e:
-            log.error("%s: failed to render %s: %s", template.filename, self.src.relpath, e)
-            log.debug("%s: failed to render %s: %s", template.filename, self.src.relpath, e, exc_info=True)
-            # TODO: return a "render error" page? But that risks silent errors
-            return None
+        # try:
+        return template.render(**template_args)
+        # except jinja2.TemplateError as e:
+        #     log.error("%s: failed to render %s: %s",
+        #               template.filename, self.src.relpath if self.src else repr(self), e)
+        #     log.debug("%s: failed to render %s: %s",
+        #               template.filename, self.src.relpath if self.src else repr(self), e, exc_info=True)
+        #     # TODO: return a "render error" page? But that risks silent errors
+        #     return None
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        """
+        Check how much this page has changed since the last build
+        """
+        return ChangeExtent.UNCHANGED
+
+    @cached_property
+    def change_extent(self) -> ChangeExtent:
+        """
+        How much this page has changed since the last build
+        """
+        if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
+            raise RuntimeError("Page.change_extent referenced before running page crossreference stage")
+        return self._compute_change_extent()
+
+
+class SourcePage(Page):
+    """
+    Page loaded from site sources
+    """
+    draft = Draft(doc="""
+If true, the page is still a draft and will not appear in the destination site,
+unless draft mode is enabled.
+
+It defaults to false, or true if `meta.date` is in the future.
+""")
+
+    old_footprint = fields.Field(internal=True, doc="""
+        Cached footprint from the previous run, or None
+    """)
+
+    def __init__(
+            self, site: Site, *,
+            node: Node,
+            src: Optional[File] = None,
+            **kw):
+        super().__init__(site, parent=node, node=node, **kw)
+        self.src = src
+
+    def _compute_footprint(self) -> dict[str, Any]:
+        """
+        Return a dict with information that can be used to evaluate changes in
+        incremental builds
+        """
+        if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
+            raise RuntimeError("SourcePage._compute_footprint referenced before running page crossreference stage")
+        res = {
+            "mtime": self.src.stat.st_mtime,
+            "size": self.src.stat.st_size,
+        }
+        return res
+
+    @cached_property
+    def footprint(self) -> dict[str, Any]:
+        """
+        Dict with information that can be used to evaluate changes in
+        incremental builds
+        """
+        return self._compute_footprint()
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        res = super()._compute_change_extent()
+        if (old := self.old_footprint) is None:
+            return ChangeExtent.ALL
+        if old.get("mtime") >= self.footprint["mtime"] and old.get("size") == self.footprint["size"]:
+            return res
+        else:
+            return ChangeExtent.ALL
+
+
+class AutoPage(Page):
+    """
+    Autogenerated page
+    """
+    created_from = fields.Field(doc="""
+        Page that generated this page.
+
+        This is only set in autogenerated pages.
+    """)
+
+    def __init__(
+            self, site: Site, *,
+            created_from: Optional[Page] = None,
+            **kw):
+        if created_from is None:
+            raise RuntimeError("created_from is None in AutoPage")
+        super().__init__(site, parent=created_from, created_from=created_from, **kw)
+        # TODO: remove this
+        self.src = None
+
+
+class FrontMatterPage(SourcePage):
+    """
+    Page with a front matter in its sources
+    """
+    front_matter = fields.Field(internal=True, doc="""
+        Front matter as parsed by the source file
+    """)
+
+    def _compute_footprint(self) -> dict[str, Any]:
+        res = super()._compute_footprint()
+        fm = {}
+        for k, v in self.front_matter.items():
+            if isinstance(v, datetime.datetime):
+                fm[k] = v.strftime("%Y-%m-%d %H:%M:%S %Z")
+            else:
+                fm[k] = v
+        res["fm"] = fm
+        return res
+
+    def _compute_change_extent(self) -> ChangeExtent:
+        res = super()._compute_change_extent()
+        if res == ChangeExtent.UNCHANGED:
+            return res
+        if self.old_footprint is not None and self.footprint["fm"] == self.old_footprint.get("fm"):
+            return ChangeExtent.CONTENTS
+        else:
+            return ChangeExtent.ALL

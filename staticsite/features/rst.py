@@ -1,19 +1,24 @@
 from __future__ import annotations
-from typing import List, Tuple
-from staticsite import Page, Feature
-from staticsite.archetypes import Archetype
-from staticsite.utils import yaml_codec
-from staticsite.contents import ContentDir
-from staticsite.utils.typing import Meta
-from staticsite.file import File
-import docutils.io
+
+import io
+import logging
+import os
+from typing import TYPE_CHECKING, Any, List, Optional, BinaryIO, Tuple, Type
+
 import docutils.core
+import docutils.io
 import docutils.nodes
 import docutils.writers.html5_polyglot
 import jinja2
-import os
-import io
-import logging
+
+from staticsite.archetypes import Archetype
+from staticsite.feature import Feature
+from staticsite.node import Node, Path
+from staticsite.page import FrontMatterPage, Page
+from staticsite.utils import yaml_codec
+
+if TYPE_CHECKING:
+    from staticsite import file, fstree
 
 log = logging.getLogger("rst")
 
@@ -77,7 +82,10 @@ class RestructuredText(Feature):
         self.yaml_tags = {"files", "dirs"}
         self.yaml_tags_filled = False
 
-    def parse_rest(self, fd, remove_docinfo=True):
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [RstPage]
+
+    def parse_rest(self, fd: BinaryIO, remove_docinfo=True):
         """
         Parse a rest document.
 
@@ -86,8 +94,7 @@ class RestructuredText(Feature):
             * the doctree with the docinfo removed
         """
         # Parse input into doctree
-        doctree = docutils.core.publish_doctree(
-                fd, source_class=docutils.io.FileInput, settings_overrides={"input_encoding": "unicode"})
+        doctree = docutils.core.publish_doctree(fd, source_class=docutils.io.FileInput)
 
         doctree_scan = DoctreeScan(doctree, remove_docinfo=remove_docinfo)
 
@@ -122,61 +129,71 @@ class RestructuredText(Feature):
 
         return meta, doctree_scan
 
-    def load_dir_meta(self, sitedir: ContentDir):
+    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
-        index = sitedir.files.get("index.rst")
-        if index is None:
-            return
+        if "index.rst" not in directory.files:
+            return None
 
         # Parse to get at the front matter
-        with open(index.abspath, "rt") as fd:
+        with directory.open("index.rst", "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd, remove_docinfo=False)
 
         return meta
 
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
-        # Update the list of yaml tags with information from site.metadata
+    def load_dir(
+            self,
+            node: Node,
+            directory: fstree.Tree,
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         if not self.yaml_tags_filled:
-            for meta in self.site.metadata.values():
-                if meta.structure:
-                    self.yaml_tags.add(meta.name)
+            cls = self.site.features.get_page_class(RstPage)
+            for name, field in cls._fields.items():
+                if field.structure:
+                    self.yaml_tags.add(name)
             self.yaml_tags_filled = True
 
         taken: List[str] = []
         pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+        for fname, (kwargs, src) in files.items():
             if not fname.endswith(".rst"):
                 continue
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
-            if fname not in ("index.rst", "README.rst"):
-                meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname[:-4])
-            else:
-                meta["site_path"] = sitedir.meta["site_path"]
-
             try:
-                fm_meta, doctree_scan = self.load_file_meta(sitedir, src, fname)
+                fm_meta, doctree_scan = self.load_file_meta(directory, fname)
             except Exception as e:
                 log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
                 log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
                 continue
 
-            meta.update(fm_meta)
+            kwargs.update(fm_meta)
 
-            page = RstPage(self.site, src, meta=meta, dir=sitedir, feature=self, doctree_scan=doctree_scan)
+            if (directory_index := fname in ("index.rst", "README.rst")):
+                path = Path()
+            else:
+                path = Path((fname[:-4],))
+
+            page = node.create_source_page(
+                    page_cls=RstPage,
+                    src=src,
+                    feature=self,
+                    front_matter=fm_meta,
+                    doctree_scan=doctree_scan,
+                    directory_index=directory_index,
+                    path=path,
+                    **kwargs)
             pages.append(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
-    def load_file_meta(self, sitedir: ContentDir, src: File, fname: str) -> Tuple[Meta, DoctreeScan]:
+    def load_file_meta(self, directory: fstree.Tree, fname: str) -> Tuple[dict[str, Any], DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
-        with sitedir.open(fname, src, "rt") as fd:
+        with directory.open(fname, "rb") as fd:
             meta, doctree_scan = self.parse_rest(fd)
 
         return meta, doctree_scan
@@ -231,22 +248,89 @@ class RestArchetype(Archetype):
         return meta, rendered
 
 
-class RstPage(Page):
+class RstPage(FrontMatterPage):
+    """
+    RestructuredText files
+
+    RestructuredText files have a `.rst` extension and their metadata are taken
+    from docinfo information.
+
+    `staticsite` will postprocess the RestructuredText doctree to adjust internal
+    links to guarantee that they point where they should.
+
+
+    ## Linking to other pages
+
+    Pages can link to other pages via any of the normal reSt links.
+
+    Links that start with a `/` will be rooted at the top of the site contents.
+
+    Relative links are resolved relative to the location of the current page first,
+    and failing that relative to its parent directory, and so on until the root of
+    the site.
+
+    For example, if you have `blog/2016/page.rst` that contains a link to
+    `images/photo.jpg`, the link will point to the first of this
+    options that will be found:
+
+    1. `blog/2016/images/photo.jpg`
+    2. `blog/images/photo.jpg`
+    3. `images/photo.jpg`
+
+    This allows organising pages pointing to other pages or assets without needing
+    to worry about where they are located in the site.
+
+    You can link to other Markdown or RestructuredText pages with the `.md` or
+    `.rst` extension ([like GitHub does](https://help.github.com/articles/relative-links-in-readmes/))
+    or without, as if you were editing a wiki.
+
+
+    Page metadata
+    -------------
+
+    As in [Sphinx](http://www.sphinx-doc.org/en/stable/markup/misc.html#file-wide-metadata),
+    a field list near the top of the file is parsed as front matter and removed
+    from the generated files.
+
+    All [bibliographic fields](http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bibliographic-fields)
+    known to docutils are parsed according to their respective type.
+
+    All fields whose name matches a taxonomy defined in `TAXONOMY_NAMES`
+    [settings](../settings.md)_ are parsed as yaml, and expected to be a list of
+    strings, with the set of values (e.g. tags) of the given taxonomy for the
+    current page.
+
+    See [page metadata](../metadata.md) for a list of commonly used metadata.
+
+
+    ## Rendering reStructuredText pages
+    --------------------------------
+
+    Besides the usual `meta`, reStructuredText pages have also these attributes:
+
+    * `page.contents`: the reSt contents rendered as HTML. You may want to use
+      it with the [`|safe` filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#safe)
+      to prevent double escaping
+    """
     TYPE = "rst"
 
-    def __init__(self, *args, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
-        super().__init__(*args, **kw)
-
-        self.meta["build_path"] = os.path.join(self.meta["site_path"], "index.html")
-
+    def __init__(self, *, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
         # Indexed by default
-        self.meta.setdefault("indexed", True)
+        kw.setdefault("indexed", True)
+        super().__init__(**kw)
 
         # Shared RestructuredText environment
         self.rst = feature
 
         # Document doctree root node
         self.doctree_scan = doctree_scan
+
+    def front_matter_changed(self, fd: BinaryIO) -> bool:
+        """
+        Check if the front matter read from fd is different from ours
+        """
+        meta, doctree_scan = self.rst.parse_rest(fd)
+        return self.front_matter != meta
 
     def check(self, checker):
         self._render_page()

@@ -1,66 +1,137 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict
-from staticsite import Page, Feature
-from staticsite.contents import ContentDir
-from staticsite.render import RenderedFile
-from staticsite.utils.typing import Meta
-from staticsite.utils.images import ImageScanner
-from staticsite.metadata import Metadata
-from staticsite.render import RenderedElement
-import os
-import mimetypes
+
+import itertools
 import logging
+import mimetypes
+import os
+from typing import TYPE_CHECKING, Any, Optional, Type
+
+from staticsite import fields
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
+from staticsite.render import RenderedElement, RenderedFile
+from staticsite.utils.images import ImageScanner
 
 if TYPE_CHECKING:
-    from staticsite import File
+    from staticsite import file, scan
+    from staticsite.node import Node
 
 log = logging.getLogger("images")
 
 
-class MetadataImage(Metadata):
-    def __init__(self, images: "Images", *args, **kw):
-        super().__init__(*args, **kw)
-        # Store a reference to the Images feature
-        self.images = images
-
-    def on_analyze(self, page: Page):
-        val = page.meta.get(self.name)
-        if val is None:
-            val = self.images.by_related_site_path.get(page.meta["site_path"])
-            if val is not None:
-                page.meta[self.name] = val
-        elif isinstance(val, str):
-            val = page.resolve_path(val)
-            page.meta[self.name] = val
+def basename_no_ext(pathname: str) -> str:
+    """
+    Return the basename of pathname, without extension
+    """
+    return os.path.splitext(os.path.basename(pathname))[0]
 
 
-class Images(Feature):
+class ImageField(TrackedFieldMixin, fields.Field):
+    """
+    Image used for this post.
+
+    It is set to a path to an image file relative to the current page.
+
+    During the crossreference phase, it is resolved to the corresponding
+    [image page](images.md).
+
+    If not set, and an image exists with the same name as the page (besides the
+    extension), that image is used.
+    """
+    tracked_by = "images"
+
+
+class ImagePageMixin(metaclass=fields.FieldsMetaclass):
+    image = ImageField()
+    width = fields.Field(doc="""
+        Image width
+    """)
+    height = fields.Field(doc="""
+        Image height
+    """)
+
+
+class Images(PageTrackingMixin, Feature):
     """
     Handle images in content directory.
 
-    See doc/reference/images.md for details.
+    Files with an `image/*` mime type found in content directories are scanned for
+    metadata and used as image pages.
+
+    Their behaviour is similar to the one of static assets, but templates and other
+    staticsite facilities can make use of the metadata resolved.
+
+
+    ## Metadata extracted from images
+
+    These are the current metadata elements filled from image data, when available:
+
+    * `page.meta.width`: image width in pixels
+    * `page.meta.height`: image height in pixels
+    * `page.meta.lat`: latitude from EXIF tags, as a signed floating point number
+      of degrees
+    * `page.meta.lon`: longitude from EXIF tags, as a signed floating point number
+      of degrees
+    * `page.meta.title`: content of the `ImageDescription` EXIF tag
+    * `page.meta.author`: content of the `Artist` EXIF tag
+    * `page.meta.image_orientation`: content of the
+      [`ImageOrientation` EXIF tag](https://www.impulseadventure.com/photo/exif-orientation.html)
+
+
+    ## Image associated to another page
+
+    If you have an image sharing the file name with another page (for example, an
+    image called `example.jpg` next to a page called `example.md`), then the page
+    automatically gets a `page.meta.image` value pointing to the image.
+
+    You can use this, for example, to easily provide an image for blog posts.
+
+
+    ## Scaled versions of images
+
+    [Theme](../theme.md) configurations can specify a set of scaled versions of images
+    to generate:
+
+    ```yaml
+    # Scaled down widths of images that will be generated
+    image_sizes:
+      medium:
+        width: 600
+      small:
+        width: 480
+      thumbnail:
+        width: 128
+    ```
+
+    Given a `image.jpg` image file, this will generate `image-medium.jpg`,
+    `image-small.jpg` and `image-thumbnail.jpg`.
+
+    Using this feature, the [`img_for` template function](templates.md) will
+    automatically generate `srcset` attributes to let the browser choose which
+    version to load.
+
+    Scaled versions of the image will be available in the image's [`related`
+    field](../fields/related.md).
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
-        self.site.register_metadata(MetadataImage(self, "image", doc="""
-Image used for this post.
+        self.page_mixins.append(ImagePageMixin)
+        # Nodes that contain images
+        self.images: set[Image] = set()
 
-It is set to a path to an image file relative to the current page.
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [Image, ScaledImage]
 
-During the analyze phase, it is resolved to the corresponding [image page](images.md).
-
-If not set, and an image exists with the same name as the page (besides the
-extension), that image is used.
-"""))
-        # Index images by the site path a related article would have
-        self.by_related_site_path: Dict[str, "Image"] = {}
-
-    def load_dir(self, sitedir: ContentDir) -> List[Page]:
-        taken: List[str] = []
-        pages: List[Page] = []
-        for fname, src in sitedir.files.items():
+    def load_dir(
+            self,
+            node: Node,
+            directory: scan.Directory,
+            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        taken: list[str] = []
+        pages: list[Page] = []
+        for fname, (kwargs, src) in files.items():
             base, ext = os.path.splitext(fname)
             mimetype = mimetypes.types_map.get(ext)
             if mimetype is None:
@@ -71,98 +142,151 @@ extension), that image is used.
 
             taken.append(fname)
 
-            meta = sitedir.meta_file(fname)
-            related_site_path = os.path.join(sitedir.meta["site_path"], base)
-            meta["site_path"] = os.path.join(sitedir.meta["site_path"], fname)
+            img_meta = self.scanner.scan(src, mimetype)
+            kwargs.update(img_meta)
 
-            img_meta = self.scanner.scan(sitedir, src, mimetype)
-            meta.update(img_meta)
-
-            page = Image(self.site, src, meta=meta, dir=sitedir, mimetype=mimetype)
+            page = node.create_source_page(
+                page_cls=Image,
+                src=src,
+                mimetype=mimetype,
+                dst=fname,
+                **kwargs)
             pages.append(page)
 
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
             if image_sizes:
                 for name, info in image_sizes.items():
-                    width = meta.get("width")
+                    width = kwargs.get("width")
                     if width is None:
                         # SVG images, for example, don't have width
                         continue
                     if info["width"] >= width:
                         continue
-                    rel_meta = dict(meta)
-                    rel_meta["related"] = {}
-                    rel_meta.pop("width", None)
-                    rel_meta.pop("height", None)
-                    rel_meta.update(**info)
-                    scaled = ScaledImage.create_from(page, rel_meta, mimetype=mimetype, name=name, info=info)
+                    rel_kwargs = dict(info)
+                    rel_kwargs["related"] = {}
+
+                    base, ext = os.path.splitext(fname)
+                    scaled_fname = f"{base}-{name}{ext}"
+
+                    scaled = node.create_auto_page(
+                        page_cls=ScaledImage,
+                        created_from=page,
+                        mimetype=mimetype,
+                        name=name,
+                        info=info,
+                        dst=scaled_fname,
+                        **rel_kwargs)
                     pages.append(scaled)
 
-            self.by_related_site_path[related_site_path] = page
+            self.images.add(page)
 
         for fname in taken:
-            del sitedir.files[fname]
+            del files[fname]
 
         return pages
 
+    def crossreference(self):
+        # Resolve image from strings to Image pages
+        for page in self.tracked_pages:
+            val = page.image
+            if isinstance(val, str):
+                page.image = page.resolve_path(val)
+                if page.image.TYPE not in ("image", "scaledimage"):
+                    log.warning("%s: image field resolves to %s which is not an image page",
+                                self, page.image)
 
-class Image(Page):
+        # If an image exists with the same basename as a page, auto-add an
+        # "image" metadata to it
+        for image in self.images:
+            name = basename_no_ext(image.src.relpath)
+            # print(f"Images.analyze {image=!r} {image.node.name=!r} {image.node.page=!r}")
+            pages = image.node.build_pages.values()
+            if image.node.sub is not None:
+                pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
+
+            # Find pages matching this image's name
+            for page in pages:
+                # print(f"Images.analyze  check {page=!r} {page.src=!r}")
+                if not (src := page.src):
+                    # Don't associate to generated pages
+                    continue
+                if (page.src.relpath == image.src.relpath):
+                    # Don't associate to variants of this image
+                    continue
+                if basename_no_ext(src.relpath) == name:
+                    # Don't add if already set
+                    if not page.image and basename_no_ext(src.relpath) == name:
+                        # print(f"Images.analyze  add {image!r}")
+                        page.image = image
+                    break
+
+
+class Image(SourcePage):
+    """
+    An image as found in the source directory
+    """
     TYPE = "image"
+
+    lat = fields.Field(doc="Image latitude")
+    lon = fields.Field(doc="Image longitude")
+    image_orientation = fields.Field(doc="Image orientation")
 
     def __init__(self, *args, mimetype: str = None, **kw):
         super().__init__(*args, **kw)
-        self.meta["date"] = self.site.localized_timestamp(self.src.stat.st_mtime)
-        self.meta["build_path"] = self.meta["site_path"]
+        # self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
-    def render(self, **kw):
-        return {
-            self.meta["build_path"]: RenderedFile(self.src),
-        }
+    def render(self, **kw) -> RenderedElement:
+        return RenderedFile(self.src)
 
 
 class RenderedScaledImage(RenderedElement):
-    def __init__(self, src: File, width: int, height: int):
+    def __init__(self, src: file.File, width: int, height: int):
         self.src = src
         self.width = width
         self.height = height
 
-    def write(self, dst: File):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
+        # If target exists and mtime is ok, keep it
+        if old and old.st_mtime >= self.src.stat.st_mtime:
+            return
         import PIL
         with PIL.Image.open(self.src.abspath) as img:
             img = img.resize((self.width, self.height))
-            img.save(dst.abspath)
+            with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
+                img.save(out)
 
     def content(self):
         with open(self.src.abspath, "rb") as fd:
             return fd.read()
 
 
-class ScaledImage(Page):
-    TYPE = "image"
+class ScaledImage(AutoPage):
+    """
+    Scaled version of an image
+    """
+    TYPE = "scaledimage"
 
-    def __init__(self, *args, mimetype: str = None, name: str = None, info: Meta = None, **kw):
+    def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):
         super().__init__(*args, **kw)
         self.name = name
-        self.meta["date"] = self.created_from.meta["date"]
+        created_from = self.created_from
+        self.date = created_from.date
+        if (title := created_from.title):
+            self.title = title
 
-        site_path = self.created_from.meta["site_path"]
-        base, ext = os.path.splitext(site_path)
-        site_path = f"{base}-{name}{ext}"
-        self.meta["site_path"] = site_path
-        self.meta["build_path"] = site_path
+        if self.height is None:
+            self.height = round(
+                    created_from.height * (
+                        info["width"] / created_from.width))
 
-        if "height" not in self.meta:
-            self.meta["height"] = round(
-                    self.created_from.meta["height"] * (
-                        info["width"] / self.created_from.meta["width"]))
+        created_from.add_related(name, self)
 
-        self.created_from.add_related(name, self)
+    def render(self, **kw) -> RenderedElement:
+        return RenderedScaledImage(self.created_from.src, self.width, self.height)
 
-    def render(self, **kw):
-        return {
-            self.meta["build_path"]: RenderedScaledImage(self.src, self.meta["width"], self.meta["height"]),
-        }
+    def _compute_change_extent(self) -> ChangeExtent:
+        return self.created_from.change_extent
 
 
 FEATURES = {

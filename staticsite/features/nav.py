@@ -1,76 +1,81 @@
 from __future__ import annotations
-# from typing import TYPE_CHECKING
-from staticsite.page import Page, PageNotFoundError
-from staticsite.feature import Feature
-from staticsite import metadata
-import os
+
 import logging
+from typing import TYPE_CHECKING, Any, Optional
+
+from staticsite import fields
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.page import PageNotFoundError
+
+if TYPE_CHECKING:
+    from staticsite.page import Page
 
 log = logging.getLogger("nav")
 
 
-class MetadataNav(metadata.MetadataInherited):
-    def __init__(self, *args, **kw):
-        kw.setdefault("structure", True)
-        super().__init__(*args, **kw)
+class NavData:
+    def __init__(self, page: Page, paths: list[str]):
+        self.page = page
+        self.paths = paths
+        self.resolved: Optional[list[Page]] = None
 
-    def on_dir_meta(self, page: Page, meta):
+    def _resolve(self):
+        if self.resolved is not None:
+            return
+        self.resolved = []
+        for path in self.paths:
+            try:
+                page = self.page.resolve_path(path)
+            except PageNotFoundError as e:
+                log.warning("%r: skipping page in nav: %s", self.page, e)
+                continue
+            if page is None:
+                log.warning("%r: path %r resolved as None: skipping", self.page, path)
+                continue
+            self.resolved.append(page)
+
+    def __iter__(self):
+        self._resolve()
+        return self.resolved.__iter__()
+
+    def to_dict(self):
+        self._resolve()
+        return self.resolved
+
+
+class NavField(TrackedFieldMixin, fields.Inherited):
+    """
+    List of page paths, relative to the page defining the nav element, that
+    are used for the navbar.
+    """
+    tracked_by = "nav"
+
+    def __init__(self, **kw):
+        kw.setdefault("default", ())
+        super().__init__(**kw)
+
+    def _clean(self, page: Page, value: Any) -> NavData:
         """
-        Inherited metadata are copied from directory indices into directory
-        metadata
+        Set metadata values in obj from values
         """
-        val = meta.get(self.name)
-        if val is not None:
-            page.meta[self.name] = val
-            return
-
-        if page.dir is None:
-            return
-
-        val = page.dir.meta.get(self.name)
-        if val is None:
-            return
-
-        res = []
-        for path in val:
-            if isinstance(path, str):
-                try:
-                    path = page.dir.resolve_path(path)
-                except PageNotFoundError:
-                    path = os.path.join("..", path)
-            res.append(path)
-
-        page.meta[self.name] = res
-
-    def on_load(self, page: Page):
-        if self.name in page.meta:
-            return
-
-        parent = page.created_from
-        if parent is None:
-            parent = page.dir
-            if parent is None:
-                return
-
-        val = parent.meta.get(self.name)
-        if val is None:
-            return
-
-        res = []
-        for path in val:
-            if isinstance(path, str):
-                try:
-                    path = parent.resolve_path(path)
-                except PageNotFoundError:
-                    pass
-            res.append(path)
-
-        # print("INHERIT", self.name, "FOR", page, "FROM", parent, "AS", val, "->", res)
-
-        page.meta[self.name] = res
+        return NavData(page, value)
 
 
-class Nav(Feature):
+class NavMixin(metaclass=fields.FieldsMetaclass):
+    nav = NavField(structure=True)
+
+
+class NavPageMixin(NavMixin):
+    nav_title = fields.Field(doc="""
+        Title to use when this page is linked in a navbar.
+
+        It defaults to `page.title`, or to the series name for series pages.
+
+        `nav_title` is only guaranteed to exist for pages that are used in `nav`.
+    """)
+
+
+class Nav(PageTrackingMixin, Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
@@ -78,43 +83,27 @@ class Nav(Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.site.register_metadata(MetadataNav("nav", doc=f"""
-List of page paths that are used for the navbar.
-"""))
-        self.site.register_metadata(metadata.Metadata("nav_title", doc=f"""
-Title to use when this paged is linked in a navbar.
+        self.node_mixins.append(NavMixin)
+        self.page_mixins.append(NavPageMixin)
 
-It defaults to `page.meta.title`, or to the series name for series pages.
-
-`nav_title` is only guaranteed to exist for pages that are used in `nav`.
-"""))
-
-    def finalize(self):
+    def crossreference(self):
         # Expand pages expressions
-        nav_pages = set()
+        nav_pages: set[Page] = set()
 
-        for page in self.site.pages.values():
-            nav = page.meta.get("nav")
-            if nav is None:
+        for page in self.tracked_pages:
+            if (nav := page.nav) is None:
                 continue
 
-            # Resolve everything
-            this_nav = []
-            for path in nav:
-                try:
-                    this_nav.append(page.resolve_path(path))
-                except PageNotFoundError as e:
-                    log.warn("%s: %s", page, e)
+            # Resolve paths to target pages
+            nav._resolve()
 
             # Build list of target pages
-            nav_pages.update(this_nav)
-
-            page.meta["nav"] = this_nav
+            nav_pages.update(nav.resolved)
 
         # Make sure nav_title is filled
         for page in nav_pages:
-            if "nav_title" not in page.meta:
-                page.meta["nav_title"] = page.meta["title"]
+            if not page.nav_title:
+                page.nav_title = page.title
 
 
 FEATURES = {

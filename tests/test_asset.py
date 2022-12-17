@@ -1,24 +1,17 @@
-from unittest import TestCase
-from . import utils as test_utils
-from staticsite.asset import Asset
-from staticsite.file import File
-from staticsite.contents import Dir
-from contextlib import contextmanager
+from __future__ import annotations
+
+import datetime
 import os
 import time
-import tempfile
-import datetime
+from contextlib import contextmanager
+from unittest import TestCase
+
 import pytz
 
+from staticsite.file import File
+from staticsite.site import Site
 
-@contextmanager
-def override_env(**kw):
-    orig = {k: os.environ[k] for k in kw}
-    for k, v in kw.items():
-        os.environ[k] = v
-    yield
-    for k, v in orig.items():
-        os.environ[k] = v
+from . import utils as test_utils
 
 
 @contextmanager
@@ -34,20 +27,39 @@ def override_tz(val):
     time.tzset()
 
 
-class TestAsset(TestCase):
+class TestAsset(test_utils.MockSiteTestMixin, TestCase):
     @test_utils.assert_no_logs()
+    @override_tz("Pacific/Samoa")
     def test_timestamps(self):
-        site = test_utils.Site()
-        dir = Dir(site, None, {"site_path": "/", "site_url": "https://www.example.org"}, None, None)
+        # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
+        FILE_TS = 1477958400
 
-        with override_tz("Pacific/Samoa"):
-            with tempfile.NamedTemporaryFile() as f:
-                # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
-                os.utime(f.name, (1477958400, 1477958400))
-                src = File(os.path.basename(f.name), abspath=f.name, stat=os.stat(f.name))
-                page = Asset(site, src, meta={}, dir=dir, name=f.name)
+        sitedef = test_utils.MockSite({
+            ".staticsite": {
+                "asset": True,
+            },
+            "testasset": "test",
+        })
+        sitedef.auto_load_site = False
+        sitedef.mock_file_mtime = None
 
-                self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
-                self.assertEqual(page.meta["site_path"], f.name)
-                self.assertEqual(page.meta["site_url"], "https://www.example.org")
-                self.assertEqual(page.meta["build_path"], f.name.lstrip("/"))
+        with self.site(sitedef) as mocksite:
+            # Set file mtime and check that it can be read back correctly
+            path = os.path.join(mocksite.root, "testasset")
+            os.utime(path, (FILE_TS, FILE_TS))
+            src = File.with_stat("testasset", path)
+            self.assertEqual(src.stat.st_mtime, FILE_TS)
+
+            # Load site contents
+            mocksite.load_site(until=Site.LOAD_STEP_CONTENTS)
+
+            page = mocksite.page("testasset")
+
+            self.assertEqual(page.node.name, "")
+            self.assertEqual(page.TYPE, "asset")
+            self.assertEqual(page.src.stat.st_mtime, FILE_TS)
+            self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
+            self.assertEqual(page.meta["site_url"], "https://www.example.org")
+            self.assertEqual(page.site_path, "testasset")
+            self.assertEqual(page.build_path, "testasset")
+            self.assertFalse(page.directory_index)
