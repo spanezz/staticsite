@@ -29,7 +29,7 @@ class Node(SiteElement):
     """
     One node in the rendered directory hierarchy of the site
     """
-    site_path = fields.Field(doc="""
+    site_path = fields.Field["Node", str](doc="""
         Where a content directory appears in the site.
 
         By default, is is the `site_path` of the parent directory, plus the directory
@@ -120,8 +120,8 @@ class Node(SiteElement):
             return target
         if target.startswith("/"):
             root = self.site.root
-            if static:
-                root = root.lookup(Path.from_string(self.site.settings.STATIC_PATH))
+            if static and (static_root := root.lookup(Path.from_string(self.site.settings.STATIC_PATH))) is not None:
+                root = static_root
             return root.lookup_page(Path.from_string(target))
         else:
             return self.lookup_page(Path.from_string(target))

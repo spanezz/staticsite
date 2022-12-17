@@ -52,11 +52,11 @@ class PageMissesFieldError(PageValidationError):
         super().__init__(page, f"missing required field meta.{field}")
 
 
-class TemplateField(fields.Field):
+class TemplateField(fields.Field["Page", str]):
     """
     Template name or compiled template, taking its default value from Page.TEMPLATE
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> str:
         if self.name not in page.__dict__:
             if (val := getattr(page, "TEMPLATE", None)):
                 page.__dict__[self.name] = val
@@ -67,11 +67,11 @@ class TemplateField(fields.Field):
             return page.__dict__[self.name]
 
 
-class PageDate(fields.Date):
+class PageDate(fields.Date["Page"]):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> Any:
         if (date := page.__dict__.get(self.name)) is None:
             if (src := page.src) is not None and src.stat is not None:
                 date = page.site.localized_timestamp(src.stat.st_mtime)
@@ -81,11 +81,11 @@ class PageDate(fields.Date):
         return date
 
 
-class Draft(fields.Bool):
+class Draft(fields.Bool["SourcePage"]):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: SourcePage, type: Optional[Type] = None) -> Any:
         if (value := page.__dict__.get(self.name)) is None:
             value = page.date > page.site.generation_time
             page.__dict__[self.name] = value
@@ -94,11 +94,11 @@ class Draft(fields.Bool):
             return value
 
 
-class RenderedField(fields.Field):
+class RenderedField(fields.Field["Page", str]):
     """
-    Make sure the draft exists and is a bool, computed according to the date
+    Field whose value is rendered from other fields
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> str:
         if (value := page.__dict__.get(self.name)) is None:
             if (tpl := getattr(page, "template_" + self.name, None)):
                 # If a template exists, render it
@@ -110,11 +110,11 @@ class RenderedField(fields.Field):
         return value
 
 
-class RenderedTitleField(fields.Field):
+class RenderedTitleField(fields.Field["Page", str]):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> str:
         if (value := page.__dict__.get(self.name)) is None:
             if (tpl := getattr(page, "template_" + self.name, None)):
                 # If a template exists, render it
@@ -181,17 +181,17 @@ class Related:
             return False
 
 
-class RelatedField(fields.Field):
+class RelatedField(fields.Field["Page", Related]):
     """
     Contains related pages indexed by name
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> Related:
         if (value := page.__dict__.get(self.name)) is None:
             value = Related(page)
             page.__dict__[self.name] = value
         return value
 
-    def __set__(self, page: Page, value: Any) -> None:
+    def __set__(self, page: Page, value: Related) -> None:
         related = self.__get__(page)
         related.pages.update(value)
 
@@ -299,7 +299,7 @@ class Page(SiteElement):
         The page description. If omitted, the page will have no description.
     """)
 
-    indexed = fields.Bool(default=False, doc="""
+    indexed = fields.Bool["Page"](default=False, doc="""
         If true, the page appears in [directory indices](dir.md) and in
         [page filter results](page_filter.md).
 
@@ -480,10 +480,10 @@ class Page(SiteElement):
             log.warn("%s: %s", self, e)
             return url
 
-        dest = urlparse(dest)
+        dest_parsed = urlparse(dest)
 
         return urlunparse(
-            (dest.scheme, dest.netloc, dest.path,
+            (dest_parsed.scheme, dest_parsed.netloc, dest_parsed.path,
              parsed.params, parsed.query, parsed.fragment)
         )
 

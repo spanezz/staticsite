@@ -98,7 +98,7 @@ class Autodoc:
             print("## Page fields", file=out)
             print(file=out)
             for name, field in sorted(fields.items()):
-                print(f"* [{name}](fields/{name}.md): {field.summary}", file=out)
+                print(f"* [{name}](fields/{name}.md): {summary(field)}", file=out)
             print(file=out)
             print("[Back to README](../../README.md)", file=out)
 
@@ -153,7 +153,7 @@ class Autodoc:
             print("## Fields", file=out)
             print(file=out)
             for name, field in sorted(page_type._fields.items()):
-                print(f"* [{name}](../fields/{name}.md): {field.summary}", file=out)
+                print(f"* [{name}](../fields/{name}.md): {summary(field)}", file=out)
             print(file=out)
             print("## Documentation", file=out)
             print(file=out)
@@ -165,8 +165,8 @@ class Autodoc:
         path = os.path.join(self.root, "fields")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:
-            print(f"# {name}: {field.summary}", file=out)
+            print(f"# {name}: {summary(field)}", file=out)
             print(file=out)
-            print(field.doc, file=out)
+            print(body(field), file=out)
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)

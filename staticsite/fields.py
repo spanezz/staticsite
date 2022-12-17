@@ -1,25 +1,27 @@
 from __future__ import annotations
 
-import functools
-import inspect
 import logging
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Generic, Optional, Sequence, Type, TypeVar
 
 import jinja2
 
 if TYPE_CHECKING:
+    import datetime
     from .site import Site
 
 log = logging.getLogger("fields")
 
+P = TypeVar("P", bound="FieldContainer")
+V = TypeVar("V")
 
-class Field:
+
+class Field(Generic[P, V]):
     """
     Declarative description of a metadata element used by staticsite
     """
     def __init__(
             self, *,
-            default: Any = None,
+            default: Optional[V] = None,
             structure: bool = False,
             internal: bool = False,
             tracked_by: Optional[str] = None,
@@ -38,35 +40,29 @@ class Field:
         self.default: Any = default
         self.structure: bool = structure
         self.internal: bool = internal
-        if doc is None:
-            self.doc = inspect.cleandoc(self.__doc__)
-        else:
-            self.doc = inspect.cleandoc(doc)
+        if doc is not None:
+            self.__doc__ = doc
 
-    def get_notes(self):
+    def get_notes(self) -> Sequence[str]:
         return ()
 
-    @functools.cached_property
-    def summary(self) -> str:
-        return self.doc.strip().split("\n\n", 1)[0]
-
-    def __set_name__(self, owner: Type[FieldContainer], name: str) -> None:
+    def __set_name__(self, owner: Type[P], name: str) -> None:
         self.name = name
 
-    def __get__(self, obj: FieldContainer, type: Type = None) -> Any:
+    def __get__(self, obj: P, type: Optional[Type] = None) -> V:
         return obj.__dict__.get(self.name, self.default)
 
-    def __set__(self, obj: FieldContainer, value: Any) -> None:
+    def __set__(self, obj: P, value: Any) -> None:
         obj.__dict__[self.name] = self._clean(obj, value)
 
-    def _clean(self, obj: FieldContainer, value: Any) -> Any:
+    def _clean(self, obj: P, value: Any) -> V:
         """
         Hook to allow to clean values before set
         """
         return value
 
 
-class Inherited(Field):
+class Inherited(Field[P, V]):
     """
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
@@ -75,7 +71,7 @@ class Inherited(Field):
         yield from super().get_notes()
         yield "Inherited from parent pages"
 
-    def __get__(self, obj: FieldContainer, type: Type = None) -> Any:
+    def __get__(self, obj: P, type: Optional[Type] = None) -> V:
         if self.name not in obj.__dict__:
             if obj._parent is not None and self.name in obj._parent._fields:
                 value = getattr(obj._parent, self.name)
@@ -87,13 +83,13 @@ class Inherited(Field):
             return obj.__dict__[self.name]
 
 
-class TemplateInherited(Inherited):
+class TemplateInherited(Inherited[P, jinja2.Template]):
     """
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
     """
 
-    def _clean(self, obj: FieldContainer, value: Any) -> jinja2.Template:
+    def _clean(self, obj: P, value: Any) -> jinja2.Template:
         # Make sure the template is compiled
         if isinstance(value, jinja2.Template):
             return value
@@ -103,15 +99,15 @@ class TemplateInherited(Inherited):
             raise ValueError(f"{value!r} is not a valid value for a template field")
 
 
-class Date(Field):
+class Date(Field[P, "datetime.datetime"]):
     """
     Field containing a date
     """
-    def _clean(self, obj: FieldContainer, value: Any) -> jinja2.Template:
+    def _clean(self, obj: P, value: Any) -> datetime.datetime:
         return obj.site.clean_date(value)
 
 
-class Bool(Field):
+class Bool(Field[P, bool]):
     """
     Make sure the field is a bool, possibly with a default value
     """
@@ -122,7 +118,7 @@ class Bool(Field):
         super().__init__(**kw)
         self.default = default
 
-    def _clean(self, obj: FieldContainer, val: Any) -> bool:
+    def _clean(self, obj: P, val: Any) -> bool:
         if val in (True, False):
             return val
         elif isinstance(val, str):
@@ -131,17 +127,17 @@ class Bool(Field):
             raise ValueError(f"{val!r} is not a valid value for a bool field")
 
 
-class Dict(Field):
+class Dict(Field[P, dict[str, Any]]):
     """
     Make sure the field is a dict
     """
-    def __get__(self, obj: FieldContainer, type: Type = None) -> Any:
+    def __get__(self, obj: P, type: Optional[Type] = None) -> dict[str, Any]:
         if (value := obj.__dict__.get(self.name)) is None:
             value = {}
             obj.__dict__[self.name] = value
         return value
 
-    def _clean(self, obj: FieldContainer, value: Any) -> Any:
+    def _clean(self, obj: P, value: Any) -> dict[str, Any]:
         """
         Hook to allow to clean values before set
         """
@@ -178,6 +174,8 @@ class FieldsMetaclass(type):
 
 
 class FieldContainer(metaclass=FieldsMetaclass):
+    _fields: dict[str, Field]
+
     def __init__(
             self,
             site: Site, *,

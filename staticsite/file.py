@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 log = logging.getLogger("contents")
 
@@ -16,21 +16,15 @@ class File(NamedTuple):
     # Relative path to root
     relpath: str
     # Absolute path to the file
-    abspath: Optional[str] = None
+    abspath: str
     # File stats if the file exists, else None
-    stat: Optional[os.stat_result] = None
+    stat: os.stat_result
 
     def __str__(self):
         if self.abspath:
             return self.abspath
         else:
             return self.relpath
-
-    @classmethod
-    def from_abspath(cls, tree_root: str, abspath: str) -> "File":
-        return cls(
-                relpath=os.path.relpath(abspath, tree_root),
-                abspath=abspath)
 
     @classmethod
     def from_dir_entry(cls, dir: "File", entry: os.DirEntry) -> "File":
