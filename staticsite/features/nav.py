@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin
 from staticsite.page import PageNotFoundError
 
 if TYPE_CHECKING:
@@ -43,7 +43,13 @@ class NavData:
         return self.resolved
 
 
-class NavField(fields.Inherited):
+class NavField(TrackedFieldMixin, fields.Inherited):
+    """
+    List of page paths, relative to the page defining the nav element, that
+    are used for the navbar.
+    """
+    tracked_by = "nav"
+
     def __init__(self, **kw):
         kw.setdefault("default", ())
         super().__init__(**kw)
@@ -56,10 +62,7 @@ class NavField(fields.Inherited):
 
 
 class NavMixin(metaclass=fields.FieldsMetaclass):
-    nav = NavField(structure=True, doc="""
-        List of page paths, relative to the page defining the nav element, that
-        are used for the navbar.
-    """)
+    nav = NavField(structure=True)
 
 
 class NavPageMixin(NavMixin):
@@ -82,13 +85,18 @@ class Nav(Feature):
         super().__init__(*args, **kw)
         self.node_mixins.append(NavMixin)
         self.page_mixins.append(NavPageMixin)
-        self.site.features.add_tracked_metadata("nav")
+
+        # Collect pages with 'aliases' metadata set
+        self.tracked_pages: set[Page] = set()
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.tracked_pages.add(obj)
 
     def crossreference(self):
         # Expand pages expressions
         nav_pages: set[Page] = set()
 
-        for page in self.site.features.pages_by_metadata["nav"]:
+        for page in self.tracked_pages:
             if (nav := page.nav) is None:
                 continue
 
