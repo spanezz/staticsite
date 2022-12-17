@@ -19,6 +19,7 @@ from .utils import timings
 if TYPE_CHECKING:
     from .node import Node
     from .page import Page
+    from .archetypes import Archetypes
 
 log = logging.getLogger("site")
 
@@ -201,6 +202,7 @@ class Site:
         self.features = Features(self)
 
         # Build cache repository
+        self.caches: Union[Caches, DisabledCaches]
         if self.settings.CACHE_REBUILDS:
             if os.access(self.settings.PROJECT_ROOT, os.W_OK):
                 self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache"))
@@ -252,7 +254,7 @@ class Site:
         # loaded, so if any remain it means that those pages have been deleted
         return self.previous_source_footprints.keys()
 
-    def find_page(self, path: str):
+    def find_page(self, path: str) -> Page:
         """
         Find a page by absolute path in the site
         """
@@ -262,16 +264,17 @@ class Site:
         """
         Iterate all pages in the site
         """
+        prune: tuple[Node, ...]
         if static:
             prune = ()
+        elif (static_root := self.root.lookup(Path.from_string(self.settings.STATIC_PATH))) is not None:
+            prune = (static_root,)
         else:
-            prune = (
-                self.root.lookup(Path.from_string(self.settings.STATIC_PATH)),
-            )
+            prune = ()
         yield from self.root.iter_pages(prune=prune, source_only=source_only)
 
     @cached_property
-    def archetypes(self) -> "archetypes.Archetypes":
+    def archetypes(self) -> "Archetypes":
         """
         Archetypes defined in the site
         """
@@ -383,6 +386,7 @@ class Site:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """
+        tree: fstree.Tree
         if meta.get("asset"):
             tree = fstree.AssetTree(self, src)
         elif toplevel:
@@ -518,27 +522,30 @@ class Site:
         Parse a date string, or make sure a datetime value is aware, or replace
         None with the current generation time
         """
+        clean_date: datetime.datetime
         # Make sure we have a datetime
         if not isinstance(date, datetime.datetime):
             mo = self.re_isodate.match(date)
             if mo:
                 if mo.group(2) == "Z":
-                    date = datetime.datetime.fromisoformat(mo.group(1)).replace(tzinfo=pytz.utc)
+                    clean_date = datetime.datetime.fromisoformat(mo.group(1)).replace(tzinfo=pytz.utc)
                 else:
-                    date = datetime.datetime.fromisoformat(date)
+                    clean_date = datetime.datetime.fromisoformat(date)
             else:
                 # TODO: log a fallback on dateutil?
                 try:
-                    date = dateutil.parser.parse(date)
+                    clean_date = dateutil.parser.parse(date)
                 except ValueError as e:
                     log.warn("cannot parse datetime %s: %s", date, e)
                     return self.generation_time
+        else:
+            clean_date = date
 
         # Make sure the datetime is aware
-        if date.tzinfo is None:
+        if clean_date.tzinfo is None:
             if hasattr(self.timezone, "localize"):
-                date = self.timezone.localize(date)
+                clean_date = self.timezone.localize(clean_date)
             else:
-                date = date.replace(tzinfo=self.timezone)
+                clean_date = clean_date.replace(tzinfo=self.timezone)
 
-        return date
+        return clean_date
