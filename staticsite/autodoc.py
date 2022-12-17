@@ -49,13 +49,53 @@ class Autodoc:
         for name, field in fields.items():
             self.write_field(name, field)
 
-        # TODO: iterate page types to generate per-page documentation
-        # TODO: document fields in per-page documentation, or link to per-field
-        #       documentation
+        # Generate index
+        with open(os.path.join(self.root, "README.md"), "wt") as out:
+            print("# Reference documentation", file=out)
+            print(file=out)
+            print("## Core structure", file=out)
+            print(file=out)
+            print("* [The Site object](site.md)", file=out)
+            # print("* [The Page object](page.md)", file=out)
+            print("* [Site settings](settings.md)", file=out)
+            # print("* [Source contents](contents.md)", file=out)
+            print("* [Themes](theme.md)", file=out)
+            # print("* [Jinja2 templates reference](templates.md)", file=out)
+            print("* [Selecting site pages](page-filter.md)", file=out)
+            print("* [Archetypes reference](archetypes.md)", file=out)
+            print("* [Site-specific features](feature.md)", file=out)
+            print("* [Front Matter](front-matter.md)", file=out)
+            print(file=out)
+            print("## Features", file=out)
+            print(file=out)
+            for feature in self.site.features.ordered():
+                print(f"* [{feature.name}](features/{feature.name}.md)", file=out)
+            print(file=out)
+            print("## Page types", file=out)
+            print(file=out)
+            for name, page_type in by_name.items():
+                print(f"* [{name}](pages/{feature.name}.md)", file=out)
+            print(file=out)
+            print("## Page fields", file=out)
+            print(file=out)
+            for name, field in sorted(fields.items()):
+                print(f"* [{name}](fields/{feature.name}.md)", file=out)
+            print(file=out)
+            print("[Back to README](../../README.md)", file=out)
 
-        # - Have features populate a directory of markdown files, one per feature
-        #    - Have features iterate on their supported pages, documenting them
-        #      and their fields
+            # TODO: * [Common page metadata](metadata.md)
+            # TODO: * [Markdown pages](markdown.md)
+            # TODO: * [reStructuredText pages](rst.md)
+            # TODO: * [Jinja2 pages](jinja2.md)
+            # TODO: * [Data pages](data.md)
+            # TODO: * [Taxonomies](taxonomies.md)
+            # TODO: * [Images](images.md)
+            # TODO: * [Listing subpages](pages.md)
+            # TODO: * [RSS/Atom feed generation](syndication.md)
+            # TODO: * [Series of pages](series.md)
+            # TODO: * [Directory indices](dir.md)
+            # TODO: * [Annotated external links](links.md)
+
         # - update self-generated metadata fields documentation
         #    - generate documentation for the various kinds of pages
         #    - lift __doc__ from pages, or another attribute gathered from all mixins
@@ -63,10 +103,25 @@ class Autodoc:
         #      documentation content
 
     def write_feature(self, feature: Feature):
+        page_types = feature.get_used_page_types()
         path = os.path.join(self.root, "features")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{feature.name}.md"), "wt") as out:
-            out.write(inspect.cleandoc(feature.__doc__))
+            print(f"# {feature.name}", file=out)
+            print(file=out)
+
+            if page_types:
+                print("## Page types", file=out)
+                print(file=out)
+                for page_type in page_types:
+                    print("* [{page_type.TYPE}](../pages/{page_type.TYPE}.md", file=out)
+                print(file=out)
+
+            print("## Documentation", file=out)
+            print(file=out)
+            print(inspect.cleandoc(feature.__doc__), file=out)
+            print(file=out)
+            print("[Back to reference index](../README.md)", file=out)
 
     def write_page_type(self, name: str, page_type: Type[Page]):
         if page_type.__doc__ is None:
@@ -75,10 +130,25 @@ class Autodoc:
         path = os.path.join(self.root, "pages")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:
-            out.write(inspect.cleandoc(page_type.__doc__))
+            print(f"# {name}", file=out)
+            print(file=out)
+            print("## Fields", file=out)
+            print(file=out)
+            for name, field in page_type._fields.items():
+                print(f"* [{name}](../fields/{name}.md", file=out)
+            print(file=out)
+            print("## Documentation", file=out)
+            print(file=out)
+            print(inspect.cleandoc(page_type.__doc__), file=out)
+            print(file=out)
+            print("[Back to reference index](../README.md)", file=out)
 
     def write_field(self, name: str, field: fields.Field):
         path = os.path.join(self.root, "fields")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:
-            out.write(inspect.cleandoc(field.doc))
+            print(f"# {name}", file=out)
+            print(file=out)
+            print(inspect.cleandoc(field.doc), file=out)
+            print(file=out)
+            print("[Back to reference index](../README.md)", file=out)
