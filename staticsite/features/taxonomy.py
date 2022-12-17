@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
 from staticsite import fields
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
 from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
@@ -146,6 +146,11 @@ class Taxonomy:
         self.index.pages = list(self.category_pages.values())
 
 
+class TaxonomyField(TrackedFieldMixin, fields.Field):
+    tracked_by = "taxonomy"
+    # TODO: make this validate as string lists
+
+
 class BaseTaxonomyPageMixin(metaclass=fields.FieldsMetaclass):
     series_title = fields.Field(doc="""
         Series title from this page onwards.
@@ -190,8 +195,7 @@ class TaxonomyFeature(Feature):
         # Instead of making tags inheritable from normal metadata, we can offer
         # them to be added by 'files' or 'dirs' directives.
         self.page_mixins.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
-            # TODO: make this validate as string lists
-            name: fields.Field(structure=True, default=(), doc=f"""
+            name: TaxonomyField(structure=True, default=(), doc=f"""
                 List of categories for the `{name}` taxonomy.
 
                 Setting this as a simple string is the same as setting it as a list of one
