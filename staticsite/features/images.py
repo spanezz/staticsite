@@ -7,7 +7,7 @@ import os
 from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
@@ -51,7 +51,7 @@ class ImagePageMixin(metaclass=fields.FieldsMetaclass):
     """)
 
 
-class Images(Feature):
+class Images(PageTrackingMixin, Feature):
     """
     Handle images in content directory.
 
@@ -64,10 +64,6 @@ class Images(Feature):
         self.page_mixins.append(ImagePageMixin)
         # Nodes that contain images
         self.images: set[Image] = set()
-        self.tracked_pages: set[Page] = set()
-
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
-        self.tracked_pages.add(obj)
 
     def load_dir(
             self,

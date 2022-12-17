@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, List
 import jinja2
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
@@ -88,7 +88,7 @@ class LinksPage(DataPage):
         self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
 
 
-class Links(Feature):
+class Links(PageTrackingMixin, Feature):
     """
     Collect links and link metadata from page metadata.
 
@@ -111,12 +111,6 @@ class Links(Feature):
 
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
-
-        # Collect pages with 'links' metadata set
-        self.tracked_pages: set[Page] = set()
-
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
-        self.tracked_pages.add(obj)
 
     def load_dir(
             self,

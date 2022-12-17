@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
 
 from staticsite import fields
 from staticsite.node import Path
-from staticsite.feature import Feature, TrackedFieldMixin
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.page import AutoPage, ChangeExtent
-
-if TYPE_CHECKING:
-    from staticsite.page import Page
 
 
 log = logging.getLogger("aliases")
@@ -28,7 +24,7 @@ class AliasesPageMixin(metaclass=fields.FieldsMetaclass):
     aliases = AliasField(structure=True)
 
 
-class AliasesFeature(Feature):
+class AliasesFeature(PageTrackingMixin, Feature):
     """
     Build redirection pages for page aliases.
 
@@ -41,12 +37,6 @@ class AliasesFeature(Feature):
         super().__init__(*args, **kw)
         self.site.features["rst"].yaml_tags.add("aliases")
         self.page_mixins.append(AliasesPageMixin)
-
-        # Collect pages with 'aliases' metadata set
-        self.tracked_pages: set[Page] = set()
-
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
-        self.tracked_pages.add(obj)
 
     def generate(self):
         # Build alias pages from pages with an 'aliases' metadata

@@ -355,3 +355,16 @@ class Features:
                     # Allows replacing features: see #28
                     log.info("%s: replacing feature %s with %s", name, old, cls)
                 self.feature_classes[name] = cls
+
+
+class PageTrackingMixin:
+    """
+    Basic page tracking functionality for features that need it
+    """
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        # Collect pages with 'aliases' metadata set
+        self.tracked_pages: set[Page] = set()
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.tracked_pages.add(obj)

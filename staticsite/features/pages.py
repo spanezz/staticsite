@@ -4,27 +4,32 @@ import logging
 from typing import Any
 
 from staticsite import fields
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.page import ChangeExtent
 
 log = logging.getLogger("pages")
 
 
+class PagesField(TrackedFieldMixin, fields.Field):
+    """
+    The `pages` metadata can use to select a set of pages shown by the current
+    page. Although default `page.html` template will not do anything with them,
+    other page templates, like `blog.html`, use this to select the pages to show.
+
+    The `pages` feature allows defining a [page filter](page-filter.md) in the
+    `pages` metadata element, which will be replaced with a list of matching pages.
+
+    To select pages, the `pages` metadata is set to a dictionary that select pages
+    in the site, with the `path`, and taxonomy names arguments similar to the
+    `site_pages` function in [templates](templates.md).
+
+    See [Selecting pages](page-filter.md) for details.
+    """
+    tracked_by = "pages"
+
+
 class PagesPageMixin(metaclass=fields.FieldsMetaclass):
-    pages = fields.Field(structure=True, doc="""
-        The `pages` metadata can use to select a set of pages shown by the current
-        page. Although default `page.html` template will not do anything with them,
-        other page templates, like `blog.html`, use this to select the pages to show.
-
-        The `pages` feature allows defining a [page filter](page-filter.md) in the
-        `pages` metadata element, which will be replaced with a list of matching pages.
-
-        To select pages, the `pages` metadata is set to a dictionary that select pages
-        in the site, with the `path`, and taxonomy names arguments similar to the
-        `site_pages` function in [templates](templates.md).
-
-        See [Selecting pages](page-filter.md) for details.
-    """)
+    pages = PagesField(structure=True)
 
     def _compute_footprint(self) -> dict[str, Any]:
         res = super()._compute_footprint()
@@ -40,14 +45,13 @@ class PagesPageMixin(metaclass=fields.FieldsMetaclass):
         return res
 
 
-class PagesFeature(Feature):
+class PagesFeature(PageTrackingMixin, Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.page_mixins = (PagesPageMixin,)
-        self.site.features.add_tracked_metadata("pages")
 
     def organize(self):
         # TODO: this seems a prerequisite for syndication, so it's currently in
@@ -56,7 +60,7 @@ class PagesFeature(Feature):
         # if it needs untangling
 
         # Expand pages expressions
-        for page in self.site.features.pages_by_metadata["pages"]:
+        for page in self.tracked_pages:
             query = page.pages
             if isinstance(query, str):
                 query = {"path": query}

@@ -11,7 +11,7 @@ import jinja2
 
 from staticsite import fields
 from staticsite.archetypes import Archetype
-from staticsite.feature import Feature, TrackedFieldMixin
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
 from staticsite.page import SourcePage, Page
@@ -41,7 +41,7 @@ class DataPageMixin(metaclass=fields.FieldsMetaclass):
     data_type = DataTypeField()
 
 
-class DataPages(Feature):
+class DataPages(PageTrackingMixin, Feature):
     """
     Handle datasets in content directories.
 
@@ -62,10 +62,6 @@ class DataPages(Feature):
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
         self.page_mixins.append(DataPageMixin)
-        self.tracked_pages: set[Page] = set()
-
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
-        self.tracked_pages.add(obj)
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls

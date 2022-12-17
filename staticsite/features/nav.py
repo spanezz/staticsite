@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin
+from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.page import PageNotFoundError
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ class NavPageMixin(NavMixin):
     """)
 
 
-class Nav(Feature):
+class Nav(PageTrackingMixin, Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
@@ -85,12 +85,6 @@ class Nav(Feature):
         super().__init__(*args, **kw)
         self.node_mixins.append(NavMixin)
         self.page_mixins.append(NavPageMixin)
-
-        # Collect pages with 'aliases' metadata set
-        self.tracked_pages: set[Page] = set()
-
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
-        self.tracked_pages.add(obj)
 
     def crossreference(self):
         # Expand pages expressions
