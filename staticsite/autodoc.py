@@ -40,8 +40,14 @@ class Autodoc:
                 raise RuntimeError(f"Page type {name} defined as both {old} and {page_type}")
             else:
                 by_name[name] = page_type
+        fields: dict[str, fields.Field] = {}
         for name, page_type in by_name.items():
             self.write_page_type(name, page_type)
+            fields.update(page_type._fields)
+
+        # Iterate fields
+        for name, field in fields.items():
+            self.write_field(name, field)
 
         # TODO: iterate page types to generate per-page documentation
         # TODO: document fields in per-page documentation, or link to per-field
@@ -72,4 +78,7 @@ class Autodoc:
             out.write(inspect.cleandoc(page_type.__doc__))
 
     def write_field(self, name: str, field: fields.Field):
-        raise NotImplementedError()
+        path = os.path.join(self.root, "fields")
+        os.makedirs(path, exist_ok=True)
+        with open(os.path.join(path, f"{name}.md"), "wt") as out:
+            out.write(inspect.cleandoc(field.doc))
