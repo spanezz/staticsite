@@ -70,16 +70,16 @@ class SiteElement(fields.FieldContainer):
     """
     Common fields for site elements
     """
-    site_name = fields.Inherited(doc="""
+    site_name = fields.Inherited[fields.FieldContainer, str](doc="""
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
     """)
 
-    site_url = fields.Inherited(doc="""
+    site_url = fields.Inherited[fields.FieldContainer, str](doc="""
         Base URL for the site, used to generate an absolute URL to the page.
     """)
 
-    author = fields.Inherited(doc="""
+    author = fields.Inherited[fields.FieldContainer, str](doc="""
         A string with the name of the author for this page.
 
         SITE_AUTHOR is used as a default if found in settings.
@@ -87,7 +87,7 @@ class SiteElement(fields.FieldContainer):
         If not found, it defaults to the current user's name.
     """)
 
-    template_copyright = fields.TemplateInherited(doc="""
+    template_copyright = fields.TemplateInherited[fields.FieldContainer](doc="""
         jinja2 template to use to generate `copyright` when it is not explicitly set.
 
         The template context will have `page` available, with the current page. The
@@ -97,7 +97,7 @@ class SiteElement(fields.FieldContainer):
         If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
     """)
 
-    template_title = fields.TemplateInherited(doc="""
+    template_title = fields.TemplateInherited[fields.FieldContainer](doc="""
         jinja2 template to use to generate `title` when it is not explicitly set.
 
         The template context will have `page` available, with the current page.
@@ -105,7 +105,7 @@ class SiteElement(fields.FieldContainer):
         HTML markup in it.
     """)
 
-    template_description = fields.TemplateInherited(doc="""
+    template_description = fields.TemplateInherited[fields.FieldContainer](doc="""
         jinja2 template to use to generate `description` when it is not
         explicitly set.
 
@@ -114,7 +114,7 @@ class SiteElement(fields.FieldContainer):
         HTML markup in it.
     """)
 
-    asset = fields.Inherited(doc="""
+    asset = fields.Inherited[fields.FieldContainer, bool](doc="""
         If set to True for a file (for example, by a `file:` pattern in a directory
         index), the file is loaded as a static asset, regardless of whether a feature
         would load it.
@@ -128,7 +128,7 @@ class RootNodeFields(metaclass=fields.FieldsMetaclass):
     """
     Extra fields for the root node
     """
-    title = fields.Field(doc="""
+    title = fields.Field["Node", str](doc="""
         Title used as site name.
 
         This only makes sense for the root node of the site hierarchy, and
