@@ -21,7 +21,8 @@ class Field:
             default: Any = None,
             structure: bool = False,
             internal: bool = False,
-            doc: str = ""):
+            tracked_by: Optional[str] = None,
+            doc: Optional[str] = None):
         """
         :arg name: name of this metadata element
         :arg default: default value when this field has not been set
@@ -36,7 +37,10 @@ class Field:
         self.default: Any = default
         self.structure: bool = structure
         self.internal: bool = internal
-        self.doc = inspect.cleandoc(doc)
+        if doc is None:
+            self.doc = inspect.cleandoc(self.__doc__)
+        else:
+            self.doc = inspect.cleandoc(doc)
 
     def get_notes(self):
         return ()

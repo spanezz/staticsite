@@ -1,22 +1,31 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 from staticsite import fields
 from staticsite.node import Path
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin
 from staticsite.page import AutoPage, ChangeExtent
+
+if TYPE_CHECKING:
+    from staticsite.page import Page
 
 
 log = logging.getLogger("aliases")
 
 
+class AliasField(TrackedFieldMixin, fields.Field):
+    """
+    Relative paths in the destination directory where the page should also show up.
+    [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
+    existing links when moving a page to a different location.
+    """
+    tracked_by = "aliases"
+
+
 class AliasesPageMixin(metaclass=fields.FieldsMetaclass):
-    aliases = fields.Field(structure=True, doc="""
-        Relative paths in the destination directory where the page should also show up.
-        [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
-        existing links when moving a page to a different location.
-    """)
+    aliases = AliasField(structure=True)
 
 
 class AliasesFeature(Feature):
@@ -32,11 +41,14 @@ class AliasesFeature(Feature):
         super().__init__(*args, **kw)
         self.site.features["rst"].yaml_tags.add("aliases")
         self.page_mixins.append(AliasesPageMixin)
-        self.site.features.add_tracked_metadata("aliases")
+        self.tracked_pages: set[Page] = set()
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.tracked_pages.add(obj)
 
     def generate(self):
         # Build alias pages from pages with an 'aliases' metadata
-        for page in self.site.features.pages_by_metadata["aliases"]:
+        for page in self.tracked_pages:
             if not (aliases := page.aliases):
                 continue
 

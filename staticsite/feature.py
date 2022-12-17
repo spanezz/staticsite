@@ -5,11 +5,45 @@ import sys
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Set, Type
 
-from . import file, fstree, site, toposort
+from . import file, fstree, site, toposort, fields
 from .node import Node
 from .page import Page
 
 log = logging.getLogger("feature")
+
+
+class TrackedFieldMixin:
+    """
+    Leat a feature track when values are set on this field
+    """
+    tracked_by: str
+
+    def __init__(self, *, tracked_by: Optional[str] = None, **kw):
+        """
+        :arg tracked_by: name of a feature that is notified when field values
+                         are ses
+        """
+        super().__init__(**kw)
+        if tracked_by is not None:
+            self.tracked_by = tracked_by
+        self.track_feature_key: str
+
+    def __set_name__(self, owner: Type[fields.FieldContainer], name: str) -> None:
+        super().__set_name__(owner, name)
+        self.track_feature_key = f"_{self.name}_feature"
+
+    def track(self, obj: fields.FieldContainer, value: Any):
+        # We cannot store a reference to the Feature in the field, because it
+        # would persist in the class definition, making it impossible to build
+        # two sites one after the other.
+        if (feature := obj.__dict__.get(self.track_feature_key)) is None:
+            feature = obj.site.features[self.tracked_by]
+            obj.__dict__[self.track_feature_key] = feature
+        feature.track_field(self, obj, value)
+
+    def __set__(self, obj: fields.FieldContainer, value: Any) -> None:
+        self.track(obj, value)
+        super().__set__(obj, value)
 
 
 class Feature:
@@ -129,6 +163,13 @@ class Feature:
     def set_previous_footprint(self, footprint: dict[str, Any]):
         """
         Notify the feature of a cached footprint from a previous build
+        """
+        pass
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        """
+        Notify the feature that the value for a field of interest is being set
+        on a page
         """
         pass
 
