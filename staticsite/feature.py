@@ -363,7 +363,7 @@ class PageTrackingMixin:
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        # Collect pages with 'aliases' metadata set
+        # Collect pages notified by track_field, regardless of field name
         self.tracked_pages: set[Page] = set()
 
     def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
