@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any, List, Type
 
 import jinja2
 
@@ -83,6 +83,8 @@ class LinksPage(DataPage):
     """
     Page with a link collection posted as metadata only.
     """
+    TYPE = "links"
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
@@ -111,6 +113,9 @@ class Links(PageTrackingMixin, Feature):
 
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
+
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [LinksPage, LinkIndexPage]
 
     def load_dir(
             self,

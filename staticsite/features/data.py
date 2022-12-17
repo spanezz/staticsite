@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Type
 
 import jinja2
 
@@ -65,6 +65,9 @@ class DataPages(PageTrackingMixin, Feature):
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
+
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [DataPage]
 
     def load_dir(
             self,
