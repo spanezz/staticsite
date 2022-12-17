@@ -199,9 +199,6 @@ class Features:
         # Features sorted by topological order
         self.sorted = None
 
-        # Site pages that have the given metadata
-        self.pages_by_metadata: dict[str, list[Page]] = {}
-
     def get_node_class(self) -> Type[Node]:
         """
         Return the Node class to use for this site
@@ -293,25 +290,6 @@ class Features:
         """
         for feature in self.sorted:
             self.page_mixins += feature.page_mixins
-
-    def add_tracked_metadata(self, name: str):
-        """
-        Mark the given metadata name so that we track pages that have it.
-
-        Reindex existing pages, if any
-        """
-        if name in self.pages_by_metadata:
-            return
-        self.pages_by_metadata[name] = []
-
-    def examine_new_page(self, page: Page):
-        """
-        Register a new page in the site
-        """
-        # Also group pages by tracked metadata
-        for name, pages in self.pages_by_metadata.items():
-            if name in page.__dict__:
-                pages.append(page)
 
     def load_default_features(self):
         """

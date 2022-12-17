@@ -28,6 +28,8 @@ class Taxonomy:
         self.name = name
         self.src = src
         self.index: Optional[Page] = None
+        # Pages that declare categories in this taxonomy
+        self.pages: set[Page] = set()
         # Metadata for the taxonomy index page
         self.index_meta: dict[str, Any] = {"taxonomy": self}
         # Metadata for the category pages
@@ -116,7 +118,7 @@ class Taxonomy:
 
         # Group pages by category
         by_category: dict[str, list[Page]] = defaultdict(list)
-        for page in self.index.site.features.pages_by_metadata[self.name]:
+        for page in self.pages:
             categories = getattr(page, self.name, None)
             if not categories:
                 continue
@@ -131,13 +133,14 @@ class Taxonomy:
 
         # Create category pages
         for category, pages in by_category.items():
-            self.category_pages[category] = self.create_category_page(category, pages)
+            if (page := self.create_category_page(category, pages)) is not None:
+                self.category_pages[category] = page
 
         # Replace category names with category pages in each categorized page
-        for page in self.index.site.features.pages_by_metadata[self.name]:
+        for page in self.pages:
             if not (categories := getattr(page, self.name, None)):
                 continue
-            setattr(page, self.name, [self.category_pages[c] for c in categories])
+            setattr(page, self.name, [p for c in categories if (p := self.category_pages.get(c)) is not None])
 
         # Sort categories dict by category name
         self.category_pages = {k: v for k, v in sorted(self.category_pages.items())}
@@ -185,6 +188,9 @@ class TaxonomyFeature(Feature):
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.taxonomies[field.name].pages.add(obj)
+
     def register_taxonomy(self, name, src: file.File):
         # Note that if we want to make the tags inheritable, we need to
         # interface with 'rst' (or 'rst' to interface with us) because rst
@@ -199,7 +205,6 @@ class TaxonomyFeature(Feature):
                 Setting this as a simple string is the same as setting it as a list of one
                 element.
             """)}))
-        self.site.features.add_tracked_metadata(name)
         self.taxonomies[name] = Taxonomy(name=name, src=src)
 
     def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:

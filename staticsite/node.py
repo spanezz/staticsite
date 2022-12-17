@@ -290,7 +290,6 @@ class Node(SiteElement):
         if (src := kw.get("src")) is not None:
             search_root_node.by_src_relpath[os.path.basename(src.relpath)] = page
         self.build_pages["index.html"] = page
-        self.site.features.examine_new_page(page)
         # if page.directory_index is False:
         #     print(f"{page=!r} dst is not set but page is not a directory index")
         return page
@@ -334,7 +333,6 @@ class Node(SiteElement):
         self.build_pages[dst] = page
         if (src := kw.get("src")) is not None:
             self.by_src_relpath[os.path.basename(src.relpath)] = page
-        self.site.features.examine_new_page(page)
         return page
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:
