@@ -11,7 +11,7 @@ import jinja2
 
 from staticsite import fields
 from staticsite.archetypes import Archetype
-from staticsite.feature import Feature
+from staticsite.feature import Feature, TrackedFieldMixin
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
 from staticsite.page import SourcePage, Page
@@ -27,13 +27,18 @@ log = logging.getLogger("data")
 re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
-class DataPageMixin(metaclass=fields.FieldsMetaclass):
-    data_type = fields.Field(doc="""
-        Type of data for this file.
+class DataTypeField(TrackedFieldMixin, fields.Field):
+    """
+    Type of data for this file.
 
-        This is used to group data of the same type together, and to choose a
-        `data-[data_type].html` rendering template.
-    """)
+    This is used to group data of the same type together, and to choose a
+    `data-[data_type].html` rendering template.
+    """
+    tracked_by = "data"
+
+
+class DataPageMixin(metaclass=fields.FieldsMetaclass):
+    data_type = DataTypeField()
 
 
 class DataPages(Feature):
@@ -57,7 +62,10 @@ class DataPages(Feature):
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
         self.page_mixins.append(DataPageMixin)
-        self.site.features.add_tracked_metadata("data_type")
+        self.tracked_pages: set[Page] = set()
+
+    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+        self.tracked_pages.add(obj)
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
@@ -126,7 +134,7 @@ class DataPages(Feature):
 
     def organize(self):
         # Dispatch pages by type
-        for page in self.site.features.pages_by_metadata["data_type"]:
+        for page in self.tracked_pages:
             data_type = page.data_type
             self.by_type[data_type].append(page)
 
