@@ -1,7 +1,5 @@
 # related: Dict of pages related to this page.
 
-Dict of pages related to this page.
-
 Dict values will be resolved as pages.
 
 If there are no related pages, `page.meta.related` will be guaranteed to exist

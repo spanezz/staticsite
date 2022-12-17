@@ -1,7 +1,5 @@
 # image: Image used for this post.
 
-Image used for this post.
-
 It is set to a path to an image file relative to the current page.
 
 During the crossreference phase, it is resolved to the corresponding

@@ -1,7 +1,5 @@
 # syndication_date: Syndication date for this page.
 
-Syndication date for this page.
-
 This is the date that will appear in RSS and Atom feeds, and the page will not
 be syndicated before this date.
 

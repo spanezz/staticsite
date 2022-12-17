@@ -1,7 +1,5 @@
 # title: Page title.
 
-Page title.
-
 If missing:
 
  * it is generated via template_title, if present

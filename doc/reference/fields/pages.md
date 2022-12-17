@@ -2,10 +2,6 @@
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
 
-The `pages` metadata can use to select a set of pages shown by the current
-page. Although default `page.html` template will not do anything with them,
-other page templates, like `blog.html`, use this to select the pages to show.
-
 The `pages` feature allows defining a [page filter](page-filter.md) in the
 `pages` metadata element, which will be replaced with a list of matching pages.
 

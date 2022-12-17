@@ -1,7 +1,5 @@
 # links: Extra metadata for external links.
 
-Extra metadata for external links.
-
 It is a list of dicts of metadata, one for each link. In each dict, these keys are recognised:
 
 * `title`: str: short title for the link

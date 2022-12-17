@@ -1,7 +1,5 @@
 # syndication: Defines syndication for the contents of this page.
 
-Defines syndication for the contents of this page.
-
 It is a structure which can contain normal metadata, plus:
 
 * `add_to`: chooses which pages will include a link to the RSS/Atom feeds.

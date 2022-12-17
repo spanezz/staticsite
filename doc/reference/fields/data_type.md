@@ -1,7 +1,5 @@
 # data_type: Type of data for this file.
 
-Type of data for this file.
-
 Identifies the data type. Internally, the data feature groups data pages by
 type, so further features can efficiently access thematic datasets.
 
