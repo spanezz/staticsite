@@ -142,6 +142,8 @@ class Node(SiteElement):
             return self.page
 
         if path.head == "..":
+            if self.parent is None:
+                return None
             return self.parent.lookup_page(path.tail)
         elif path.head in (".", ""):
             # Probably not worth trying to avoid a recursion step here, since
