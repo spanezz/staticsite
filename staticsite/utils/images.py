@@ -11,7 +11,7 @@ import PIL
 import PIL.Image
 
 if TYPE_CHECKING:
-    from staticsite import File
+    from staticsite.file import File
     from staticsite.cache import Cache
 
 log = logging.getLogger("utils.images")
@@ -68,7 +68,7 @@ class ImageScanner:
         return meta
 
     def read_meta_exiftool(self, pathname: str) -> dict[str, Any]:
-        meta = {}
+        meta: dict[str, Any] = {}
 
         # It is important to use abspath here, as exiftool does not support the
         # usual -- convention to deal with files starting with a dash. With abspath

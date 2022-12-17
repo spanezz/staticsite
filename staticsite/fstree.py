@@ -33,7 +33,7 @@ class Tree:
         self.src = src
 
         # Metadata found in this directory
-        self.meta = {}
+        self.meta: dict[str, Any] = {}
 
         # Files in this directory
         self.files: dict[str, File] = {}
@@ -154,7 +154,7 @@ class PageTree(Tree):
                 res.update(meta)
         return res
 
-    def _scandir(self):
+    def _scandir(self) -> None:
         subdirs: list[tuple[str, File]] = []
         with os.scandir(self.dir_fd) as entries:
             for entry in entries:

@@ -1,8 +1,10 @@
 from __future__ import annotations
-from typing import Dict, Any, Tuple, BinaryIO, TextIO, Iterable
-import logging
+
 import json
+import logging
 import re
+from typing import Any, BinaryIO, Dict, Generator, Iterable, TextIO, Tuple
+
 from . import yaml_codec
 
 log = logging.getLogger("utils")
@@ -74,7 +76,7 @@ def read_markdown_partial(fd: BinaryIO) -> tuple[str, dict[str, Any], Iterable[s
             return "yaml", yaml_codec.loads(buf.decode()), (x.rstrip().decode() for x in fd)
     else:
         # No front matter found
-        def iter_body():
+        def iter_body() -> Generator[str, None, None]:
             yield line.rstrip().decode()
             for x in fd:
                 yield x.rstrip().decode()
