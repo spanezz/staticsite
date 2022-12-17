@@ -356,6 +356,8 @@ class MarkdownArchetype(Archetype):
 
 class MarkdownPage(FrontMatterPage):
     """
+    Markdown sources
+
     Markdown files have a `.md` extension and are prefixed by
     [front matter metadata](../front-matter.md).
 

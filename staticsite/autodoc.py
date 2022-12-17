@@ -19,7 +19,17 @@ log = logging.getLogger("autodoc")
 def summary(obj: Any):
     if obj.__doc__ is None:
         return f"Missing documentation for {obj!r}"
-    return inspect.cleandoc(obj.__doc__).strip().splitlines()[0]
+    return inspect.cleandoc(obj.__doc__).strip().split("\n\n", 1)[0]
+
+
+def body(obj: Any):
+    if obj.__doc__ is None:
+        return f"Missing documentation for {obj!r}"
+    res = inspect.cleandoc(obj.__doc__).strip().split("\n\n", 1)
+    if len(res) == 2:
+        return res[1]
+    else:
+        return res[0]
 
 
 class Autodoc:
@@ -75,13 +85,13 @@ class Autodoc:
 
             print("## Features", file=out)
             print(file=out)
-            for feature in self.site.features.ordered():
+            for feature in sorted(self.site.features.ordered(), key=lambda f: f.name):
                 print(f"* [{feature.name}](features/{feature.name}.md): {summary(feature)}", file=out)
             print(file=out)
 
             print("## Page types", file=out)
             print(file=out)
-            for name, page_type in by_name.items():
+            for name, page_type in sorted(by_name.items()):
                 print(f"* [{name}](pages/{name}.md): {summary(page_type)}", file=out)
             print(file=out)
 
@@ -122,12 +132,12 @@ class Autodoc:
                 print("## Page types", file=out)
                 print(file=out)
                 for page_type in page_types:
-                    print("* [{page_type.TYPE}](../pages/{page_type.TYPE}.md", file=out)
+                    print(f"* [{page_type.TYPE}](../pages/{page_type.TYPE}.md): {summary(page_type)}", file=out)
                 print(file=out)
 
             print("## Documentation", file=out)
             print(file=out)
-            print(inspect.cleandoc(feature.__doc__), file=out)
+            print(body(feature), file=out)
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 
@@ -147,7 +157,7 @@ class Autodoc:
             print(file=out)
             print("## Documentation", file=out)
             print(file=out)
-            print(inspect.cleandoc(page_type.__doc__), file=out)
+            print(body(page_type), file=out)
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 

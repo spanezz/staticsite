@@ -48,7 +48,7 @@ class Field:
 
     @functools.cached_property
     def summary(self) -> str:
-        return self.doc.strip().splitlines()[0]
+        return self.doc.strip().split("\n\n", 1)[0]
 
     def __set_name__(self, owner: Type[FieldContainer], name: str) -> None:
         self.name = name
