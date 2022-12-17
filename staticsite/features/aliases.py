@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from staticsite import fields
 from staticsite.node import Path
 from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
 from staticsite.page import AutoPage, ChangeExtent
+
+if TYPE_CHECKING:
+    from staticsite.page import SourcePage
 
 
 log = logging.getLogger("aliases")
@@ -66,7 +70,7 @@ class AliasPage(AutoPage):
     """
     Page rendering a redirect to another page
     """
-    page = fields.Field(doc="Page this alias redirects to")
+    page = fields.Field["AliasPage", "SourcePage"](doc="Page this alias redirects to")
     TYPE = "alias"
     TEMPLATE = "redirect.html"
 

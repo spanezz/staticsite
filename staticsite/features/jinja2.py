@@ -66,6 +66,7 @@ class J2Pages(Feature):
         else:
             if (front_matter := load_front_matter(template)):
                 return front_matter
+        return None
 
     def load_dir(
             self,
@@ -115,7 +116,7 @@ class J2Pages(Feature):
         return pages
 
 
-class RenderPartialTemplateMixin:
+class RenderPartialTemplateMixin(SourcePage):
     def _find_block(self, *names):
         for name in names:
             block = self.page_template.blocks.get("page_content")

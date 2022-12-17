@@ -10,7 +10,6 @@ from collections import Counter
 from typing import TYPE_CHECKING, Generator, Optional
 
 from .. import utils
-from ..file import File
 from ..node import Path
 from ..page import ChangeExtent
 from .command import Fail, SiteCommand
@@ -40,11 +39,11 @@ class Build(SiteCommand):
                             help="always do a full rebuild")
         return parser
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         self.site: Site
 
-    def run(self):
+    def run(self) -> Optional[int]:
         self.site = self.load_site()
         self.builder = Builder(
                 self.site, type_filter=self.args.type,
@@ -53,6 +52,7 @@ class Build(SiteCommand):
         self.builder.write()
         if self.builder.has_errors:
             return 1
+        return None
 
 
 class RenderStats:
@@ -107,7 +107,7 @@ class RenderDirectory:
         with utils.open_dir_fd(name, dir_fd=self.dir_fd) as subdir_fd:
             yield RenderDirectory(self.root, subpath, subdir_fd)
 
-    def prepare_subdir(self, name: str) -> Optional[File]:
+    def prepare_subdir(self, name: str) -> Optional[os.stat_result]:
         """
         Prepare for rendering a subdirectory.
 
@@ -127,7 +127,7 @@ class RenderDirectory:
             os.mkdir(name, dir_fd=self.dir_fd)
             return None
 
-    def prepare_file(self, name: str) -> Optional[File]:
+    def prepare_file(self, name: str) -> Optional[os.stat_result]:
         """
         Prepare for rendering a file
 

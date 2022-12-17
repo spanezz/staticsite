@@ -168,7 +168,7 @@ class Theme:
         self.configs = configs
 
         # Jinja2 Environment
-        self.jinja2 = None
+        self.jinja2: jinja2.Environment
 
         # Compute template lookup paths
         self.template_lookup_paths: List[str] = []

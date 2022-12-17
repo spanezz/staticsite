@@ -19,7 +19,7 @@ from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, fstree
 
 log = logging.getLogger("data")
 
@@ -78,7 +78,7 @@ class DataPages(PageTrackingMixin, Feature):
     def load_dir(
             self,
             node: Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken = []
         pages = []

@@ -17,9 +17,10 @@ from .settings import Settings
 from .utils import timings
 
 if TYPE_CHECKING:
+    from .archetypes import Archetypes
     from .node import Node
     from .page import Page
-    from .archetypes import Archetypes
+    from .theme import Theme
 
 log = logging.getLogger("site")
 
@@ -196,7 +197,7 @@ class Site:
         self.stage_features_constructed = False
 
         # Theme used to render pages
-        self.theme = None
+        self._theme = None
 
         # Feature implementation registry
         self.features = Features(self)
@@ -220,6 +221,15 @@ class Site:
 
         # Source page footprints from a previous build
         self.previous_source_footprints: dict[str, dict[str, Any]]
+
+    @cached_property
+    def theme(self) -> Theme:
+        """
+        Return the Theme object for this site
+        """
+        if self._theme is None:
+            raise RuntimeError("Site.theme called before the theme was loaded")
+        return self._theme
 
     def clear_footprints(self):
         """
@@ -300,20 +310,20 @@ class Site:
         """
         from .theme import Theme
 
-        if self.theme is not None:
+        if self._theme is not None:
             raise RuntimeError(
-                    F"load_theme called while a theme was already loaded from {self.theme.root}")
+                    F"load_theme called while a theme was already loaded from {self._theme.root}")
 
         if isinstance(self.settings.THEME, str):
-            self.theme = Theme.create(self, self.settings.THEME)
+            self._theme = Theme.create(self, self.settings.THEME)
         else:
             # Pick the first valid theme directory
             candidate_themes = self.settings.THEME
             if isinstance(candidate_themes, str):
                 candidate_themes = (candidate_themes,)
-            self.theme = Theme.create_legacy(self, candidate_themes)
+            self._theme = Theme.create_legacy(self, candidate_themes)
 
-        self.theme.load()
+        self._theme.load()
 
         # We not have the final feature list, we can load old feature footprints
         for feature in self.features.ordered():
@@ -377,7 +387,7 @@ class Site:
             self.root.site_name = os.path.basename(tree.src.abspath)
 
         # Scan asset trees from themes
-        self.theme.scan_assets()
+        self._theme.scan_assets()
 
         # Notify Features that contents have been scanned
         self.features.contents_scanned()
