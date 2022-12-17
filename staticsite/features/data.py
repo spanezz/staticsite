@@ -31,8 +31,14 @@ class DataTypeField(TrackedFieldMixin, fields.Field):
     """
     Type of data for this file.
 
+    Identifies the data type. Internally, the data feature groups data pages by
+    type, so further features can efficiently access thematic datasets.
+
     This is used to group data of the same type together, and to choose a
     `data-[data_type].html` rendering template.
+
+    The `page.meta.template` metadata for data pages, when not specified, defaults
+    to `dir-[type].html`, or if that is missing, to `data.html`.
     """
     tracked_by = "data"
 
@@ -174,6 +180,19 @@ def write_data(fd, data, fmt):
 
 
 class DataPage(RenderPartialTemplateMixin, SourcePage):
+    """
+    Data files
+
+    Data files have a `.json`, `.yaml`, or `.toml` extension and can be rendered
+    with custom Jinja2 templates.
+
+    The content of the data file is parsed, and merged into the page metadata.
+
+    The jinja2 template can be chosen using the `data_type` metadata field.
+
+    The metadata of any page with the `data_type` metadata will be also tracked as
+    data. This allows to create normal pages that also add to a named dataset.
+    """
     TYPE = "data"
 
     def __init__(self, site, **kw):
