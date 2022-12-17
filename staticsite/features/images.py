@@ -13,7 +13,7 @@ from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
 if TYPE_CHECKING:
-    from staticsite import file, scan
+    from staticsite import file, fstree
     from staticsite.node import Node
 
 log = logging.getLogger("images")
@@ -43,12 +43,6 @@ class ImageField(TrackedFieldMixin, fields.Field):
 
 class ImagePageMixin(metaclass=fields.FieldsMetaclass):
     image = ImageField()
-    width = fields.Field(doc="""
-        Image width
-    """)
-    height = fields.Field(doc="""
-        Image height
-    """)
 
 
 class Images(PageTrackingMixin, Feature):
@@ -113,7 +107,7 @@ class Images(PageTrackingMixin, Feature):
     Scaled versions of the image will be available in the image's [`related`
     field](../fields/related.md).
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
@@ -127,7 +121,7 @@ class Images(PageTrackingMixin, Feature):
     def load_dir(
             self,
             node: Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
@@ -222,17 +216,26 @@ class Images(PageTrackingMixin, Feature):
                     break
 
 
-class Image(SourcePage):
+class ImageMixin(metaclass=fields.FieldsMetaclass):
+    width = fields.Field[Page, int](doc="""
+        Image width
+    """)
+    height = fields.Field[Page, int](doc="""
+        Image height
+    """)
+
+
+class Image(ImageMixin, SourcePage):
     """
     An image as found in the source directory
     """
     TYPE = "image"
 
-    lat = fields.Field(doc="Image latitude")
-    lon = fields.Field(doc="Image longitude")
-    image_orientation = fields.Field(doc="Image orientation")
+    lat = fields.Field[Page, float](doc="Image latitude")
+    lon = fields.Field[Page, float](doc="Image longitude")
+    image_orientation = fields.Field[Page, int](doc="Image orientation")
 
-    def __init__(self, *args, mimetype: str = None, **kw):
+    def __init__(self, *args, mimetype: str, **kw):
         super().__init__(*args, **kw)
         # self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
@@ -261,13 +264,13 @@ class RenderedScaledImage(RenderedElement):
             return fd.read()
 
 
-class ScaledImage(AutoPage):
+class ScaledImage(ImageMixin, AutoPage):
     """
     Scaled version of an image
     """
     TYPE = "scaledimage"
 
-    def __init__(self, *args, mimetype: str = None, name: str = None, info: dict[str, Any] = None, **kw):
+    def __init__(self, *args, mimetype: str, name: str, info: dict[str, Any], **kw):
         super().__init__(*args, **kw)
         self.name = name
         created_from = self.created_from

@@ -679,7 +679,7 @@ It defaults to false, or true if `meta.date` is in the future.
     def __init__(
             self, site: Site, *,
             node: Node,
-            src: Optional[File] = None,
+            src: File,
             **kw):
         super().__init__(site, parent=node, node=node, **kw)
         self.src = src
