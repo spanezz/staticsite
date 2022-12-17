@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import datetime
 import heapq
-import io
 import logging
 import os
 import time
@@ -12,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
 import pytz
 
 if TYPE_CHECKING:
-    from ..page import page
+    from ..page import Page
 
 log = logging.getLogger("utils")
 
@@ -102,16 +101,7 @@ def open_dir_fd(path, dir_fd=None):
         os.close(res)
 
 
-def open_in_dir(name: str, *args, dir_fd: int, **kw):
-    """
-    Open a file contained in this directory
-    """
-    def _file_opener(fname, flags):
-        return os.open(fname, flags, dir_fd=dir_fd)
-    return io.open(name, *args, opener=_file_opener, **kw)
-
-
-def arrange(pages: List[page.Page], sort: str, limit: Optional[int] = None) -> List[page.Page]:
+def arrange(pages: List[Page], sort: str, limit: Optional[int] = None) -> List[Page]:
     """
     Sort the pages by ``sort`` and take the first ``limit`` ones
     """
