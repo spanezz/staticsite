@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedField, PageTrackingMixin
-from staticsite.page import PageNotFoundError, Page
+from staticsite.feature import Feature, PageTrackingMixin, TrackedField
+from staticsite.page import Page, PageNotFoundError
+
+if TYPE_CHECKING:
+    from staticsite.node import Node
 
 log = logging.getLogger("nav")
 
@@ -80,8 +83,10 @@ class Nav(PageTrackingMixin[NavPageMixin], Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.node_mixins.append(NavMixin)
         self.page_mixins.append(NavPageMixin)
+
+    def get_node_bases(self) -> Sequence[Type[Node]]:
+        return (NavMixin,)
 
     def crossreference(self) -> None:
         # Expand pages expressions

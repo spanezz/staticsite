@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import sys
 from collections import defaultdict
-from typing import Any, Callable, Dict, Generic, List, Optional, Set, Type, TypeVar
+from typing import (Any, Callable, Dict, Generic, List, Optional, Sequence,
+                    Set, Type, TypeVar)
 
-from . import file, fstree, site, toposort, fields
+from . import fields, file, fstree, site, toposort
 from .node import Node
 from .page import Page
 
@@ -79,8 +80,6 @@ class Feature:
         self.j2_globals: dict[str, Callable] = {}
         # Feature-provided jinja2 filters
         self.j2_filters: dict[str, Callable] = {}
-        # Feature-provided node mixins
-        self.node_mixins: list[Type] = []
         # Feature-provided page mixins
         self.page_mixins: list[Type] = []
 
@@ -157,6 +156,19 @@ class Feature:
         """
         pass
 
+    def get_node_bases(self) -> Sequence[Type[Node]]:
+        """
+        Return a sequence of base classes to add when instantiating Node types
+        """
+        return ()
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        """
+        Return a sequence of base classes to add when instantiating the given
+        page type
+        """
+        return ()
+
     def get_used_page_types(self) -> list[Type[Page]]:
         """
         Return a list of the page types used by this feature
@@ -187,9 +199,6 @@ class Features:
         # Feature implementation registry
         self.features: dict[str, Feature] = {}
 
-        # Mixins provided by features to add to Node classes
-        self.node_mixins: list[Type] = []
-
         # Mixins provided by features to add to Page classes
         self.page_mixins: list[Type] = []
 
@@ -207,7 +216,10 @@ class Features:
         Return the Node class to use for this site
         """
         if self.node_class is None:
-            self.node_class = type("Node", tuple(self.node_mixins) + (Node,), {})
+            bases: list[Type[Node]] = []
+            for feature in self.ordered():
+                bases.extend(feature.get_node_bases())
+            self.node_class = type("Node", tuple(bases) + (Node,), {})
         return self.node_class
 
     def get_page_class(self, cls: Type[Page]) -> Type[Page]:
@@ -284,7 +296,6 @@ class Features:
             feature = cls(cls.NAME, self.site)
             self.features[cls.NAME] = feature
             self.sorted.append(feature)
-            self.node_mixins += feature.node_mixins
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
 
