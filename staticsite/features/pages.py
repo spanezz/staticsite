@@ -4,7 +4,7 @@ import logging
 from typing import Any, Sequence, Type, Union
 
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
-from staticsite.page import ChangeExtent, Page
+from staticsite.page import ChangeExtent, Page, SourcePage
 
 log = logging.getLogger("pages")
 
@@ -30,6 +30,8 @@ class PagesField(TrackedField["PagesPageMixin", Union[list[str], list[Page]]]):
 class PagesPageMixin(Page):
     pages = PagesField(structure=True)
 
+
+class PagesSourcePageMixin(PagesPageMixin, SourcePage):
     def _compute_footprint(self) -> dict[str, Any]:
         res = super()._compute_footprint()
         if self.pages:
@@ -38,6 +40,8 @@ class PagesPageMixin(Page):
 
     def _compute_change_extent(self) -> ChangeExtent:
         res = super()._compute_change_extent()
+        if self.old_footprint is None:
+            return ChangeExtent.ALL
         if "footprint" in self._fields and res == ChangeExtent.UNCHANGED:
             if set(self.footprint.get("pages", ())) != set(self.old_footprint.get("pages", ())):
                 res = ChangeExtent.ALL
@@ -49,7 +53,10 @@ class PagesFeature(PageTrackingMixin, Feature):
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
-        return (PagesPageMixin,)
+        if issubclass(page_cls, SourcePage):
+            return (PagesSourcePageMixin,)
+        else:
+            return (PagesPageMixin,)
 
     def organize(self):
         # TODO: this seems a prerequisite for syndication, so it's currently in

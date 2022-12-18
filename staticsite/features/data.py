@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, Sequence, Type
 
 import jinja2
 
-from staticsite import fields
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
@@ -43,7 +42,7 @@ class DataTypeField(TrackedField["DataPageMixin", str]):
     tracked_by = "data"
 
 
-class DataPageMixin(metaclass=fields.FieldsMetaclass):
+class DataPageMixin(SourcePage):
     data_type = DataTypeField()
 
 
@@ -69,7 +68,10 @@ class DataPages(PageTrackingMixin, Feature):
         self.page_class_by_type = {}
 
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
-        return (DataPageMixin,)
+        if issubclass(page_cls, SourcePage):
+            return (DataPageMixin,)
+        else:
+            return ()
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls

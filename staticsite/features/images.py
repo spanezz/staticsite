@@ -41,7 +41,7 @@ class ImageField(TrackedField[Page, Union[str, "Image"]]):
     tracked_by = "images"
 
 
-class ImagePageMixin(metaclass=fields.FieldsMetaclass):
+class ImagePageMixin(Page):
     image = ImageField()
 
 

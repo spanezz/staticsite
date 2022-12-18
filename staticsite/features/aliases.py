@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Sequence, Type
+from typing import Sequence, Type
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.node import Path
-from staticsite.page import AutoPage, ChangeExtent, SourcePage
-
-if TYPE_CHECKING:
-    from staticsite.page import Page
+from staticsite.page import AutoPage, ChangeExtent, Page
 
 log = logging.getLogger("aliases")
 
 
-class AliasField(TrackedField[SourcePage, list[str]]):
+class AliasField(TrackedField[Page, list[str]]):
     """
     Relative paths in the destination directory where the page should also show up.
     [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
@@ -23,7 +20,7 @@ class AliasField(TrackedField[SourcePage, list[str]]):
     tracked_by = "aliases"
 
 
-class AliasesPageMixin(metaclass=fields.FieldsMetaclass):
+class AliasesPageMixin(Page):
     aliases = AliasField(structure=True)
 
 
