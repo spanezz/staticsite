@@ -42,7 +42,7 @@ class DataTypeField(TrackedField["DataPageMixin", str]):
     tracked_by = "data"
 
 
-class DataPageMixin(SourcePage):
+class DataPageMixin(Page):
     data_type = DataTypeField()
 
 
@@ -68,10 +68,7 @@ class DataPages(PageTrackingMixin, Feature):
         self.page_class_by_type = {}
 
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
-        if issubclass(page_cls, SourcePage):
-            return (DataPageMixin,)
-        else:
-            return ()
+        return (DataPageMixin,)
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls
