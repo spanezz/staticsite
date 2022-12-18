@@ -8,7 +8,7 @@ from . import asset
 from . import dirindex
 
 if TYPE_CHECKING:
-    from . import fields
+    from .fields import Field
     from .site import Site
     from .feature import Feature
     from .page import Page
@@ -40,7 +40,7 @@ class Autodoc:
         self.site = site
         self.root = root
 
-    def generate(self):
+    def generate(self) -> None:
         # Iterate features to generate per-feature documentation
         page_types: set[Type[Page]] = {asset.Asset, dirindex.Dir}
         for feature in self.site.features.ordered():
@@ -56,7 +56,7 @@ class Autodoc:
                 raise RuntimeError(f"Page type {name} defined as both {old} and {page_type}")
             else:
                 by_name[name] = page_type
-        fields: dict[str, fields.Field] = {}
+        fields: dict[str, Field[Any, Any]] = {}
         for name, page_type in by_name.items():
             self.write_page_type(name, page_type)
             fields.update(page_type._fields)
@@ -161,7 +161,7 @@ class Autodoc:
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 
-    def write_field(self, name: str, field: fields.Field):
+    def write_field(self, name: str, field: Field):
         path = os.path.join(self.root, "fields")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:
