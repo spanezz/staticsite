@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict, Set
+from typing import TYPE_CHECKING, List, Dict
 import os
 import gc
 import mimetypes
@@ -142,9 +142,9 @@ class Application(tornado.web.Application):
         )
 
         self.site_settings: Settings = settings
-        self.site: Site = None
-        self.pages: PageFS = None
-        self.page_sockets: Set[PageSocket] = set()
+        self.site: Site
+        self.pages: PageFS
+        self.page_sockets: set[PageSocket] = set()
         self.change_monitor = ChangeMonitor(self)
 
     def add_page_socket(self, handler):

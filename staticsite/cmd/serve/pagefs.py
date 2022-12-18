@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional, Union
 import os
 import locale
 import mimetypes
@@ -19,19 +19,17 @@ class PageFS:
 
     This can be used to render pages on demand.
     """
-    def __init__(self, site: Site = None):
-        self.paths = {}
+    def __init__(self, site: Site):
+        self.paths: dict[str, Page] = {}
+        for page in site.iter_pages():
+            self.add_page(page, page.build_path)
 
-        if site:
-            for page in site.iter_pages():
-                self.add_page(page, page.build_path)
-
-    def add_page(self, page: Page, build_path: str = None):
+    def add_page(self, page: Page, build_path: str):
         if build_path is None:
             build_path = page.build_path
         self.paths[build_path] = page
 
-    def get_page(self, relpath: str) -> Tuple[str, Page]:
+    def get_page(self, relpath: str) -> Union[tuple[None, None], tuple[str, Page]]:
         if not relpath:
             relpath = "/index.html"
         dst_relpath = os.path.normpath(relpath).lstrip("/")
