@@ -16,7 +16,7 @@ P = TypeVar("P", bound=Page)
 V = TypeVar("V")
 
 
-class TrackedFieldMixin(fields.Field[P, V]):
+class TrackedField(fields.Field[P, V]):
     """
     Leat a feature track when values are set on this field
     """
@@ -340,17 +340,17 @@ class Features:
                 self.feature_classes[name] = cls
 
 
-P = TypeVar("P", bound="fields.FieldContainer")
+PG = TypeVar("PG", bound="fields.FieldContainer")
 
 
-class PageTrackingMixin(Generic[P]):
+class PageTrackingMixin(Generic[PG]):
     """
     Basic page tracking functionality for features that need it
     """
     def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         # Collect pages notified by track_field, regardless of field name
-        self.tracked_pages: set[P] = set()
+        self.tracked_pages: set[PG] = set()
 
-    def track_field(self, field: fields.Field, obj: P, value: Any):
+    def track_field(self, field: fields.Field, obj: PG, value: Any):
         self.tracked_pages.add(obj)

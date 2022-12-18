@@ -4,10 +4,10 @@ import itertools
 import logging
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional, Type, Union
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
@@ -26,7 +26,7 @@ def basename_no_ext(pathname: str) -> str:
     return os.path.splitext(os.path.basename(pathname))[0]
 
 
-class ImageField(TrackedFieldMixin, fields.Field):
+class ImageField(TrackedField[Page, Union[str, "Image"]]):
     """
     Image used for this post.
 

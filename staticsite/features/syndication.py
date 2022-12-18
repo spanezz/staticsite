@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Union, Type
 import jinja2
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.node import Path
 from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent
 from staticsite.utils import arrange
@@ -202,7 +202,7 @@ class Syndication:
                 dest.add_related("atom_feed", self.atom_page)
 
     @classmethod
-    def clean_value(self, page: Page, value: Any) -> Syndication:
+    def clean_value(self, page: Page, value: Any) -> Optional[Syndication]:
         """
         Instantiate a Syndication object from a Page field
         """
@@ -228,7 +228,7 @@ class SyndicatedPageError(Exception):
     pass
 
 
-class SyndicationField(TrackedFieldMixin, fields.Field):
+class SyndicationField(TrackedField[Page, Syndication]):
     """
     Defines syndication for the contents of this page.
 

@@ -11,7 +11,7 @@ import jinja2
 
 from staticsite import fields
 from staticsite.archetypes import Archetype
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
 from staticsite.page import SourcePage, Page
@@ -27,7 +27,7 @@ log = logging.getLogger("data")
 re_ext = re.compile(r"\.(json|toml|yaml)$")
 
 
-class DataTypeField(TrackedFieldMixin, fields.Field):
+class DataTypeField(TrackedField["DataPageMixin", str]):
     """
     Type of data for this file.
 

@@ -7,21 +7,21 @@ from typing import TYPE_CHECKING, Any, List, Type
 
 import jinja2
 
-from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
 from staticsite.node import Node, Path
+from staticsite.page import Page
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
-    from staticsite import Page, file, scan
+    from staticsite import file, fstree
 
 log = logging.getLogger("links")
 
 
-class LinksField(TrackedFieldMixin, fields.Field):
+class LinksField(TrackedField["LinksPageMixin", dict[str, Any]]):
     """
     Extra metadata for external links.
 
@@ -38,7 +38,7 @@ class LinksField(TrackedFieldMixin, fields.Field):
     tracked_by = "links"
 
 
-class LinksPageMixin(metaclass=fields.FieldsMetaclass):
+class LinksPageMixin(Page):
     links = LinksField()
 
     @jinja2.pass_context
@@ -137,7 +137,7 @@ class Links(PageTrackingMixin, Feature):
     """
     RUN_AFTER = ["data"]
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         self.j2_globals["links_merged"] = self.links_merged
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
@@ -159,7 +159,7 @@ class Links(PageTrackingMixin, Feature):
     def load_dir(
             self,
             node: Node,
-            directory: scan.Directory,
+            directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
         Handle .links pages that generate the browseable archive of annotated
@@ -197,7 +197,7 @@ class Links(PageTrackingMixin, Feature):
 
         return pages
 
-    def load_file_meta(self, directory: scan.Directory, fname) -> dict[str, Any]:
+    def load_file_meta(self, directory: fstree.Tree, fname: str) -> dict[str, Any]:
         """
         Parse the links file to read its description
         """

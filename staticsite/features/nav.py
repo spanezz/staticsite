@@ -4,7 +4,7 @@ import logging
 from typing import Any, Optional
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.page import PageNotFoundError, Page
 
 log = logging.getLogger("nav")
@@ -14,7 +14,7 @@ class NavData:
     def __init__(self, page: Page, paths: list[str]):
         self.page = page
         self.paths = paths
-        self.resolved: Optional[list[Page]] = None
+        self.resolved: Optional[list["NavPageMixin"]] = None
 
     def _resolve(self):
         if self.resolved is not None:
@@ -40,7 +40,7 @@ class NavData:
         return self.resolved
 
 
-class NavField(TrackedFieldMixin, fields.Inherited):
+class NavField(TrackedField[Page, NavData], fields.Inherited[Page, NavData]):
     """
     List of page paths, relative to the page defining the nav element, that
     are used for the navbar.
@@ -95,12 +95,13 @@ class Nav(PageTrackingMixin[NavPageMixin], Feature):
             nav._resolve()
 
             # Build list of target pages
-            nav_pages.update(nav.resolved)
+            if nav.resolved is not None:
+                nav_pages.update(nav.resolved)
 
         # Make sure nav_title is filled
-        for page in nav_pages:
-            if not page.nav_title:
-                page.nav_title = page.title
+        for target in nav_pages:
+            if not target.nav_title:
+                target.nav_title = target.title
 
 
 FEATURES = {

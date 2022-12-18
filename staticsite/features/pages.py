@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 from typing import Any, Union
 
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
+from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.page import ChangeExtent, Page
 
 log = logging.getLogger("pages")
 
 
-class PagesField(TrackedFieldMixin["PagesPageMixin", Union[list[str], list[Page]]]):
+class PagesField(TrackedField["PagesPageMixin", Union[list[str], list[Page]]]):
     """
     The `pages` metadata can use to select a set of pages shown by the current
     page. Although default `page.html` template will not do anything with them,

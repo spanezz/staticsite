@@ -4,10 +4,10 @@ import functools
 import heapq
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type, Union
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedFieldMixin
+from staticsite.feature import Feature, TrackedField
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
 from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
@@ -149,7 +149,7 @@ class Taxonomy:
         self.index.pages = list(self.category_pages.values())
 
 
-class TaxonomyField(TrackedFieldMixin, fields.Field):
+class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
     tracked_by = "taxonomy"
     # TODO: make this validate as string lists
 

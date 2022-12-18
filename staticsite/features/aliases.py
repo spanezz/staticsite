@@ -1,21 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from staticsite import fields
+from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.node import Path
-from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
-from staticsite.page import AutoPage, ChangeExtent
-
-if TYPE_CHECKING:
-    from staticsite.page import SourcePage
-
+from staticsite.page import AutoPage, ChangeExtent, SourcePage
 
 log = logging.getLogger("aliases")
 
 
-class AliasField(TrackedFieldMixin, fields.Field):
+class AliasField(TrackedField[SourcePage, list[str]]):
     """
     Relative paths in the destination directory where the page should also show up.
     [Like in Hugo](https://gohugo.io/extras/aliases/), this can be used to maintain
