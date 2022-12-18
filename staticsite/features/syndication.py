@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-from typing import Any, List, Optional, Union, Type
+from typing import Any, List, Optional, Sequence, Union, Type
 
 import jinja2
 
@@ -406,10 +406,12 @@ class SyndicationFeature(PageTrackingMixin, Feature):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.page_mixins.append(SyndicationPageMixin)
         self.site.features["rst"].yaml_tags.add("syndication")
         self.syndications = []
         self.j2_globals["syndicated_pages"] = self.jinja2_syndicated_pages
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return (SyndicationPageMixin,)
 
     def get_used_page_types(self) -> list[Type[Page]]:
         return [RSSPage, AtomPage, ArchivePage]

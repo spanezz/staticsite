@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List, Type
+from typing import TYPE_CHECKING, Any, List, Sequence, Type
 
 import jinja2
 
@@ -141,7 +141,6 @@ class Links(PageTrackingMixin, Feature):
         super().__init__(*args, **kw)
         self.j2_globals["links_merged"] = self.links_merged
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
-        self.page_mixins.append(LinksPageMixin)
 
         # Shortcut to access the Data feature
         self.data = self.site.features["data"]
@@ -152,6 +151,9 @@ class Links(PageTrackingMixin, Feature):
 
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return (LinksPageMixin,)
 
     def get_used_page_types(self) -> list[Type[Page]]:
         return [LinksPage, LinkIndexPage]

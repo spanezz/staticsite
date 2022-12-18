@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Union
+from typing import Any, Sequence, Type, Union
 
-from staticsite.feature import Feature, TrackedField, PageTrackingMixin
+from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.page import ChangeExtent, Page
 
 log = logging.getLogger("pages")
@@ -48,9 +48,8 @@ class PagesFeature(PageTrackingMixin, Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        self.page_mixins = (PagesPageMixin,)
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return (PagesPageMixin,)
 
     def organize(self):
         # TODO: this seems a prerequisite for syndication, so it's currently in

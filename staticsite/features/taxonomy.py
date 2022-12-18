@@ -4,7 +4,7 @@ import functools
 import heapq
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Sequence, Type, Union
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
@@ -315,9 +315,13 @@ class TaxonomyFeature(Feature):
         super().__init__(*args, **kw)
         # All TaxonomyPages found
         self.taxonomies: dict[str, Taxonomy] = {}
+        self.page_bases: list[Type[Page]] = []
 
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return self.page_bases
 
     def get_used_page_types(self) -> list[Type[Page]]:
         return [TaxonomyPage, CategoryPage]
@@ -332,7 +336,7 @@ class TaxonomyFeature(Feature):
         # them.
         # Instead of making tags inheritable from normal metadata, we can offer
         # them to be added by 'files' or 'dirs' directives.
-        self.page_mixins.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
+        self.page_bases.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
             name: TaxonomyField(structure=True, default=(), doc=f"""
                 List of categories for the `{name}` taxonomy.
 

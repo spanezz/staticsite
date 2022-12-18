@@ -199,9 +199,6 @@ class Features:
         # Feature implementation registry
         self.features: dict[str, Feature] = {}
 
-        # Mixins provided by features to add to Page classes
-        self.page_mixins: list[Type] = []
-
         # Cached final node class
         self.node_class: Optional[Type[Node]] = None
 
@@ -229,7 +226,10 @@ class Features:
         if (final := self.page_classes.get(cls)):
             return final
         # TODO: skip adding mixins to Asset pages?
-        final = type(cls.__name__, tuple(self.page_mixins) + (cls,), {
+        bases: list[Type[Page]] = []
+        for feature in self.ordered():
+            bases.extend(feature.get_page_bases(cls))
+        final = type(cls.__name__, tuple(bases) + (cls,), {
             "__doc__": cls.__doc__, "__module__": cls.__module__
         })
         self.page_classes[cls] = final
@@ -298,14 +298,6 @@ class Features:
             self.sorted.append(feature)
 
         log.debug("sorted feature list: %r", [x.name for x in self.sorted])
-
-    def contents_scanned(self):
-        """
-        Hook called when the site is done scanning contents, and before
-        instantiating pages
-        """
-        for feature in self.sorted:
-            self.page_mixins += feature.page_mixins
 
     def load_default_features(self):
         """

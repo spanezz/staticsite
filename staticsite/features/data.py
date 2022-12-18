@@ -5,16 +5,16 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any, Sequence, Type
 
 import jinja2
 
 from staticsite import fields
 from staticsite.archetypes import Archetype
-from staticsite.feature import Feature, TrackedField, PageTrackingMixin
+from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
-from staticsite.page import SourcePage, Page
+from staticsite.page import Page, SourcePage
 from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
 
@@ -67,7 +67,9 @@ class DataPages(PageTrackingMixin, Feature):
         self.by_type = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
         self.page_class_by_type = {}
-        self.page_mixins.append(DataPageMixin)
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return (DataPageMixin,)
 
     def register_page_class(self, type: str, cls):
         self.page_class_by_type[type] = cls

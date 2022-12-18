@@ -4,7 +4,7 @@ import itertools
 import logging
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Any, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField, PageTrackingMixin
@@ -111,9 +111,11 @@ class Images(PageTrackingMixin, Feature):
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
-        self.page_mixins.append(ImagePageMixin)
         # Nodes that contain images
         self.images: set[Image] = set()
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return (ImagePageMixin,)
 
     def get_used_page_types(self) -> list[Type[Page]]:
         return [Image, ScaledImage]

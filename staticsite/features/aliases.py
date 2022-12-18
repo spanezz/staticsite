@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING, Sequence, Type
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.node import Path
 from staticsite.page import AutoPage, ChangeExtent, SourcePage
+
+if TYPE_CHECKING:
+    from staticsite.page import Page
 
 log = logging.getLogger("aliases")
 
@@ -35,7 +39,9 @@ class AliasesFeature(PageTrackingMixin, Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.site.features["rst"].yaml_tags.add("aliases")
-        self.page_mixins.append(AliasesPageMixin)
+
+    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+        return (AliasesPageMixin,)
 
     def generate(self):
         # Build alias pages from pages with an 'aliases' metadata
