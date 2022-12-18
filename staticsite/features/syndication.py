@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import os
 from typing import Any, List, Optional, Union, Type
@@ -228,7 +229,7 @@ class SyndicatedPageError(Exception):
     pass
 
 
-class SyndicationField(TrackedField[Page, Syndication]):
+class SyndicationField(TrackedField[Page, Optional[Syndication]]):
     """
     Defines syndication for the contents of this page.
 
@@ -266,23 +267,23 @@ class SyndicationField(TrackedField[Page, Syndication]):
     """
     tracked_by = "syndication"
 
-    def _clean(self, page: Page, value: Any) -> Syndication:
+    def _clean(self, page: Page, value: Any) -> Optional[Syndication]:
         return Syndication.clean_value(page, value)
 
 
-class SyndicationDateField(fields.Date):
-    def __get__(self, page: Page, type: Type = None) -> Any:
+class SyndicationDateField(fields.Date[Page]):
+    def __get__(self, page: Page, type: Optional[Type] = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             date = page.date
             page.__dict__[self.name] = date
         return date
 
 
-class SyndicatedField(fields.Bool):
+class SyndicatedField(fields.Bool[Page]):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def __get__(self, page: Page, type: Type = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> bool:
         if (value := page.__dict__.get(self.name)) is None:
             value = page.indexed
             page.__dict__[self.name] = value
@@ -291,7 +292,7 @@ class SyndicatedField(fields.Bool):
             return value
 
 
-class SyndicationPageMixin(metaclass=fields.FieldsMetaclass):
+class SyndicationPageMixin(Page):
     syndication = SyndicationField(structure=True)
     syndicated = SyndicatedField(doc="""
         Set to true if the page can be included in a syndication, else to false.
@@ -320,7 +321,7 @@ class SyndicationPageMixin(metaclass=fields.FieldsMetaclass):
     # """)
 
 
-def _get_syndicated_pages(page: Page, limit: Optional[int] = None) -> List[Page]:
+def _get_syndicated_pages(page: SyndicationPageMixin, limit: Optional[int] = None) -> List[Page]:
     """
     Get the sorted list of syndicated pages for a page
     """
@@ -414,7 +415,8 @@ class SyndicationFeature(PageTrackingMixin, Feature):
         return [RSSPage, AtomPage, ArchivePage]
 
     @jinja2.pass_context
-    def jinja2_syndicated_pages(self, context, what: Union[str, Page, List[Page], None] = None, limit=None) -> bool:
+    def jinja2_syndicated_pages(
+            self, context, what: Union[str, Page, list[Page], None] = None, limit=None) -> list[Page]:
         """
         Get the list of pages to be syndicated
         """
@@ -468,7 +470,7 @@ class SyndicationPage(AutoPage):
     """
     Base class for syndication pages
     """
-    index = fields.Field(doc="""
+    index = fields.Field["SyndicationPage", SyndicationPageMixin](doc="""
         Page that defined the syndication for this feed
     """)
 
@@ -523,7 +525,7 @@ class ArchivePage(AutoPage):
     * `page.created_from`: the page for which the archive page was created
     """
 
-    index = fields.Field(doc="""
+    index = fields.Field["ArchivePage", SyndicationPageMixin](doc="""
         Page that defined the syndication for this feed
     """)
 
