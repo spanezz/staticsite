@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
-from staticsite.page import PageNotFoundError
-
-if TYPE_CHECKING:
-    from staticsite.page import Page
+from staticsite.page import PageNotFoundError, Page
 
 log = logging.getLogger("nav")
 
@@ -61,12 +58,12 @@ class NavField(TrackedFieldMixin, fields.Inherited):
         return NavData(page, value)
 
 
-class NavMixin(metaclass=fields.FieldsMetaclass):
+class NavMixin(fields.FieldContainer):
     nav = NavField(structure=True)
 
 
-class NavPageMixin(NavMixin):
-    nav_title = fields.Field(doc="""
+class NavPageMixin(NavMixin, Page):
+    nav_title = fields.Field[Page, str](doc="""
         Title to use when this page is linked in a navbar.
 
         It defaults to `page.title`, or to the series name for series pages.
@@ -75,7 +72,7 @@ class NavPageMixin(NavMixin):
     """)
 
 
-class Nav(PageTrackingMixin, Feature):
+class Nav(PageTrackingMixin[NavPageMixin], Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
@@ -86,9 +83,9 @@ class Nav(PageTrackingMixin, Feature):
         self.node_mixins.append(NavMixin)
         self.page_mixins.append(NavPageMixin)
 
-    def crossreference(self):
+    def crossreference(self) -> None:
         # Expand pages expressions
-        nav_pages: set[Page] = set()
+        nav_pages: set[NavPageMixin] = set()
 
         for page in self.tracked_pages:
             if (nav := page.nav) is None:

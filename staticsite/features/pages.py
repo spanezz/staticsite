@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Union
 
-from staticsite import fields
 from staticsite.feature import Feature, TrackedFieldMixin, PageTrackingMixin
-from staticsite.page import ChangeExtent
+from staticsite.page import ChangeExtent, Page
 
 log = logging.getLogger("pages")
 
 
-class PagesField(TrackedFieldMixin, fields.Field):
+class PagesField(TrackedFieldMixin["PagesPageMixin", Union[list[str], list[Page]]]):
     """
     The `pages` metadata can use to select a set of pages shown by the current
     page. Although default `page.html` template will not do anything with them,
@@ -28,7 +27,7 @@ class PagesField(TrackedFieldMixin, fields.Field):
     tracked_by = "pages"
 
 
-class PagesPageMixin(metaclass=fields.FieldsMetaclass):
+class PagesPageMixin(Page):
     pages = PagesField(structure=True)
 
     def _compute_footprint(self) -> dict[str, Any]:

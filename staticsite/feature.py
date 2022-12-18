@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Callable, Dict, Generic, List, Optional, Set, Type, TypeVar
 
 from . import file, fstree, site, toposort, fields
 from .node import Node
@@ -12,7 +12,11 @@ from .page import Page
 log = logging.getLogger("feature")
 
 
-class TrackedFieldMixin:
+P = TypeVar("P", bound=Page)
+V = TypeVar("V")
+
+
+class TrackedFieldMixin(fields.Field[P, V]):
     """
     Leat a feature track when values are set on this field
     """
@@ -28,7 +32,7 @@ class TrackedFieldMixin:
             self.tracked_by = tracked_by
         self.track_feature_key: str
 
-    def __set_name__(self, owner: Type[fields.FieldContainer], name: str) -> None:
+    def __set_name__(self, owner: Type[P], name: str) -> None:
         super().__set_name__(owner, name)
         self.track_feature_key = f"_{self.name}_feature"
 
@@ -41,7 +45,7 @@ class TrackedFieldMixin:
             obj.__dict__[self.track_feature_key] = feature
         feature.track_field(self, obj, value)
 
-    def __set__(self, obj: fields.FieldContainer, value: Any) -> None:
+    def __set__(self, obj: P, value: Any) -> None:
         self.track(obj, value)
         super().__set__(obj, value)
 
@@ -72,13 +76,13 @@ class Feature:
         # Site object
         self.site = site
         # Feature-provided jinja2 globals
-        self.j2_globals: Dict[str, Callable] = {}
+        self.j2_globals: dict[str, Callable] = {}
         # Feature-provided jinja2 filters
-        self.j2_filters: Dict[str, Callable] = {}
+        self.j2_filters: dict[str, Callable] = {}
         # Feature-provided node mixins
-        self.node_mixins = []
+        self.node_mixins: list[Type] = []
         # Feature-provided page mixins
-        self.page_mixins = []
+        self.page_mixins: list[Type] = []
 
     def __str__(self):
         return self.name
@@ -169,13 +173,6 @@ class Feature:
     def set_previous_footprint(self, footprint: dict[str, Any]):
         """
         Notify the feature of a cached footprint from a previous build
-        """
-        pass
-
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
-        """
-        Notify the feature that the value for a field of interest is being set
-        on a page
         """
         pass
 
@@ -343,14 +340,17 @@ class Features:
                 self.feature_classes[name] = cls
 
 
-class PageTrackingMixin:
+P = TypeVar("P", bound="fields.FieldContainer")
+
+
+class PageTrackingMixin(Generic[P]):
     """
     Basic page tracking functionality for features that need it
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         # Collect pages notified by track_field, regardless of field name
-        self.tracked_pages: set[Page] = set()
+        self.tracked_pages: set[P] = set()
 
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+    def track_field(self, field: fields.Field, obj: P, value: Any):
         self.tracked_pages.add(obj)

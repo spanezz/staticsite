@@ -13,11 +13,11 @@ if TYPE_CHECKING:
 log = logging.getLogger("dir")
 
 
-class ParentField(fields.Field):
+class ParentField(fields.Field["Dir", Optional[Page]]):
     """
     Field that works as a proxy for page.node.parent.page
     """
-    def __get__(self, page: Page, type: Type = None) -> Optional[Page]:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> Optional[Page]:
         if (parent := page.node.parent) is None:
             return None
         return parent.page
