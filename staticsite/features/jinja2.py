@@ -116,7 +116,7 @@ class J2Pages(Feature):
         return pages
 
 
-class RenderPartialTemplateMixin(SourcePage):
+class RenderPartialTemplateMixin(TemplatePage):
     def _find_block(self, *names):
         for name in names:
             block = self.page_template.blocks.get("page_content")
