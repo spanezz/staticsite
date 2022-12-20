@@ -121,16 +121,20 @@ class Node(SiteElement):
         The path is resolved relative to this node, and if not found, relative
         to the parent node, and so on until the top.
         """
-        from .page import Page
+        from .page import Page, PageNotFoundError
         if isinstance(target, Page):
             return target
         if target.startswith("/"):
             root = self.site.root
             if static and (static_root := root.lookup(Path.from_string(self.site.settings.STATIC_PATH))) is not None:
                 root = static_root
-            return root.lookup_page(Path.from_string(target))
+            page = root.lookup_page(Path.from_string(target))
         else:
-            return self.lookup_page(Path.from_string(target))
+            page = self.lookup_page(Path.from_string(target))
+        if page is None:
+            raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
+        else:
+            return page
 
     def lookup_page(self, path: Path) -> Optional[Page]:
         """
@@ -278,8 +282,10 @@ class Node(SiteElement):
 
         if directory_index:
             search_root_node = self
-        else:
+        elif self.parent is not None:
             search_root_node = self.parent
+        else:
+            search_root_node = self
 
         # Create the page
         try:
@@ -410,7 +416,7 @@ class Node(SiteElement):
         Check if page is contained in or under this node
         """
         # Walk the parent chain of page.node to see if we find self
-        node = page.node
+        node: Optional[Node] = page.node
         while node is not None:
             if node == self:
                 return True
