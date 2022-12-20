@@ -473,6 +473,12 @@ class Page(SiteElement):
         else:
             return "/" + page.site_path
 
+    def render(self, **kw) -> RenderedElement:
+        """
+        Return a RenderedElement that can produce the built version of this page
+        """
+        raise NotImplementedError(f"{self.__class__.__name__}.render not implemented")
+
     def check(self, checker):
         pass
 
