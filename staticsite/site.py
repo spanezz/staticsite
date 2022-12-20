@@ -289,6 +289,8 @@ class Site:
         Archetypes defined in the site
         """
         from .archetypes import Archetypes
+        if self.settings.PROJECT_ROOT is None:
+            raise RuntimeError("PROJECT_ROOT is not set and cannot be inferred")
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
 
     def load_features(self):
