@@ -176,7 +176,11 @@ class PageTree(Tree):
                     continue
                 else:
                     # Take note of files
-                    self.files[entry.name] = File.from_dir_entry(self.src, entry)
+                    try:
+                        self.files[entry.name] = File.from_dir_entry(self.src, entry)
+                    except FileNotFoundError:
+                        log.warning("%s: cannot stat() file: broken symlink?",
+                                    os.path.join(self.src.abspath, entry.name))
 
         # Let features add to directory metadata
         self.meta.update(self._load_dir_meta())
@@ -281,7 +285,11 @@ class AssetTree(Tree):
                     self.sub[entry.name] = AssetTree(self.site, File.from_dir_entry(self.src, entry))
                 else:
                     # Take note of files
-                    self.files[entry.name] = File.from_dir_entry(self.src, entry)
+                    try:
+                        self.files[entry.name] = File.from_dir_entry(self.src, entry)
+                    except FileNotFoundError:
+                        log.warning("%s: cannot stat() file: broken symlink?",
+                                    os.path.join(self.src.abspath, entry.name))
 
     def populate_node(self, node: Node):
         # Add the metadata scanned for this directory

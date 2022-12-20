@@ -28,17 +28,10 @@ class File(NamedTuple):
 
     @classmethod
     def from_dir_entry(cls, dir: "File", entry: os.DirEntry) -> "File":
-        try:
-            st = entry.stat()
-        except FileNotFoundError:
-            log.warning("%s: cannot stat() file: broken symlink?",
-                        os.path.join(dir.abspath, entry.name))
-            st = None
-
         return cls(
                 relpath=os.path.join(dir.relpath, entry.name),
                 abspath=os.path.join(dir.abspath, entry.name),
-                stat=st)
+                stat=entry.stat())
 
     @classmethod
     def with_stat(cls, relpath: str, abspath: str):
