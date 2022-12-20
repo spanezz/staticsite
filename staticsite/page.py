@@ -372,19 +372,13 @@ class Page(SiteElement):
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
-            root: Optional[str] = None,
             **kw) -> List["Page"]:
         """
         If not set, default root to the path of the containing directory for
         this page
         """
-        if root is None:
-            root = self.search_root_node
-
-        # print(f"find_pages {root=}, {path=!r}")
-
         from .page_filter import PageFilter
-        f = PageFilter(self.site, path, limit, sort, root=root, **kw)
+        f = PageFilter(self.site, path, limit, sort, root=self.search_root_node, **kw)
         return f.filter()
 
     def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
