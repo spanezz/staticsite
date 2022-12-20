@@ -14,7 +14,7 @@ import markupsafe
 from staticsite.feature import Feature
 from staticsite.archetypes import Archetype
 from staticsite.node import Path
-from staticsite.page import FrontMatterPage, Page, PageNotFoundError
+from staticsite.page import FrontMatterPage, TemplatePage, Page, PageNotFoundError
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -356,7 +356,7 @@ class MarkdownArchetype(Archetype):
         return archetype_meta, post_body
 
 
-class MarkdownPage(FrontMatterPage):
+class MarkdownPage(TemplatePage, FrontMatterPage):
     """
     Markdown sources
 
@@ -496,6 +496,12 @@ class MarkdownPage(FrontMatterPage):
         # Sequence of lines found in the body including and after the divider
         # line, nor None if there is no divider line
         self.body_rest: Optional[list[str]]
+
+        # True if this page can render a short version of itself
+        self.content_has_split = False
+
+        # External links found when rendering the page
+        self.rendered_external_links: set[str] = set()
 
         # Split lead and rest of the post, if a divider line is present
         for idx, line in enumerate(body):

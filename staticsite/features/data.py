@@ -13,7 +13,7 @@ from staticsite.archetypes import Archetype
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
 from staticsite.node import Node, Path
-from staticsite.page import Page, SourcePage
+from staticsite.page import Page, SourcePage, TemplatePage
 from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
 
@@ -180,7 +180,7 @@ def write_data(fd, data, fmt):
         raise NotImplementedError("data format {} is not supported".format(fmt))
 
 
-class DataPage(RenderPartialTemplateMixin, SourcePage):
+class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     """
     Data files
 

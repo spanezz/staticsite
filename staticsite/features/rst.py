@@ -14,7 +14,7 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.node import Node, Path
-from staticsite.page import FrontMatterPage, Page
+from staticsite.page import FrontMatterPage, TemplatePage, Page
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
@@ -248,7 +248,7 @@ class RestArchetype(Archetype):
         return meta, rendered
 
 
-class RstPage(FrontMatterPage):
+class RstPage(FrontMatterPage, TemplatePage):
     """
     RestructuredText files
 

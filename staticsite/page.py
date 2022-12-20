@@ -269,13 +269,6 @@ class Page(SiteElement):
         If missing, the modification time of the file is used.
     """)
 
-    template = TemplateField(doc="""
-        Template used to render the page. Defaults to `page.html`, although specific
-        pages of some features can default to other template names.
-
-        Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-    """)
-
     copyright = RenderedField(doc="""
         Copyright notice for the page. If missing, it's generated using
         `template_copyright`.
@@ -346,12 +339,6 @@ class Page(SiteElement):
         # as a path url
         self.leaf: bool = leaf
 
-        # True if this page can render a short version of itself
-        self.content_has_split = False
-
-        # External links found when rendering the page
-        self.rendered_external_links: set[str] = set()
-
         # Check the existence of other mandatory fields
         if self.site_url is None:
             raise PageMissesFieldError(self, "site_url")
@@ -379,31 +366,6 @@ class Page(SiteElement):
         Set the page as meta.related.name
         """
         self.related[name] = page
-
-    @cached_property
-    def page_template(self):
-        template = self.meta["template"]
-        if isinstance(template, jinja2.Template):
-            return template
-        return self.site.theme.jinja2.get_template(template)
-
-    @property
-    def date_as_iso8601(self):
-        from dateutil.tz import tzlocal
-        if (ts := self.date) is None:
-            return None
-        # TODO: Take timezone from config instead of tzlocal()
-        tz = tzlocal()
-        ts = ts.astimezone(tz)
-        offset = tz.utcoffset(ts)
-        offset_sec = (offset.days * 24 * 3600 + offset.seconds)
-        offset_hrs = offset_sec // 3600
-        offset_min = offset_sec % 3600
-        if offset:
-            tz_str = '{0:+03d}:{1:02d}'.format(offset_hrs, offset_min // 60)
-        else:
-            tz_str = 'Z'
-        return ts.strftime("%Y-%m-%d %H:%M:%S") + tz_str
 
     def find_pages(
             self,
@@ -511,50 +473,6 @@ class Page(SiteElement):
         else:
             return "/" + page.site_path
 
-    def get_img_attributes(
-            self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
-        """
-        Given a path to an image page, return a dict with <img> attributes that
-        can be used to refer to it
-        """
-        img = self.resolve_path(image)
-
-        res = {
-            "alt": img.title,
-        }
-
-        if type is not None:
-            # If a specific version is required, do not use srcset
-            rel = img.related.get(type, img)
-            res["width"] = str(rel.width)
-            res["height"] = str(rel.height)
-            res["src"] = self.url_for(rel, absolute=absolute)
-        else:
-            # https://developers.google.com/web/ilt/pwa/lab-responsive-images
-            # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
-            srcsets = []
-            for rel in img.related.values():
-                if rel.TYPE not in ("image", "scaledimage"):
-                    continue
-
-                if (width := rel.width) is None:
-                    continue
-
-                url = self.url_for(rel, absolute=absolute)
-                srcsets.append(f"{markupsafe.escape(url)} {width}w")
-
-            if srcsets:
-                width = img.width
-                srcsets.append(f"{markupsafe.escape(self.url_for(img))} {width}w")
-                res["srcset"] = ", ".join(srcsets)
-                res["src"] = self.url_for(img, absolute=absolute)
-            else:
-                res["width"] = str(img.width)
-                res["height"] = str(img.height)
-                res["src"] = self.url_for(img, absolute=absolute)
-
-        return res
-
     def check(self, checker):
         pass
 
@@ -573,43 +491,6 @@ class Page(SiteElement):
         else:
             return self.TYPE
 
-    @jinja2.pass_context
-    def html_full(self, context, **kw) -> str:
-        """
-        Render the full page, from the <html> tag downwards.
-        """
-        context = dict(context)
-        context["render_style"] = "full"
-        context.update(kw)
-        return self.render_template(self.page_template, template_args=context)
-
-    @jinja2.pass_context
-    def html_body(self, context, **kw) -> str:
-        """
-        Render the full body of the page, with UI elements excluding
-        navigation, headers, footers
-        """
-        return ""
-
-    @jinja2.pass_context
-    def html_inline(self, context, **kw) -> str:
-        """
-        Render the content of the page to be shown inline, like in a blog page.
-
-        Above-the-fold content only, small images, no UI elements
-        """
-        return ""
-
-    @jinja2.pass_context
-    def html_feed(self, context, **kw) -> str:
-        """
-        Render the content of the page to be shown in a RSS/Atom feed.
-
-        It shows the whole contents, without any UI elements, and with absolute
-        URLs
-        """
-        return ""
-
     def to_dict(self):
         from .utils import dump_meta
         res = {
@@ -624,26 +505,6 @@ class Page(SiteElement):
                 "abspath": str(self.src.abspath),
             }
         return res
-
-    def render(self, **kw) -> RenderedElement:
-        return RenderedString(self.html_full(kw))
-
-    def render_template(self, template: jinja2.Template, template_args: Optional[dict[Any, Any]] = None) -> str:
-        """
-        Render a jinja2 template, logging things if something goes wrong
-        """
-        if template_args is None:
-            template_args = {}
-        template_args["page"] = self
-        # try:
-        return template.render(**template_args)
-        # except jinja2.TemplateError as e:
-        #     log.error("%s: failed to render %s: %s",
-        #               template.filename, self.src.relpath if self.src else repr(self), e)
-        #     log.debug("%s: failed to render %s: %s",
-        #               template.filename, self.src.relpath if self.src else repr(self), e, exc_info=True)
-        #     # TODO: return a "render error" page? But that risks silent errors
-        #     return None
 
     def _compute_change_extent(self) -> ChangeExtent:
         """
@@ -763,3 +624,124 @@ class FrontMatterPage(SourcePage):
             return ChangeExtent.CONTENTS
         else:
             return ChangeExtent.ALL
+
+
+class TemplatePage(Page):
+    """
+    Page that renders using a Jinja2 template
+    """
+
+    template = TemplateField(doc="""
+        Template used to render the page. Defaults to `page.html`, although specific
+        pages of some features can default to other template names.
+
+        Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
+    """)
+
+    @cached_property
+    def page_template(self):
+        template = self.meta["template"]
+        if isinstance(template, jinja2.Template):
+            return template
+        return self.site.theme.jinja2.get_template(template)
+
+    def get_img_attributes(
+            self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
+        """
+        Given a path to an image page, return a dict with <img> attributes that
+        can be used to refer to it
+        """
+        img = self.resolve_path(image)
+
+        res = {
+            "alt": img.title,
+        }
+
+        if type is not None:
+            # If a specific version is required, do not use srcset
+            rel = img.related.get(type, img)
+            res["width"] = str(rel.width)
+            res["height"] = str(rel.height)
+            res["src"] = self.url_for(rel, absolute=absolute)
+        else:
+            # https://developers.google.com/web/ilt/pwa/lab-responsive-images
+            # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
+            srcsets = []
+            for rel in img.related.values():
+                if rel.TYPE not in ("image", "scaledimage"):
+                    continue
+
+                if (width := rel.width) is None:
+                    continue
+
+                url = self.url_for(rel, absolute=absolute)
+                srcsets.append(f"{markupsafe.escape(url)} {width}w")
+
+            if srcsets:
+                width = img.width
+                srcsets.append(f"{markupsafe.escape(self.url_for(img))} {width}w")
+                res["srcset"] = ", ".join(srcsets)
+                res["src"] = self.url_for(img, absolute=absolute)
+            else:
+                res["width"] = str(img.width)
+                res["height"] = str(img.height)
+                res["src"] = self.url_for(img, absolute=absolute)
+
+        return res
+
+    @jinja2.pass_context
+    def html_full(self, context, **kw) -> str:
+        """
+        Render the full page, from the <html> tag downwards.
+        """
+        context = dict(context)
+        context["render_style"] = "full"
+        context.update(kw)
+        return self.render_template(self.page_template, template_args=context)
+
+    @jinja2.pass_context
+    def html_body(self, context, **kw) -> str:
+        """
+        Render the full body of the page, with UI elements excluding
+        navigation, headers, footers
+        """
+        return ""
+
+    @jinja2.pass_context
+    def html_inline(self, context, **kw) -> str:
+        """
+        Render the content of the page to be shown inline, like in a blog page.
+
+        Above-the-fold content only, small images, no UI elements
+        """
+        return ""
+
+    @jinja2.pass_context
+    def html_feed(self, context, **kw) -> str:
+        """
+        Render the content of the page to be shown in a RSS/Atom feed.
+
+        It shows the whole contents, without any UI elements, and with absolute
+        URLs
+        """
+        return ""
+
+    def render(self, **kw) -> RenderedElement:
+        return RenderedString(self.html_full(kw))
+
+    def render_template(self, template: jinja2.Template, template_args: Optional[dict[Any, Any]] = None) -> str:
+        """
+        Render a jinja2 template, logging things if something goes wrong
+        """
+        if template_args is None:
+            template_args = {}
+        template_args["page"] = self
+        # try:
+        return template.render(**template_args)
+        # except jinja2.TemplateError as e:
+        #     log.error("%s: failed to render %s: %s",
+        #               template.filename, self.src.relpath if self.src else repr(self), e)
+        #     log.debug("%s: failed to render %s: %s",
+        #               template.filename, self.src.relpath if self.src else repr(self), e, exc_info=True)
+        #     # TODO: return a "render error" page? But that risks silent errors
+        #     return None

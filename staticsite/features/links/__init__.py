@@ -39,6 +39,7 @@ class LinksField(TrackedField["LinksPageMixin", dict[str, Any]]):
 
 
 class LinksPageMixin(Page):
+    # Allow every page to contribute links information
     links = LinksField()
 
     @jinja2.pass_context
@@ -47,34 +48,38 @@ class LinksPageMixin(Page):
 
         # If the page has rendered pointers to external links, add a dataset
         # with extra information for them
-        if self.rendered_external_links:
-            feature = self.site.features["links"]
-            links = feature.links
-            if feature.indices:
-                tag_indices = feature.indices[0].by_tag
-                data = {}
-                for url in self.rendered_external_links:
-                    info = links.get(url)
-                    if info is None:
-                        continue
-                    info = info.as_dict()
+        if not (external_links := getattr(self, "rendered_external_links", ())):
+            return rendered
 
-                    # Resolve tag urls for page into a { title: …,  url: … } dict
-                    tags = info.get("tags")
-                    if tags:
-                        tag_dicts = []
-                        for tag in tags:
-                            dest = tag_indices[tag]
-                            tag_dicts.append({"tag": tag, "url": self.url_for(dest)})
-                        info["tags"] = tag_dicts
+        feature = self.site.features["links"]
+        links = feature.links
+        if not feature.indices:
+            return rendered
 
-                    data[url] = info
-                if data:
-                    rendered += (
-                        "\n<script type='application/json' class='links-metadata'>"
-                        f"{json.dumps(data)}"
-                        "</script>\n"
-                    )
+        tag_indices = feature.indices[0].by_tag
+        data = {}
+        for url in external_links:
+            info = links.get(url)
+            if info is None:
+                continue
+            info = info.as_dict()
+
+            # Resolve tag urls for page into a { title: …,  url: … } dict
+            tags = info.get("tags")
+            if tags:
+                tag_dicts = []
+                for tag in tags:
+                    dest = tag_indices[tag]
+                    tag_dicts.append({"tag": tag, "url": self.url_for(dest)})
+                info["tags"] = tag_dicts
+
+            data[url] = info
+        if data:
+            rendered += (
+                "\n<script type='application/json' class='links-metadata'>"
+                f"{json.dumps(data)}"
+                "</script>\n"
+            )
 
         return rendered
 
@@ -87,7 +92,7 @@ class LinksPage(DataPage):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.meta["links"]})
+        self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.links})
 
 
 class Links(PageTrackingMixin, Feature):

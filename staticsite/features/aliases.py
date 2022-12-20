@@ -6,7 +6,7 @@ from typing import Sequence, Type
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.node import Path
-from staticsite.page import AutoPage, ChangeExtent, Page
+from staticsite.page import AutoPage, ChangeExtent, Page, TemplatePage
 
 log = logging.getLogger("aliases")
 
@@ -64,7 +64,7 @@ class AliasesFeature(PageTrackingMixin, Feature):
                         path=subpath)
 
 
-class AliasPage(AutoPage):
+class AliasPage(TemplatePage, AutoPage):
     """
     Page rendering a redirect to another page
     """

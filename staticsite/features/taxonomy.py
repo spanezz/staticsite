@@ -10,7 +10,7 @@ from staticsite import fields
 from staticsite.feature import Feature, TrackedField
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
-from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
+from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent, TemplatePage
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -406,7 +406,7 @@ class TaxonomyFeature(Feature):
             taxonomy.generate_pages()
 
 
-class TaxonomyPage(SourcePage):
+class TaxonomyPage(TemplatePage, SourcePage):
     """
     Root page for one taxonomy defined in the site
 
@@ -486,7 +486,7 @@ class TaxonomyPage(SourcePage):
 
 
 @functools.total_ordering
-class CategoryPage(AutoPage):
+class CategoryPage(TemplatePage, AutoPage):
     """
     Index page showing all the pages tagged with a given taxonomy item
 

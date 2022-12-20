@@ -8,7 +8,7 @@ import markupsafe
 
 from staticsite import node
 from staticsite.feature import Feature
-from staticsite.page import ChangeExtent, Page, SourcePage
+from staticsite.page import ChangeExtent, Page, SourcePage, TemplatePage
 from staticsite.page_filter import compile_page_match
 from staticsite.utils import front_matter
 
@@ -171,7 +171,7 @@ class RenderPartialTemplateMixin(SourcePage):
             return ""
 
 
-class J2Page(RenderPartialTemplateMixin, SourcePage):
+class J2Page(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     """
     Jinja2 pages
 

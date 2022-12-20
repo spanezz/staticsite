@@ -4,7 +4,7 @@ import logging
 import os
 from typing import TYPE_CHECKING, Optional, Type
 
-from .page import SourcePage, Page, ChangeExtent
+from .page import SourcePage, Page, ChangeExtent, TemplatePage
 from . import fields
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ class ParentField(fields.Field["Dir", Optional[Page]]):
         return parent.page
 
 
-class Dir(SourcePage):
+class Dir(TemplatePage, SourcePage):
     """
     Page with a directory index
     """

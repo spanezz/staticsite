@@ -10,7 +10,7 @@ import jinja2
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.node import Path
-from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent
+from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent, TemplatePage
 from staticsite.utils import arrange
 
 log = logging.getLogger("syndication")
@@ -468,7 +468,7 @@ class SyndicationFeature(PageTrackingMixin, Feature):
             syndication.crossreference()
 
 
-class SyndicationPage(AutoPage):
+class SyndicationPage(TemplatePage, AutoPage):
     """
     Base class for syndication pages
     """
@@ -519,7 +519,7 @@ class AtomPage(SyndicationPage):
     TEMPLATE = "syndication.atom"
 
 
-class ArchivePage(AutoPage):
+class ArchivePage(TemplatePage, AutoPage):
     """
     An archive page is automatically created for each syndication.
 
