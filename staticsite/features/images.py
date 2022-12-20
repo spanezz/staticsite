@@ -4,11 +4,11 @@ import itertools
 import logging
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast
 
 from staticsite import fields
-from staticsite.feature import Feature, TrackedField, PageTrackingMixin
-from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent
+from staticsite.feature import Feature, PageTrackingMixin, TrackedField
+from staticsite.page import AutoPage, ChangeExtent, Page, SourcePage
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -274,10 +274,18 @@ class ScaledImage(ImageMixin, AutoPage):
     """
     TYPE = "scaledimage"
 
+    # Note: from Python 3.12, we can parameterize Page on the type of
+    # created_from, defaulting to Page: https://peps.python.org/pep-0696/
+    #
+    # Now if we did that we'd have to specify a third type explicitly every
+    # time we describe a page, and it's easier to work around it with cast.
+    # With 3.12 we can remove the casts in favour of an extra type in the page
+    # definition
+
     def __init__(self, *args, mimetype: str, name: str, info: dict[str, Any], **kw):
         super().__init__(*args, **kw)
         self.name = name
-        created_from = self.created_from
+        created_from = cast(Image, self.created_from)
         self.date = created_from.date
         if (title := created_from.title):
             self.title = title
@@ -290,7 +298,7 @@ class ScaledImage(ImageMixin, AutoPage):
         created_from.add_related(name, self)
 
     def render(self, **kw) -> RenderedElement:
-        return RenderedScaledImage(self.created_from.src, self.width, self.height)
+        return RenderedScaledImage(cast(Image, self.created_from).src, self.width, self.height)
 
     def _compute_change_extent(self) -> ChangeExtent:
         return self.created_from.change_extent
