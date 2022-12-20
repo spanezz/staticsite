@@ -21,12 +21,13 @@ class LinkIndexPage(SourcePage):
     TYPE = "links_index"
     TEMPLATE = "data-links.html"
 
-    def __init__(self, *args, name: str, links: Links, **kw):
+    def __init__(self, *args, name: str, links: Links, link_collection: LinkCollection, **kw):
         kw.setdefault("nav_title", name.capitalize())
         kw.setdefault("title", "All links shared in the site")
         super().__init__(*args, **kw)
         # Reference to the Feature with the aggregated link collection
         self.feature_links = links
+        self.link_collection = link_collection
 
         self.by_tag: dict[str, "LinksTagPage"] = {}
 
@@ -61,7 +62,6 @@ class LinkIndexPage(SourcePage):
         # Set self.meta.pages to the sorted list of categories
         pages.sort(key=lambda x: x.title)
         self.pages = pages
-        self.link_collection = self.feature_links.links
 
     def _compute_change_extent(self) -> ChangeExtent:
         # TODO: with some more infrastructure, we can track what pages

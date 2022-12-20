@@ -149,11 +149,20 @@ class Images(PageTrackingMixin, Feature):
                 **kwargs)
             pages.append(page)
 
+            self.images.add(page)
+
+        for fname in taken:
+            del files[fname]
+
+        return pages
+
+    def generate(self):
+        for image in self.images:
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
             if image_sizes:
                 for name, info in image_sizes.items():
-                    width = kwargs.get("width")
+                    width = image.width
                     if width is None:
                         # SVG images, for example, don't have width
                         continue
@@ -162,25 +171,17 @@ class Images(PageTrackingMixin, Feature):
                     rel_kwargs = dict(info)
                     rel_kwargs["related"] = {}
 
-                    base, ext = os.path.splitext(fname)
+                    base, ext = os.path.splitext(os.path.basename(image.src.relpath))
                     scaled_fname = f"{base}-{name}{ext}"
 
-                    scaled = node.create_auto_page(
+                    image.node.create_auto_page(
                         page_cls=ScaledImage,
-                        created_from=page,
-                        mimetype=mimetype,
+                        created_from=image,
+                        mimetype=image.mimetype,
                         name=name,
                         info=info,
                         dst=scaled_fname,
                         **rel_kwargs)
-                    pages.append(scaled)
-
-            self.images.add(page)
-
-        for fname in taken:
-            del files[fname]
-
-        return pages
 
     def crossreference(self):
         # Resolve image from strings to Image pages
@@ -239,6 +240,7 @@ class Image(ImageMixin, SourcePage):
 
     def __init__(self, *args, mimetype: str, **kw):
         super().__init__(*args, **kw)
+        self.mimetype = mimetype
         # self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
     def render(self, **kw) -> RenderedElement:

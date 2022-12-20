@@ -149,6 +149,9 @@ class Links(PageTrackingMixin, Feature):
         # when they have a `data_type: links` metadata
         self.data.register_page_class("links", LinksPage)
 
+        # Index of all links
+        self.links = LinkCollection()
+
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
 
@@ -188,6 +191,7 @@ class Links(PageTrackingMixin, Feature):
                     src=src,
                     name=name,
                     links=self,
+                    link_collection=self.links,
                     path=Path((name,)),
                     **kwargs)
             pages.append(page)
@@ -242,9 +246,6 @@ class Links(PageTrackingMixin, Feature):
         return page.url_for(dest)
 
     def organize(self):
-        # Index of all links
-        self.links = LinkCollection()
-
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
         for page in self.tracked_pages:
@@ -254,6 +255,7 @@ class Links(PageTrackingMixin, Feature):
                 for tag in link.tags:
                     self.by_tag[tag].append(link)
 
+    def generate(self):
         # Call analyze on all .links pages, to populate them
         for index in self.indices:
             index.organize()
