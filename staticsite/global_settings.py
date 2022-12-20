@@ -10,7 +10,7 @@ import os
 PROJECT_ROOT: Optional[str] = None
 
 # Base URL for the site, used to generate absolute URLs
-SITE_URL: str = None
+SITE_URL: Optional[str] = None
 
 # Root directory of the site in the URLs we generate.
 #
