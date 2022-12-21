@@ -222,6 +222,9 @@ class Site:
         # Source page footprints from a previous build
         self.previous_source_footprints: dict[str, dict[str, Any]]
 
+        # Pages for which we should call Page.crossreference() at the beginning of the crossreference stage
+        self.pages_to_crossreference: set[Page] = set()
+
     @cached_property
     def theme(self) -> Theme:
         """
@@ -489,7 +492,7 @@ class Site:
         Call features to organize the pages that have just been loaded from
         sources
         """
-        # Call analyze hook on features
+        # Call organize hook on features
         for feature in self.features.ordered():
             feature.organize()
 
@@ -497,7 +500,7 @@ class Site:
         """
         Call features to generate new pages
         """
-        # Call analyze hook on features
+        # Call generate hook on features
         for feature in self.features.ordered():
             feature.generate()
 
@@ -506,7 +509,11 @@ class Site:
         Call features to cross-reference pages after the site structure has
         been finalized
         """
-        # Call analyze hook on features
+        # Call crossreference hook on selected pages
+        for page in self.pages_to_crossreference:
+            page.crossreference()
+
+        # Call crossreference hook on features
         for feature in self.features.ordered():
             feature.crossreference()
 

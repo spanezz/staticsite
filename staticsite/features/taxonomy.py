@@ -9,7 +9,6 @@ from typing import (TYPE_CHECKING, Any, Iterable, Optional,
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
-from staticsite.features.pages import PagesPageMixin
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
 from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
@@ -415,7 +414,7 @@ class TaxonomyFeature(Feature):
             taxonomy.generate_pages()
 
 
-class TaxonomyPage(PagesPageMixin, TemplatePage, SourcePage):
+class TaxonomyPage(TemplatePage, SourcePage):
     """
     Root page for one taxonomy defined in the site
 

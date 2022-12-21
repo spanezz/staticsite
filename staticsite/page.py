@@ -5,7 +5,7 @@ import enum
 import logging
 import os
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Type, TypeVar
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -50,6 +50,36 @@ class PageValidationError(Exception):
 class PageMissesFieldError(PageValidationError):
     def __init__(self, page: "Page", field: str):
         super().__init__(page, f"missing required field meta.{field}")
+
+
+P = TypeVar("P", bound="Page")
+V = TypeVar("V")
+
+
+class CrossreferenceField(fields.Field[P, V]):
+    """
+    Call crossreference() on the page when this field is set
+    """
+    def __set__(self, page: P, value: Any) -> None:
+        page.site.pages_to_crossreference.add(page)
+        super().__set__(page, value)
+
+
+class PagesField(CrossreferenceField["Page", Union[str, dict[str, Any], list["Page"]]]):
+    """
+    The `pages` metadata can use to select a set of pages shown by the current
+    page. Although default `page.html` template will not do anything with them,
+    other page templates, like `blog.html`, use this to select the pages to show.
+
+    The `pages` feature allows defining a [page filter](page-filter.md) in the
+    `pages` metadata element, which will be replaced with a list of matching pages.
+
+    To select pages, the `pages` metadata is set to a dictionary that select pages
+    in the site, with the `path`, and taxonomy names arguments similar to the
+    `site_pages` function in [templates](templates.md).
+
+    See [Selecting pages](page-filter.md) for details.
+    """
 
 
 class TemplateField(fields.Field["Page", str]):
@@ -300,6 +330,8 @@ class Page(SiteElement):
         [reStructuredText](rst.rst), and [data](data.md) pages.
     """)
 
+    pages = PagesField(structure=True)
+
     related = RelatedField(structure=True, doc="""
         Dict of pages related to this page.
 
@@ -467,6 +499,31 @@ class Page(SiteElement):
         else:
             return "/" + page.site_path
 
+    def crossreference(self) -> None:
+        """
+        Called at the beginning of the 'crossreference' step when the page is in
+        site.pages_to_crossreference
+        """
+        # Expand pages expressions
+        if (query := self.pages) is None:
+            return
+        if isinstance(query, str):
+            query = {"path": query}
+        elif isinstance(query, list):
+            # Skip pages that already have a populated pages list
+            return
+        elif not isinstance(query, dict):
+            raise RuntimeError("pages field is not None, string, list of pages, or dict")
+
+        # Replace the dict with the expanded list of pages
+        # Do not include self in the result list
+        pages = [p for p in self.find_pages(**query) if p != self]
+        self.pages = pages
+        if pages:
+            # Update the page date to the max of the pages dates
+            max_date = max(p.date for p in pages)
+            self.date = max(max_date, self.date)
+
     def render(self, **kw) -> RenderedElement:
         """
         Return a RenderedElement that can produce the built version of this page
@@ -556,6 +613,8 @@ It defaults to false, or true if `meta.date` is in the future.
             "mtime": self.src.stat.st_mtime,
             "size": self.src.stat.st_size,
         }
+        if self.pages:
+            res["pages"] = [page.src.relpath for page in self.pages if getattr(page, "src", None)]
         return res
 
     @cached_property
@@ -570,10 +629,12 @@ It defaults to false, or true if `meta.date` is in the future.
         res = super()._compute_change_extent()
         if (old := self.old_footprint) is None:
             return ChangeExtent.ALL
-        if old.get("mtime") >= self.footprint["mtime"] and old.get("size") == self.footprint["size"]:
-            return res
-        else:
+        if old.get("mtime") < self.footprint["mtime"] or old.get("size") != self.footprint["size"]:
             return ChangeExtent.ALL
+        if res == ChangeExtent.UNCHANGED:
+            if set(self.footprint.get("pages", ())) != set(self.old_footprint.get("pages", ())):
+                return ChangeExtent.ALL
+        return res
 
 
 class AutoPage(Page):
