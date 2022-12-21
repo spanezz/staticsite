@@ -22,7 +22,7 @@ class Syndication:
     """
     def __init__(
             self,
-            index: Page, *,
+            index: Optional[Page], *,
             title: Optional[str] = None,
             description: Optional[str] = None,
             template_title: Optional[str] = None,
@@ -41,10 +41,10 @@ class Syndication:
             self.default_meta["template_description"] = template_description
 
         # Page that defined the syndication
-        self.index: Page = index
+        self.index: Optional[Page] = index
 
         # Pages that get syndicated
-        self.pages: List[Page] = []
+        self.pages: list[Page] = []
 
         # Pages to which we add feed information
         #
@@ -98,6 +98,8 @@ class Syndication:
         """
         Build RSS and Atom feeds
         """
+        if self.index is None:
+            raise RuntimeError("Syndication.index field was not set")
         if "title" not in self.default_meta and "template_title" not in self.default_meta:
             self.default_meta["title"] = self.index.title
 
@@ -139,6 +141,8 @@ class Syndication:
         """
         if self.archive is None:
             return
+        if self.index is None:
+            raise RuntimeError("Syndication.index field was not set")
 
         self.archive["pages"] = self.pages
         self.archive["index"] = self.index
@@ -167,6 +171,8 @@ class Syndication:
         Given a list of pages to potentially syndicate, filter them by their
         syndicated header, and sort by syndication date.
         """
+        if self.index is None:
+            raise RuntimeError("Syndication.index field was not set")
         draft_mode = self.index.site.settings.DRAFT_MODE
         for page in self.index.pages or ():
             if not page.syndicated:
@@ -190,6 +196,8 @@ class Syndication:
         """
         Add a link to the syndication to the pages listed in add_to
         """
+        if self.index is None:
+            raise RuntimeError("Syndication.index field was not set")
         add_to = self.add_to
         if add_to is False or add_to in ("no", "false", 0):
             pass
@@ -203,7 +211,7 @@ class Syndication:
                 dest.add_related("atom_feed", self.atom_page)
 
     @classmethod
-    def clean_value(self, page: Page, value: Any) -> Optional[Syndication]:
+    def clean_value(self, page: Optional[Page], value: Any) -> Optional[Syndication]:
         """
         Instantiate a Syndication object from a Page field
         """

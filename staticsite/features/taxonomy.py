@@ -4,13 +4,16 @@ import functools
 import heapq
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Sequence, Type, Union
+from typing import (TYPE_CHECKING, Any, Iterable, Optional,
+                    Sequence, Type, Union)
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
+from staticsite.features.pages import PagesPageMixin
 from staticsite.features.syndication import Syndication
 from staticsite.node import Path
-from staticsite.page import SourcePage, AutoPage, Page, ChangeExtent, TemplatePage
+from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
+                             TemplatePage)
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -37,7 +40,7 @@ class Taxonomy:
         # Metadata for the archive pages
         self.archive_meta: dict[str, Any] = {}
         # Category pages by category name
-        self.category_pages: dict[str, Page] = {}
+        self.category_pages: dict[str, CategoryPage] = {}
 
     def update_meta(
             self,
@@ -58,7 +61,7 @@ class Taxonomy:
         if archive is not None:
             self.archive_meta.update(archive)
 
-    def create_index(self, node: Node) -> TaxonomyPage:
+    def create_index(self, node: Node) -> Optional[TaxonomyPage]:
         """
         Create the index page for this taxonomy
         """
@@ -71,10 +74,12 @@ class Taxonomy:
             **self.index_meta)
         return self.index
 
-    def create_category_page(self, name: str, pages: List[Page]) -> CategoryPage:
+    def create_category_page(self, name: str, pages: list[Page]) -> CategoryPage:
         """
         Generate the page for one category in this taxonomy
         """
+        if self.index is None:
+            raise RuntimeError("Taxonomy.create_category_page called without an index page")
         # Sort pages by date, used by series sequencing
         pages.sort(key=lambda p: p.date)
 
@@ -93,8 +98,8 @@ class Taxonomy:
             category_meta["syndication"] = syndication
             category_meta["syndication"].archive.update(self.archive_meta)
 
-        # Don't auto-add feeds for the tag syndication pages
-        syndication.add_to = False
+            # Don't auto-add feeds for the tag syndication pages
+            syndication.add_to = False
 
         # TODO: archive
 
@@ -114,6 +119,8 @@ class Taxonomy:
             **category_meta)
 
     def generate_pages(self) -> None:
+        if self.index is None:
+            raise RuntimeError("Taxonomy.generate_pages called without an index page")
         self.category_meta["taxonomy"] = self.index
 
         # Group pages by category
@@ -326,7 +333,7 @@ class TaxonomyFeature(Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [TaxonomyPage, CategoryPage]
 
-    def track_field(self, field: fields.Field, obj: fields.FieldContainer, value: Any):
+    def track_field(self, field: fields.Field, obj: Page, value: Any):
         self.taxonomies[field.name].pages.add(obj)
 
     def register_taxonomy(self, name, src: file.File):
@@ -357,8 +364,8 @@ class TaxonomyFeature(Feature):
             node: Node,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
-        taken: List[str] = []
-        pages: List[Page] = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
             if not fname.endswith(".taxonomy"):
                 continue
@@ -374,7 +381,9 @@ class TaxonomyFeature(Feature):
             kwargs.update(fm_meta)
 
             taxonomy.update_meta(**kwargs)
-            pages.append(taxonomy.create_index(node))
+            if (page := taxonomy.create_index(node)) is None:
+                continue
+            pages.append(page)
 
         for fname in taken:
             del files[fname]
@@ -392,7 +401,7 @@ class TaxonomyFeature(Feature):
         return meta
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
-        return [t.index for t in self.taxonomies.values()]
+        return [t.index for t in self.taxonomies.values() if t.index is not None]
 
     def jinja2_taxonomy(self, name) -> Optional["TaxonomyPage"]:
         if (taxonomy := self.taxonomies.get(name)):
@@ -406,7 +415,7 @@ class TaxonomyFeature(Feature):
             taxonomy.generate_pages()
 
 
-class TaxonomyPage(TemplatePage, SourcePage):
+class TaxonomyPage(PagesPageMixin, TemplatePage, SourcePage):
     """
     Root page for one taxonomy defined in the site
 
@@ -515,7 +524,7 @@ class CategoryPage(TemplatePage, AutoPage):
         # Category name
         self.name = name
         # Index of each page in the category sequence
-        self.page_index: Dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)}
+        self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)}
 
     def to_dict(self):
         res = super().to_dict()
