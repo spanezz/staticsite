@@ -185,12 +185,15 @@ class Syndication:
         # Compute dates for generated pages
         if self.pages:
             max_date = max(p.date for p in self.pages)
-            if self.rss_page is not None:
-                self.rss_page.date = max_date
-            if self.atom_page is not None:
-                self.atom_page.date = max_date
-            if self.archive_page is not None:
-                self.archive_page.date = max_date
+        else:
+            max_date = self.site.generation_time
+
+        if self.rss_page is not None:
+            self.rss_page.date = max_date
+        if self.atom_page is not None:
+            self.atom_page.date = max_date
+        if self.archive_page is not None:
+            self.archive_page.date = max_date
 
     def process_add_to(self):
         """
@@ -546,11 +549,6 @@ class ArchivePage(TemplatePage, AutoPage):
         super().__init__(*args, **kw)
 
         self.pages = self.created_from.pages
-
-        if self.pages:
-            self.date = max(p.date for p in self.pages)
-        else:
-            self.date = self.site.generation_time
 
         self.created_from.add_related("archive", self)
 
