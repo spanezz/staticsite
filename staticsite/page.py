@@ -6,8 +6,7 @@ import enum
 import logging
 import os
 from functools import cached_property
-from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar,
-                    Union, cast)
+from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union)
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -686,12 +685,12 @@ It defaults to false, or true if `meta.date` is in the future.
         """
         if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
             raise RuntimeError("SourcePage._compute_footprint referenced before running page crossreference stage")
-        res = {
+        res: dict[str, Any] = {
             "mtime": self.src.stat.st_mtime,
             "size": self.src.stat.st_size,
         }
         # We can cast to list[Page] since we made sure we only run after the crossreference stage
-        if (pages := cast(list[Page], self.pages)):
+        if (pages := self.pages):
             res["pages"] = [page.src.relpath for page in pages if getattr(page, "src", None)]
         return res
 
