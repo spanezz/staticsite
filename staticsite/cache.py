@@ -32,7 +32,7 @@ if HAVE_LMDB:
             self.fname = fname + ".lmdb"
 
         @cached_property
-        def db(self):
+        def db(self) -> lmdb.Environment:
             os.makedirs(os.path.dirname(self.fname), exist_ok=True)
             return lmdb.open(self.fname, metasync=False, sync=False, map_size=100*1024*1024)
 
