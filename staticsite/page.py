@@ -151,7 +151,7 @@ class Pages(collections.abc.Sequence):
         return self.pages.__reversed__()
 
 
-class PagesField(CrossreferenceField["Page", Union[str, dict[str, Any], list["Page"]]]):
+class PagesField(CrossreferenceField["Page", Pages]):
     """
     The `pages` metadata can use to select a set of pages shown by the current
     page. Although default `page.html` template will not do anything with them,
@@ -166,7 +166,7 @@ class PagesField(CrossreferenceField["Page", Union[str, dict[str, Any], list["Pa
 
     See [Selecting pages](page-filter.md) for details.
     """
-    def _clean(self, page: Page, value: Any) -> Page:
+    def _clean(self, page: Page, value: Any) -> Pages:
         return Pages(page, value)
 
 
