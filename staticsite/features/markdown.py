@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, BinaryIO, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Set, BinaryIO, Tuple, Type, Union
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -31,7 +31,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         super().__init__(*args, **kw)
         self.page: Optional[Page] = None
         self.absolute: bool = False
-        self.substituted: Dict[str, str] = {}
+        self.substituted: dict[str, str] = {}
         self.external_links: Set[str] = set()
 
     def set_page(self, page: Page, absolute: bool = False):
@@ -184,7 +184,7 @@ class MarkdownPages(Feature):
             # This will as a side effect prime the link resolver cache,
             # avoiding links from being looked up again during rendering
             for src, dest in cached["paths"]:
-                if self.link_resolver.resolve_url(src) != dest:
+                if self.link_resolver.resolve_page(src)[0].site_path != dest:
                     cached = None
                     break
         if cached:
