@@ -179,7 +179,7 @@ class Builder:
         self.full = full
         self.has_errors = False
 
-    def write(self):
+    def write(self) -> None:
         """
         Generate output
         """
@@ -248,7 +248,7 @@ class Builder:
 #             (pid, status) = os.wait()
 #             pids.discard(pid)
 
-    def write_single_process(self):
+    def write_single_process(self) -> None:
         root = self.site.root
         if self.path_filter is not None:
             root = root.lookup(Path.from_string(self.path_filter))
@@ -299,7 +299,7 @@ class Builder:
 
         render_dir.cleanup_leftovers()
 
-    def output_abspath(self, relpath):
+    def output_abspath(self, relpath: str) -> str:
         abspath = os.path.join(self.build_root, relpath)
         os.makedirs(os.path.dirname(abspath), exist_ok=True)
         return abspath

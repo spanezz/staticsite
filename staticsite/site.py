@@ -283,8 +283,8 @@ class Site:
         prune: tuple[Node, ...]
         if static:
             prune = ()
-        elif (static_root := self.root.lookup(Path.from_string(self.settings.STATIC_PATH))) is not None:
-            prune = (static_root,)
+        elif (self.root != self.static_root):
+            prune = (self.static_root,)
         else:
             prune = ()
         yield from self.root.iter_pages(prune=prune, source_only=source_only)

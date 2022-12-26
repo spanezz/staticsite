@@ -131,9 +131,10 @@ class Node(SiteElement):
         if isinstance(target, Page):
             return target
         if target.startswith("/"):
-            root = self.site.root
-            if static and (static_root := root.lookup(Path.from_string(self.site.settings.STATIC_PATH))) is not None:
-                root = static_root
+            if static:
+                root = self.site.static_root
+            else:
+                root = self.site.root
             page = root.lookup_page(Path.from_string(target))
         else:
             page = self.lookup_page(Path.from_string(target))
