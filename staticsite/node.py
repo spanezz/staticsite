@@ -51,8 +51,14 @@ class Node(SiteElement):
             name: str, *,
             parent: Optional[Node] = None):
         super().__init__(site, parent=parent)
-        # Basename of this directory
+        # Basename of this node
         self.name: str = name
+        # Path of this node from the root of the site (without leading /)
+        self.path: str
+        if parent is None:
+            self.path = name
+        else:
+            self.path = os.path.join(parent.path, name)
         # Parent node, or None if this is the root
         self.parent: Optional[Node] = parent
         # Index page for this directory, if present
@@ -181,15 +187,6 @@ class Node(SiteElement):
 
         return None
 
-    def compute_path(self) -> str:
-        """
-        Compute the build path for this node
-        """
-        if self.parent is None:
-            return self.name
-        else:
-            return os.path.join(self.parent.compute_path(), self.name)
-
     def create_source_page(
             self,
             src: file.File,
@@ -208,7 +205,7 @@ class Node(SiteElement):
             raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
 
         if dst is None and not directory_index and not path:
-            raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
+            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
 
         if self.site.last_load_step > self.site.LOAD_STEP_CONTENTS:
             raise RuntimeError("Node.create_source_page created after the 'contents' step has completed")
@@ -252,7 +249,7 @@ class Node(SiteElement):
             raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
 
         if dst is None and not directory_index and not path:
-            raise RuntimeError(f"{self.compute_path()}: empty path for {kw['page_cls']}")
+            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
 
         if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
             raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
@@ -304,7 +301,7 @@ class Node(SiteElement):
                 # First one wins, to allow overriding of assets in theme
                 pass
             else:
-                log.warn("%s: page %r replaces page %r", self.compute_path(), page, self.page)
+                log.warn("%s: page %r replaces page %r", self.path, page, self.page)
 
         self.page = page
         if (src := kw.get("src")) is not None:
@@ -348,7 +345,7 @@ class Node(SiteElement):
                 # First one wins, to allow overriding of assets in theme
                 pass
             else:
-                log.warn("%s: page %r replaces page %r", self.compute_path(), page, old)
+                log.warn("%s: page %r replaces page %r", self.path, page, old)
 
         self.build_pages[dst] = page
         if (src := kw.get("src")) is not None:

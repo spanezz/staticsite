@@ -469,16 +469,16 @@ class Page(SiteElement):
         """
         # return self.meta["build_path"]
         if self.leaf:
-            return os.path.join(self.node.compute_path(), self.dst)
+            return os.path.join(self.node.path, self.dst)
         else:
-            return self.node.compute_path()
+            return self.node.path
 
     @property
     def build_path(self) -> str:
         """
         Accessor to support the migration away from meta['build_path']
         """
-        return os.path.join(self.node.compute_path(), self.dst)
+        return os.path.join(self.node.path, self.dst)
 
     def add_related(self, name: str, page: "Page") -> None:
         """
@@ -521,7 +521,7 @@ class Page(SiteElement):
         else:
             root = self.search_root_node
         path = Path.from_string(target)
-        # print(f"Page.resolve_path  start from {root.compute_path()!r}, path={path!r}")
+        # print(f"Page.resolve_path  start from {root.path!r}, path={path!r}")
 
         dst = root.lookup_page(path)
         # print(f"Page.resolve_path  found {dst=!r}")

@@ -14,19 +14,19 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
         with self.site(files) as mocksite:
             page, alias1, alias2 = mocksite.page("page", "alias", "test/alias")
 
-            self.assertEqual(page.node.compute_path(), "page")
+            self.assertEqual(page.node.path, "page")
             self.assertEqual(page.title, "Page Title")
             self.assertEqual(page.build_path, "page/index.html")
             self.assertIsNotNone(page.aliases)
 
-            self.assertEqual(alias1.node.compute_path(), "alias")
+            self.assertEqual(alias1.node.path, "alias")
             self.assertEqual(alias1.title, "Page Title")
             self.assertEqual(alias1.build_path, "alias/index.html")
             self.assertEqual(alias1.template, "redirect.html")
             self.assertEqual(alias1.page, page)
             self.assertIsNone(alias1.aliases)
 
-            self.assertEqual(alias2.node.compute_path(), "test/alias")
+            self.assertEqual(alias2.node.path, "test/alias")
             self.assertEqual(alias2.title, "Page Title")
             self.assertEqual(alias2.build_path, "test/alias/index.html")
             self.assertEqual(alias2.template, "redirect.html")
@@ -45,18 +45,18 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
             page, alias, alias1 = mocksite.page("page", "alias", "dir1/dir2/alias")
 
             self.assertEqual(page.TYPE, "markdown")
-            self.assertEqual(page.node.compute_path(), "page")
+            self.assertEqual(page.node.path, "page")
             self.assertEqual(page.build_path, "page/index.html")
             self.assertEqual(page.aliases, ["alias", "/page", "/dir1/dir2/alias"])
 
-            self.assertEqual(alias.node.compute_path(), "alias")
+            self.assertEqual(alias.node.path, "alias")
             self.assertEqual(alias.build_path, "alias/index.html")
             self.assertEqual(alias.template, "redirect.html")
             self.assertEqual(alias.page, page)
             self.assertIsNone(alias.aliases)
             mocksite.assertBuilt(None, "alias", "alias/index.html", sample="href=\"/page")
 
-            self.assertEqual(alias1.node.compute_path(), "dir1/dir2/alias")
+            self.assertEqual(alias1.node.path, "dir1/dir2/alias")
             self.assertEqual(alias1.build_path, "dir1/dir2/alias/index.html")
             self.assertEqual(alias1.template, "redirect.html")
             self.assertEqual(alias1.page, page)

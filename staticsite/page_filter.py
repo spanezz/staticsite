@@ -98,7 +98,7 @@ class PageFilter:
 
         self.allow = allow
 
-        # print(f"PageFilter({path=!r}, {self.root.compute_path()=!r}, {self.re_path=!r}, {self.taxonomy_filters=}")
+        # print(f"PageFilter({path=!r}, {self.root.path=!r}, {self.re_path=!r}, {self.taxonomy_filters=}")
 
     def filter(self):
         # print("PageFilter.filter")
