@@ -1,20 +1,22 @@
 from __future__ import annotations
 
+import collections.abc
 import datetime
 import enum
 import logging
 import os
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Type, TypeVar
+from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar,
+                    Union, cast)
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
 import markupsafe
 
 from . import fields
-from .site import SiteElement
 from .node import Path
 from .render import RenderedString
+from .site import SiteElement
 
 if TYPE_CHECKING:
     from .file import File
@@ -65,6 +67,90 @@ class CrossreferenceField(fields.Field[P, V]):
         super().__set__(page, value)
 
 
+class Pages(collections.abc.Sequence):
+    """
+    List of pages, resolved at `crossreference` time, that can be provided as:
+     - path to another page, relative to this page
+     - page filter
+    """
+    def __init__(self, page: Page, value: Any):
+        # Reference page for resolving relative paths
+        self.page = page
+
+        # Resolved list of pages
+        self.pages: Optional[list[Page]] = None
+
+        # Filter expression to enumerate pages
+        self.query: Optional[dict[str, Any]] = None
+
+        if isinstance(value, str):
+            self.query = {"path": value}
+        elif isinstance(value, list):
+            self.pages = value
+        elif isinstance(value, dict):
+            self.query = value
+        elif isinstance(value, Pages):
+            self.page = value.page
+            self.pages = value.pages
+            self.query = value.query
+        else:
+            raise RuntimeError("pages field is not string, list of pages, or dict")
+
+    def resolve(self):
+        """
+        Fill self.pages using self.query
+        """
+        if self.pages is not None:
+            return
+
+        if self.query is None:
+            self.pages = []
+            return
+
+        # Replace the dict with the expanded list of pages
+        # Do not include self in the result list
+        self.pages = [p for p in self.page.find_pages(**self.query) if p != self.page]
+
+    def to_dict(self) -> Optional[list[Page]]:
+        return self.pages
+
+    def __repr__(self):
+        if self.pages is None:
+            return repr(self.query)
+        else:
+            return repr(self.pages)
+
+    def __eq__(self, other):
+        if isinstance(other, list):
+            return self.pages == other
+        elif isinstance(other, dict):
+            return self.query == other
+        elif isinstance(other, Pages):
+            return self.page == other.page and self.query == other.query or self.pages == other.pages
+        else:
+            return False
+
+    def __len__(self):
+        if self.pages is None:
+            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+        return len(self.pages)
+
+    def __getitem__(self, key):
+        if self.pages is None:
+            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+        return self.pages.__getitem__(key)
+
+    def __iter__(self):
+        if self.pages is None:
+            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+        return self.pages.__iter__()
+
+    def __reversed__(self):
+        if self.pages is None:
+            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+        return self.pages.__reversed__()
+
+
 class PagesField(CrossreferenceField["Page", Union[str, dict[str, Any], list["Page"]]]):
     """
     The `pages` metadata can use to select a set of pages shown by the current
@@ -80,6 +166,8 @@ class PagesField(CrossreferenceField["Page", Union[str, dict[str, Any], list["Pa
 
     See [Selecting pages](page-filter.md) for details.
     """
+    def _clean(self, page: Page, value: Any) -> Page:
+        return Pages(page, value)
 
 
 class TemplateField(fields.Field["Page", str]):
@@ -504,24 +592,12 @@ class Page(SiteElement):
         Called at the beginning of the 'crossreference' step when the page is in
         site.pages_to_crossreference
         """
-        # Expand pages expressions
-        if (query := self.pages) is None:
-            return
-        if isinstance(query, str):
-            query = {"path": query}
-        elif isinstance(query, list):
-            # Skip pages that already have a populated pages list
-            return
-        elif not isinstance(query, dict):
-            raise RuntimeError("pages field is not None, string, list of pages, or dict")
+        if self.pages is not None:
+            self.pages.resolve()
 
-        # Replace the dict with the expanded list of pages
-        # Do not include self in the result list
-        pages = [p for p in self.find_pages(**query) if p != self]
-        self.pages = pages
-        if pages:
+        if self.pages:
             # Update the page date to the max of the pages dates
-            max_date = max(p.date for p in pages)
+            max_date = max(p.date for p in self.pages)
             self.date = max(max_date, self.date)
 
     def render(self, **kw) -> RenderedElement:
@@ -613,8 +689,9 @@ It defaults to false, or true if `meta.date` is in the future.
             "mtime": self.src.stat.st_mtime,
             "size": self.src.stat.st_size,
         }
-        if self.pages:
-            res["pages"] = [page.src.relpath for page in self.pages if getattr(page, "src", None)]
+        # We can cast to list[Page] since we made sure we only run after the crossreference stage
+        if (pages := cast(list[Page], self.pages)):
+            res["pages"] = [page.src.relpath for page in pages if getattr(page, "src", None)]
         return res
 
     @cached_property
@@ -631,7 +708,7 @@ It defaults to false, or true if `meta.date` is in the future.
             return ChangeExtent.ALL
         if old.get("mtime") < self.footprint["mtime"] or old.get("size") != self.footprint["size"]:
             return ChangeExtent.ALL
-        if res == ChangeExtent.UNCHANGED:
+        if res == ChangeExtent.UNCHANGED and self.footprint and self.old_footprint:
             if set(self.footprint.get("pages", ())) != set(self.old_footprint.get("pages", ())):
                 return ChangeExtent.ALL
         return res

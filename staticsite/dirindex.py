@@ -55,6 +55,7 @@ class Dir(TemplatePage, SourcePage):
         for name, page in self.node.build_pages.items():
             if page != self and page.leaf and page.indexed:
                 pages.append(page)
+        pages.sort(key=lambda p: p.date)
         self.pages = pages
 
         # self.indexed = bool(self.pages) or any(p.indexed for p in self.subdirs)
@@ -64,7 +65,6 @@ class Dir(TemplatePage, SourcePage):
         # Since finalize is called from the bottom up, subdirs have their date
         # up to date
         self.subdirs.sort(key=lambda p: p.date)
-        self.pages.sort(key=lambda p: p.date)
 
         date_pages = []
         if self.subdirs:
