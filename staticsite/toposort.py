@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from graphlib import CycleError, TopologicalSorter
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping, TypeVar
 
 __all__ = ["CycleError", "sort"]
 
-Node = Any
-Graph = dict[Node, Iterable[Node]]
+N = TypeVar("N")
 
 
-def sort(graph: Graph) -> list[Node]:
+def sort(graph: Mapping[N, Iterable[N]]) -> list[N]:
     """
     Linearize a dependency graph, throwing an exception if a cycle is detected.
 
