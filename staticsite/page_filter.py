@@ -116,7 +116,9 @@ class PageFilter:
         return pages
 
     def _filter(self, root: Node, relpath: str) -> Generator[Page, None, None]:
-
+        """
+        :arg:relpath: path of the page relative to the root node of the search
+        """
         for name, page in root.build_pages.items():
             # print(f"_filter {page=!r} indexed={page.meta['indexed']}")
             if not page.indexed:
