@@ -6,7 +6,7 @@ import enum
 import logging
 import os
 from functools import cached_property
-from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union)
+from typing import (TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union)
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
@@ -480,7 +480,7 @@ class Page(SiteElement):
         """
         return os.path.join(self.node.compute_path(), self.dst)
 
-    def add_related(self, name: str, page: "Page"):
+    def add_related(self, name: str, page: "Page") -> None:
         """
         Set the page as meta.related.name
         """
@@ -491,7 +491,7 @@ class Page(SiteElement):
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
-            **kw) -> List["Page"]:
+            **kw) -> list["Page"]:
         """
         If not set, default root to the path of the containing directory for
         this page
@@ -500,7 +500,7 @@ class Page(SiteElement):
         f = PageFilter(self.site, path, limit, sort, root=self.search_root_node, **kw)
         return f.filter()
 
-    def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
+    def resolve_path(self, target: Union[str, "Page"], static: bool = False) -> "Page":
         """
         Return a Page from the site, given a source or site path relative to
         this page.
