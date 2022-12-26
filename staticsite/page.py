@@ -191,7 +191,7 @@ class PageDate(fields.Date["Page"]):
     """
     def __get__(self, page: Page, type: Optional[Type] = None) -> Any:
         if (date := page.__dict__.get(self.name)) is None:
-            if (src := page.src) is not None and src.stat is not None:
+            if (src := getattr(page, "src", None)) is not None and src.stat is not None:
                 date = page.site.localized_timestamp(src.stat.st_mtime)
             else:
                 date = page.site.generation_time
@@ -515,9 +515,10 @@ class Page(SiteElement):
         # print(f"Page.resolve_path {self=!r}, {target=!r}")
         # Find the start node for the search
         if target.startswith("/"):
-            root = self.site.root
             if static:
-                root = root.lookup(Path.from_string(self.site.settings.STATIC_PATH))
+                root = self.site.static_root
+            else:
+                root = self.site.root
         else:
             root = self.search_root_node
         path = Path.from_string(target)

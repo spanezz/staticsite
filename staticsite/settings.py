@@ -86,7 +86,7 @@ class Settings:
     LANGUAGES: Sequence[dict[str, Any]]
 
     # Path where theme static assets will be placed in built site
-    # Override with "" to merge when with the rest of the contents
+    # Override with "" to merge them with the rest of the contents
     STATIC_PATH: str
 
     def __init__(self, default_settings="staticsite.global_settings"):

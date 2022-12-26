@@ -187,8 +187,11 @@ class Site:
         # Filesystem trees scanned by the site
         self.fstrees: dict[str, fstree.Tree] = {}
 
-        # Root directory of the site
+        # Root node of the site
         self.root: Node
+
+        # Root node for the static contents of the site
+        self.static_root: Node
 
         # Last load step performed
         self.last_load_step = self.LOAD_STEP_INITIAL
@@ -376,6 +379,9 @@ class Site:
 
         # Create root node
         self.root = type("RootNode", (RootNodeFields, self.features.get_node_class(),), {})(self, "")
+
+        # Create static root node
+        self.static_root = self.root.at_path(Path.from_string(self.settings.STATIC_PATH))
 
         # Scan the main content filesystem
         src = File.with_stat("", os.path.abspath(self.content_root))
