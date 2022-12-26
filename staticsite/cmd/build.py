@@ -251,7 +251,7 @@ class Builder:
     def write_single_process(self) -> None:
         root = self.site.root
         if self.path_filter is not None:
-            root = root.lookup(Path.from_string(self.path_filter))
+            root = root.lookup_node(Path.from_string(self.path_filter))
         stats = RenderStats()
         os.makedirs(self.build_root, exist_ok=True)
         with RenderDirectory.open(self.build_root) as render_dir:

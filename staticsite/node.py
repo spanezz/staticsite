@@ -97,28 +97,6 @@ class Node(SiteElement):
         for node in self.sub.values():
             yield from node.iter_pages(prune, source_only=source_only)
 
-    def lookup(self, path: Path) -> Optional[Node]:
-        """
-        Return the subnode at the given relative path, or None if it does not
-        exist.
-
-        Path elements of "." and ".." are supported
-        """
-        if not path:
-            return self
-        if path.head == ".":
-            # Probably not worth trying to avoid a recursion step here, since
-            # this should not be a common occurrence
-            return self.lookup(path.tail)
-        elif path.head == "..":
-            if self.parent is None:
-                return None
-            else:
-                return self.parent.lookup(path.tail)
-        elif (sub := self.sub.get(path.head)):
-            return sub.lookup(path.tail)
-        return None
-
     def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
         """
         Return a Page from the site, given a source or site path relative to
@@ -408,6 +386,28 @@ class Node(SiteElement):
             return self
         else:
             return self.child(path.head).at_path(path.tail)
+
+    def lookup_node(self, path: Path) -> Optional[Node]:
+        """
+        Return the subnode at the given relative path, or None if it does not
+        exist.
+
+        Path elements of "." and ".." are supported
+        """
+        if not path:
+            return self
+        if path.head == ".":
+            # Probably not worth trying to avoid a recursion step here, since
+            # this should not be a common occurrence
+            return self.lookup_node(path.tail)
+        elif path.head == "..":
+            if self.parent is None:
+                return None
+            else:
+                return self.parent.lookup_node(path.tail)
+        elif (sub := self.sub.get(path.head)):
+            return sub.lookup_node(path.tail)
+        return None
 
     def contains(self, page: Page) -> bool:
         """
