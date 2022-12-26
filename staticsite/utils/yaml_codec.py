@@ -49,7 +49,7 @@ try:
     def load_ruamel(file):
         return yaml_loader.load(file)
 
-    # # Hack to do unsorted serialization with ruamel
+    # Hack to do unsorted serialization with ruamel
     yaml_dumper = ruamel.yaml.YAML(typ="rt", pure=True)
     yaml_dumper.allow_unicode = True
     yaml_dumper.default_flow_style = False

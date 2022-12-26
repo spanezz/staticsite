@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
     """
-    Return a compiled re.Pattrn from a glob or regular expression.
+    Return a compiled re.Pattern from a glob or regular expression.
 
     :arg pattern:
       * if it's a re.Pattern instance, it is returned as is
@@ -24,7 +24,7 @@ def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
       * otherwise, it is considered a glob expression, and fnmatch.translate()
         is used to convert it to a regular expression, then compiled
     """
-    if hasattr(pattern, "match"):
+    if isinstance(pattern, re.Pattern):
         return pattern
     if pattern and (pattern[0] == '^' or pattern[-1] == '$'):
         return re.compile(pattern)
@@ -79,6 +79,7 @@ class PageFilter:
         self.site = site
         self.root = root or site.root
 
+        self.re_path: Optional[re.Pattern]
         if path is not None:
             self.re_path = compile_page_match(path)
         else:

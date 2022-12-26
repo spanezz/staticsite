@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any, BinaryIO, Dict, Generator, Iterable, TextIO, Tuple
+from typing import (Any, BinaryIO, Dict, Generator, Iterable, Optional, TextIO,
+                    Tuple)
 
 from . import yaml_codec
 
@@ -21,7 +22,7 @@ def write(meta: Dict[str, Any], style: str = "toml") -> str:
     return ""
 
 
-def read_markdown_partial(fd: BinaryIO) -> tuple[str, dict[str, Any], Iterable[str]]:
+def read_markdown_partial(fd: BinaryIO) -> tuple[Optional[str], dict[str, Any], Iterable[str]]:
     """
     Parse lines front matter from a markdown file header.
 
