@@ -4,18 +4,21 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, List, Optional, Set, BinaryIO, Tuple, Type, Union
+from typing import (TYPE_CHECKING, Any, BinaryIO, List, Optional, Set, Tuple,
+                    Type, Union)
 from urllib.parse import urlparse, urlunparse
 
 import jinja2
 import markdown
 import markupsafe
+from markdown.util import AMP_SUBSTITUTE
 
-from staticsite.feature import Feature
 from staticsite.archetypes import Archetype
+from staticsite.feature import Feature
 from staticsite.markup import MarkupPage
 from staticsite.node import Path
-from staticsite.page import FrontMatterPage, TemplatePage, Page, PageNotFoundError
+from staticsite.page import (FrontMatterPage, Page, PageNotFoundError,
+                             TemplatePage)
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -27,9 +30,12 @@ if TYPE_CHECKING:
 log = logging.getLogger("markdown")
 
 
-class LinkResolver(markdown.treeprocessors.Treeprocessor):
-    def __init__(self, *args, **kw) -> None:
-        super().__init__(*args, **kw)
+class LinkResolver:
+    """
+    Caching backend for resolving internal URLs in rendered content
+    """
+
+    def __init__(self):
         self.page: Optional[Page] = None
         self.absolute: bool = False
         self.substituted: dict[str, str] = {}
@@ -41,39 +47,7 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         self.substituted = {}
         self.external_links = set()
 
-    def run(self, root):
-        for a in root.iter("a"):
-            page, new_url = self.resolve_url(a.attrib.get("href", None))
-            if new_url is not None:
-                a.attrib["href"] = new_url
-
-        for img in root.iter("img"):
-            orig_url = img.attrib.get("src", None)
-            if orig_url is None:
-                continue
-
-            page, parsed = self.resolve_page(orig_url)
-            if page is None:
-                continue
-
-            try:
-                attrs = self.page.get_img_attributes(page, absolute=self.absolute)
-            except PageNotFoundError as e:
-                log.warn("%s: %s", self.page, e)
-                continue
-
-            img.attrib.update(attrs)
-
     def resolve_page(self, url: str) -> Union[tuple[None, None], tuple[Page, urllib.parse.ParseResult]]:
-        from markdown.util import AMP_SUBSTITUTE
-        if url.startswith(AMP_SUBSTITUTE):
-            # Possibly an overencoded mailto: link.
-            # see https://bugs.debian.org/816218
-            #
-            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
-            # we look for it here.
-            return None, None
-
         parsed = urlparse(url)
 
         # If it's an absolute url, leave it unchanged
@@ -125,9 +99,61 @@ class LinkResolver(markdown.treeprocessors.Treeprocessor):
         )
 
 
+class FixURLs(markdown.treeprocessors.Treeprocessor):
+    """
+    Markdown Treeprocessor that fixes internal links in HTML tags
+    """
+    def __init__(self, *args, **kw) -> None:
+        super().__init__(*args, **kw)
+        self.link_resolver = LinkResolver()
+
+    def should_resolve(self, url: str) -> bool:
+        if url.startswith(AMP_SUBSTITUTE):
+            # Possibly an overencoded mailto: link.
+            # see https://bugs.debian.org/816218
+            #
+            # Markdown then further escapes & with utils.AMP_SUBSTITUTE, so
+            # we look for it here.
+            return False
+        return True
+
+    def run(self, root):
+        # Replace <a href=…>
+        for a in root.iter("a"):
+            if (orig_url := a.attrib.get("href", None)) is None:
+                continue
+
+            if not self.should_resolve(orig_url):
+                continue
+
+            page, new_url = self.link_resolver.resolve_url(orig_url)
+            if new_url is not None:
+                a.attrib["href"] = new_url
+
+        # Replace <img src=…>
+        for img in root.iter("img"):
+            if (orig_url := img.attrib.get("src", None)) is None:
+                continue
+
+            if not self.should_resolve(orig_url):
+                continue
+
+            page, parsed = self.link_resolver.resolve_page(orig_url)
+            if page is None:
+                continue
+
+            try:
+                attrs = self.link_resolver.page.get_img_attributes(page, absolute=self.link_resolver.absolute)
+            except PageNotFoundError as e:
+                log.warn("%s: %s", self.page, e)
+                continue
+
+            img.attrib.update(attrs)
+
+
 class StaticSiteExtension(markdown.extensions.Extension):
     def extendMarkdown(self, md):
-        self.link_resolver = LinkResolver(md)
+        self.link_resolver = FixURLs(md)
         md.treeprocessors.register(self.link_resolver, 'staticsite', 0)
         md.registerExtension(self)
 
@@ -154,7 +180,7 @@ class MarkdownPages(Feature):
             extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
             output_format="html5",
         )
-        self.link_resolver = md_staticsite.link_resolver
+        self.link_resolver = md_staticsite.link_resolver.link_resolver
 
         self.j2_filters["markdown"] = self.jinja2_markdown
 
