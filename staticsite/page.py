@@ -7,7 +7,6 @@ import logging
 import os
 from functools import cached_property
 from typing import (TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union)
-from urllib.parse import urlparse, urlunparse
 
 import jinja2
 import markupsafe
@@ -529,39 +528,6 @@ class Page(SiteElement):
             raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
         else:
             return dst
-
-    def resolve_url(self, url: str) -> str:
-        """
-        Resolve internal URLs.
-
-        Returns the argument itself if the URL does not need changing, else
-        returns the new URL.
-
-        To check for a noop, check like ``if page.resolve_url(url) is url``
-
-        This is used by url resolver postprocessors, like in markdown or
-        restructured text pages.
-
-        For resolving urls in templates, see Theme.jinja2_url_for().
-        """
-        parsed = urlparse(url)
-        if parsed.scheme or parsed.netloc:
-            return url
-        if not parsed.path:
-            return url
-
-        try:
-            dest = self.url_for(parsed.path)
-        except PageNotFoundError as e:
-            log.warn("%s: %s", self, e)
-            return url
-
-        dest_parsed = urlparse(dest)
-
-        return urlunparse(
-            (dest_parsed.scheme, dest_parsed.netloc, dest_parsed.path,
-             parsed.params, parsed.query, parsed.fragment)
-        )
 
     def url_for(self, target: Union[str, "Page"], absolute=False, static=False) -> str:
         """
