@@ -4,9 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import (TYPE_CHECKING, Any, BinaryIO, List, Optional, Set, Tuple,
-                    Type, Union)
-from urllib.parse import urlparse, urlunparse
+from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type
 
 import jinja2
 import markdown
@@ -15,88 +13,17 @@ from markdown.util import AMP_SUBSTITUTE
 
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
-from staticsite.markup import MarkupPage
+from staticsite.markup import MarkupFeature, MarkupPage
 from staticsite.node import Path
 from staticsite.page import (FrontMatterPage, Page, PageNotFoundError,
                              TemplatePage)
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
-    import urllib.parse
-
     from staticsite import file, fstree
     from staticsite.node import Node
 
 log = logging.getLogger("markdown")
-
-
-class LinkResolver:
-    """
-    Caching backend for resolving internal URLs in rendered content
-    """
-
-    def __init__(self):
-        self.page: Optional[Page] = None
-        self.absolute: bool = False
-        self.substituted: dict[str, str] = {}
-        self.external_links: Set[str] = set()
-
-    def set_page(self, page: Page, absolute: bool = False):
-        self.page = page
-        self.absolute = absolute
-        self.substituted = {}
-        self.external_links = set()
-
-    def resolve_page(self, url: str) -> Union[tuple[None, None], tuple[Page, urllib.parse.ParseResult]]:
-        parsed = urlparse(url)
-
-        # If it's an absolute url, leave it unchanged
-        if parsed.scheme or parsed.netloc:
-            self.external_links.add(url)
-            return None, None
-
-        # If it's an anchor inside the page, leave it unchanged
-        if not parsed.path:
-            return None, None
-
-        # Try with cache
-        site_path = self.substituted.get(parsed.path)
-        if site_path is not None:
-            try:
-                return self.page.site.find_page(site_path), parsed
-            except KeyError:
-                log.warn("%s: url %s resolved via cache to %s which does not exist in the site. Cache out of date?",
-                         self.page, url, site_path)
-
-        # Resolve as a path
-        try:
-            page = self.page.resolve_path(parsed.path)
-        except PageNotFoundError as e:
-            log.warn("%s: %s", self.page, e)
-            return None, None
-
-        # Cache the page site_path
-        self.substituted[url] = page.site_path
-
-        return page, parsed
-
-    def resolve_url(self, url: str) -> Tuple[Page, str]:
-        """
-        Resolve internal URLs.
-
-        Returns None if the URL does not need changing, else returns the new URL.
-        """
-        page, parsed = self.resolve_page(url)
-        if page is None:
-            return page, url
-
-        new_url = self.page.url_for(page, absolute=self.absolute)
-        dest = urlparse(new_url)
-
-        return page, urlunparse(
-            (dest.scheme, dest.netloc, dest.path,
-             parsed.params, parsed.query, parsed.fragment)
-        )
 
 
 class FixURLs(markdown.treeprocessors.Treeprocessor):
@@ -167,7 +94,7 @@ class StaticSiteExtension(markdown.extensions.Extension):
         self.link_resolver.set_page(page, absolute)
 
 
-class MarkdownPages(Feature):
+class MarkdownPages(MarkupFeature, Feature):
     """
     Render ``.md`` markdown pages, with front matter.
 
@@ -175,7 +102,6 @@ class MarkdownPages(Feature):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.link_resolver = LinkResolver()
         self.markdown = markdown.Markdown(
             extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
                 StaticSiteExtension(link_resolver=self.link_resolver),
