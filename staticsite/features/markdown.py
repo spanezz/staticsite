@@ -103,9 +103,9 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
     """
     Markdown Treeprocessor that fixes internal links in HTML tags
     """
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args, link_resolver, **kw) -> None:
         super().__init__(*args, **kw)
-        self.link_resolver = LinkResolver()
+        self.link_resolver = link_resolver
 
     def should_resolve(self, url: str) -> bool:
         if url.startswith(AMP_SUBSTITUTE):
@@ -152,9 +152,12 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
+    def __init__(self, *, link_resolver, **kwargs):
+        super().__init__(**kwargs)
+        self.link_resolver = link_resolver
+
     def extendMarkdown(self, md):
-        self.link_resolver = FixURLs(md)
-        md.treeprocessors.register(self.link_resolver, 'staticsite', 0)
+        md.treeprocessors.register(FixURLs(md, link_resolver=self.link_resolver), 'staticsite', 0)
         md.registerExtension(self)
 
     def reset(self):
@@ -172,15 +175,14 @@ class MarkdownPages(Feature):
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        md_staticsite = StaticSiteExtension()
+        self.link_resolver = LinkResolver()
         self.markdown = markdown.Markdown(
             extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
-                md_staticsite,
+                StaticSiteExtension(link_resolver=self.link_resolver),
             ],
             extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
             output_format="html5",
         )
-        self.link_resolver = md_staticsite.link_resolver.link_resolver
 
         self.j2_filters["markdown"] = self.jinja2_markdown
 
