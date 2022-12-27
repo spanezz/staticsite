@@ -166,45 +166,7 @@ class MarkdownPages(Feature):
     def jinja2_markdown(self, context, mdtext):
         return markupsafe.Markup(self.render_snippet(context.parent["page"], mdtext))
 
-    def render_page(self, page: MarkdownPage, body: List[str], render_type: str, absolute: bool = False):
-        """
-        Render markdown in the context of the given page.
-        """
-        self.link_resolver.set_page(page, absolute)
-
-        cache_key = f"{render_type}:{page.src.relpath}"
-
-        # Try fetching rendered content from cache
-        cached = self.render_cache.get(cache_key)
-        if cached and cached["mtime"] != page.src.stat.st_mtime:
-            # If the source has changed, drop the cached version
-            cached = None
-        if cached:
-            # If the destination of links has changed, drop the cached version.
-            # This will as a side effect prime the link resolver cache,
-            # avoiding links from being looked up again during rendering
-            for src, dest in cached["paths"]:
-                if self.link_resolver.resolve_page(src)[0].site_path != dest:
-                    cached = None
-                    break
-        if cached:
-            # log.info("%s: markdown cache hit", page.src.relpath)
-            return cached["rendered"]
-
-        self.markdown.reset()
-        rendered = self.markdown.convert("\n".join(body))
-
-        page.rendered_external_links.update(self.link_resolver.external_links)
-
-        self.render_cache.put(cache_key, {
-            "mtime": page.src.stat.st_mtime,
-            "rendered": rendered,
-            "paths": list(self.link_resolver.substituted.items()),
-        })
-
-        return rendered
-
-    def render_snippet(self, page, content):
+    def render_snippet(self, page: Page, content: str) -> str:
         """
         Render markdown in the context of the given page.
 
@@ -528,32 +490,70 @@ class MarkdownPage(TemplatePage, FrontMatterPage):
     def check(self, checker):
         self.render()
 
+    def render_page(self, body: List[str], render_type: str, absolute: bool = False) -> str:
+        """
+        Render markdown in the context of the given page.
+        """
+        self.mdpages.link_resolver.set_page(self, absolute)
+
+        cache_key = f"{render_type}:{self.src.relpath}"
+
+        # Try fetching rendered content from cache
+        cached = self.mdpages.render_cache.get(cache_key)
+        if cached and cached["mtime"] != self.src.stat.st_mtime:
+            # If the source has changed, drop the cached version
+            cached = None
+        if cached:
+            # If the destination of links has changed, drop the cached version.
+            # This will as a side effect prime the link resolver cache,
+            # avoiding links from being looked up again during rendering
+            for src, dest in cached["paths"]:
+                if self.link_resolver.resolve_page(src)[0].site_path != dest:
+                    cached = None
+                    break
+        if cached:
+            # log.info("%s: markdown cache hit", page.src.relpath)
+            return cached["rendered"]
+
+        self.mdpages.markdown.reset()
+        rendered = self.mdpages.markdown.convert("\n".join(body))
+
+        self.rendered_external_links.update(self.mdpages.link_resolver.external_links)
+
+        self.mdpages.render_cache.put(cache_key, {
+            "mtime": self.src.stat.st_mtime,
+            "rendered": rendered,
+            "paths": list(self.mdpages.link_resolver.substituted.items()),
+        })
+
+        return rendered
+
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
-            return self.mdpages.render_page(self, body, render_type="hb", absolute=absolute)
+            return self.render_page(body, render_type="hb", absolute=absolute)
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="s", absolute=absolute)
+            return self.render_page(self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
-            return self.mdpages.render_page(self, body, render_type="h", absolute=absolute)
+            return self.render_page(body, render_type="h", absolute=absolute)
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="s", absolute=absolute)
+            return self.render_page(self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + [""] + self.body_rest
-            return self.mdpages.render_page(self, body, render_type="f", absolute=absolute)
+            return self.render_page(body, render_type="f", absolute=absolute)
         else:
-            return self.mdpages.render_page(self, self.body_start, render_type="f", absolute=absolute)
+            return self.render_page(self.body_start, render_type="f", absolute=absolute)
 
 
 FEATURES = {
