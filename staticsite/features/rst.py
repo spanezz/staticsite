@@ -207,14 +207,14 @@ class RestructuredText(Feature):
 class RestArchetype(Archetype):
     def __init__(self, archetypes, relpath, feature):
         super().__init__(archetypes, relpath)
-        self.rst = feature
+        self.feature = feature
 
     def render(self, **kw):
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version
         with io.StringIO(rendered) as fd:
-            parsed_meta, doctree_scan = self.rst.parse_rest(fd, remove_docinfo=False)
+            parsed_meta, doctree_scan = self.feature.parse_rest(fd, remove_docinfo=False)
 
         meta.update(**parsed_meta)
 
@@ -320,7 +320,7 @@ class RstPage(FrontMatterPage, TemplatePage):
         super().__init__(**kw)
 
         # Shared RestructuredText environment
-        self.rst = feature
+        self.feature = feature
 
         # Document doctree root node
         self.doctree_scan = doctree_scan
@@ -329,7 +329,7 @@ class RstPage(FrontMatterPage, TemplatePage):
         """
         Check if the front matter read from fd is different from ours
         """
-        meta, doctree_scan = self.rst.parse_rest(fd)
+        meta, doctree_scan = self.feature.parse_rest(fd)
         return self.front_matter != meta
 
     def check(self, checker):

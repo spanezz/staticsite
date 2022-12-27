@@ -283,9 +283,9 @@ class MarkdownPages(Feature):
 
 
 class MarkdownArchetype(Archetype):
-    def __init__(self, archetypes, relpath, mdpages):
+    def __init__(self, archetypes, relpath, feature):
         super().__init__(archetypes, relpath)
-        self.mdpages = mdpages
+        self.feature = feature
 
     def render(self, **kw):
         meta, rendered = super().render(**kw)
@@ -450,7 +450,7 @@ class MarkdownPage(TemplatePage, FrontMatterPage):
         super().__init__(**kw)
 
         # Shared markdown environment
-        self.mdpages = feature
+        self.feature = feature
 
         # Sequence of lines found in the body before the divider line, if any
         self.body_start: list[str]
@@ -484,7 +484,7 @@ class MarkdownPage(TemplatePage, FrontMatterPage):
         # TODO: refactor read_file_meta to skip reading the body if we don't
         # need it, but still parse until the title if the front matter doesn't
         # have one
-        meta, body = self.mdpages.read_file_meta(fd)
+        meta, body = self.feature.read_file_meta(fd)
         return self.front_matter != meta
 
     def check(self, checker):
@@ -494,12 +494,12 @@ class MarkdownPage(TemplatePage, FrontMatterPage):
         """
         Render markdown in the context of the given page.
         """
-        self.mdpages.link_resolver.set_page(self, absolute)
+        self.feature.link_resolver.set_page(self, absolute)
 
         cache_key = f"{render_type}:{self.src.relpath}"
 
         # Try fetching rendered content from cache
-        cached = self.mdpages.render_cache.get(cache_key)
+        cached = self.feature.render_cache.get(cache_key)
         if cached and cached["mtime"] != self.src.stat.st_mtime:
             # If the source has changed, drop the cached version
             cached = None
@@ -515,15 +515,15 @@ class MarkdownPage(TemplatePage, FrontMatterPage):
             # log.info("%s: markdown cache hit", page.src.relpath)
             return cached["rendered"]
 
-        self.mdpages.markdown.reset()
-        rendered = self.mdpages.markdown.convert("\n".join(body))
+        self.feature.markdown.reset()
+        rendered = self.feature.markdown.convert("\n".join(body))
 
-        self.rendered_external_links.update(self.mdpages.link_resolver.external_links)
+        self.rendered_external_links.update(self.feature.link_resolver.external_links)
 
-        self.mdpages.render_cache.put(cache_key, {
+        self.feature.render_cache.put(cache_key, {
             "mtime": self.src.stat.st_mtime,
             "rendered": rendered,
-            "paths": list(self.mdpages.link_resolver.substituted.items()),
+            "paths": list(self.feature.link_resolver.substituted.items()),
         })
 
         return rendered
