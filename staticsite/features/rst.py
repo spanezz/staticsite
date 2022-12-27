@@ -13,6 +13,7 @@ import jinja2
 
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
+from staticsite.markup import MarkupFeature, MarkupPage
 from staticsite.node import Node, Path
 from staticsite.page import FrontMatterPage, TemplatePage, Page
 from staticsite.utils import yaml_codec
@@ -67,7 +68,7 @@ class DoctreeScan:
             self.scan(node)
 
 
-class RestructuredText(Feature):
+class RestructuredText(MarkupFeature, Feature):
     """
     Render ``.rst`` reStructuredText pages, with front matter.
 
@@ -76,7 +77,7 @@ class RestructuredText(Feature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
-        # self.render_cache = self.site.caches.get("markdown")
+        self.render_cache = self.site.caches.get("rst")
 
         # Names of tags whose content should be parsed as yaml
         self.yaml_tags = {"files", "dirs"}
@@ -248,7 +249,7 @@ class RestArchetype(Archetype):
         return meta, rendered
 
 
-class RstPage(FrontMatterPage, TemplatePage):
+class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
     """
     RestructuredText files
 
@@ -335,61 +336,52 @@ class RstPage(FrontMatterPage, TemplatePage):
     def check(self, checker):
         self._render_page()
 
-    def _render_page(self):
-        if not self.doctree_scan.links_rewritten:
-            for node in self.doctree_scan.links_target:
-                node.attributes["refuri"] = self.resolve_url(node.attributes["refuri"])
-            for node in self.doctree_scan.links_image:
-                node.attributes["uri"] = self.resolve_url(node.attributes["uri"])
+    def _render_page(self, absolute: bool = False):
+        cache_key = self.src.relpath
+        with self.markup_render_context(cache_key, absolute=absolute) as context:
+            if (rendered := context.cache.get("rendered")):
+                # log.info("%s: rst cache hit", page.src.relpath)
+                return rendered
 
-        # TODO: caching
-        # cached = self.render_cache.get(page.src.relpath)
-        # if cached and cached["mtime"] != page.mtime:
-        #     cached = None
-        # if cached:
-        #     for src, dest in cached["paths"]:
-        #         if self.link_resolver.resolve_url(src) != dest:
-        #             cached = None
-        #             break
-        # if cached:
-        #     # log.info("%s: markdown cache hit", page.src.relpath)
-        #     return cached["rendered"]
+            if not self.doctree_scan.links_rewritten:
+                for node in self.doctree_scan.links_target:
+                    node.attributes["refuri"] = context.link_resolver.resolve_url(node.attributes["refuri"])
+                for node in self.doctree_scan.links_image:
+                    node.attributes["uri"] = context.link_resolver.resolve_url(node.attributes["uri"])
+                self.doctree_scan.links_rewritten = True
 
-        writer = docutils.writers.html5_polyglot.Writer()
-        # TODO: study if/how we can con configure publish_programmatically to
-        # do as little work as possible
-        output, pub = docutils.core.publish_programmatically(
-            source=self.doctree_scan.doctree, source_path=None,
-            source_class=docutils.io.DocTreeInput,
-            destination=None, destination_path=None,
-            destination_class=docutils.io.StringOutput,
-            reader=None, reader_name='doctree',
-            parser=None, parser_name='null',
-            writer=writer, writer_name=None,
-            settings=None, settings_spec=None,
-            settings_overrides=None,
-            config_section=None,
-            enable_exit_status=False
-            )
-        parts = pub.writer.parts
-        # self.render_cache.put(page.src.relpath, {
-        #     "mtime": page.mtime,
-        #     "rendered": parts["body"],
-        #     "paths": list(self.link_resolver.substituted.items()),
-        # })
-        return parts["body"]
+            writer = docutils.writers.html5_polyglot.Writer()
+            # TODO: study if/how we can con configure publish_programmatically to
+            # do as little work as possible
+            output, pub = docutils.core.publish_programmatically(
+                source=self.doctree_scan.doctree, source_path=None,
+                source_class=docutils.io.DocTreeInput,
+                destination=None, destination_path=None,
+                destination_class=docutils.io.StringOutput,
+                reader=None, reader_name='doctree',
+                parser=None, parser_name='null',
+                writer=writer, writer_name=None,
+                settings=None, settings_spec=None,
+                settings_overrides=None,
+                config_section=None,
+                enable_exit_status=False
+                )
+            parts = pub.writer.parts
+            rendered = parts["body"]
+            context.cache["rendered"] = rendered
+            return rendered
 
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
-        return self._render_page()
+        return self._render_page(absolute=self != context["page"])
 
     @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
-        return self._render_page()
+        return self._render_page(absolute=self != context["page"])
 
     @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
-        return self._render_page()
+        return self._render_page(absolute=self != context["page"])
 
 
 FEATURES = {

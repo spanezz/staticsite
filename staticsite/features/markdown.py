@@ -53,7 +53,7 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
             if not self.should_resolve(orig_url):
                 continue
 
-            page, new_url = self.link_resolver.resolve_url(orig_url)
+            new_url = self.link_resolver.resolve_url(orig_url)
             if new_url is not None:
                 a.attrib["href"] = new_url
 
@@ -445,22 +445,13 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     def check(self, checker):
         self.render()
 
-    def render_page(self, body: List[str], render_type: str, absolute: bool = False) -> str:
+    def _render_page(self, body: List[str], render_type: str, absolute: bool = False) -> str:
         """
         Render markdown in the context of the given page.
         """
-        self.feature.link_resolver.set_page(self, absolute)
         cache_key = f"{render_type}:{self.src.relpath}"
 
-        with self.markup_render_context(cache_key) as context:
-            if (paths := context.cache.get("paths")) is not None:
-                # If the destination of links has changed, drop the cached version.
-                # This will as a side effect prime the link resolver cache,
-                # avoiding links from being looked up again during rendering
-                for src, dest in paths:
-                    if self.link_resolver.resolve_page(src)[0].site_path != dest:
-                        context.reset_cache()
-                        break
+        with self.markup_render_context(cache_key, absolute=absolute) as context:
             if (rendered := context.cache.get("rendered")):
                 # log.info("%s: markdown cache hit", page.src.relpath)
                 return rendered
@@ -471,7 +462,6 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
             self.rendered_external_links.update(self.feature.link_resolver.external_links)
 
             context.cache["rendered"] = rendered
-            context.cache["paths"] = list(self.feature.link_resolver.substituted.items())
 
         return rendered
 
@@ -480,27 +470,27 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
-            return self.render_page(body, render_type="hb", absolute=absolute)
+            return self._render_page(body, render_type="hb", absolute=absolute)
         else:
-            return self.render_page(self.body_start, render_type="s", absolute=absolute)
+            return self._render_page(self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
-            return self.render_page(body, render_type="h", absolute=absolute)
+            return self._render_page(body, render_type="h", absolute=absolute)
         else:
-            return self.render_page(self.body_start, render_type="s", absolute=absolute)
+            return self._render_page(self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         absolute = self != context["page"]
         if self.content_has_split:
             body = self.body_start + [""] + self.body_rest
-            return self.render_page(body, render_type="f", absolute=absolute)
+            return self._render_page(body, render_type="f", absolute=absolute)
         else:
-            return self.render_page(self.body_start, render_type="f", absolute=absolute)
+            return self._render_page(self.body_start, render_type="f", absolute=absolute)
 
 
 FEATURES = {

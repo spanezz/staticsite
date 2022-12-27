@@ -65,7 +65,7 @@ class LinkResolver:
 
         return page, parsed
 
-    def resolve_url(self, url: str) -> tuple[Page, str]:
+    def resolve_url(self, url: str) -> str:
         """
         Resolve internal URLs.
 
@@ -73,12 +73,12 @@ class LinkResolver:
         """
         page, parsed = self.resolve_page(url)
         if page is None:
-            return page, url
+            return url
 
         new_url = self.page.url_for(page, absolute=self.absolute)
         dest = urlparse(new_url)
 
-        return page, urlunparse(
+        return urlunparse(
             (dest.scheme, dest.netloc, dest.path,
              parsed.params, parsed.query, parsed.fragment)
         )
@@ -96,17 +96,30 @@ class MarkupRenderContext:
     """
     def __init__(self, page: MarkupPage, cache_key: str):
         self.page = page
+        self.link_resolver = page.feature.link_resolver
         self.cache_key = cache_key
         self.cache: dict[str, Any]
 
     def load(self):
         if (cache := self.page.feature.render_cache.get(self.cache_key)) is None:
             self.reset_cache()
-        elif cache["mtime"] != self.page.src.stat.st_mtime:
+            return
+
+        if cache["mtime"] != self.page.src.stat.st_mtime:
             # If the source has changed, drop the cached version
             self.reset_cache()
-        else:
-            self.cache = cache
+            return
+
+        if (paths := cache.get("paths")) is not None:
+            # If the destination of links has changed, drop the cached version.
+            # This will as a side effect prime the link resolver cache,
+            # avoiding links from being looked up again during rendering
+            for src, dest in paths:
+                if self.link_resolver.resolve_page(src)[0].site_path != dest:
+                    self.reset_cache()
+                    return
+
+        self.cache = cache
 
     def reset_cache(self):
         self.cache = {
@@ -114,6 +127,7 @@ class MarkupRenderContext:
         }
 
     def save(self):
+        self.cache["paths"] = list(self.link_resolver.substituted.items())
         self.page.feature.render_cache.put(self.cache_key, self.cache)
 
 
@@ -125,7 +139,8 @@ class MarkupPage(SourcePage):
     """
 
     @contextlib.contextmanager
-    def markup_render_context(self, cache_key: str) -> ContextManager[MarkupRenderContext]:
+    def markup_render_context(self, cache_key: str, absolute: bool = False) -> ContextManager[MarkupRenderContext]:
+        self.feature.link_resolver.set_page(self, absolute)
         render_context = MarkupRenderContext(self, cache_key)
         render_context.load()
         yield render_context
