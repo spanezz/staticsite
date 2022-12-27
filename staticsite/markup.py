@@ -32,6 +32,18 @@ class LinkResolver:
         self.substituted = {}
         self.external_links = set()
 
+    def load_cache(self, paths: list[tuple[str, str]]) -> bool:
+        # If the destination of links has changed, drop the cached version.
+        # This will as a side effect prime the link resolver cache,
+        # avoiding links from being looked up again during rendering
+        for src, dest in paths:
+            if self.resolve_page(src)[0].site_path != dest:
+                return False
+        return True
+
+    def to_cache(self) -> list[tuple[str, str]]:
+        return list(self.substituted.items())
+
     def resolve_page(self, url: str) -> Union[tuple[None, None], tuple[Page, urllib.parse.ParseResult]]:
         parsed = urlparse(url)
 
@@ -110,14 +122,9 @@ class MarkupRenderContext:
             self.reset_cache()
             return
 
-        if (paths := cache.get("paths")) is not None:
-            # If the destination of links has changed, drop the cached version.
-            # This will as a side effect prime the link resolver cache,
-            # avoiding links from being looked up again during rendering
-            for src, dest in paths:
-                if self.link_resolver.resolve_page(src)[0].site_path != dest:
-                    self.reset_cache()
-                    return
+        if (paths := cache.get("paths")) is None or not self.link_resolver.load_cache(paths):
+            self.reset_cache()
+            return
 
         self.cache = cache
 
@@ -127,7 +134,7 @@ class MarkupRenderContext:
         }
 
     def save(self):
-        self.cache["paths"] = list(self.link_resolver.substituted.items())
+        self.cache["paths"] = self.link_resolver.to_cache()
         self.page.feature.render_cache.put(self.cache_key, self.cache)
 
 
