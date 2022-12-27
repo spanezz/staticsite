@@ -13,6 +13,7 @@ import markupsafe
 
 from staticsite.feature import Feature
 from staticsite.archetypes import Archetype
+from staticsite.markup import MarkupPage
 from staticsite.node import Path
 from staticsite.page import FrontMatterPage, TemplatePage, Page, PageNotFoundError
 from staticsite.utils import front_matter
@@ -318,7 +319,7 @@ class MarkdownArchetype(Archetype):
         return archetype_meta, post_body
 
 
-class MarkdownPage(TemplatePage, FrontMatterPage):
+class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     """
     Markdown sources
 
@@ -495,36 +496,28 @@ class MarkdownPage(TemplatePage, FrontMatterPage):
         Render markdown in the context of the given page.
         """
         self.feature.link_resolver.set_page(self, absolute)
-
         cache_key = f"{render_type}:{self.src.relpath}"
 
-        # Try fetching rendered content from cache
-        cached = self.feature.render_cache.get(cache_key)
-        if cached and cached["mtime"] != self.src.stat.st_mtime:
-            # If the source has changed, drop the cached version
-            cached = None
-        if cached:
-            # If the destination of links has changed, drop the cached version.
-            # This will as a side effect prime the link resolver cache,
-            # avoiding links from being looked up again during rendering
-            for src, dest in cached["paths"]:
-                if self.link_resolver.resolve_page(src)[0].site_path != dest:
-                    cached = None
-                    break
-        if cached:
-            # log.info("%s: markdown cache hit", page.src.relpath)
-            return cached["rendered"]
+        with self.markup_render_context(cache_key) as context:
+            if (paths := context.cache.get("paths")) is not None:
+                # If the destination of links has changed, drop the cached version.
+                # This will as a side effect prime the link resolver cache,
+                # avoiding links from being looked up again during rendering
+                for src, dest in paths:
+                    if self.link_resolver.resolve_page(src)[0].site_path != dest:
+                        context.reset_cache()
+                        break
+            if (rendered := context.cache.get("rendered")):
+                # log.info("%s: markdown cache hit", page.src.relpath)
+                return rendered
 
-        self.feature.markdown.reset()
-        rendered = self.feature.markdown.convert("\n".join(body))
+            self.feature.markdown.reset()
+            rendered = self.feature.markdown.convert("\n".join(body))
 
-        self.rendered_external_links.update(self.feature.link_resolver.external_links)
+            self.rendered_external_links.update(self.feature.link_resolver.external_links)
 
-        self.feature.render_cache.put(cache_key, {
-            "mtime": self.src.stat.st_mtime,
-            "rendered": rendered,
-            "paths": list(self.feature.link_resolver.substituted.items()),
-        })
+            context.cache["rendered"] = rendered
+            context.cache["paths"] = list(self.feature.link_resolver.substituted.items())
 
         return rendered
 
