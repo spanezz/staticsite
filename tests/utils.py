@@ -100,7 +100,7 @@ class MockSiteBase:
         """
         res: list[Page] = []
         for path in paths:
-            page = self.site.find_page(path)
+            page = self.site.root.resolve_path(path)
             if page is None:
                 self.test_case.fail(f"Page {path!r} not found in site")
             res.append(page)

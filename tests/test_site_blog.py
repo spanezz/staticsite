@@ -162,7 +162,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "type": "rss",
         })
         # A feed page renders images, all of a split page, absolute site urls
-        rendered = self.site.find_page("index.rss").render().content()
+        rendered = self.page("index.rss").render().content()
         self.assertIn(b"src=&#39;https://www.example.org/posts/example-small.jpg", rendered)
         self.assertIn(b"This is the rest of the blog post", rendered)
 

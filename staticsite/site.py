@@ -270,12 +270,6 @@ class Site:
         # loaded, so if any remain it means that those pages have been deleted
         return self.previous_source_footprints.keys()
 
-    def find_page(self, path: str) -> Page:
-        """
-        Find a page by absolute path in the site
-        """
-        return self.root.resolve_path(path)
-
     def iter_pages(self, static: bool = True, source_only: bool = False) -> Generator[Page, None, None]:
         """
         Iterate all pages in the site
