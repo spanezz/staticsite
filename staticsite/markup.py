@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import TYPE_CHECKING, Any, ContextManager, Optional, Union
+from typing import (TYPE_CHECKING, Any, ContextManager, NamedTuple, Optional,
+                    Union)
 from urllib.parse import urlparse, urlunparse
 
-from .page import SourcePage, PageNotFoundError
+from .page import PageNotFoundError, SourcePage
 
 if TYPE_CHECKING:
     import urllib.parse
@@ -13,6 +14,11 @@ if TYPE_CHECKING:
     from .page import Page
 
 log = logging.getLogger("markdown")
+
+
+class ResolvedLink(NamedTuple):
+    page: Page
+    site_path: str
 
 
 class LinkResolver:
@@ -23,7 +29,7 @@ class LinkResolver:
     def __init__(self):
         self.page: Optional[Page] = None
         self.absolute: bool = False
-        self.substituted: dict[str, str] = {}
+        self.substituted: dict[str, ResolvedLink] = {}
         self.external_links: set[str] = set()
 
     def set_page(self, page: Page, absolute: bool = False):
@@ -42,7 +48,7 @@ class LinkResolver:
         return True
 
     def to_cache(self) -> list[tuple[str, str]]:
-        return list(self.substituted.items())
+        return [(k, v.site_path) for k, v in self.substituted.items()]
 
     def resolve_page(self, url: str) -> Union[tuple[None, None], tuple[Page, urllib.parse.ParseResult]]:
         parsed = urlparse(url)
@@ -57,13 +63,8 @@ class LinkResolver:
             return None, None
 
         # Try with cache
-        site_path = self.substituted.get(parsed.path)
-        if site_path is not None:
-            try:
-                return self.page.site.find_page(site_path), parsed
-            except KeyError:
-                log.warn("%s: url %s resolved via cache to %s which does not exist in the site. Cache out of date?",
-                         self.page, url, site_path)
+        if (resolved := self.substituted.get(parsed.path)) is not None:
+            return resolved.page, parsed
 
         # Resolve as a path
         try:
@@ -73,7 +74,7 @@ class LinkResolver:
             return None, None
 
         # Cache the page site_path
-        self.substituted[url] = page.site_path
+        self.substituted[url] = ResolvedLink(page, page.site_path)
 
         return page, parsed
 
