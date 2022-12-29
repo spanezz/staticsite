@@ -36,6 +36,27 @@ tags: [cat]
             self.assertEqual(cat.pages, [page])
             self.assertEqual(page.tags, [cat])
 
+    def test_field_validation(self):
+        """
+        Test the various ways of providing tags
+        """
+        files = {
+            "tags.taxonomy": "---\n",
+            "single.md": {"tags": "cat"},
+            "multi.md": {"tags": ["cat", "dog"]},
+            "none1.md": {"tags": ""},
+            "none2.md": {"tags": []},
+            "none3.md": {"tags": None},
+        }
+        with self.site(files) as mocksite:
+            single, multi, none1, none2, none3 = mocksite.page("single", "multi", "none1", "none2", "none3")
+            cat, dog = mocksite.page("tags/cat", "tags/dog")
+            self.assertEqual(single.tags, [cat])
+            self.assertEqual(multi.tags, [cat, dog])
+            self.assertEqual(none1.tags, [])
+            self.assertEqual(none2.tags, [])
+            self.assertEqual(none3.tags, [])
+
     def test_enrico_tags(self):
         """
         Test tags.taxonomy from my own site

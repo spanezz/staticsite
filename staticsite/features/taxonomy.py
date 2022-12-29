@@ -100,16 +100,6 @@ class Taxonomy:
             # Don't auto-add feeds for the tag syndication pages
             syndication.add_to = False
 
-        # TODO: archive
-
-        # if archive is not None:
-        #     self.archive_meta.update(archive)
-        #     elif archive is False:
-        #         archive = None
-
-        #     if archive is not None:
-        #         archive.setdefault("template_title", "{{meta.created_from.name}} archive")
-
         return self.index.node.create_auto_page(
             created_from=self.index,
             page_cls=CategoryPage,
@@ -128,11 +118,6 @@ class Taxonomy:
             categories = getattr(page, self.name, None)
             if not categories:
                 continue
-            # Make sure page.meta.$category is a list
-            # TODO: move to field validator
-            if isinstance(categories, str):
-                categories = (categories,)
-                setattr(page, self.name, categories)
             # File the page in its category lists
             for category in categories:
                 by_category[category].append(page)
@@ -157,7 +142,16 @@ class Taxonomy:
 
 class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
     tracked_by = "taxonomy"
-    # TODO: make this validate as string lists
+
+    def _clean(self, page: Page, value: Union[None, str, list[str], list[Page]]) -> Union[list[str], list[Page]]:
+        if not value:
+            return []
+        elif isinstance(value, str):
+            return [value]
+        elif isinstance(value, list):
+            return value
+        else:
+            raise ValueError(f"{value!r} is not a string, a list of strings, or a list of Page objects")
 
 
 class BaseTaxonomyPageMixin(metaclass=fields.FieldsMetaclass):

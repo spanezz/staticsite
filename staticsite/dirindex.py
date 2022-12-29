@@ -60,8 +60,6 @@ class Dir(TemplatePage, SourcePage):
 
         # self.indexed = bool(self.pages) or any(p.indexed for p in self.subdirs)
 
-        # TODO: set draft if all subdirs and pages are drafts?
-
         # Since finalize is called from the bottom up, subdirs have their date
         # up to date
         self.subdirs.sort(key=lambda p: p.date)
