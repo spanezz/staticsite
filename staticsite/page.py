@@ -507,11 +507,14 @@ class Page(SiteElement):
 
     def url_for(self, target: Union[str, "Page"], absolute=False, static=False) -> str:
         """
-        Generate a URL for a page, specified by path or with the page itself
+        Generate a URL for a page, specified by:
+
+        * an absolute path
+        * a path relative to this page
+        * the target page itself
         """
         # print(f"Page.url_for {self=!r}, {target=!r}")
         page: "Page"
-
         if isinstance(target, str):
             page = self.resolve_path(target, static=static)
         else:
