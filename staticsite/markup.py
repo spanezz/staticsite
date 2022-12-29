@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import (TYPE_CHECKING, Any, Generator, NamedTuple, Optional,
-                    Union)
+from typing import TYPE_CHECKING, Any, Generator, NamedTuple, Optional
 from urllib.parse import urlparse, urlunparse
 
 from .page import PageNotFoundError, SourcePage
@@ -19,6 +18,11 @@ log = logging.getLogger("markdown")
 class ResolvedLink(NamedTuple):
     page: Page
     site_path: str
+
+
+class ResolvedPage(NamedTuple):
+    page: Page
+    url: urllib.parse.ParseResult
 
 
 class LinkResolver:
@@ -43,40 +47,44 @@ class LinkResolver:
         # This will as a side effect prime the link resolver cache,
         # avoiding links from being looked up again during rendering
         for src, dest in paths:
-            if self.resolve_page(src)[0].site_path != dest:
+            if (resolved := self.resolve_page(src)) is None:
+                return False
+            if resolved.page.site_path != dest:
                 return False
         return True
 
     def to_cache(self) -> list[tuple[str, str]]:
         return [(k, v.site_path) for k, v in self.substituted.items()]
 
-    def resolve_page(self, url: str) -> Union[tuple[None, None], tuple[Page, urllib.parse.ParseResult]]:
+    def resolve_page(self, url: str) -> Optional[ResolvedPage]:
+        if self.page is None:
+            raise RuntimeError("LinkResolver.resolve_page called before LinkResolver.set_page")
         parsed = urlparse(url)
 
         # If it's an absolute url, leave it unchanged
         if parsed.scheme or parsed.netloc:
             self.external_links.add(url)
-            return None, None
+            return None
 
         # If it's an anchor inside the page, leave it unchanged
         if not parsed.path:
-            return None, None
+            return None
 
         # Try with cache
         if (resolved := self.substituted.get(parsed.path)) is not None:
-            return resolved.page, parsed
+            return ResolvedPage(resolved.page, parsed)
 
         # Resolve as a path
         try:
             page = self.page.resolve_path(parsed.path)
         except PageNotFoundError as e:
             log.warn("%s: %s", self.page, e)
-            return None, None
+            return None
 
         # Cache the page site_path
         self.substituted[url] = ResolvedLink(page, page.site_path)
 
-        return page, parsed
+        return ResolvedPage(page, parsed)
 
     def resolve_url(self, url: str) -> str:
         """
@@ -84,16 +92,17 @@ class LinkResolver:
 
         Returns None if the URL does not need changing, else returns the new URL.
         """
-        page, parsed = self.resolve_page(url)
-        if page is None:
+        if self.page is None:
+            raise RuntimeError("LinkResolver.resolve_page called before LinkResolver.set_page")
+        if (resolved := self.resolve_page(url)) is None:
             return url
 
-        new_url = self.page.url_for(page, absolute=self.absolute)
+        new_url = self.page.url_for(resolved.page, absolute=self.absolute)
         dest = urlparse(new_url)
 
         return urlunparse(
             (dest.scheme, dest.netloc, dest.path,
-             parsed.params, parsed.query, parsed.fragment)
+             resolved.url.params, resolved.url.query, resolved.url.fragment)
         )
 
 
