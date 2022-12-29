@@ -142,8 +142,7 @@ class PageFilter:
             if self.re_path is not None:
                 if self.re_path.match(os.path.join(relpath, name)):
                     pass
-                elif page.src and self.re_path.match(
-                        (os.path.join(relpath, os.path.basename(page.src.relpath)))):
+                elif page.source_name and self.re_path.match((os.path.join(relpath, page.source_name))):
                     pass
                 else:
                     # print(f"  {page=!r} {page.src=} did not match")

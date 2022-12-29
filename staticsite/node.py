@@ -251,8 +251,8 @@ class Node(SiteElement):
                 log.warn("%s: page %r replaces page %r", self.path, page, self.page)
 
         self.page = page
-        if (src := kw.get("src")) is not None:
-            search_root_node.by_src_relpath[os.path.basename(src.relpath)] = page
+        if page.source_name is not None:
+            search_root_node.by_src_relpath[page.source_name] = page
         self.build_pages["index.html"] = page
         # if page.directory_index is False:
         #     print(f"{page=!r} dst is not set but page is not a directory index")
@@ -295,8 +295,8 @@ class Node(SiteElement):
                 log.warn("%s: page %r replaces page %r", self.path, page, old)
 
         self.build_pages[dst] = page
-        if (src := kw.get("src")) is not None:
-            self.by_src_relpath[os.path.basename(src.relpath)] = page
+        if page.source_name is not None:
+            self.by_src_relpath[page.source_name] = page
         return page
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:
