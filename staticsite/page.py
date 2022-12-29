@@ -218,8 +218,7 @@ class RenderedField(fields.Field["Page", str]):
         if (value := page.__dict__.get(self.name)) is None:
             if (tpl := getattr(page, "template_" + self.name, None)):
                 # If a template exists, render it
-                # TODO: remove meta= and make it compatibile again with stable staticsite
-                value = markupsafe.Markup(tpl.render(meta=page.meta, page=page))
+                value = markupsafe.Markup(tpl.render(page=page))
             else:
                 value = self.default
             self.__dict__[self.name] = value
@@ -234,8 +233,7 @@ class RenderedTitleField(fields.Field["Page", str]):
         if (value := page.__dict__.get(self.name)) is None:
             if (tpl := getattr(page, "template_" + self.name, None)):
                 # If a template exists, render it
-                # TODO: remove meta= and make it compatibile again with stable staticsite
-                value = markupsafe.Markup(tpl.render(meta=page.meta, page=page))
+                value = markupsafe.Markup(tpl.render(page=page))
             else:
                 value = page.site_name
             self.__dict__[self.name] = value

@@ -377,7 +377,7 @@ class Site:
         Build directory metadata based on site settings
         """
         res = {
-            "template_copyright": "© {{meta.date.year}} {{meta.author}}",
+            "template_copyright": "© {{page.meta.date.year}} {{page.meta.author}}",
         }
         if self.settings.SITE_URL:
             res["site_url"] = self.settings.SITE_URL
