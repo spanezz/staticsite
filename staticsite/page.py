@@ -604,9 +604,10 @@ It defaults to false, or true if `meta.date` is in the future.
             node: Node,
             src: File,
             **kw):
-        super().__init__(site, parent=node, node=node, **kw)
         # Information about the source file for this page
+        # Set right away so that __repr__ works
         self.src: File = src
+        super().__init__(site, parent=node, node=node, **kw)
         self.source_name: str = os.path.basename(self.src.relpath)
 
     def __str__(self):

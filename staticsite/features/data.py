@@ -19,6 +19,7 @@ from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.site import Site
 
 log = logging.getLogger("data")
 
@@ -196,7 +197,7 @@ class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     """
     TYPE = "data"
 
-    def __init__(self, site, **kw):
+    def __init__(self, site: Site, **kw):
         # Indexed by default
         kw.setdefault("indexed", True)
         if "template" not in kw:
