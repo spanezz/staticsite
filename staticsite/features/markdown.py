@@ -411,21 +411,16 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
         # line, nor None if there is no divider line
         self.body_rest: Optional[list[str]]
 
-        # True if this page can render a short version of itself
-        self.content_has_split = False
-
         # External links found when rendering the page
         self.rendered_external_links: set[str] = set()
 
         # Split lead and rest of the post, if a divider line is present
         for idx, line in enumerate(body):
             if self.re_divider.match(line):
-                self.content_has_split = True
                 self.body_start = body[:idx]
                 self.body_rest = body[idx:]
                 break
         else:
-            self.content_has_split = False
             self.body_start = body
             self.body_rest = None
 
@@ -465,7 +460,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         absolute = self != context["page"]
-        if self.content_has_split:
+        if self.body_rest is not None:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
             return self._render_page(body, render_type="hb", absolute=absolute)
         else:
@@ -474,7 +469,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     @jinja2.pass_context
     def html_inline(self, context, **kw) -> str:
         absolute = self != context["page"]
-        if self.content_has_split:
+        if self.body_rest is not None:
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
             return self._render_page(body, render_type="h", absolute=absolute)
         else:
@@ -483,7 +478,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     @jinja2.pass_context
     def html_feed(self, context, **kw) -> str:
         absolute = self != context["page"]
-        if self.content_has_split:
+        if self.body_rest is not None:
             body = self.body_start + [""] + self.body_rest
             return self._render_page(body, render_type="f", absolute=absolute)
         else:
