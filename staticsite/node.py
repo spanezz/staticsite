@@ -4,7 +4,7 @@ import contextlib
 import datetime
 import logging
 import os
-from typing import TYPE_CHECKING, Generator, Optional, Sequence, TextIO, Type, Union
+from typing import TYPE_CHECKING, Generator, Optional, Sequence, TextIO, Type
 
 from . import fields
 from .site import SiteElement, Path
@@ -97,39 +97,7 @@ class Node(SiteElement):
         for node in self.sub.values():
             yield from node.iter_pages(prune, source_only=source_only)
 
-    def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
-        """
-        Return a Page from the site, given a source or site path relative to
-        this page.
-
-        The path is resolved relative to this node, and if not found, relative
-        to the parent node, and so on until the top.
-        """
-        from .page import Page, PageNotFoundError
-        if isinstance(target, Page):
-            return target
-        if target.startswith("/"):
-            if static:
-                root = self.site.static_root
-            else:
-                root = self.site.root
-            page = root.lookup_page(Path.from_string(target))
-        else:
-            page = self.lookup_page(Path.from_string(target))
-        if page is None:
-            raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
-        else:
-            return page
-
     def lookup_page(self, path: Path) -> Optional[Page]:
-        """
-        Find a page by following path from this node
-
-        The final path component can match:
-        * a node name
-        * the basename of a page's src_relpath
-        * the rendered file name
-        """
         # print(f"Node.lookup_page: {self.name=!r}, {self.page=!r}, {path=!r},"
         #       f" sub={self.sub.keys() if self.sub else 'None'}")
 

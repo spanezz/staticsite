@@ -315,13 +315,11 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
     """
     TYPE = "rst"
 
-    def __init__(self, *, feature: RestructuredText, doctree_scan: DoctreeScan, **kw):
+    def __init__(self, *, doctree_scan: DoctreeScan, **kw):
+        self.feature: RestructuredText
         # Indexed by default
         kw.setdefault("indexed", True)
         super().__init__(**kw)
-
-        # Shared RestructuredText environment
-        self.feature = feature
 
         # Document doctree root node
         self.doctree_scan = doctree_scan

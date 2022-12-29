@@ -399,13 +399,11 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     # Match a Markdown divider line
     re_divider = re.compile(r"^____+$")
 
-    def __init__(self, *, feature: MarkdownPages, body: List[str], **kw):
+    def __init__(self, *, body: List[str], **kw):
+        self.feature: MarkdownPages
         # Indexed by default
         kw.setdefault("indexed", True)
         super().__init__(**kw)
-
-        # Shared markdown environment
-        self.feature = feature
 
         # Sequence of lines found in the body before the divider line, if any
         self.body_start: list[str]

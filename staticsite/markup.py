@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import (TYPE_CHECKING, Any, ContextManager, NamedTuple, Optional,
+from typing import (TYPE_CHECKING, Any, Generator, NamedTuple, Optional,
                     Union)
 from urllib.parse import urlparse, urlunparse
 
@@ -26,7 +26,7 @@ class LinkResolver:
     Caching backend for resolving internal URLs in rendered content
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.page: Optional[Page] = None
         self.absolute: bool = False
         self.substituted: dict[str, ResolvedLink] = {}
@@ -145,9 +145,13 @@ class MarkupPage(SourcePage):
 
     This is a base for pages like Markdown or Rst
     """
+    def __init__(self, *, feature: MarkupFeature, **kw):
+        super().__init__(**kw)
+        self.feature = feature
 
     @contextlib.contextmanager
-    def markup_render_context(self, cache_key: str, absolute: bool = False) -> ContextManager[MarkupRenderContext]:
+    def markup_render_context(
+            self, cache_key: str, absolute: bool = False) -> Generator[MarkupRenderContext, None, None]:
         self.feature.link_resolver.set_page(self, absolute)
         render_context = MarkupRenderContext(self, cache_key)
         render_context.load()

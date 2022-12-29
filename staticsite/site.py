@@ -125,6 +125,46 @@ class SiteElement(fields.FieldContainer):
         are loaded as static assets, without the interventions of features.
     """)
 
+    def lookup_page(self, path: Path) -> Optional[Page]:
+        """
+        Find a page by given a path starting from this site element
+
+        The final path component can match:
+        * a node name
+        * the basename of a page's src_relpath
+        * the rendered file name
+        """
+        raise NotImplementedError(f"{self.__class__.__name__}.lookup_page() not implemented")
+
+    def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
+        """
+        Return a Page from the site, given a source or site path relative to
+        this page.
+
+        The path is resolved relative to this node, and if not found, relative
+        to the parent node, and so on until the top.
+        """
+        from .page import Page, PageNotFoundError
+
+        if isinstance(target, Page):
+            return target
+
+        path = Path.from_string(target)
+
+        if target.startswith("/"):
+            if static:
+                root = self.site.static_root
+            else:
+                root = self.site.root
+            page = root.lookup_page(path)
+        else:
+            page = self.lookup_page(path)
+
+        if page is None:
+            raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
+        else:
+            return page
+
 
 class RootNodeFields(metaclass=fields.FieldsMetaclass):
     """

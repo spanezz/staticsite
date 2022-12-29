@@ -456,6 +456,9 @@ class Page(SiteElement):
         # Set to True if this page is shown as a file url, False if it's shown
         # as a path url
         self.leaf: bool = leaf
+        # Paths relative to self.node.path where this page can appear to a
+        # match filter
+        self.match_paths: list[str] = []
 
         # Check the existence of other mandatory fields
         if self.site_url is None:
@@ -499,35 +502,8 @@ class Page(SiteElement):
         f = PageFilter(self.site, path, limit, sort, root=self.search_root_node, **kw)
         return f.filter()
 
-    def resolve_path(self, target: Union[str, "Page"], static: bool = False) -> "Page":
-        """
-        Return a Page from the site, given a source or site path relative to
-        this page.
-
-        The path is resolved relative to this page, and if not found, relative
-        to the parent page, and so on until the top.
-        """
-        if isinstance(target, Page):
-            return target
-
-        # print(f"Page.resolve_path {self=!r}, {target=!r}")
-        # Find the start node for the search
-        if target.startswith("/"):
-            if static:
-                root = self.site.static_root
-            else:
-                root = self.site.root
-        else:
-            root = self.search_root_node
-        path = Path.from_string(target)
-        # print(f"Page.resolve_path  start from {root.path!r}, path={path!r}")
-
-        dst = root.lookup_page(path)
-        # print(f"Page.resolve_path  found {dst=!r}")
-        if dst is None:
-            raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
-        else:
-            return dst
+    def lookup_page(self, path: Path) -> Optional[Page]:
+        return self.search_root_node.lookup_page(path)
 
     def url_for(self, target: Union[str, "Page"], absolute=False, static=False) -> str:
         """
