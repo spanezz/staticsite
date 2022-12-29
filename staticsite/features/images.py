@@ -205,15 +205,15 @@ class Images(PageTrackingMixin, Feature):
             # Find pages matching this image's name
             for page in pages:
                 # print(f"Images.analyze  check {page=!r} {page.src=!r}")
-                if not (src := page.src):
+                if not isinstance(page, SourcePage):
                     # Don't associate to generated pages
                     continue
                 if (page.src.relpath == image.src.relpath):
                     # Don't associate to variants of this image
                     continue
-                if basename_no_ext(src.relpath) == name:
+                if basename_no_ext(page.src.relpath) == name:
                     # Don't add if already set
-                    if not page.image and basename_no_ext(src.relpath) == name:
+                    if not page.image and basename_no_ext(page.src.relpath) == name:
                         # print(f"Images.analyze  add {image!r}")
                         page.image = image
                     break

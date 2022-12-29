@@ -553,19 +553,10 @@ class Page(SiteElement):
         pass
 
     def __str__(self):
-        if hasattr(self, "src"):
-            return self.site_path
-        else:
-            return self.TYPE
+        return self.site_path
 
     def __repr__(self):
-        if hasattr(self, "src"):
-            if self.src:
-                return f"{self.TYPE}:{self.src.relpath}"
-            else:
-                return f"{self.TYPE}:auto:{self.site_path}"
-        else:
-            return self.TYPE
+        return f"{self.TYPE}:auto:{self.site_path}"
 
     def to_dict(self):
         from .utils import dump_meta
@@ -575,11 +566,6 @@ class Page(SiteElement):
             "site_path": self.site_path,
             "build_path": self.build_path,
         }
-        if self.src:
-            res["src"] = {
-                "relpath": str(self.src.relpath),
-                "abspath": str(self.src.abspath),
-            }
         return res
 
     def _compute_change_extent(self) -> ChangeExtent:
@@ -622,6 +608,20 @@ It defaults to false, or true if `meta.date` is in the future.
         # Information about the source file for this page
         self.src: File = src
         self.source_name: str = os.path.basename(self.src.relpath)
+
+    def __str__(self):
+        return self.site_path
+
+    def __repr__(self):
+        return f"{self.TYPE}:{self.src.relpath}"
+
+    def to_dict(self):
+        res = super().to_dict()
+        res["src"] = {
+            "relpath": str(self.src.relpath),
+            "abspath": str(self.src.abspath),
+        }
+        return res
 
     def _compute_footprint(self) -> dict[str, Any]:
         """
@@ -676,8 +676,6 @@ class AutoPage(Page):
         if created_from is None:
             raise RuntimeError("created_from is None in AutoPage")
         super().__init__(site, parent=created_from, created_from=created_from, **kw)
-        # TODO: remove this
-        self.src = None
 
 
 class FrontMatterPage(SourcePage):
