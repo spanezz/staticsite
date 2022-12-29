@@ -12,7 +12,7 @@ import markupsafe
 
 from . import toposort
 from .file import File
-from .page import Page, PageNotFoundError
+from .page import ImagePage, Page, PageNotFoundError
 from .utils import arrange, front_matter
 
 log = logging.getLogger("theme")
@@ -425,8 +425,12 @@ class Theme:
             log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
             return ""
 
-        res_attrs = cur_page.get_img_attributes(path, type=type, absolute=absolute)
-        res_attrs.update(attrs)
+        image_page = cur_page.resolve_path(path)
+        if isinstance(image_page, ImagePage):
+            res_attrs = image_page.get_img_attributes(type=type, absolute=absolute)
+        else:
+            log.warning("%s: img src= resolves to %s which is not an image page", cur_page, image_page)
+            res_attrs = {"src": cur_page.url_for(image_page)}
 
         escape = markupsafe.escape
         res = ["<img"]

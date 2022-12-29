@@ -63,7 +63,7 @@ class Node(SiteElement):
         self.parent: Optional[Node] = parent
         # Index page for this directory, if present
         self.page: Optional[Page] = None
-        # SourcePages in this node indexed by basename(src.relpath)
+        # SourcePages in this node indexed by source_name
         self.by_src_relpath: dict[str, Page] = {}
         # Pages to be rendered at this location
         self.build_pages: dict[str, Page] = {}

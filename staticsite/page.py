@@ -730,50 +730,6 @@ class TemplatePage(Page):
             return template
         return self.site.theme.jinja2.get_template(template)
 
-    def get_img_attributes(
-            self, image: Union[str, "Page"], type: Optional[str] = None, absolute=False) -> Dict[str, str]:
-        """
-        Given a path to an image page, return a dict with <img> attributes that
-        can be used to refer to it
-        """
-        img = self.resolve_path(image)
-
-        res = {
-            "alt": img.title,
-        }
-
-        if type is not None:
-            # If a specific version is required, do not use srcset
-            rel = img.related.get(type, img)
-            res["width"] = str(rel.width)
-            res["height"] = str(rel.height)
-            res["src"] = self.url_for(rel, absolute=absolute)
-        else:
-            # https://developers.google.com/web/ilt/pwa/lab-responsive-images
-            # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
-            srcsets = []
-            for rel in img.related.values():
-                if rel.TYPE not in ("image", "scaledimage"):
-                    continue
-
-                if (width := rel.width) is None:
-                    continue
-
-                url = self.url_for(rel, absolute=absolute)
-                srcsets.append(f"{markupsafe.escape(url)} {width}w")
-
-            if srcsets:
-                width = img.width
-                srcsets.append(f"{markupsafe.escape(self.url_for(img))} {width}w")
-                res["srcset"] = ", ".join(srcsets)
-                res["src"] = self.url_for(img, absolute=absolute)
-            else:
-                res["width"] = str(img.width)
-                res["height"] = str(img.height)
-                res["src"] = self.url_for(img, absolute=absolute)
-
-        return res
-
     @jinja2.pass_context
     def html_full(self, context, **kw) -> str:
         """
@@ -830,3 +786,54 @@ class TemplatePage(Page):
         #               template.filename, self.src.relpath if self.src else repr(self), e, exc_info=True)
         #     # TODO: return a "render error" page? But that risks silent errors
         #     return None
+
+
+class ImagePage(Page):
+    width = fields.Field[Page, int](doc="""
+        Image width
+    """)
+    height = fields.Field[Page, int](doc="""
+        Image height
+    """)
+
+    def get_img_attributes(
+            self, type: Optional[str] = None, absolute=False) -> Dict[str, str]:
+        """
+        Given a path to an image page, return a dict with <img> attributes that
+        can be used to refer to it
+        """
+        res = {
+            "alt": self.title,
+        }
+
+        if type is not None:
+            # If a specific version is required, do not use srcset
+            rel = self.related.get(type, self)
+            res["width"] = str(rel.width)
+            res["height"] = str(rel.height)
+            res["src"] = self.url_for(rel, absolute=absolute)
+        else:
+            # https://developers.google.com/web/ilt/pwa/lab-responsive-images
+            # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
+            srcsets = []
+            for rel in self.related.values():
+                if rel.TYPE not in ("image", "scaledimage"):
+                    continue
+
+                if (width := rel.width) is None:
+                    continue
+
+                url = self.url_for(rel, absolute=absolute)
+                srcsets.append(f"{markupsafe.escape(url)} {width}w")
+
+            if srcsets:
+                width = self.width
+                srcsets.append(f"{markupsafe.escape(self.url_for(self))} {width}w")
+                res["srcset"] = ", ".join(srcsets)
+                res["src"] = self.url_for(self, absolute=absolute)
+            else:
+                res["width"] = str(self.width)
+                res["height"] = str(self.height)
+                res["src"] = self.url_for(self, absolute=absolute)
+
+        return res

@@ -27,10 +27,10 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
             "posts/example.jpg", "posts/example-small.jpg", "posts/example-thumbnail.jpg",
         ])
 
-        index, page, archive = self.mocksite.page("", "about", "archive")
+        index, page, archive, image = self.mocksite.page("", "about", "archive", "posts/example.jpg")
         self.assertEqual(page.meta["title"], "About")
 
-        self.assertEqual(index.get_img_attributes("posts/example.jpg"), {
+        self.assertEqual(image.get_img_attributes(), {
             'alt': 'This is an example image',
             'src': '/posts/example.jpg',
             'srcset': '/posts/example-small.jpg 480w, /posts/example-thumbnail.jpg 128w, /posts/example.jpg 500w',
@@ -166,7 +166,7 @@ class TestBlog(test_utils.SiteTestMixin, TestCase):
         self.assertIn(b"src=&#39;https://www.example.org/posts/example-small.jpg", rendered)
         self.assertIn(b"This is the rest of the blog post", rendered)
 
-        self.assertEqual(self.page("posts/example.jpg").to_dict(), {
+        self.assertEqual(image.to_dict(), {
             "src": {
                 "relpath": "posts/example.jpg",
                 "abspath": os.path.join(self.site.content_root, "posts/example.jpg"),

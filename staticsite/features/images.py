@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
-from staticsite.page import AutoPage, ChangeExtent, Page, SourcePage
+from staticsite.page import AutoPage, ChangeExtent, Page, SourcePage, ImagePage
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -219,16 +219,7 @@ class Images(PageTrackingMixin, Feature):
                     break
 
 
-class ImageMixin(metaclass=fields.FieldsMetaclass):
-    width = fields.Field[Page, int](doc="""
-        Image width
-    """)
-    height = fields.Field[Page, int](doc="""
-        Image height
-    """)
-
-
-class Image(ImageMixin, SourcePage):
+class Image(ImagePage, SourcePage):
     """
     An image as found in the source directory
     """
@@ -268,7 +259,7 @@ class RenderedScaledImage(RenderedElement):
             return fd.read()
 
 
-class ScaledImage(ImageMixin, AutoPage):
+class ScaledImage(ImagePage, AutoPage):
     """
     Scaled version of an image
     """

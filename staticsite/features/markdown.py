@@ -15,8 +15,7 @@ from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
 from staticsite.node import Path
-from staticsite.page import (FrontMatterPage, Page, PageNotFoundError,
-                             TemplatePage)
+from staticsite.page import FrontMatterPage, ImagePage, Page, TemplatePage
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -69,10 +68,10 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
             if page is None:
                 continue
 
-            try:
-                attrs = self.link_resolver.page.get_img_attributes(page, absolute=self.link_resolver.absolute)
-            except PageNotFoundError as e:
-                log.warn("%s: %s", self.page, e)
+            if isinstance(page, ImagePage):
+                attrs = page.get_img_attributes(absolute=self.link_resolver.absolute)
+            else:
+                log.warning("%s: img src= resolves to %s which is not an image page", self.page, page)
                 continue
 
             img.attrib.update(attrs)
