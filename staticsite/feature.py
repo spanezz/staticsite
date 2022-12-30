@@ -9,6 +9,7 @@ from typing import (Any, Callable, Dict, Generic, List, Optional, Sequence,
 from . import fields, file, fstree, site, toposort
 from .node import Node
 from .page import Page
+from .asset import Asset
 
 log = logging.getLogger("feature")
 
@@ -203,7 +204,11 @@ class Features:
         self.node_class: Optional[Type[Node]] = None
 
         # Cached final page classes indexed by original page class
-        self.page_classes: dict[Type[Page], Type[Page]] = {}
+        self.page_classes: dict[Type[Page], Type[Page]] = {
+            # Preinit with Asset being a final page, without any mixin added
+            # from features
+            Asset: Asset,
+        }
 
         # Features sorted by topological order
         self.sorted = None
@@ -225,7 +230,6 @@ class Features:
         """
         if (final := self.page_classes.get(cls)):
             return final
-        # TODO: skip adding mixins to Asset pages?
         bases: list[Type[Page]] = []
         for feature in self.ordered():
             bases.extend(feature.get_page_bases(cls))
