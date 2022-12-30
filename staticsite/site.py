@@ -18,7 +18,8 @@ from .utils import timings
 
 if TYPE_CHECKING:
     from .archetypes import Archetypes
-    from .node import Node, RootNode, SourceAssetNode
+    from .node import Node
+    from .source_node import RootNode, SourceAssetNode
     from .page import Page
     from .theme import Theme
 
@@ -392,7 +393,7 @@ class Site:
         Scan content root directories, building metadata for the directories in
         the site tree
         """
-        from .node import RootNode
+        from .source_node import RootNode
         if not self.stage_features_constructed:
             log.warn("scan_content called before site features have been loaded")
 
