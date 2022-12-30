@@ -153,22 +153,20 @@ class MarkdownPages(MarkupFeature, Feature):
                 continue
 
             kwargs.update(fm_meta)
+            kwargs["feature"] = self
+            kwargs["src"] = src
+            kwargs["page_cls"] = MarkdownPage
+            kwargs["front_matter"] = fm_meta
+            kwargs["body"] = body
 
-            if (directory_index := fname in ("index.md", "README.md")):
-                path = Path()
+            if fname in ("index.md", "README.md"):
+                page = node.create_source_page_as_index(**kwargs)
             else:
-                path = Path((fname[:-3],))
+                page = node.create_source_page_as_path(
+                        directory_index=False,
+                        path=Path((fname[:-3],)),
+                        **kwargs)
 
-            # print("CREAT", fname, directory_index)
-            page = node.create_source_page(
-                    page_cls=MarkdownPage,
-                    src=src,
-                    feature=self,
-                    front_matter=fm_meta,
-                    body=body,
-                    directory_index=directory_index,
-                    path=path,
-                    **kwargs)
             pages.append(page)
 
         for fname in taken:

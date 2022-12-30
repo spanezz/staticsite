@@ -111,18 +111,16 @@ class DataPages(PageTrackingMixin, Feature):
 
             page_name = fname[:-len(mo.group(0))]
             kwargs.update(fm_meta)
+            kwargs["page_cls"] = self.page_class_by_type.get(data_type, DataPage)
+            kwargs["src"] = src
 
             if (directory_index := page_name == "index"):
-                path = Path()
+                page = node.create_source_page_as_index(**kwargs)
             else:
-                path = Path((page_name,))
-
-            page = node.create_source_page(
-                page_cls=self.page_class_by_type.get(data_type, DataPage),
-                src=src,
-                directory_index=directory_index,
-                path=path,
-                **kwargs)
+                page = node.create_source_page_as_path(
+                    directory_index=directory_index,
+                    path=Path((page_name,)),
+                    **kwargs)
             pages.append(page)
 
         for fname in taken:

@@ -96,17 +96,20 @@ class J2Pages(Feature):
             if front_matter:
                 kwargs.update(front_matter)
 
-            if not (directory_index := fname == "index.html"):
-                # Is this still needed?
-                fname = fname.replace(".j2", "")
-                kwargs["dst"] = fname
+            kwargs["page_cls"] = J2Page
+            kwargs["src"] = src
+            kwargs["template"] = template
 
-            page = node.create_source_page(
-                    page_cls=J2Page,
-                    src=src,
-                    template=template,
-                    directory_index=directory_index,
-                    **kwargs)
+            if not (directory_index := fname == "index.html"):
+                page = node.create_source_page(
+                        directory_index=directory_index,
+                        # TODO: Is this replace still needed? Do we still
+                        # support the .j2 trick?
+                        dst=fname.replace(".j2", ""),
+                        **kwargs)
+            else:
+                page = node.create_source_page_as_index(**kwargs)
+
             pages.append(page)
             taken.append(fname)
 

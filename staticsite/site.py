@@ -399,14 +399,15 @@ class Site:
             log.info("%s: content tree does not exist", self.content_root)
             return
 
+        src = File.with_stat("", os.path.abspath(self.content_root))
+
         # Create root node
-        self.root = self.features.get_node_class(RootNode)(self)
+        self.root = self.features.get_node_class(RootNode)(self, src=src)
 
         # Create static root node
         self.static_root = self.root.at_path(Path.from_string(self.settings.STATIC_PATH))
 
         # Scan the main content filesystem
-        src = File.with_stat("", os.path.abspath(self.content_root))
         tree = self.scan_tree(src, self._settings_to_meta(), toplevel=True)
 
         # Here we may have loaded more site-wide metadata from the root's index

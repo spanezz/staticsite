@@ -170,21 +170,19 @@ class RestructuredText(MarkupFeature, Feature):
                 continue
 
             kwargs.update(fm_meta)
+            kwargs["page_cls"] = RstPage
+            kwargs["src"] = src
+            kwargs["feature"] = self
+            kwargs["front_matter"] = fm_meta
+            kwargs["doctree_scan"] = doctree_scan
 
             if (directory_index := fname in ("index.rst", "README.rst")):
-                path = Path()
+                page = node.create_source_page_as_index(**kwargs)
             else:
-                path = Path((fname[:-4],))
-
-            page = node.create_source_page(
-                    page_cls=RstPage,
-                    src=src,
-                    feature=self,
-                    front_matter=fm_meta,
-                    doctree_scan=doctree_scan,
-                    directory_index=directory_index,
-                    path=path,
-                    **kwargs)
+                page = node.create_source_page_as_path(
+                        directory_index=directory_index,
+                        path=Path((fname[:-4],)),
+                        **kwargs)
             pages.append(page)
 
         for fname in taken:

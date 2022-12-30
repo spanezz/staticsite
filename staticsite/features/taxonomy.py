@@ -64,11 +64,11 @@ class Taxonomy:
         """
         Create the index page for this taxonomy
         """
-        self.index = node.create_source_page(
+        self.index = node.create_source_page_as_path(
             page_cls=TaxonomyPage,
             src=self.src,
             name=self.name,
-            directory_index=True,
+            directory_index=False,
             path=Path((self.name,)),
             **self.index_meta)
         return self.index

@@ -191,7 +191,7 @@ class Links(PageTrackingMixin, Feature):
                 continue
             kwargs.update(fm_meta)
 
-            page = node.create_source_page(
+            page = node.create_source_page_as_path(
                     page_cls=LinkIndexPage,
                     src=src,
                     name=name,
