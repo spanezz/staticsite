@@ -283,6 +283,17 @@ class SyndicationField(TrackedField[Page, Optional[Syndication]]):
 
 
 class SyndicationDateField(fields.Date[Page]):
+    """
+    Syndication date for this page.
+
+    This is the date that will appear in RSS and Atom feeds, and the page will not
+    be syndicated before this date.
+
+    Use this field to publish a date today but make it appear in
+    syndication only at some point in the future.
+
+    If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
+    """
     def __get__(self, page: Page, type: Optional[Type] = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             date = page.date
@@ -292,7 +303,9 @@ class SyndicationDateField(fields.Date[Page]):
 
 class SyndicatedField(fields.Bool[Page]):
     """
-    Make sure the draft exists and is a bool, computed according to the date
+    Set to true if the page can be included in a syndication, else to false.
+
+    If not set, it defaults to the value of `indexed`.
     """
     def __get__(self, page: Page, type: Optional[Type] = None) -> bool:
         if (value := page.__dict__.get(self.name)) is None:
@@ -310,17 +323,7 @@ class SyndicationPageMixin(Page):
 
         If not set, it defaults to the value of `indexed`.
     """)
-    syndication_date = SyndicationDateField(doc="""
-        Syndication date for this page.
-
-        This is the date that will appear in RSS and Atom feeds, and the page will not
-        be syndicated before this date.
-
-        Use this field to publish a date today but make it appear in
-        syndication only at some point in the future.
-
-        If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
-    """)
+    syndication_date = SyndicationDateField()
     # rss_page = fields.Field(doc="""
     #     Page with the RSS feed with posts for the syndication the page is in
     # """)

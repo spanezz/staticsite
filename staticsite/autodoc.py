@@ -102,8 +102,6 @@ class Autodoc:
             print(file=out)
             print("[Back to README](../../README.md)", file=out)
 
-            # TODO: * [Common page metadata](metadata.md)
-
         # - update self-generated metadata fields documentation
         #    - generate documentation for the various kinds of pages
         #    - lift __doc__ from pages, or another attribute gathered from all mixins

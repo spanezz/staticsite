@@ -332,7 +332,13 @@ class Related:
 
 class RelatedField(fields.Field["Page", Related]):
     """
-    Contains related pages indexed by name
+    Readonly mapping of pages related to this page, indexed by name.
+
+    If there are no related pages, `page.meta.related` will be guaranteed to exist
+    as an empty dictionary.
+
+    Features can add to this. For example, [syndication](syndication.md) can add
+    `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
     """
     def __get__(self, page: Page, type: Optional[Type] = None) -> Related:
         if (value := page.__dict__.get(self.name)) is None:
@@ -451,17 +457,7 @@ class Page(SiteElement):
 
     pages = PagesField(structure=True)
 
-    related = RelatedField(structure=True, doc="""
-        Dict of pages related to this page.
-
-        Dict values will be resolved as pages.
-
-        If there are no related pages, `page.meta.related` will be guaranteed to exist
-        as an empty dictionary.
-
-        Features can add to this. For example, [syndication](syndication.md) can add
-        `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
-    """)
+    related = RelatedField(structure=True)
 
     def __init__(
             self, site: Site, *,
