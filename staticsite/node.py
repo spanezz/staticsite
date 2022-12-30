@@ -302,6 +302,14 @@ class SourceNode(Node):
         super().__init__(site, name, parent=parent)
         self.src = src
 
+    def add_asset(self, *, src: file.File, name: str) -> Asset:
+        """
+        Add an Asset as a subnode of this one
+        """
+        # Import here to avoid cyclical imports
+        from .asset import Asset
+        return self.create_source_page_as_file(page_cls=Asset, src=src, name=name, dst=name)
+
     def create_source_page_as_file(
             self, *,
             src: file.File,
@@ -337,6 +345,36 @@ class SourceNode(Node):
         except SkipPage:
             return None
 
+    def asset_child(self, name: str, src: file.File) -> SourceAssetNode:
+        """
+        Create the given child as a SourceNode
+        """
+        if (node := self.sub.get(name)) is not None:
+            if not isinstance(node, SourceNode):
+                raise RuntimeError(
+                        f"source node {name} already exists in {self.name}"
+                        f" as virtual node instead of source node {src.abspath}")
+            if node.src != src:
+                log.debug("assets: merging %s with %s", node.src.abspath, src.abspath)
+                # Replace src, since for assets we allow merging multiple dirs
+                node.src = src
+            return node
+
+        node = self.site.features.get_node_class(SourceAssetNode)(site=self.site, name=name, parent=self, src=src)
+        self.sub[name] = node
+        return node
+
+
+class SourceAssetNode(SourceNode):
+    """
+    Node corresponding to a source directory that contains only asset pages
+    """
+
+
+class SourcePageNode(SourceNode):
+    """
+    Node corresponding to a source directory that contains non-asset pages
+    """
     def create_source_page_as_path(
             self,
             src: file.File,
@@ -408,14 +446,6 @@ class SourceNode(Node):
         except SkipPage:
             return None
 
-    def add_asset(self, *, src: file.File, name: str) -> Asset:
-        """
-        Add an Asset as a subnode of this one
-        """
-        # Import here to avoid cyclical imports
-        from .asset import Asset
-        return self.create_source_page_as_file(page_cls=Asset, src=src, name=name, dst=name)
-
     def add_directory_index(self, src: file.File):
         """
         Add a directory index to this node
@@ -426,13 +456,12 @@ class SourceNode(Node):
             name=self.name,
             src=src)
 
-    def source_child(self, name: str, src: file.File) -> SourceNode:
+    def page_child(self, name: str, src: file.File) -> SourcePageNode:
         """
         Create the given child as a SourceNode
         """
         if (node := self.sub.get(name)) is not None:
             if not isinstance(node, SourceNode):
-                print(repr(node), type(node))
                 raise RuntimeError(
                         f"source node {name} already exists in {self.name}"
                         f" as virtual node instead of source node {src.abspath}")
@@ -442,12 +471,12 @@ class SourceNode(Node):
                         f" as {node.src.abspath} instead of {src.abspath}")
             return node
 
-        node = self.site.features.get_node_class(SourceNode)(site=self.site, name=name, parent=self, src=src)
+        node = self.site.features.get_node_class(SourcePageNode)(site=self.site, name=name, parent=self, src=src)
         self.sub[name] = node
         return node
 
 
-class RootNode(SourceNode):
+class RootNode(SourcePageNode):
     """
     Node at the root of the site tree
     """
@@ -468,7 +497,7 @@ class RootNode(SourceNode):
         """
         res: SourceNode = self
         while path:
-            res = self.source_child(path.head, src=self.src)
+            res = self.page_child(path.head, src=self.src)
             path = path.tail
         return res
 
@@ -478,7 +507,7 @@ class RootNode(SourceNode):
         """
         res: SourceNode = self
         while path:
-            res = res.source_child(path.head, src=self.src)
+            res = res.asset_child(path.head, src=self.src)
             path = path.tail
         return res
 

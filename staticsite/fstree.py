@@ -13,7 +13,7 @@ from .utils import front_matter, open_dir_fd
 
 if TYPE_CHECKING:
     from .site import Site
-    from .node import SourceNode
+    from .node import SourceNode, SourcePageNode, SourceAssetNode
 
 log = logging.getLogger("fstree")
 
@@ -199,7 +199,7 @@ class PageTree(Tree):
             else:
                 self.sub[name] = PageTree(self.site, src)
 
-    def populate_node(self, node: SourceNode):
+    def populate_node(self, node: SourcePageNode):
         # print(f"PageTree.populate_node {self.src.relpath=} {self.meta=}")
         # Add the metadata scanned for this directory
 
@@ -229,7 +229,7 @@ class PageTree(Tree):
         # Create nodes for subtrees
         for name, tree in self.sub.items():
             # Compute metadata for this directory
-            dir_node = node.source_child(name, src=tree.src)
+            dir_node = node.page_child(name, src=tree.src)
             for pattern, dmeta in self.dir_rules:
                 if pattern.match(name):
                     dir_node.update_fields(dmeta)
@@ -296,7 +296,7 @@ class AssetTree(Tree):
                         log.warning("%s: cannot stat() file: broken symlink?",
                                     os.path.join(self.src.abspath, entry.name))
 
-    def populate_node(self, node: SourceNode):
+    def populate_node(self, node: SourceAssetNode):
         # Add the metadata scanned for this directory
         for k, v in self.meta.items():
             if k in node._fields:
@@ -313,7 +313,7 @@ class AssetTree(Tree):
         # Recurse into subdirectories
         for name, tree in self.sub.items():
             # Compute metadata for this directory
-            dir_node = node.source_child(name, src=tree.src)
+            dir_node = node.asset_child(name, src=tree.src)
 
             # Recursively descend into the directory
             with self.open_subtree(name, tree):
