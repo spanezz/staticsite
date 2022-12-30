@@ -405,7 +405,7 @@ class Site:
         self.root = self.features.get_node_class(RootNode)(self, src=src)
 
         # Create static root node
-        self.static_root = self.root.at_path(Path.from_string(self.settings.STATIC_PATH))
+        self.static_root = self.root.static_root(Path.from_string(self.settings.STATIC_PATH))
 
         # Scan the main content filesystem
         tree = self.scan_tree(src, self._settings_to_meta(), toplevel=True)
@@ -451,7 +451,7 @@ class Site:
             # Create root node based on site_path
             if (site_path := tree.meta.get("site_path")) and site_path.strip("/"):
                 # print(f"Site.load_content populate at {site_path} from {tree.src.abspath}")
-                node = self.root.at_path(Path.from_string(site_path))
+                node = self.root.root_for_site_path(Path.from_string(site_path))
             else:
                 # print(f"Site.load_content populate at <root> from {tree.src.abspath}")
                 node = self.root

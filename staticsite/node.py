@@ -133,6 +133,174 @@ class Node(SiteElement):
 
         return None
 
+    def create_auto_page(
+            self,
+            path: Optional[Path] = None,
+            dst: Optional[str] = None,
+            directory_index: bool = False,
+            **kw):
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        if "src" in kw:
+            raise RuntimeError("auto page created with 'src' set")
+
+        if directory_index and dst:
+            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
+
+        if dst is None and not directory_index and not path:
+            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
+
+        if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
+            raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
+
+        node = self.at_path(path)
+
+        try:
+            if dst:
+                return node._create_leaf_page(dst=dst, **kw)
+            else:
+                return node._create_index_page(directory_index=directory_index,  **kw)
+        except SkipPage:
+            return None
+
+    def _create_index_page(
+            self, *,
+            page_cls: Type[Page],
+            directory_index: bool = False,
+            **kw):
+        from .page import PageValidationError
+
+        if directory_index:
+            search_root_node = self
+        elif self.parent is not None:
+            search_root_node = self.parent
+        else:
+            search_root_node = self
+
+        # Create the page
+        try:
+            page = self.site.features.get_page_class(page_cls)(
+                site=self.site, dst="index.html", node=self,
+                search_root_node=search_root_node,
+                leaf=False,
+                directory_index=directory_index, **kw)
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            raise SkipPage()
+
+        if self.page is not None:
+            page.old_footprint = self.page.old_footprint
+            if self.page.TYPE == "asset" and page.TYPE == "asset":
+                # First one wins, to allow overriding of assets in theme
+                pass
+            else:
+                log.warn("%s: page %r replaces page %r", self.path, page, self.page)
+
+        self.page = page
+        if page.source_name is not None:
+            search_root_node.by_src_relpath[page.source_name] = page
+        self.build_pages["index.html"] = page
+        # if page.directory_index is False:
+        #     print(f"{page=!r} dst is not set but page is not a directory index")
+        return page
+
+    def _create_leaf_page(
+            self, *,
+            page_cls: Type[Page],
+            dst: str,
+            **kw):
+        from .page import PageValidationError
+
+        # Create the page
+        try:
+            page = self.site.features.get_page_class(page_cls)(
+                site=self.site, dst=dst,
+                node=self,
+                search_root_node=self,
+                leaf=True,
+                directory_index=False, **kw)
+        except PageValidationError as e:
+            log.warn("%s: skipping page: %s", e.page, e.msg)
+            raise SkipPage()
+
+        if (old := self.build_pages.get(dst)):
+            if (old_footprint := getattr(old, "old_footprint", None)) is not None:
+                page.old_footprint = old_footprint
+            if old.TYPE == "asset" and page.TYPE == "asset":
+                # First one wins, to allow overriding of assets in theme
+                pass
+            else:
+                log.warn("%s: page %r replaces page %r", self.path, page, old)
+
+        self.build_pages[dst] = page
+        if page.source_name is not None:
+            self.by_src_relpath[page.source_name] = page
+        return page
+
+    def child(self, name: str) -> Node:
+        """
+        Return the given subnode, creating it if missing
+        """
+        if (node := self.sub.get(name)):
+            return node
+
+        node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
+        self.sub[name] = node
+        return node
+
+    def at_path(self, path: Path) -> Node:
+        """
+        Return the subnode at the given path, creating it if missing
+        """
+        if not path:
+            return self
+        else:
+            return self.child(path.head).at_path(path.tail)
+
+    def lookup_node(self, path: Path) -> Optional[Node]:
+        """
+        Return the subnode at the given relative path, or None if it does not
+        exist.
+
+        Path elements of "." and ".." are supported
+        """
+        if not path:
+            return self
+        if path.head == ".":
+            # Probably not worth trying to avoid a recursion step here, since
+            # this should not be a common occurrence
+            return self.lookup_node(path.tail)
+        elif path.head == "..":
+            if self.parent is None:
+                return None
+            else:
+                return self.parent.lookup_node(path.tail)
+        elif (sub := self.sub.get(path.head)):
+            return sub.lookup_node(path.tail)
+        return None
+
+    def contains(self, page: Page) -> bool:
+        """
+        Check if page is contained in or under this node
+        """
+        # Walk the parent chain of page.node to see if we find self
+        node: Optional[Node] = page.node
+        while node is not None:
+            if node == self:
+                return True
+            node = node.parent
+        return False
+
+
+class SourceNode(Node):
+    """
+    Node corresponding to a source directory
+    """
+    def __init__(self, site: Site, name: str, *, src: file.File, parent: Optional[Node]):
+        super().__init__(site, name, parent=parent)
+        self.src = src
+
     def create_source_page_as_file(
             self, *,
             src: file.File,
@@ -239,111 +407,6 @@ class Node(SiteElement):
         except SkipPage:
             return None
 
-    def create_auto_page(
-            self,
-            path: Optional[Path] = None,
-            dst: Optional[str] = None,
-            directory_index: bool = False,
-            **kw):
-        """
-        Create a page of the given type, attaching it at the given path
-        """
-        if "src" in kw:
-            raise RuntimeError("auto page created with 'src' set")
-
-        if directory_index and dst:
-            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
-
-        if dst is None and not directory_index and not path:
-            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
-
-        if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
-            raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
-
-        node = self.at_path(path)
-
-        try:
-            if dst:
-                return node._create_leaf_page(dst=dst, **kw)
-            else:
-                return node._create_index_page(directory_index=directory_index,  **kw)
-        except SkipPage:
-            return None
-
-    def _create_index_page(
-            self, *,
-            page_cls: Type[Page],
-            directory_index: bool = False,
-            **kw):
-        from .page import PageValidationError
-
-        if directory_index:
-            search_root_node = self
-        elif self.parent is not None:
-            search_root_node = self.parent
-        else:
-            search_root_node = self
-
-        # Create the page
-        try:
-            page = self.site.features.get_page_class(page_cls)(
-                site=self.site, dst="index.html", node=self,
-                search_root_node=search_root_node,
-                leaf=False,
-                directory_index=directory_index, **kw)
-        except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
-            raise SkipPage()
-
-        if self.page is not None:
-            page.old_footprint = self.page.old_footprint
-            if self.page.TYPE == "asset" and page.TYPE == "asset":
-                # First one wins, to allow overriding of assets in theme
-                pass
-            else:
-                log.warn("%s: page %r replaces page %r", self.path, page, self.page)
-
-        self.page = page
-        if page.source_name is not None:
-            search_root_node.by_src_relpath[page.source_name] = page
-        self.build_pages["index.html"] = page
-        # if page.directory_index is False:
-        #     print(f"{page=!r} dst is not set but page is not a directory index")
-        return page
-
-    def _create_leaf_page(
-            self, *,
-            page_cls: Type[Page],
-            dst: str,
-            **kw):
-        from .page import PageValidationError
-
-        # Create the page
-        try:
-            page = self.site.features.get_page_class(page_cls)(
-                site=self.site, dst=dst,
-                node=self,
-                search_root_node=self,
-                leaf=True,
-                directory_index=False, **kw)
-        except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
-            raise SkipPage()
-
-        if (old := self.build_pages.get(dst)):
-            if (old_footprint := getattr(old, "old_footprint", None)) is not None:
-                page.old_footprint = old_footprint
-            if old.TYPE == "asset" and page.TYPE == "asset":
-                # First one wins, to allow overriding of assets in theme
-                pass
-            else:
-                log.warn("%s: page %r replaces page %r", self.path, page, old)
-
-        self.build_pages[dst] = page
-        if page.source_name is not None:
-            self.by_src_relpath[page.source_name] = page
-        return page
-
     def add_asset(self, *, src: file.File, name: str) -> Asset:
         """
         Add an Asset as a subnode of this one
@@ -362,68 +425,25 @@ class Node(SiteElement):
             name=self.name,
             src=src)
 
-    def child(self, name: str) -> Node:
+    def source_child(self, name: str, src: file.File) -> SourceNode:
         """
-        Return the given subnode, creating it if missing
+        Create the given child as a SourceNode
         """
-        if (node := self.sub.get(name)):
+        if (node := self.sub.get(name)) is not None:
+            if not isinstance(node, SourceNode):
+                print(repr(node), type(node))
+                raise RuntimeError(
+                        f"source node {name} already exists in {self.name}"
+                        f" as virtual node instead of source node {src.abspath}")
+            if node.src != src:
+                raise RuntimeError(
+                        f"source node {name} already exists in {self.name}"
+                        f" as {node.src.abspath} instead of {src.abspath}")
             return node
 
-        node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
+        node = self.site.features.get_node_class(SourceNode)(site=self.site, name=name, parent=self, src=src)
         self.sub[name] = node
         return node
-
-    def at_path(self, path: Path) -> Node:
-        """
-        Return the subnode at the given path, creating it if missing
-        """
-        if not path:
-            return self
-        else:
-            return self.child(path.head).at_path(path.tail)
-
-    def lookup_node(self, path: Path) -> Optional[Node]:
-        """
-        Return the subnode at the given relative path, or None if it does not
-        exist.
-
-        Path elements of "." and ".." are supported
-        """
-        if not path:
-            return self
-        if path.head == ".":
-            # Probably not worth trying to avoid a recursion step here, since
-            # this should not be a common occurrence
-            return self.lookup_node(path.tail)
-        elif path.head == "..":
-            if self.parent is None:
-                return None
-            else:
-                return self.parent.lookup_node(path.tail)
-        elif (sub := self.sub.get(path.head)):
-            return sub.lookup_node(path.tail)
-        return None
-
-    def contains(self, page: Page) -> bool:
-        """
-        Check if page is contained in or under this node
-        """
-        # Walk the parent chain of page.node to see if we find self
-        node: Optional[Node] = page.node
-        while node is not None:
-            if node == self:
-                return True
-            node = node.parent
-        return False
-
-
-class SourceNode(Node):
-    """
-    Node corresponding to a source directory
-    """
-    def __init__(self, site: Site, name: str, *, src: file.File, parent: Optional[Node]):
-        super().__init__(site, name, parent=parent)
-        self.src = src
 
 
 class RootNode(SourceNode):
@@ -440,3 +460,23 @@ class RootNode(SourceNode):
 
     def __init__(self, site: Site, *, src: file.File):
         super().__init__(site, name="", src=src, parent=None)
+
+    def root_for_site_path(self, path: Path) -> SourceNode:
+        """
+        Return the subnode at the given path, creating it if missing
+        """
+        res: SourceNode = self
+        while path:
+            res = self.source_child(path.head, src=self.src)
+            path = path.tail
+        return res
+
+    def static_root(self, path: Path) -> SourceNode:
+        """
+        Return the subnode at the given path, creating it if missing
+        """
+        res: SourceNode = self
+        while path:
+            res = self.source_child(path.head, src=self.src)
+            path = path.tail
+        return res
