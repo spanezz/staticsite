@@ -114,7 +114,7 @@ class Syndication:
         kwargs["index"] = self.index
 
         # RSS feed
-        rss_page = self.index.node.create_auto_page(
+        rss_page = self.index.node.create_auto_page_as_file(
                 created_from=self.index,
                 page_cls=RSSPage,
                 dst=f"{page_name}.{RSSPage.TYPE}",
@@ -124,7 +124,7 @@ class Syndication:
         # print(f"  rss_page {rss_page.meta=!r}")
 
         # Atom feed
-        atom_page = self.index.node.create_auto_page(
+        atom_page = self.index.node.create_auto_page_as_file(
                 created_from=self.index,
                 page_cls=AtomPage,
                 dst=f"{page_name}.{AtomPage.TYPE}",

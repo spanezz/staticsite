@@ -56,8 +56,7 @@ class LinkIndexPage(TemplatePage, SourcePage):
                     page_cls=LinksTagPage,
                     data_type="links",
                     title=f"{tag} links",
-                    links=links,
-                    directory_index=True)
+                    links=links)
             self.by_tag[tag] = page
             pages.append(page)
 

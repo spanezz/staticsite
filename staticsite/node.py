@@ -133,11 +133,9 @@ class Node(SiteElement):
 
         return None
 
-    def create_auto_page(
+    def create_auto_page_as_file(
             self,
-            path: Optional[Path] = None,
-            dst: Optional[str] = None,
-            directory_index: bool = False,
+            dst: str,
             **kw):
         """
         Create a page of the given type, attaching it at the given path
@@ -145,10 +143,29 @@ class Node(SiteElement):
         if "src" in kw:
             raise RuntimeError("auto page created with 'src' set")
 
-        if directory_index and dst:
-            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
+        if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
+            raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
 
-        if dst is None and not directory_index and not path:
+        try:
+            if dst:
+                return self._create_leaf_page(dst=dst, **kw)
+            else:
+                return self._create_index_page(directory_index=False,  **kw)
+        except SkipPage:
+            return None
+
+    def create_auto_page(
+            self,
+            path: Optional[Path] = None,
+            dst: Optional[str] = None,
+            **kw):
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        if "src" in kw:
+            raise RuntimeError("auto page created with 'src' set")
+
+        if dst is None and not path:
             raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
 
         if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
@@ -160,7 +177,7 @@ class Node(SiteElement):
             if dst:
                 return node._create_leaf_page(dst=dst, **kw)
             else:
-                return node._create_index_page(directory_index=directory_index,  **kw)
+                return node._create_index_page(directory_index=False,  **kw)
         except SkipPage:
             return None
 

@@ -174,7 +174,7 @@ class Images(PageTrackingMixin, Feature):
                     base, ext = os.path.splitext(os.path.basename(image.src.relpath))
                     scaled_fname = f"{base}-{name}{ext}"
 
-                    image.node.create_auto_page(
+                    image.node.create_auto_page_as_file(
                         page_cls=ScaledImage,
                         created_from=image,
                         mimetype=image.mimetype,
