@@ -141,7 +141,7 @@ class Images(PageTrackingMixin, Feature):
             img_meta = self.scanner.scan(src, mimetype)
             kwargs.update(img_meta)
 
-            page = node.create_source_page(
+            page = node.create_source_page_as_file(
                 page_cls=Image,
                 src=src,
                 mimetype=mimetype,

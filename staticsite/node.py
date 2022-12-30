@@ -133,11 +133,11 @@ class Node(SiteElement):
 
         return None
 
-    def create_source_page(
-            self,
+    def create_source_page_as_file(
+            self, *,
             src: file.File,
             path: Optional[Path] = None,
-            dst: Optional[str] = None,
+            dst: Optional[str],
             directory_index: bool = False,
             date: Optional[datetime.datetime] = None,
             **kw):
@@ -370,18 +370,17 @@ class Node(SiteElement):
         """
         # Import here to avoid cyclical imports
         from .asset import Asset
-        return self.create_source_page(page_cls=Asset, src=src, name=name, dst=name)
+        return self.create_source_page_as_file(page_cls=Asset, src=src, name=name, dst=name)
 
     def add_directory_index(self, src: file.File):
         """
         Add a directory index to this node
         """
         from . import dirindex
-        return self.create_source_page(
+        return self.create_source_page_as_index(
             page_cls=dirindex.Dir,
             name=self.name,
-            src=src,
-            directory_index=True)
+            src=src)
 
     def child(self, name: str) -> Node:
         """
