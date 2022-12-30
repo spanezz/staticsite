@@ -9,7 +9,6 @@ import jinja2
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField, PageTrackingMixin
-from staticsite.node import Path
 from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent, TemplatePage
 from staticsite.utils import arrange
 
@@ -146,10 +145,10 @@ class Syndication:
 
         self.archive["pages"] = self.pages
         self.archive["index"] = self.index
-        self.archive_page = self.index.node.create_auto_page(
+        self.archive_page = self.index.node.create_auto_page_as_path(
                 created_from=self.index,
                 page_cls=ArchivePage,
-                path=Path(("archive",)),
+                name="archive",
                 **self.archive,
                 )
         if self.archive_page is not None:

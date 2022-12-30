@@ -10,7 +10,6 @@ from typing import (TYPE_CHECKING, Any, Iterable, Optional,
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
 from staticsite.features.syndication import Syndication
-from staticsite.node import Path
 from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
                              TemplatePage)
 from staticsite.utils import front_matter
@@ -98,11 +97,10 @@ class Taxonomy:
             # Don't auto-add feeds for the tag syndication pages
             syndication.add_to = False
 
-        return self.index.node.create_auto_page(
+        return self.index.node.create_auto_page_as_path(
             created_from=self.index,
             page_cls=CategoryPage,
             name=name,
-            path=Path((name,)),
             **category_meta)
 
     def generate_pages(self) -> None:
@@ -510,10 +508,10 @@ class CategoryPage(TemplatePage, AutoPage):
     taxonomy = fields.Field["CategoryPage", TaxonomyPage](doc="Page that defined this taxonomy")
     name = fields.Field["CategoryPage", str](doc="Name of the category shown in this page")
 
-    def __init__(self, *args, name: str, **kw):
+    def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         # Category name
-        self.name = name
+        self.name = self.node.name
         # Index of each page in the category sequence
         self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)}
 

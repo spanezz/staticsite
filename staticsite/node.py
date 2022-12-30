@@ -154,10 +154,9 @@ class Node(SiteElement):
         except SkipPage:
             return None
 
-    def create_auto_page(
+    def create_auto_page_as_path(
             self,
-            path: Optional[Path] = None,
-            dst: Optional[str] = None,
+            name: str,
             **kw):
         """
         Create a page of the given type, attaching it at the given path
@@ -165,19 +164,13 @@ class Node(SiteElement):
         if "src" in kw:
             raise RuntimeError("auto page created with 'src' set")
 
-        if dst is None and not path:
-            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
-
         if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
             raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
 
-        node = self.at_path(path)
+        node = self.child(name)
 
         try:
-            if dst:
-                return node._create_leaf_page(dst=dst, **kw)
-            else:
-                return node._create_index_page(directory_index=False,  **kw)
+            return node._create_index_page(directory_index=False,  **kw)
         except SkipPage:
             return None
 
@@ -265,15 +258,6 @@ class Node(SiteElement):
         node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
         self.sub[name] = node
         return node
-
-    def at_path(self, path: Path) -> Node:
-        """
-        Return the subnode at the given path, creating it if missing
-        """
-        if not path:
-            return self
-        else:
-            return self.child(path.head).at_path(path.tail)
 
     def lookup_node(self, path: Path) -> Optional[Node]:
         """
@@ -494,6 +478,16 @@ class RootNode(SourceNode):
         """
         res: SourceNode = self
         while path:
-            res = self.source_child(path.head, src=self.src)
+            res = res.source_child(path.head, src=self.src)
+            path = path.tail
+        return res
+
+    def generate_path(self, path: Path) -> Node:
+        """
+        Return the subnode at the given path, creating it if missing
+        """
+        res: Node = self
+        while path:
+            res = res.child(path.head)
             path = path.tail
         return res
