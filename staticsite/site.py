@@ -18,7 +18,7 @@ from .utils import timings
 
 if TYPE_CHECKING:
     from .archetypes import Archetypes
-    from .node import Node
+    from .node import Node, RootNode, SourceAssetNode
     from .page import Page
     from .theme import Theme
 
@@ -152,6 +152,7 @@ class SiteElement(fields.FieldContainer):
         path = Path.from_string(target)
 
         if target.startswith("/"):
+            root: Node
             if static:
                 root = self.site.static_root
             else:
@@ -215,10 +216,10 @@ class Site:
         self.fstrees: dict[str, fstree.Tree] = {}
 
         # Root node of the site
-        self.root: Node
+        self.root: RootNode
 
         # Root node for the static contents of the site
-        self.static_root: Node
+        self.static_root: SourceAssetNode
 
         # Last load step performed
         self.last_load_step = self.LOAD_STEP_INITIAL
@@ -427,13 +428,16 @@ class Site:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """
+        if src.abspath in self.fstrees:
+            # TODO: just return?
+            raise RuntimeError(f"{src.abspath} scanned twice")
         tree: fstree.Tree
         if meta.get("asset"):
             tree = fstree.AssetTree(self, src)
         elif toplevel:
             tree = fstree.RootPageTree(self, src)
         else:
-            tree = fstree.PageTree(self, src)
+            raise RuntimeError("trying to scan a non-toplevel page tree")
         tree.meta.update(meta)
         with tree.open_tree():
             tree.scan()
