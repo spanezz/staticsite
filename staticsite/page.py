@@ -473,13 +473,6 @@ class Page(SiteElement):
         else:
             return self.node.path
 
-    @property
-    def build_path(self) -> str:
-        """
-        Accessor to support the migration away from meta['build_path']
-        """
-        return os.path.join(self.node.path, self.dst)
-
     def add_related(self, name: str, page: "Page") -> None:
         """
         Set the page as meta.related.name
@@ -564,7 +557,7 @@ class Page(SiteElement):
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
             "site_path": self.site_path,
-            "build_path": self.build_path,
+            "build_path": os.path.join(self.node.path, self.dst),
         }
         return res
 

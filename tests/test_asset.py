@@ -61,5 +61,6 @@ class TestAsset(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
             self.assertEqual(page.meta["site_url"], "https://www.example.org")
             self.assertEqual(page.site_path, "testasset")
-            self.assertEqual(page.build_path, "testasset")
+            self.assertEqual(page.node.path, "")
+            self.assertEqual(page.dst, "testasset")
             self.assertFalse(page.directory_index)

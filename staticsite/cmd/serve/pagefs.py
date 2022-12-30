@@ -8,6 +8,7 @@ import logging
 if TYPE_CHECKING:
     from staticsite.site import Site
     from staticsite.page import Page
+    from staticsite.node import Node
 
 log = logging.getLogger("serve")
 
@@ -21,13 +22,14 @@ class PageFS:
     """
     def __init__(self, site: Site):
         self.paths: dict[str, Page] = {}
-        for page in site.iter_pages():
-            self.add_page(page, page.build_path)
+        self.add_tree(site.root)
 
-    def add_page(self, page: Page, build_path: str):
-        if build_path is None:
-            build_path = page.build_path
-        self.paths[build_path] = page
+    def add_tree(self, root: Node, relpath: str = ""):
+        for name, page in root.build_pages.items():
+            self.paths[os.path.join(relpath, name)] = page
+
+        for name, sub in root.sub.items():
+            self.add_tree(sub, os.path.join(relpath, name))
 
     def get_page(self, relpath: str) -> Union[tuple[None, None], tuple[str, Page]]:
         if not relpath:

@@ -289,13 +289,12 @@ class Builder:
                     rendered.write(name=name, dir_fd=render_dir.dir_fd, old=old_file)
                 self.build_log[os.path.join(render_dir.relpath, name)] = page
 
-        if node.sub:
-            for name, sub in node.sub.items():
-                # Subdir
-                # log.debug("write_subtree relpath:%s render subdir %s", render_dir.relpath, name)
-                render_dir.prepare_subdir(name)
-                with render_dir.subdir(name) as subdir:
-                    self.write_subtree(sub, subdir, stats)
+        for name, sub in node.sub.items():
+            # Subdir
+            # log.debug("write_subtree relpath:%s render subdir %s", render_dir.relpath, name)
+            render_dir.prepare_subdir(name)
+            with render_dir.subdir(name) as subdir:
+                self.write_subtree(sub, subdir, stats)
 
         render_dir.cleanup_leftovers()
 
