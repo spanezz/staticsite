@@ -367,7 +367,7 @@ class Site:
 
         self._theme.load()
 
-        # We not have the final feature list, we can load old feature footprints
+        # We now have the final feature list, we can load old feature footprints
         for feature in self.features.ordered():
             footprint = self.build_cache.get(f"footprint_{feature.name}")
             feature.set_previous_footprint(footprint if footprint is not None else {})
