@@ -390,7 +390,13 @@ class Node(SiteElement):
         return False
 
 
-class RootNode(Node):
+class SourceNode(Node):
+    """
+    Node corresponding to a source directory
+    """
+
+
+class RootNode(SourceNode):
     """
     Node at the root of the site tree
     """
@@ -401,3 +407,6 @@ class RootNode(Node):
         takes the value from the title of the root index page. If set, and the
         site name is not set by other means, it is used to give the site a name.
     """)
+
+    def __init__(self, site: Site):
+        super().__init__(site, name="", parent=None)

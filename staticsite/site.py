@@ -400,7 +400,7 @@ class Site:
             return
 
         # Create root node
-        self.root = self.features.get_node_class(RootNode)(self, "")
+        self.root = self.features.get_node_class(RootNode)(self)
 
         # Create static root node
         self.static_root = self.root.at_path(Path.from_string(self.settings.STATIC_PATH))
