@@ -167,7 +167,7 @@ class Node(SiteElement):
         if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
             raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
 
-        node = self.child(name)
+        node = self._child(name)
 
         try:
             return node._create_index_page(directory_index=False,  **kw)
@@ -248,7 +248,7 @@ class Node(SiteElement):
             self.by_src_relpath[page.source_name] = page
         return page
 
-    def child(self, name: str) -> Node:
+    def _child(self, name: str) -> Node:
         """
         Return the given subnode, creating it if missing
         """
@@ -367,7 +367,7 @@ class SourceNode(Node):
             log.info("%s: page is still a draft: skipping", src.relpath)
             return None
 
-        node = self.child(name)
+        node = self._child(name)
 
         try:
             return node._create_index_page(directory_index=False, src=src, date=date, **kw)
@@ -488,6 +488,6 @@ class RootNode(SourceNode):
         """
         res: Node = self
         while path:
-            res = res.child(path.head)
+            res = res._child(path.head)
             path = path.tail
         return res

@@ -45,14 +45,14 @@ class LinkIndexPage(TemplatePage, SourcePage):
         pages = []
         for tag, links in self.feature_links.by_tag.items():
             name = tag + "-links"
-            sub = self.node.child(name)
 
-            if sub.page is not None:
+            if name in self.node.sub:
                 # A page already exists
                 continue
 
-            page = sub.create_auto_page(
+            page = self.node.create_auto_page_as_path(
                     created_from=self,
+                    name=name,
                     page_cls=LinksTagPage,
                     data_type="links",
                     title=f"{tag} links",
