@@ -136,9 +136,7 @@ class Node(SiteElement):
     def create_source_page_as_file(
             self, *,
             src: file.File,
-            path: Optional[Path] = None,
-            dst: Optional[str],
-            directory_index: bool = False,
+            dst: str,
             date: Optional[datetime.datetime] = None,
             **kw):
         """
@@ -146,12 +144,6 @@ class Node(SiteElement):
         """
         if "created_from" in kw:
             raise RuntimeError("source page created with 'created_from' set")
-
-        if directory_index and dst:
-            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
-
-        if dst is None and not directory_index and not path:
-            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
 
         if self.site.last_load_step > self.site.LOAD_STEP_CONTENTS:
             raise RuntimeError("Node.create_source_page created after the 'contents' step has completed")
@@ -171,13 +163,8 @@ class Node(SiteElement):
             log.info("%s: page is still a draft: skipping", src.relpath)
             return None
 
-        node = self.at_path(path)
-
         try:
-            if dst:
-                return node._create_leaf_page(dst=dst, src=src, date=date, **kw)
-            else:
-                return node._create_index_page(directory_index=directory_index, src=src, date=date, **kw)
+            return self._create_leaf_page(dst=dst, src=src, date=date, **kw)
         except SkipPage:
             return None
 
