@@ -200,8 +200,8 @@ class Features:
         # Feature implementation registry
         self.features: dict[str, Feature] = {}
 
-        # Cached final node class
-        self.node_class: Optional[Type[Node]] = None
+        # Cached final node classes indexed by original node class
+        self.node_classes: dict[Type[Node], Type[Node]] = {}
 
         # Cached final page classes indexed by original page class
         self.page_classes: dict[Type[Page], Type[Page]] = {
@@ -213,16 +213,20 @@ class Features:
         # Features sorted by topological order
         self.sorted = None
 
-    def get_node_class(self) -> Type[Node]:
+    def get_node_class(self, cls: Type[Node]) -> Type[Node]:
         """
-        Return the Node class to use for this site
+        Given a base Node class, return its version with added mixins
         """
-        if self.node_class is None:
-            bases: list[Type[Node]] = []
-            for feature in self.ordered():
-                bases.extend(feature.get_node_bases())
-            self.node_class = type("Node", tuple(bases) + (Node,), {})
-        return self.node_class
+        if (final := self.node_classes.get(cls)):
+            return final
+        bases: list[Type[Node]] = []
+        for feature in self.ordered():
+            bases.extend(feature.get_node_bases())
+        final = type(cls.__name__, tuple(bases) + (cls,), {
+            "__doc__": cls.__doc__, "__module__": cls.__module__
+        })
+        self.node_classes[cls] = final
+        return final
 
     def get_page_class(self, cls: Type[Page]) -> Type[Page]:
         """

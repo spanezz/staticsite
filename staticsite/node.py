@@ -328,7 +328,7 @@ class Node(SiteElement):
             return
 
         try:
-            node = self.site.features.get_node_class()(site=self.site, name=name, parent=self)
+            node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
             self.sub[name] = node
             yield node
         except Exception:
@@ -342,7 +342,7 @@ class Node(SiteElement):
         if (node := self.sub.get(name)):
             return node
 
-        node = self.site.features.get_node_class()(site=self.site, name=name, parent=self)
+        node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
         self.sub[name] = node
         return node
 
@@ -388,3 +388,16 @@ class Node(SiteElement):
                 return True
             node = node.parent
         return False
+
+
+class RootNode(Node):
+    """
+    Node at the root of the site tree
+    """
+    title = fields.Field["Node", str](doc="""
+        Title used as site name.
+
+        This only makes sense for the root node of the site hierarchy, and
+        takes the value from the title of the root index page. If set, and the
+        site name is not set by other means, it is used to give the site a name.
+    """)
