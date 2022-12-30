@@ -103,16 +103,6 @@ class Autodoc:
             print("[Back to README](../../README.md)", file=out)
 
             # TODO: * [Common page metadata](metadata.md)
-            # TODO: * [reStructuredText pages](rst.md)
-            # TODO: * [Jinja2 pages](jinja2.md)
-            # TODO: * [Data pages](data.md)
-            # TODO: * [Taxonomies](taxonomies.md)
-            # TODO: * [Images](images.md)
-            # TODO: * [Listing subpages](pages.md)
-            # TODO: * [RSS/Atom feed generation](syndication.md)
-            # TODO: * [Series of pages](series.md)
-            # TODO: * [Directory indices](dir.md)
-            # TODO: * [Annotated external links](links.md)
 
         # - update self-generated metadata fields documentation
         #    - generate documentation for the various kinds of pages
