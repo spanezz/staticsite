@@ -11,7 +11,7 @@ from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
-from staticsite.node import Node, Path
+from staticsite.node import Node
 from staticsite.page import Page
 from staticsite.page_filter import PageFilter
 
@@ -197,7 +197,6 @@ class Links(PageTrackingMixin, Feature):
                     name=name,
                     links=self,
                     link_collection=self.links,
-                    path=Path((name,)),
                     **kwargs)
             pages.append(page)
 

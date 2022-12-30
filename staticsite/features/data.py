@@ -12,7 +12,7 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
-from staticsite.node import Node, Path
+from staticsite.node import Node
 from staticsite.page import Page, SourcePage, TemplatePage
 from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
@@ -114,12 +114,11 @@ class DataPages(PageTrackingMixin, Feature):
             kwargs["page_cls"] = self.page_class_by_type.get(data_type, DataPage)
             kwargs["src"] = src
 
-            if (directory_index := page_name == "index"):
+            if page_name == "index":
                 page = node.create_source_page_as_index(**kwargs)
             else:
                 page = node.create_source_page_as_path(
-                    directory_index=directory_index,
-                    path=Path((page_name,)),
+                    name=page_name,
                     **kwargs)
             pages.append(page)
 

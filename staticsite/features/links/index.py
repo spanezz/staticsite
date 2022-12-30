@@ -3,11 +3,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from staticsite.page import SourcePage, AutoPage, ChangeExtent, TemplatePage
+from staticsite.page import AutoPage, ChangeExtent, SourcePage, TemplatePage
 
 from .data import Link, LinkCollection
 
 if TYPE_CHECKING:
+    from staticsite.node import Node
+
     from . import Links
 
 log = logging.getLogger("links")
@@ -21,10 +23,10 @@ class LinkIndexPage(TemplatePage, SourcePage):
     TYPE = "links_index"
     TEMPLATE = "data-links.html"
 
-    def __init__(self, *args, name: str, links: Links, link_collection: LinkCollection, **kw):
-        kw.setdefault("nav_title", name.capitalize())
+    def __init__(self, *args, node: Node, links: Links, link_collection: LinkCollection, **kw):
+        kw.setdefault("nav_title", node.name.capitalize())
         kw.setdefault("title", "All links shared in the site")
-        super().__init__(*args, **kw)
+        super().__init__(*args, node=node, **kw)
         # Reference to the Feature with the aggregated link collection
         self.feature_links = links
         self.link_collection = link_collection

@@ -14,7 +14,7 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
-from staticsite.node import Node, Path
+from staticsite.node import Node
 from staticsite.page import FrontMatterPage, TemplatePage, Page
 from staticsite.utils import yaml_codec
 
@@ -176,12 +176,11 @@ class RestructuredText(MarkupFeature, Feature):
             kwargs["front_matter"] = fm_meta
             kwargs["doctree_scan"] = doctree_scan
 
-            if (directory_index := fname in ("index.rst", "README.rst")):
+            if fname in ("index.rst", "README.rst"):
                 page = node.create_source_page_as_index(**kwargs)
             else:
                 page = node.create_source_page_as_path(
-                        directory_index=directory_index,
-                        path=Path((fname[:-4],)),
+                        name=fname[:-4],
                         **kwargs)
             pages.append(page)
 

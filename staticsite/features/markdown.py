@@ -14,7 +14,6 @@ from markdown.util import AMP_SUBSTITUTE
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
-from staticsite.node import Path
 from staticsite.page import FrontMatterPage, ImagePage, Page, TemplatePage
 from staticsite.utils import front_matter
 
@@ -163,8 +162,7 @@ class MarkdownPages(MarkupFeature, Feature):
                 page = node.create_source_page_as_index(**kwargs)
             else:
                 page = node.create_source_page_as_path(
-                        directory_index=False,
-                        path=Path((fname[:-3],)),
+                        name=fname[:-3],
                         **kwargs)
 
             pages.append(page)

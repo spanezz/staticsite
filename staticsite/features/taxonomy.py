@@ -68,8 +68,6 @@ class Taxonomy:
             page_cls=TaxonomyPage,
             src=self.src,
             name=self.name,
-            directory_index=False,
-            path=Path((self.name,)),
             **self.index_meta)
         return self.index
 
@@ -425,12 +423,12 @@ class TaxonomyPage(TemplatePage, SourcePage):
 
     taxonomy = fields.Field["TaxonomyPage", Taxonomy](doc="Structured taxonomy information")
 
-    def __init__(self, *args, name: str, **kw):
-        kw.setdefault("nav_title", name.capitalize())
-        super().__init__(*args, **kw)
+    def __init__(self, *args, node: None, **kw):
+        kw.setdefault("nav_title", node.name.capitalize())
+        super().__init__(*args, node=node, **kw)
 
         # Taxonomy name (e.g. "tags")
-        self.name = name
+        self.name = self.node.name
 
     @property
     def categories(self):
