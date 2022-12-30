@@ -208,7 +208,6 @@ class Node(SiteElement):
     def create_source_page_as_index(
             self,
             src: file.File,
-            path: Optional[Path] = None,
             date: Optional[datetime.datetime] = None,
             **kw):
         """
@@ -235,10 +234,8 @@ class Node(SiteElement):
             log.info("%s: page is still a draft: skipping", src.relpath)
             return None
 
-        node = self.at_path(path)
-
         try:
-            return node._create_index_page(directory_index=True, src=src, date=date, **kw)
+            return self._create_index_page(directory_index=True, src=src, date=date, **kw)
         except SkipPage:
             return None
 
