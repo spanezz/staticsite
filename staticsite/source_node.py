@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import contextlib
 import datetime
 import io
 import logging
 import os
+import stat
 from typing import TYPE_CHECKING, Optional, TextIO
 
-from . import fields
+from . import fields, file
 from .node import Node, SkipPage
 from .site import Path
 from .utils import open_dir_fd
 
 if TYPE_CHECKING:
-    from . import file
     from .asset import Asset
     from .site import Site
 
@@ -30,80 +29,11 @@ class SourceNode(Node):
         # The directory corresponding to this node
         self.src = src
 
-        # When scanning/itearating, this is set to a path fd opened to this
-        # directory
-        self.dir_fd: Optional[int] = None
-
-        # Files in this directory
-        self.files: dict[str, file.File] = {}
-
-    def print_source(self, lead: str = "", file: Optional[TextIO] = None):
-        print(f"{lead}{self.meta=}", file=file)
-        for name, src in self.files.items():
-            print(f"{lead}→ {name}", file=file)
-        for name, tree in self.sub.items():
-            if not isinstance(tree, SourceNode):
-                continue
-            print(f"{lead}📂 {name}", file=file)
-            tree.print_source(lead + "  ", file=file)
-
-    @contextlib.contextmanager
-    def open_tree(self):
-        """
-        Open self.dir_fd for the duration of this context manager
-        """
-        with open_dir_fd(self.src.abspath) as dir_fd:
-            self.dir_fd = dir_fd
-            try:
-                yield
-            finally:
-                self.dir_fd = None
-
-    @contextlib.contextmanager
-    def open_subtree(self, name: str, tree: SourceNode):
-        """
-        Open tree.dir_fd for the duration of this context manager
-        """
-        with open_dir_fd(name, self.dir_fd) as subdir_fd:
-            tree.dir_fd = subdir_fd
-            try:
-                yield
-            finally:
-                tree.dir_fd = None
-
-    def _scandir(self):
-        """
-        Scan the contents of a directory, filling in structures but without
-        recursing
-        """
-        raise NotImplementedError(f"{self.__class__.__name__}._scandir not implemented")
-
-    def scan(self):
-        """
-        Scan directory contents, recursively
-        """
-        self._scandir()
-        # Recurse into subdirectories
-        for name, tree in self.sub.items():
-            with self.open_subtree(name, tree):
-                tree.scan()
-
     def populate(self):
         """
         Recursively populate the node with information from this tree
         """
         raise NotImplementedError(f"{self.__class__.__name__}.populate not implemented")
-
-    def open(self, name, *args, **kw):
-        """
-        Open a file contained in this directory
-        """
-        if self.dir_fd is None:
-            raise RuntimeError("Tree.open called without a dir_fd")
-
-        def _file_opener(fname, flags):
-            return os.open(fname, flags, dir_fd=self.dir_fd)
-        return io.open(name, *args, opener=_file_opener, **kw)
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:
         """
@@ -172,6 +102,28 @@ class SourceAssetNode(SourceNode):
     """
     Node corresponding to a source directory that contains only asset pages
     """
+    def populate_node(self, node: SourceAssetNode):
+        # Add the metadata scanned for this directory
+        for k, v in self.meta.items():
+            if k in node._fields:
+                setattr(node, k, v)
+
+        # Load every file as an asset
+        for fname, src in self.files.items():
+            if src.stat is None:
+                continue
+            if stat.S_ISREG(src.stat.st_mode):
+                log.debug("Loading static file %s", src.relpath)
+                node.add_asset(src=src, name=fname)
+
+        # Recurse into subdirectories
+        for name, tree in self.sub.items():
+            # Compute metadata for this directory
+            dir_node = node.asset_child(name, src=tree.src)
+
+            # Recursively descend into the directory
+            with self.open_subtree(name, tree):
+                tree.populate_node(dir_node)
 
 
 class SourcePageNode(SourceNode):
