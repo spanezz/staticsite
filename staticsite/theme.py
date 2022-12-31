@@ -300,7 +300,7 @@ class Theme:
                 continue
             # TODO: make this a child of the previously scanned static
             meta["site_path"] = os.path.join(site_path, name)
-            self.site.scan_tree(
+            self.site.scan_asset_tree(
                 src=File.with_stat(name, root),
                 meta=meta,
             )
@@ -308,7 +308,7 @@ class Theme:
         # Load assets from theme directories
         meta["site_path"] = site_path
         for path in self.theme_static_dirs:
-            self.site.scan_tree(
+            self.site.scan_asset_tree(
                 src=File.with_stat("", os.path.abspath(path)),
                 meta=meta,
             )

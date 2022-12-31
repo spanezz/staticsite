@@ -410,7 +410,7 @@ class Site:
         self.static_root = self.root.static_root(Path.from_string(self.settings.STATIC_PATH))
 
         # Scan the main content filesystem
-        tree = self.scan_tree(src, self._settings_to_meta(), toplevel=True)
+        tree = self.scan_content_tree(src, self._settings_to_meta())
 
         # Here we may have loaded more site-wide metadata from the root's index
         # page: incorporate them
@@ -425,20 +425,28 @@ class Site:
         # Scan asset trees from themes
         self._theme.scan_assets()
 
-    def scan_tree(self, src: File, meta: dict[str, Any], toplevel: bool = False) -> fstree.Tree:
+    def scan_content_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """
         if src.abspath in self.fstrees:
             # TODO: just return?
             raise RuntimeError(f"{src.abspath} scanned twice")
-        tree: fstree.Tree
-        if meta.get("asset"):
-            tree = fstree.AssetTree(self, src)
-        elif toplevel:
-            tree = fstree.RootPageTree(self, src)
-        else:
-            raise RuntimeError("trying to scan a non-toplevel page tree")
+        tree = fstree.RootPageTree(self, src)
+        tree.meta.update(meta)
+        with tree.open_tree():
+            tree.scan()
+        self.fstrees[src.abspath] = tree
+        return tree
+
+    def scan_asset_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:
+        """
+        Scan the contents of the given directory, adding it to self.fstrees
+        """
+        if src.abspath in self.fstrees:
+            # TODO: just return?
+            raise RuntimeError(f"{src.abspath} scanned twice")
+        tree = fstree.AssetTree(self, src)
         tree.meta.update(meta)
         with tree.open_tree():
             tree.scan()
