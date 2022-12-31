@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 import datetime
-import io
 import logging
-import os
-import stat
-from typing import TYPE_CHECKING, Optional, TextIO
+from typing import TYPE_CHECKING, Optional
 
 from . import fields, file
 from .node import Node, SkipPage
 from .site import Path
-from .utils import open_dir_fd
 
 if TYPE_CHECKING:
     from .asset import Asset
@@ -28,12 +24,6 @@ class SourceNode(Node):
 
         # The directory corresponding to this node
         self.src = src
-
-    def populate(self):
-        """
-        Recursively populate the node with information from this tree
-        """
-        raise NotImplementedError(f"{self.__class__.__name__}.populate not implemented")
 
     def add_asset(self, *, src: file.File, name: str) -> Asset:
         """
@@ -102,28 +92,6 @@ class SourceAssetNode(SourceNode):
     """
     Node corresponding to a source directory that contains only asset pages
     """
-    def populate_node(self, node: SourceAssetNode):
-        # Add the metadata scanned for this directory
-        for k, v in self.meta.items():
-            if k in node._fields:
-                setattr(node, k, v)
-
-        # Load every file as an asset
-        for fname, src in self.files.items():
-            if src.stat is None:
-                continue
-            if stat.S_ISREG(src.stat.st_mode):
-                log.debug("Loading static file %s", src.relpath)
-                node.add_asset(src=src, name=fname)
-
-        # Recurse into subdirectories
-        for name, tree in self.sub.items():
-            # Compute metadata for this directory
-            dir_node = node.asset_child(name, src=tree.src)
-
-            # Recursively descend into the directory
-            with self.open_subtree(name, tree):
-                tree.populate_node(dir_node)
 
 
 class SourcePageNode(SourceNode):
