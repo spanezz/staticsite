@@ -548,11 +548,12 @@ class Page(SiteElement):
         if self.site_url != page.site_url:
             absolute = True
 
+        path = os.path.join(self.site.root.site_path, page.site_path).strip("/")
         if absolute:
             site_url = page.site_url.rstrip("/")
-            return f"{site_url}/{page.site_path}"
+            return f"{site_url}/{path}"
         else:
-            return "/" + page.site_path
+            return "/" + path
 
     def crossreference(self) -> None:
         """

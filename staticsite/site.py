@@ -361,32 +361,29 @@ class Site:
             footprint = self.build_cache.get(f"footprint_{feature.name}")
             feature.set_previous_footprint(footprint if footprint is not None else {})
 
-    def _settings_to_meta(self) -> dict[str, Any]:
+    def _settings_to_meta(self):
         """
         Build directory metadata based on site settings
         """
-        res = {
-            "template_copyright": "© {{page.meta.date.year}} {{page.meta.author}}",
-        }
+        self.root.template_copyright = "© {{page.meta.date.year}} {{page.meta.author}}"
         if self.settings.SITE_URL:
-            res["site_url"] = self.settings.SITE_URL
+            self.root.site_url = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            res["site_path"] = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
+            self.root.site_path = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
         else:
-            res["site_path"] = "/"
+            self.root.site_path = "/"
         if self.settings.SITE_NAME:
-            res["site_name"] = self.settings.SITE_NAME
+            self.root.site_name = self.settings.SITE_NAME
         if self.settings.SITE_AUTHOR:
-            res["author"] = self.settings.SITE_AUTHOR
+            self.root.author = self.settings.SITE_AUTHOR
         else:
             import getpass
             import pwd
             user = getpass.getuser()
             pw = pwd.getpwnam(user)
-            res["author"] = pw.pw_gecos.split(",")[0]
+            self.root.author = pw.pw_gecos.split(",")[0]
 
-        log.debug("Initial settings: %r", res)
-        return res
+        # log.debug("Initial settings: %r", res)
 
     def scan_content(self):
         """
@@ -405,18 +402,13 @@ class Site:
 
         # Create root node
         self.root = self.features.get_node_class(RootNode)(self, src=src)
+        self._settings_to_meta()
 
         # Create static root node
         self.static_root = self.root.static_root(Path.from_string(self.settings.STATIC_PATH))
 
         # Scan the main content filesystem
-        tree = self.scan_content_tree(src, self._settings_to_meta())
-
-        # Here we may have loaded more site-wide metadata from the root's index
-        # page: incorporate them
-        for k, v in tree.meta.items():
-            if k in self.root._fields:
-                setattr(self.root, k, v)
+        tree = self.scan_content_tree(src)
 
         if self.root.site_name is None:
             # If we still have no idea of site names, use the root directory's name
@@ -425,29 +417,27 @@ class Site:
         # Scan asset trees from themes
         self._theme.scan_assets()
 
-    def scan_content_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:
+    def scan_content_tree(self, src: File) -> fstree.Tree:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """
         if src.abspath in self.fstrees:
             # TODO: just return?
             raise RuntimeError(f"{src.abspath} scanned twice")
-        tree = fstree.RootPageTree(self, src)
-        tree.meta.update(meta)
+        tree = fstree.RootPageTree(site=self, src=src, node=self.root)
         with tree.open_tree():
             tree.scan()
         self.fstrees[src.abspath] = tree
         return tree
 
-    def scan_asset_tree(self, src: File, meta: dict[str, Any]) -> fstree.Tree:
+    def scan_asset_tree(self, src: File, node: SourceAssetNode) -> fstree.Tree:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """
         if src.abspath in self.fstrees:
             # TODO: just return?
             raise RuntimeError(f"{src.abspath} scanned twice")
-        tree = fstree.AssetTree(self, src)
-        tree.meta.update(meta)
+        tree = fstree.AssetTree(site=self, src=src, node=node)
         with tree.open_tree():
             tree.scan()
         self.fstrees[src.abspath] = tree
@@ -459,19 +449,8 @@ class Site:
         """
         # Turn scanned filesytem information into site structure
         for abspath, tree in self.fstrees.items():
-            # print(f"* tree {tree.src.relpath}")
-            # tree.print()
-            # Create root node based on site_path
-            if (site_path := tree.meta.get("site_path")) and site_path.strip("/"):
-                # print(f"Site.load_content populate at {site_path} from {tree.src.abspath}")
-                node = self.root.root_for_site_path(Path.from_string(site_path))
-            else:
-                # print(f"Site.load_content populate at <root> from {tree.src.abspath}")
-                node = self.root
-
-            # Populate node from tree
             with tree.open_tree():
-                tree.populate_node(node)
+                tree.populate_node()
 
     def load(self, until: int = LOAD_STEP_ALL):
         """

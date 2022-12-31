@@ -289,28 +289,22 @@ class Theme:
         """
         Load static assets
         """
-        site_path = os.path.join(self.site.root.site_path, self.site.settings.STATIC_PATH)
-        meta = {"asset": True}
-
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
             root = os.path.join("/usr/share/javascript", name)
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            # TODO: make this a child of the previously scanned static
-            meta["site_path"] = os.path.join(site_path, name)
             self.site.scan_asset_tree(
                 src=File.with_stat(name, root),
-                meta=meta,
+                node=self.site.static_root.asset_child(name),
             )
 
         # Load assets from theme directories
-        meta["site_path"] = site_path
         for path in self.theme_static_dirs:
             self.site.scan_asset_tree(
                 src=File.with_stat("", os.path.abspath(path)),
-                meta=meta,
+                node=self.site.static_root,
             )
 
     def jinja2_basename(self, val: str) -> str:

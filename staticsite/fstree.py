@@ -13,7 +13,7 @@ from .utils import front_matter, open_dir_fd
 
 if TYPE_CHECKING:
     from .site import Site
-    from .node import SourceNode, SourcePageNode, SourceAssetNode
+    from .node import SourceNode
 
 log = logging.getLogger("fstree")
 
@@ -22,8 +22,9 @@ class Tree:
     """
     Recursive information about a filesystem tree
     """
-    def __init__(self, site: Site, src: File):
+    def __init__(self, *, site: Site, src: File, node: SourceNode):
         self.site = site
+        self.node = node
 
         # When scanning/itearating, this is set to a path fd opened to this
         # directory
@@ -32,9 +33,6 @@ class Tree:
         # The directory corresponding to this node
         self.src = src
 
-        # Metadata found in this directory
-        self.meta: dict[str, Any] = {}
-
         # Files in this directory
         self.files: dict[str, File] = {}
 
@@ -42,7 +40,7 @@ class Tree:
         self.sub: dict[str, Tree] = {}
 
     def print(self, lead: str = "", file: Optional[TextIO] = None):
-        print(f"{lead}{self.meta=}", file=file)
+        print(f"{lead}", file=file)
         for name, src in self.files.items():
             print(f"{lead}→ {name}", file=file)
         for name, tree in self.sub.items():
@@ -90,7 +88,7 @@ class Tree:
             with self.open_subtree(name, tree):
                 tree.scan()
 
-    def populate_node(self, node: SourceNode):
+    def populate_node(self):
         """
         Recursively popuplate the node with information from this tree
         """
@@ -112,8 +110,8 @@ class PageTree(Tree):
     """
     Filesystem tree that can contain pages and assets
     """
-    def __init__(self, site: Site, src: File):
-        super().__init__(site, src)
+    def __init__(self, *, site: Site, src: File, node: SourceNode):
+        super().__init__(site=site, src=src, node=node)
 
         # Rules for assigning metadata to subdirectories
         self.dir_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
@@ -152,7 +150,8 @@ class PageTree(Tree):
             if meta is not None:
                 self._take_dir_rules(meta)
                 res.update(meta)
-        return res
+        # Filter out metadata entries that were specific to the index page of the directory
+        return {k: v for k, v in res.items() if k in self.node._fields}
 
     def _scandir(self) -> None:
         subdirs: list[tuple[str, File]] = []
@@ -170,7 +169,7 @@ class PageTree(Tree):
                     with self.open(entry.name, "rt") as fd:
                         fmt, meta = front_matter.read_whole(fd)
                         self._take_dir_rules(meta)
-                        self.meta.update(meta)
+                        self.node.update_fields(meta)
                 elif entry.name.startswith("."):
                     # Skip hidden files
                     continue
@@ -183,7 +182,7 @@ class PageTree(Tree):
                                     os.path.join(self.src.abspath, entry.name))
 
         # Let features add to directory metadata
-        self.meta.update(self._load_dir_meta())
+        self.node.update_fields(self._load_dir_meta())
 
         # Instantiate subtrees
         for name, src in subdirs:
@@ -195,20 +194,12 @@ class PageTree(Tree):
                     meta.update(dmeta)
 
             if meta.get("asset"):
-                self.sub[name] = AssetTree(self.site, src)
+                self.sub[name] = AssetTree(site=self.site, src=src, node=self.node.asset_child(name, src))
             else:
-                self.sub[name] = PageTree(self.site, src)
+                self.sub[name] = PageTree(site=self.site, src=src, node=self.node.page_child(name, src))
 
-    def populate_node(self, node: SourcePageNode):
-        # print(f"PageTree.populate_node {self.src.relpath=} {self.meta=}")
+    def populate_node(self):
         # Add the metadata scanned for this directory
-
-        # Since we are loading metadata from index pages, here we
-        # ignore fields that are not relevant for Node, that may have been
-        # loaded from its index page
-        for k, v in self.meta.items():
-            if k in node._fields:
-                setattr(node, k, v)
 
         # Compute metadata for files
         files_meta: dict[str, tuple[dict[str, Any], File]] = {}
@@ -221,7 +212,7 @@ class PageTree(Tree):
             # Handle assets right away
             if res.get("asset"):
                 # print(f"PageTree.populate_node  add asset {fname}")
-                node.add_asset(src=src, name=fname)
+                self.node.add_asset(src=src, name=fname)
             else:
                 # print(f"PageTree.populate_node  enqueue file {fname}")
                 files_meta[fname] = (res, src)
@@ -229,7 +220,7 @@ class PageTree(Tree):
         # Create nodes for subtrees
         for name, tree in self.sub.items():
             # Compute metadata for this directory
-            dir_node = node.page_child(name, src=tree.src)
+            dir_node = self.node.page_child(name, src=tree.src)
             for pattern, dmeta in self.dir_rules:
                 if pattern.match(name):
                     dir_node.update_fields(dmeta)
@@ -237,7 +228,7 @@ class PageTree(Tree):
         # Let features pick their files
         # print(f"PageTree.populate_node  initial files to pick {files_meta.keys()}")
         for handler in self.site.features.ordered():
-            handler.load_dir(node, self, files_meta)
+            handler.load_dir(self.node, self, files_meta)
             if not files_meta:
                 break
         # print(f"PageTree.populate_node  remaining files to pick {files_meta.keys()}")
@@ -247,19 +238,19 @@ class PageTree(Tree):
         for fname, (file_meta, src) in files_meta.items():
             if src.stat and stat.S_ISREG(src.stat.st_mode):
                 log.debug("Loading static file %s", src.relpath)
-                node.add_asset(src=src, name=fname)
+                self.node.add_asset(src=src, name=fname)
 
         # Recurse into subtrees
         for name, tree in self.sub.items():
             with self.open_subtree(name, tree):
-                tree.populate_node(node.sub[name])
+                tree.populate_node()
 
         # If no feature added a directory index, synthesize one
         # TODO: if no feature added any page, this node becomes empty. Add a unit test for this case.
         # TODO: potentially we need to be able to skip adding a directory index
         #       and this Node as an empty leaf
-        if not node.page:
-            node.add_directory_index(self.src)
+        if not self.node.page:
+            self.node.add_directory_index(self.src)
 
 
 class RootPageTree(PageTree):
@@ -268,7 +259,7 @@ class RootPageTree(PageTree):
     """
     def _load_dir_meta(self) -> dict[str, Any]:
         res = super()._load_dir_meta()
-        if (title := res.get("title")) and "site_name" not in res and "site_name" not in self.meta:
+        if (title := res.get("title")) and "site_name" not in res and not self.node.site_name:
             res["site_name"] = title
         return res
 
@@ -287,7 +278,11 @@ class AssetTree(Tree):
                 # Note: is_dir, is_file, and stat, follow symlinks by default
                 if entry.is_dir():
                     # Take note of directories
-                    self.sub[entry.name] = AssetTree(self.site, File.from_dir_entry(self.src, entry))
+                    src = File.from_dir_entry(self.src, entry)
+                    self.sub[entry.name] = AssetTree(
+                            site=self.site,
+                            src=src,
+                            node=self.node.asset_child(entry.name, src))
                 else:
                     # Take note of files
                     try:
@@ -296,25 +291,17 @@ class AssetTree(Tree):
                         log.warning("%s: cannot stat() file: broken symlink?",
                                     os.path.join(self.src.abspath, entry.name))
 
-    def populate_node(self, node: SourceAssetNode):
-        # Add the metadata scanned for this directory
-        for k, v in self.meta.items():
-            if k in node._fields:
-                setattr(node, k, v)
-
+    def populate_node(self):
         # Load every file as an asset
         for fname, src in self.files.items():
             if src.stat is None:
                 continue
             if stat.S_ISREG(src.stat.st_mode):
                 log.debug("Loading static file %s", src.relpath)
-                node.add_asset(src=src, name=fname)
+                self.node.add_asset(src=src, name=fname)
 
         # Recurse into subdirectories
         for name, tree in self.sub.items():
-            # Compute metadata for this directory
-            dir_node = node.asset_child(name, src=tree.src)
-
             # Recursively descend into the directory
             with self.open_subtree(name, tree):
-                tree.populate_node(dir_node)
+                tree.populate_node()

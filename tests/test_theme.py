@@ -70,7 +70,7 @@ class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
                     context = None
                 return site.theme.jinja2_url_for(context, dest, **kw)
 
-            page = mocksite.page("prefix")
+            page = mocksite.page("")
             self.assertEqual(url_for("page1.md", page=page), "/prefix/page1")
             self.assertEqual(url_for("page1", page=page), "/prefix/page1")
 
