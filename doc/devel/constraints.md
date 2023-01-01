@@ -22,6 +22,10 @@ changed**
   metadata and existing structure from the first one
 * When adding contents from multiple roots, the second root cannot replace
   files from the first root
+* Asset directories however can be merged
+* The site can appear under a path instead of at the root. That affects only
+  generated URLs, not links between pages. Source contents are completely
+  unaware of the root path of the site when exposed on the web
 
 **Pages cannot determine the type of other pages**
 

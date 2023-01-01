@@ -10,14 +10,13 @@ from typing import (TYPE_CHECKING, Any, Iterable, Optional,
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
 from staticsite.features.syndication import Syndication
-from staticsite.node import Path
 from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
                              TemplatePage)
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
-    from staticsite.node import Node
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("taxonomy")
 
@@ -60,16 +59,14 @@ class Taxonomy:
         if archive is not None:
             self.archive_meta.update(archive)
 
-    def create_index(self, node: Node) -> Optional[TaxonomyPage]:
+    def create_index(self, node: SourcePageNode) -> Optional[TaxonomyPage]:
         """
         Create the index page for this taxonomy
         """
-        self.index = node.create_source_page(
+        self.index = node.create_source_page_as_path(
             page_cls=TaxonomyPage,
             src=self.src,
             name=self.name,
-            directory_index=True,
-            path=Path((self.name,)),
             **self.index_meta)
         return self.index
 
@@ -100,11 +97,10 @@ class Taxonomy:
             # Don't auto-add feeds for the tag syndication pages
             syndication.add_to = False
 
-        return self.index.node.create_auto_page(
+        return self.index.node.create_auto_page_as_path(
             created_from=self.index,
             page_cls=CategoryPage,
             name=name,
-            path=Path((name,)),
             **category_meta)
 
     def generate_pages(self) -> None:
@@ -354,7 +350,7 @@ class TaxonomyFeature(Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []
@@ -425,12 +421,12 @@ class TaxonomyPage(TemplatePage, SourcePage):
 
     taxonomy = fields.Field["TaxonomyPage", Taxonomy](doc="Structured taxonomy information")
 
-    def __init__(self, *args, name: str, **kw):
-        kw.setdefault("nav_title", name.capitalize())
-        super().__init__(*args, **kw)
+    def __init__(self, *args, node: SourcePageNode, **kw):
+        kw.setdefault("nav_title", node.name.capitalize())
+        super().__init__(*args, node=node, **kw)
 
         # Taxonomy name (e.g. "tags")
-        self.name = name
+        self.name = self.node.name
 
     @property
     def categories(self):
@@ -512,10 +508,10 @@ class CategoryPage(TemplatePage, AutoPage):
     taxonomy = fields.Field["CategoryPage", TaxonomyPage](doc="Page that defined this taxonomy")
     name = fields.Field["CategoryPage", str](doc="Name of the category shown in this page")
 
-    def __init__(self, *args, name: str, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         # Category name
-        self.name = name
+        self.name = self.node.name
         # Index of each page in the category sequence
         self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)}
 

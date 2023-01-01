@@ -14,12 +14,12 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
-from staticsite.node import Node, Path
 from staticsite.page import FrontMatterPage, TemplatePage, Page
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("rst")
 
@@ -145,7 +145,7 @@ class RestructuredText(MarkupFeature, Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         if not self.yaml_tags_filled:
@@ -170,21 +170,18 @@ class RestructuredText(MarkupFeature, Feature):
                 continue
 
             kwargs.update(fm_meta)
+            kwargs["page_cls"] = RstPage
+            kwargs["src"] = src
+            kwargs["feature"] = self
+            kwargs["front_matter"] = fm_meta
+            kwargs["doctree_scan"] = doctree_scan
 
-            if (directory_index := fname in ("index.rst", "README.rst")):
-                path = Path()
+            if fname in ("index.rst", "README.rst"):
+                page = node.create_source_page_as_index(**kwargs)
             else:
-                path = Path((fname[:-4],))
-
-            page = node.create_source_page(
-                    page_cls=RstPage,
-                    src=src,
-                    feature=self,
-                    front_matter=fm_meta,
-                    doctree_scan=doctree_scan,
-                    directory_index=directory_index,
-                    path=path,
-                    **kwargs)
+                page = node.create_source_page_as_path(
+                        name=fname[:-4],
+                        **kwargs)
             pages.append(page)
 
         for fname in taken:

@@ -53,7 +53,8 @@ try:
     yaml_dumper = ruamel.yaml.YAML(typ="rt", pure=True)
     yaml_dumper.allow_unicode = True
     yaml_dumper.default_flow_style = False
-    yaml_dumper.explicit_start = True
+    # TODO: yaml does not have explicit_start typed correctly
+    yaml_dumper.explicit_start = True  # type: ignore
 
     def dumps_ruamel(data):
         # YAML dump with unsorted keys

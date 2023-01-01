@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import contextlib
-import datetime
 import logging
 import os
 from typing import TYPE_CHECKING, Generator, Optional, Sequence, TextIO, Type
@@ -10,8 +8,6 @@ from . import fields
 from .site import SiteElement, Path
 
 if TYPE_CHECKING:
-    from . import file
-    from .asset import Asset
     from .page import Page
     from .site import Site
 
@@ -134,57 +130,9 @@ class Node(SiteElement):
 
         return None
 
-    def create_source_page(
+    def create_auto_page_as_file(
             self,
-            src: file.File,
-            path: Optional[Path] = None,
-            dst: Optional[str] = None,
-            directory_index: bool = False,
-            date: Optional[datetime.datetime] = None,
-            **kw):
-        """
-        Create a page of the given type, attaching it at the given path
-        """
-        if "created_from" in kw:
-            raise RuntimeError("source page created with 'created_from' set")
-
-        if directory_index and dst:
-            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
-
-        if dst is None and not directory_index and not path:
-            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
-
-        if self.site.last_load_step > self.site.LOAD_STEP_CONTENTS:
-            raise RuntimeError("Node.create_source_page created after the 'contents' step has completed")
-
-        if self.site.previous_source_footprints:
-            # TODO: since we pop, we lose fooprint info for assets that replace other assets.
-            # TODO: propagate it when doing the replacement?
-            kw["old_footprint"] = self.site.previous_source_footprints.pop(src.relpath, None)
-
-        if date is None:
-            date = self.site.localized_timestamp(src.stat.st_mtime)
-        else:
-            date = self.site.clean_date(date)
-
-        # Skip draft pages
-        if date > self.site.generation_time and not self.site.settings.DRAFT_MODE:
-            log.info("%s: page is still a draft: skipping", src.relpath)
-            return None
-
-        try:
-            if dst:
-                return self._create_leaf_page(dst=dst, path=path, src=src, date=date, **kw)
-            else:
-                return self._create_index_page(path=path, directory_index=directory_index, src=src, date=date, **kw)
-        except SkipPage:
-            return None
-
-    def create_auto_page(
-            self,
-            path: Optional[Path] = None,
-            dst: Optional[str] = None,
-            directory_index: bool = False,
+            dst: str,
             **kw):
         """
         Create a page of the given type, attaching it at the given path
@@ -192,37 +140,43 @@ class Node(SiteElement):
         if "src" in kw:
             raise RuntimeError("auto page created with 'src' set")
 
-        if directory_index and dst:
-            raise RuntimeError(f"directory_index is True for a page with dst set ({dst=!r})")
-
-        if dst is None and not directory_index and not path:
-            raise RuntimeError(f"{self.path}: empty path for {kw['page_cls']}")
-
         if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
             raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
 
         try:
             if dst:
-                return self._create_leaf_page(dst=dst, path=path, **kw)
+                return self._create_leaf_page(dst=dst, **kw)
             else:
-                return self._create_index_page(path=path, directory_index=directory_index,  **kw)
+                return self._create_index_page(directory_index=False,  **kw)
+        except SkipPage:
+            return None
+
+    def create_auto_page_as_path(
+            self,
+            name: str,
+            **kw):
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        if "src" in kw:
+            raise RuntimeError("auto page created with 'src' set")
+
+        if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
+            raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
+
+        node = self._child(name)
+
+        try:
+            return node._create_index_page(directory_index=False,  **kw)
         except SkipPage:
             return None
 
     def _create_index_page(
             self, *,
             page_cls: Type[Page],
-            path: Optional[Path] = None,
             directory_index: bool = False,
             **kw):
         from .page import PageValidationError
-
-        if path:
-            # If a subpath is requested, delegate to subnodes
-            with self.tentative_child(path.head) as node:
-                return node._create_index_page(
-                        page_cls=page_cls, path=path.tail,
-                        **kw)
 
         if directory_index:
             search_root_node = self
@@ -262,16 +216,8 @@ class Node(SiteElement):
             self, *,
             page_cls: Type[Page],
             dst: str,
-            path: Optional[Path] = None,
             **kw):
         from .page import PageValidationError
-
-        if path:
-            # If a subpath is requested, delegate to subnodes
-            with self.tentative_child(path.head) as node:
-                return node._create_leaf_page(
-                        page_cls=page_cls, dst=dst, path=path.tail,
-                        **kw)
 
         # Create the page
         try:
@@ -299,43 +245,7 @@ class Node(SiteElement):
             self.by_src_relpath[page.source_name] = page
         return page
 
-    def add_asset(self, *, src: file.File, name: str) -> Asset:
-        """
-        Add an Asset as a subnode of this one
-        """
-        # Import here to avoid cyclical imports
-        from .asset import Asset
-        return self.create_source_page(page_cls=Asset, src=src, name=name, dst=name)
-
-    def add_directory_index(self, src: file.File):
-        """
-        Add a directory index to this node
-        """
-        from . import dirindex
-        return self.create_source_page(
-            page_cls=dirindex.Dir,
-            name=self.name,
-            src=src,
-            directory_index=True)
-
-    @contextlib.contextmanager
-    def tentative_child(self, name: str) -> Generator[Node, None, None]:
-        """
-        Add a child, removing it if an exception is raised
-        """
-        if (node := self.sub.get(name)):
-            yield node
-            return
-
-        try:
-            node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
-            self.sub[name] = node
-            yield node
-        except Exception:
-            # Rollback the addition
-            self.sub.pop(name, None)
-
-    def child(self, name: str) -> Node:
+    def _child(self, name: str) -> Node:
         """
         Return the given subnode, creating it if missing
         """
@@ -345,15 +255,6 @@ class Node(SiteElement):
         node = self.site.features.get_node_class(Node)(site=self.site, name=name, parent=self)
         self.sub[name] = node
         return node
-
-    def at_path(self, path: Path) -> Node:
-        """
-        Return the subnode at the given path, creating it if missing
-        """
-        if not path:
-            return self
-        else:
-            return self.child(path.head).at_path(path.tail)
 
     def lookup_node(self, path: Path) -> Optional[Node]:
         """
@@ -388,16 +289,3 @@ class Node(SiteElement):
                 return True
             node = node.parent
         return False
-
-
-class RootNode(Node):
-    """
-    Node at the root of the site tree
-    """
-    title = fields.Field["Node", str](doc="""
-        Title used as site name.
-
-        This only makes sense for the root node of the site hierarchy, and
-        takes the value from the title of the root index page. If set, and the
-        site name is not set by other means, it is used to give the site a name.
-    """)

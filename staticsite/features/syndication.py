@@ -9,9 +9,7 @@ import jinja2
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField, PageTrackingMixin
-from staticsite.node import Path
 from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent, TemplatePage
-from staticsite.utils import arrange
 
 log = logging.getLogger("syndication")
 
@@ -114,7 +112,7 @@ class Syndication:
         kwargs["index"] = self.index
 
         # RSS feed
-        rss_page = self.index.node.create_auto_page(
+        rss_page = self.index.node.create_auto_page_as_file(
                 created_from=self.index,
                 page_cls=RSSPage,
                 dst=f"{page_name}.{RSSPage.TYPE}",
@@ -124,7 +122,7 @@ class Syndication:
         # print(f"  rss_page {rss_page.meta=!r}")
 
         # Atom feed
-        atom_page = self.index.node.create_auto_page(
+        atom_page = self.index.node.create_auto_page_as_file(
                 created_from=self.index,
                 page_cls=AtomPage,
                 dst=f"{page_name}.{AtomPage.TYPE}",
@@ -146,10 +144,10 @@ class Syndication:
 
         self.archive["pages"] = self.pages
         self.archive["index"] = self.index
-        self.archive_page = self.index.node.create_auto_page(
+        self.archive_page = self.index.node.create_auto_page_as_path(
                 created_from=self.index,
                 page_cls=ArchivePage,
-                path=Path(("archive",)),
+                name="archive",
                 **self.archive,
                 )
         if self.archive_page is not None:
@@ -345,7 +343,7 @@ def _get_syndicated_pages(page: SyndicationPageMixin, limit: Optional[int] = Non
 
     if (pages := page.pages) is None:
         raise SyndicatedPageError(f"page {page!r} has no `syndication.pages` or `pages` in metadata")
-    return arrange(pages, "-syndication_date", limit=limit)
+    return pages.arrange("-syndication_date", limit=limit)
 
 
 class SyndicationFeature(PageTrackingMixin, Feature):
@@ -430,7 +428,7 @@ class SyndicationFeature(PageTrackingMixin, Feature):
 
     @jinja2.pass_context
     def jinja2_syndicated_pages(
-            self, context, what: Union[str, Page, list[Page], None] = None, limit=None) -> list[Page]:
+            self, context, what: Union[str, SyndicationPageMixin, None] = None, limit=None) -> list[Page]:
         """
         Get the list of pages to be syndicated
         """
@@ -457,7 +455,8 @@ class SyndicationFeature(PageTrackingMixin, Feature):
             elif isinstance(what, Page):
                 return _get_syndicated_pages(what, limit=limit)
             else:
-                return arrange(what, "-syndication_date", limit=limit)
+                raise SyndicatedPageError(
+                        f"syndicated_pages called with a page argument of unsupported type {what.__class__.__name__}")
         except SyndicatedPageError as e:
             log.warn("%s: %s", context.name, e)
             return []

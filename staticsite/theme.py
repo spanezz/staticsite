@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import Any, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
 
 import jinja2
 import markupsafe
@@ -13,7 +13,11 @@ import markupsafe
 from . import toposort
 from .file import File
 from .page import ImagePage, Page, PageNotFoundError
-from .utils import arrange, front_matter
+from .utils import front_matter
+from .utils.arrange import arrange
+
+if TYPE_CHECKING:
+    from .page import Pages
 
 log = logging.getLogger("theme")
 
@@ -278,39 +282,34 @@ class Theme:
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
         self.jinja2.filters["next_month"] = self.jinja2_next_month
         self.jinja2.filters["basename"] = self.jinja2_basename
-        self.jinja2.filters["arrange"] = arrange
+        self.jinja2.filters["arrange"] = self.jinja2_arrange
 
         # Add feature-provided globals and filters
         for feature in self.site.features.ordered():
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
-    def scan_assets(self):
+    def scan_assets(self) -> None:
         """
         Load static assets
         """
-        site_path = os.path.join(self.site.root.site_path, self.site.settings.STATIC_PATH)
-        meta = {"asset": True}
-
         # Load system assets from site settings and theme configurations
         for name in self.system_assets:
             root = os.path.join("/usr/share/javascript", name)
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
-            # TODO: make this a child of the previously scanned static
-            meta["site_path"] = os.path.join(site_path, name)
-            self.site.scan_tree(
-                src=File.with_stat(name, root),
-                meta=meta,
+            src = File.with_stat(name, root)
+            self.site.scan_asset_tree(
+                src=src,
+                node=self.site.static_root.asset_child(name, src=src),
             )
 
         # Load assets from theme directories
-        meta["site_path"] = site_path
         for path in self.theme_static_dirs:
-            self.site.scan_tree(
+            self.site.scan_asset_tree(
                 src=File.with_stat("", os.path.abspath(path)),
-                meta=meta,
+                node=self.site.static_root,
             )
 
     def jinja2_basename(self, val: str) -> str:
@@ -438,3 +437,10 @@ class Theme:
             res.append(f" {escape(k)}='{escape(v)}'")
         res.append("></img>")
         return markupsafe.Markup("".join(res))
+
+    def jinja2_arrange(self, pages: Union[Pages, list[Page]], *args, **kw) -> list[Page]:
+        from .page import Pages
+        if isinstance(pages, Pages):
+            return pages.arrange(*args, **kw)
+        else:
+            return arrange(pages, *args, **kw)

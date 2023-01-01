@@ -14,13 +14,12 @@ from markdown.util import AMP_SUBSTITUTE
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
-from staticsite.node import Path
 from staticsite.page import FrontMatterPage, ImagePage, Page, TemplatePage
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
-    from staticsite.node import Node
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("markdown")
 
@@ -135,7 +134,7 @@ class MarkdownPages(MarkupFeature, Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []
@@ -153,22 +152,19 @@ class MarkdownPages(MarkupFeature, Feature):
                 continue
 
             kwargs.update(fm_meta)
+            kwargs["feature"] = self
+            kwargs["src"] = src
+            kwargs["page_cls"] = MarkdownPage
+            kwargs["front_matter"] = fm_meta
+            kwargs["body"] = body
 
-            if (directory_index := fname in ("index.md", "README.md")):
-                path = Path()
+            if fname in ("index.md", "README.md"):
+                page = node.create_source_page_as_index(**kwargs)
             else:
-                path = Path((fname[:-3],))
+                page = node.create_source_page_as_path(
+                        name=fname[:-3],
+                        **kwargs)
 
-            # print("CREAT", fname, directory_index)
-            page = node.create_source_page(
-                    page_cls=MarkdownPage,
-                    src=src,
-                    feature=self,
-                    front_matter=fm_meta,
-                    body=body,
-                    directory_index=directory_index,
-                    path=path,
-                    **kwargs)
             pages.append(page)
 
         for fname in taken:

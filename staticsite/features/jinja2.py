@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, List, Optional, Type
 import jinja2
 import markupsafe
 
-from staticsite import node
 from staticsite.feature import Feature
 from staticsite.page import ChangeExtent, Page, SourcePage, TemplatePage
 from staticsite.page_filter import compile_page_match
@@ -14,6 +13,7 @@ from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("jinja2")
 
@@ -70,7 +70,7 @@ class J2Pages(Feature):
 
     def load_dir(
             self,
-            node: node.Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         # Precompile JINJA2_PAGES patterns
@@ -96,17 +96,21 @@ class J2Pages(Feature):
             if front_matter:
                 kwargs.update(front_matter)
 
-            if not (directory_index := fname == "index.html"):
-                # Is this still needed?
-                fname = fname.replace(".j2", "")
-                kwargs["dst"] = fname
+            kwargs["page_cls"] = J2Page
+            kwargs["src"] = src
+            kwargs["template"] = template
 
-            page = node.create_source_page(
-                    page_cls=J2Page,
-                    src=src,
-                    template=template,
-                    directory_index=directory_index,
-                    **kwargs)
+            # TODO: Is this replace still needed? Do we still
+            # support the .j2 trick?
+            fname = fname.replace(".j2", "")
+
+            if fname == "index.html":
+                page = node.create_source_page_as_index(**kwargs)
+            else:
+                page = node.create_source_page_as_file(
+                        dst=fname,
+                        **kwargs)
+
             pages.append(page)
             taken.append(fname)
 

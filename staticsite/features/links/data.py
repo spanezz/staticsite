@@ -42,7 +42,7 @@ class LinkCollection:
         self.links: Dict[str, Link] = links if links is not None else {}
 
         # Compute count of link and tag cardinalities
-        self.card = Counter()
+        self.card: dict[str, int] = Counter()
         for link in self.links.values():
             for tag in link.tags:
                 self.card[tag] += 1
@@ -56,7 +56,7 @@ class LinkCollection:
     def __bool__(self):
         return bool(self.links)
 
-    def get(self, url: str) -> Optional[str]:
+    def get(self, url: str) -> Optional[Link]:
         return self.links.get(url)
 
     def tags_and_cards(self):

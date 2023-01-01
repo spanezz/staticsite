@@ -49,20 +49,19 @@ class AliasesFeature(PageTrackingMixin, Feature):
 
             for alias in aliases:
                 path = Path.from_string(alias)
-                node = self.site.root.at_path(path.dir)
-                subpath = Path((path.name,))
-                if (old := node.lookup_page(subpath)):
+                node = self.site.root.generate_path(path.dir)
+                if (old := node.lookup_page(Path((path.name,)))):
                     if old == page:
                         log.warning("%r defines alias %r pointing to itself", page, alias)
                     else:
                         log.warning("%r defines alias %r pointing to existing page %r", page, alias, old)
                     continue
-                node.create_auto_page(
+                node.create_auto_page_as_path(
                         page_cls=AliasPage,
                         created_from=page,
                         page=page,
                         title=page.title,
-                        path=subpath)
+                        name=path.name)
 
 
 class AliasPage(TemplatePage, AutoPage):

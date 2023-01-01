@@ -50,7 +50,9 @@ class RenderedFile(RenderedElement):
             with open(self.src.abspath, "rb") as fd:
                 with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
                     shutil.copyfileobj(fd, out)
-                    shutil.copystat(fd.fileno(), out.fileno())
+                    # TODO: copystat can accept unix file descriptors as
+                    # arguments, but it is not typed accordingly
+                    shutil.copystat(fd.fileno(), out.fileno())  # type: ignore
 
     def content(self) -> bytes:
         with open(self.src.abspath, "rb") as fd:

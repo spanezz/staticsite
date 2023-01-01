@@ -11,12 +11,12 @@ from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.data import DataPage
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
-from staticsite.node import Node, Path
-from staticsite.page import Page
+from staticsite.page import Page, TemplatePage
 from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("links")
 
@@ -42,6 +42,8 @@ class LinksPageMixin(Page):
     # Allow every page to contribute links information
     links = LinksField()
 
+
+class LinksTemplatePageMixin(LinksPageMixin, TemplatePage):
     @jinja2.pass_context
     def html_body(self, context, **kw) -> str:
         rendered = super().html_body(context, **kw)
@@ -161,14 +163,17 @@ class Links(PageTrackingMixin, Feature):
         self.indices: List[LinkIndexPage] = []
 
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
-        return (LinksPageMixin,)
+        if issubclass(page_cls, TemplatePage):
+            return (LinksTemplatePageMixin,)
+        else:
+            return (LinksPageMixin,)
 
     def get_used_page_types(self) -> list[Type[Page]]:
         return [LinksPage, LinkIndexPage]
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
@@ -191,13 +196,12 @@ class Links(PageTrackingMixin, Feature):
                 continue
             kwargs.update(fm_meta)
 
-            page = node.create_source_page(
+            page = node.create_source_page_as_path(
                     page_cls=LinkIndexPage,
                     src=src,
                     name=name,
                     links=self,
                     link_collection=self.links,
-                    path=Path((name,)),
                     **kwargs)
             pages.append(page)
 
