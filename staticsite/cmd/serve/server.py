@@ -42,7 +42,7 @@ class ChangeMonitor:
         # Pending trigger
         self.pending = None
 
-    def update_watch_dirs(self, dirs: list[str]):
+    def update_watch_dirs(self, dirs: list[str]) -> None:
         dirs = [os.path.realpath(d) for d in dirs]
 
         for path in self.watches.keys() - dirs:
@@ -55,11 +55,11 @@ class ChangeMonitor:
                     path, pyinotify.IN_CLOSE_WRITE | pyinotify.IN_DELETE, rec=True)
             log.info("%s: adding watch", path)
 
-    def notify(self):
+    def notify(self) -> None:
         self.pending = None
         self.app.trigger_reload()
 
-    def on_event(self, event):
+    def on_event(self, event) -> None:
         """
         Handle incoming asyncio events
         """
@@ -148,20 +148,20 @@ class Application(tornado.web.Application):
         self.page_sockets: set[PageSocket] = set()
         self.change_monitor = ChangeMonitor(self)
 
-    def add_page_socket(self, handler):
+    def add_page_socket(self, handler) -> None:
         self.page_sockets.add(handler)
 
-    def remove_page_socket(self, handler):
+    def remove_page_socket(self, handler) -> None:
         self.page_sockets.discard(handler)
 
-    def trigger_reload(self):
+    def trigger_reload(self) -> None:
         log.info("Content change detected: reloading site")
         self.reload()
         payload = json.dumps({"event": "reload"})
         for handler in self.page_sockets:
             handler.write_message(payload)
 
-    def reload(self):
+    def reload(self) -> None:
         # (re)instantiate site
         # FIXME: do the build in a thread worker?
         self.site = Site(settings=self.site_settings)

@@ -1,0 +1,84 @@
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+# https://mypy.readthedocs.io/en/latest/config_file.html
+mypy_path = "stubs"
+
+# Warn about casting an expression to its inferred type (inverse: --no-warn-redundant-casts)
+warn_redundant_casts = true
+
+# Warn about unneeded '# type: ignore' comments (inverse: --no-warn-unused-ignores)
+warn_unused_ignores = true
+
+# Warn about returning values of type Any from non-Any typed functions (inverse: --no-warn-return-any)
+warn_return_any = true
+
+#  --no-warn-no-return       Do not warn about functions that end without returning (inverse: --warn-no-return)
+
+# Warn about statements or expressions inferred to be unreachable (inverse: --no-warn-unreachable)
+warn_unreachable = true
+
+# [[tool.mypy.overrides]]
+# module = ["staticsite.site", "staticsite.page", "staticsite.theme"]
+# 
+# #  --disallow-any-unimported
+# #                            Disallow Any types resulting from unfollowed imports
+# #  --disallow-any-expr       Disallow all expressions that have type Any
+# #  --disallow-any-decorated  Disallow functions that have Any in their signature after decorator transformation
+# #  --disallow-any-explicit   Disallow explicit Any in type positions
+# #  --disallow-any-generics   Disallow usage of generic types that do not specify explicit type parameters (inverse: --allow-any-generics)
+# #  --disallow-subclassing-any
+# #                            Disallow subclassing values of type 'Any' when defining classes (inverse: --allow-subclassing-any)
+# #
+# #  --disallow-untyped-calls  Disallow calling functions without type annotations from functions with type annotations (inverse: --allow-untyped-calls)
+# 
+# # Disallow defining functions without type annotations or with incomplete type annotations (inverse: --allow-untyped-defs)
+# # disallow_untyped_defs = true
+# 
+# # Disallow defining functions with incomplete type annotations (inverse: --allow-incomplete-defs)
+# disallow_incomplete_defs = true
+# 
+# # Type check the interior of functions without type annotations (inverse: --no-check-untyped-defs)
+# check_untyped_defs = true
+# 
+# # Disallow decorating typed functions with untyped decorators (inverse: --allow-untyped-decorators)
+# disallow_untyped_decorators = true
+# 
+# #  --allow-untyped-globals   Suppress toplevel errors caused by missing annotations (inverse: --disallow-untyped-globals)
+# #  --allow-redefinition      Allow unconditional variable redefinition with a new type (inverse: --disallow-redefinition)
+# 
+# # Treat imports as private unless aliased (inverse: --implicit-reexport)
+# no_implicit_reexport = true
+# 
+# #  --strict-equality         Prohibit equality, identity, and container checks for non-overlapping types (inverse: --no-strict-equality)
+# #  --strict-concatenate      Make arguments prepended via Concatenate be truly positional-only (inverse: --no-strict-concatenate)
+# 
+# # Strict mode; enables the following flags: --warn-unused-configs, --disallow-any-generics, --disallow-subclassing-any, --disallow-untyped-calls, --disallow-untyped-defs,
+# # --disallow-incomplete-defs, --check-untyped-defs, --disallow-untyped-decorators, --warn-redundant-casts, --warn-unused-ignores, --warn-return-any, --no-implicit-
+# # reexport, --strict-equality, --strict-concatenate
+# strict = true
+# 
+# [[tool.mypy.overrides]]
+# # TODO: strict typing of this module is not a priority
+# module = "staticsite.cmd.serve.*"
+# strict = false
+# disallow_incomplete_defs = false
+# check_untyped_defs = false
+# disallow_untyped_decorators = false
+# 
+# [[tool.mypy.overrides]]
+# # TODO: strict typing of this module is not a priority
+# module = "staticsite.features.links.*"
+# strict = false
+# disallow_incomplete_defs = false
+# check_untyped_defs = false
+# disallow_untyped_decorators = false
+# 
+# [[tool.mypy.overrides]]
+# # TODO: strict typing of this module is not a priority
+# module = "staticsite.cmd.*"
+# strict = false
+# disallow_incomplete_defs = false
+# check_untyped_defs = false
+# disallow_untyped_decorators = false

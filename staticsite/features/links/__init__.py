@@ -86,13 +86,13 @@ class LinksTemplatePageMixin(LinksPageMixin, TemplatePage):
         return rendered
 
 
-class LinksPage(DataPage):
+class LinksPage(LinksPageMixin, DataPage):
     """
     Page with a link collection posted as metadata only.
     """
     TYPE = "links"
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.links})
 
@@ -249,12 +249,12 @@ class Links(PageTrackingMixin, Feature):
         return links
 
     @jinja2.pass_context
-    def links_tag_index_url(self, context, tag):
+    def links_tag_index_url(self, context, tag) -> str:
         dest = self.indices[0].by_tag[tag]
         page = context.parent["page"]
         return page.url_for(dest)
 
-    def organize(self):
+    def organize(self) -> None:
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
         for page in self.tracked_pages:
@@ -264,7 +264,7 @@ class Links(PageTrackingMixin, Feature):
                 for tag in link.tags:
                     self.by_tag[tag].append(link)
 
-    def generate(self):
+    def generate(self) -> None:
         # Call analyze on all .links pages, to populate them
         for index in self.indices:
             index.organize()

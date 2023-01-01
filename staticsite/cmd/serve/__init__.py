@@ -7,7 +7,7 @@ log = logging.getLogger("serve")
 
 
 class ServerMixin:
-    def start_server(self):
+    def start_server(self) -> None:
         try:
             import tornado.httpserver
             import tornado.netutil
@@ -38,7 +38,7 @@ class ServerMixin:
         server = tornado.httpserver.HTTPServer(app)
         server.add_sockets(sockets)
 
-        async def open_browser():
+        async def open_browser() -> None:
             webbrowser.open_new_tab(url)
 
         if not getattr(self.args, "no_start", True):
@@ -49,7 +49,7 @@ class ServerMixin:
         loop = asyncio.get_event_loop()
         loop.run_forever()
 
-    def run(self):
+    def run(self) -> None:
         self.start_server()
 
 
@@ -69,7 +69,7 @@ class Serve(ServerMixin, SiteCommand):
 class Show(ServerMixin, Command):
     "Show the current directory in a browser"
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
 
         # Set default project root if undefined

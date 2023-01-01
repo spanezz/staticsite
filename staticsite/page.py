@@ -12,9 +12,8 @@ import jinja2
 import markupsafe
 
 from . import fields
-from .node import Path
 from .render import RenderedString
-from .site import SiteElement
+from .site import Path, SiteElement
 from .utils.arrange import arrange
 
 if TYPE_CHECKING:
@@ -66,7 +65,7 @@ class CrossreferenceField(fields.Field[P, V]):
         super().__set__(page, value)
 
 
-class Pages(collections.abc.Sequence):
+class Pages(collections.abc.Sequence["Page"]):
     """
     List of pages, resolved at `crossreference` time, that can be provided as:
      - path to another page, relative to this page
@@ -95,7 +94,7 @@ class Pages(collections.abc.Sequence):
         else:
             raise RuntimeError("pages field is not string, list of pages, or dict")
 
-    def resolve(self):
+    def resolve(self) -> None:
         """
         Fill self.pages using self.query
         """
@@ -113,13 +112,13 @@ class Pages(collections.abc.Sequence):
     def to_dict(self) -> Optional[list[Page]]:
         return self.pages
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.pages is None:
             return repr(self.query)
         else:
             return repr(self.pages)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, list):
             return self.pages == other
         elif isinstance(other, dict):
@@ -129,12 +128,12 @@ class Pages(collections.abc.Sequence):
         else:
             return False
 
-    def __len__(self):
+    def __len__(self) -> int:
         if self.pages is None:
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return len(self.pages)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> Page:
         if self.pages is None:
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return self.pages.__getitem__(key)
@@ -292,13 +291,13 @@ class Related:
         self.page = page
         self.pages: dict[str, Union[str, Page]] = {}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Related({self.page!r}, {self.pages!r}))"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.pages.__str__()
 
-    def __getitem__(self, name: str):
+    def __getitem__(self, name: str) -> Optional[Page]:
         if (val := self.pages.get(name)) is None:
             pass
         elif isinstance(val, str):
@@ -306,14 +305,14 @@ class Related:
             self.pages[name] = val
         return val
 
-    def __setitem__(self, name: str, page: Union[str, Page]):
+    def __setitem__(self, name: str, page: Union[str, Page]) -> None:
         if (old := self.pages.get(name)) is not None and old != self.page:
             log.warn("%s: attempt to set related.%s to %r but it was already %r",
                      self, name, page, old)
             return
         self.pages[name] = page
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return self.pages
 
     def get(self, *args):
@@ -381,7 +380,7 @@ class Meta:
         except AttributeError:
             raise KeyError(key)
 
-    def __contains__(self, key: str):
+    def __contains__(self, key: str) -> bool:
         if (field := self._page._fields.get(key)) is None:
             return False
         if field.internal:
@@ -475,7 +474,7 @@ class Page(SiteElement):
             dst: str,
             leaf: bool,
             directory_index: bool = False,
-            **kw):
+            **kw) -> None:
         # Set these fields early as they are used by __str__/__repr__
         # Node where this page is installed in the rendered structure
         self.node: Node = node
@@ -536,7 +535,7 @@ class Page(SiteElement):
     def lookup_page(self, path: Path) -> Optional[Page]:
         return self.search_root_node.lookup_page(path)
 
-    def url_for(self, target: Union[str, "Page"], absolute=False, static=False) -> str:
+    def url_for(self, target: Union[str, "Page"], absolute: bool = False, static: bool = False) -> str:
         """
         Generate a URL for a page, specified by:
 
@@ -586,13 +585,13 @@ class Page(SiteElement):
     def check(self, checker):
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.site_path
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.TYPE}:auto:{self.site_path}"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         from .utils import dump_meta
         res = {
             "meta": dump_meta(self.meta),
@@ -644,13 +643,13 @@ It defaults to false, or true if `meta.date` is in the future.
         super().__init__(site, parent=node, node=node, **kw)
         self.source_name: str = os.path.basename(self.src.relpath)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.site_path
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.TYPE}:{self.src.relpath}"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         res = super().to_dict()
         res["src"] = {
             "relpath": str(self.src.relpath),
@@ -707,7 +706,7 @@ class AutoPage(Page):
     def __init__(
             self, site: Site, *,
             created_from: Optional[Page] = None,
-            **kw):
+            **kw) -> None:
         if created_from is None:
             raise RuntimeError("created_from is None in AutoPage")
         super().__init__(site, parent=created_from, created_from=created_from, **kw)
@@ -755,7 +754,7 @@ class TemplatePage(Page):
     """)
 
     @cached_property
-    def page_template(self):
+    def page_template(self) -> jinja2.Template:
         template = self.meta["template"]
         if isinstance(template, jinja2.Template):
             return template
