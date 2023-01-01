@@ -6,7 +6,7 @@ import enum
 import logging
 import os
 from functools import cached_property
-from typing import (TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union)
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union
 
 import jinja2
 import markupsafe
@@ -15,6 +15,7 @@ from . import fields
 from .node import Path
 from .render import RenderedString
 from .site import SiteElement
+from .utils.arrange import arrange
 
 if TYPE_CHECKING:
     from .file import File
@@ -147,6 +148,14 @@ class Pages(collections.abc.Sequence):
         if self.pages is None:
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return self.pages.__reversed__()
+
+    def arrange(self, sort: str, limit: Optional[int] = None) -> list[Page]:
+        """
+        Sort the pages by ``sort`` and take the first ``limit`` ones
+        """
+        if self.pages is None:
+            raise RuntimeError(f"{self.page}.arrange is accessed before the crossreference step has run")
+        return arrange(self.pages, sort=sort, limit=limit)
 
 
 class PagesField(CrossreferenceField["Page", Pages]):

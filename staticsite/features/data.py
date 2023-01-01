@@ -12,7 +12,6 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.features.jinja2 import RenderPartialTemplateMixin
-from staticsite.node import Node
 from staticsite.page import Page, SourcePage, TemplatePage
 from staticsite.page_filter import PageFilter
 from staticsite.utils import yaml_codec
@@ -20,6 +19,7 @@ from staticsite.utils import yaml_codec
 if TYPE_CHECKING:
     from staticsite import file, fstree
     from staticsite.site import Site
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("data")
 
@@ -79,7 +79,7 @@ class DataPages(PageTrackingMixin, Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken = []

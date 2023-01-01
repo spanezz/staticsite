@@ -19,7 +19,7 @@ from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
-    from staticsite.node import Node
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("markdown")
 
@@ -134,7 +134,7 @@ class MarkdownPages(MarkupFeature, Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: List[str] = []

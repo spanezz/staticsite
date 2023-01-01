@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import Any, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
 
 import jinja2
 import markupsafe
@@ -13,7 +13,11 @@ import markupsafe
 from . import toposort
 from .file import File
 from .page import ImagePage, Page, PageNotFoundError
-from .utils import arrange, front_matter
+from .utils import front_matter
+from .utils.arrange import arrange
+
+if TYPE_CHECKING:
+    from .page import Pages
 
 log = logging.getLogger("theme")
 
@@ -278,7 +282,7 @@ class Theme:
         self.jinja2.filters["datetime_format"] = self.jinja2_datetime_format
         self.jinja2.filters["next_month"] = self.jinja2_next_month
         self.jinja2.filters["basename"] = self.jinja2_basename
-        self.jinja2.filters["arrange"] = arrange
+        self.jinja2.filters["arrange"] = self.jinja2_arrange
 
         # Add feature-provided globals and filters
         for feature in self.site.features.ordered():
@@ -432,3 +436,10 @@ class Theme:
             res.append(f" {escape(k)}='{escape(v)}'")
         res.append("></img>")
         return markupsafe.Markup("".join(res))
+
+    def jinja2_arrange(self, pages: Union[Pages, list[Page]], *args, **kw) -> list[Page]:
+        from .page import Pages
+        if isinstance(pages, Pages):
+            return pages.arrange(*args, **kw)
+        else:
+            return arrange(pages, *args, **kw)

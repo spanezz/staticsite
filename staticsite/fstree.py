@@ -13,7 +13,7 @@ from .utils import front_matter, open_dir_fd
 
 if TYPE_CHECKING:
     from .site import Site
-    from .node import SourceNode
+    from .source_node import SourceNode, SourcePageNode, SourceAssetNode
 
 log = logging.getLogger("fstree")
 
@@ -110,8 +110,9 @@ class PageTree(Tree):
     """
     Filesystem tree that can contain pages and assets
     """
-    def __init__(self, *, site: Site, src: File, node: SourceNode):
+    def __init__(self, *, site: Site, src: File, node: SourcePageNode):
         super().__init__(site=site, src=src, node=node)
+        self.node: SourcePageNode
 
         # Rules for assigning metadata to subdirectories
         self.dir_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
@@ -198,7 +199,7 @@ class PageTree(Tree):
             else:
                 self.sub[name] = PageTree(site=self.site, src=src, node=self.node.page_child(name, src))
 
-    def populate_node(self):
+    def populate_node(self) -> None:
         # Add the metadata scanned for this directory
 
         # Compute metadata for files
@@ -268,6 +269,9 @@ class AssetTree(Tree):
     """
     Filesystem tree that only contains assets
     """
+    def __init__(self, *, site: Site, src: File, node: SourceAssetNode):
+        super().__init__(site=site, src=src, node=node)
+
     def _scandir(self):
         with os.scandir(self.dir_fd) as entries:
             for entry in entries:
@@ -291,7 +295,7 @@ class AssetTree(Tree):
                         log.warning("%s: cannot stat() file: broken symlink?",
                                     os.path.join(self.src.abspath, entry.name))
 
-    def populate_node(self):
+    def populate_node(self) -> None:
         # Load every file as an asset
         for fname, src in self.files.items():
             if src.stat is None:

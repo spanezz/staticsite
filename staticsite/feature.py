@@ -3,19 +3,24 @@ from __future__ import annotations
 import logging
 import sys
 from collections import defaultdict
-from typing import (Any, Callable, Dict, Generic, List, Optional, Sequence,
-                    Type, TypeVar)
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Generic, List,
+                    Optional, Sequence, Type, TypeVar, cast)
 
 from . import fields, file, fstree, site, toposort
+from .asset import Asset
 from .node import Node
 from .page import Page
-from .asset import Asset
+
+if TYPE_CHECKING:
+    from .source_node import SourcePageNode
 
 log = logging.getLogger("feature")
 
 
 P = TypeVar("P", bound=Page)
 V = TypeVar("V")
+NT = TypeVar("NT", bound=Type[Node])
+PT = TypeVar("PT", bound=Type[Page])
 
 
 class TrackedField(fields.Field[P, V]):
@@ -111,7 +116,7 @@ class Feature:
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         """
@@ -213,12 +218,12 @@ class Features:
         # Features sorted by topological order
         self.sorted = None
 
-    def get_node_class(self, cls: Type[Node]) -> Type[Node]:
+    def get_node_class(self, cls: NT) -> NT:
         """
         Given a base Node class, return its version with added mixins
         """
         if (final := self.node_classes.get(cls)):
-            return final
+            return cast(NT, final)
         bases: list[Type[Node]] = []
         for feature in self.ordered():
             bases.extend(feature.get_node_bases())
@@ -226,14 +231,14 @@ class Features:
             "__doc__": cls.__doc__, "__module__": cls.__module__
         })
         self.node_classes[cls] = final
-        return final
+        return cast(NT, final)
 
-    def get_page_class(self, cls: Type[Page]) -> Type[Page]:
+    def get_page_class(self, cls: PT) -> PT:
         """
         Given a base Page class, return its version with added mixins
         """
         if (final := self.page_classes.get(cls)):
-            return final
+            return cast(PT, final)
         bases: list[Type[Page]] = []
         for feature in self.ordered():
             bases.extend(feature.get_page_bases(cls))
@@ -241,7 +246,7 @@ class Features:
             "__doc__": cls.__doc__, "__module__": cls.__module__
         })
         self.page_classes[cls] = final
-        return final
+        return cast(PT, final)
 
     def ordered(self):
         return self.sorted

@@ -14,12 +14,12 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
-from staticsite.node import Node
 from staticsite.page import FrontMatterPage, TemplatePage, Page
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("rst")
 
@@ -145,7 +145,7 @@ class RestructuredText(MarkupFeature, Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         if not self.yaml_tags_filled:

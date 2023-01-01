@@ -14,7 +14,7 @@ from staticsite.utils.images import ImageScanner
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
-    from staticsite.node import Node
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("images")
 
@@ -122,7 +122,7 @@ class Images(PageTrackingMixin, Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []

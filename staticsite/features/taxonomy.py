@@ -16,7 +16,7 @@ from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
-    from staticsite.node import Node
+    from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("taxonomy")
 
@@ -59,7 +59,7 @@ class Taxonomy:
         if archive is not None:
             self.archive_meta.update(archive)
 
-    def create_index(self, node: Node) -> Optional[TaxonomyPage]:
+    def create_index(self, node: SourcePageNode) -> Optional[TaxonomyPage]:
         """
         Create the index page for this taxonomy
         """
@@ -350,7 +350,7 @@ class TaxonomyFeature(Feature):
 
     def load_dir(
             self,
-            node: Node,
+            node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
         taken: list[str] = []
@@ -421,7 +421,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
 
     taxonomy = fields.Field["TaxonomyPage", Taxonomy](doc="Structured taxonomy information")
 
-    def __init__(self, *args, node: None, **kw):
+    def __init__(self, *args, node: SourcePageNode, **kw):
         kw.setdefault("nav_title", node.name.capitalize())
         super().__init__(*args, node=node, **kw)
 
@@ -508,7 +508,7 @@ class CategoryPage(TemplatePage, AutoPage):
     taxonomy = fields.Field["CategoryPage", TaxonomyPage](doc="Page that defined this taxonomy")
     name = fields.Field["CategoryPage", str](doc="Name of the category shown in this page")
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         # Category name
         self.name = self.node.name

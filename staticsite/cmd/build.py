@@ -168,7 +168,9 @@ class Builder:
         self.site = site
         self.type_filter = type_filter
         self.path_filter = path_filter
-        if self.site.settings.OUTPUT is None:
+        if site.settings.PROJECT_ROOT is None:
+            raise Fail("PROJECT_ROOT is not set")
+        if site.settings.OUTPUT is None:
             raise Fail(
                     "No output directory configured:"
                     " please use --output or set OUTPUT in settings.py or .staticsite.py")
@@ -249,9 +251,11 @@ class Builder:
 #             pids.discard(pid)
 
     def write_single_process(self) -> None:
-        root = self.site.root
+        root: Node = self.site.root
         if self.path_filter is not None:
-            root = root.lookup_node(Path.from_string(self.path_filter))
+            if (node := root.lookup_node(Path.from_string(self.path_filter))) is None:
+                raise Fail(f"path filter {self.path_filter} does not match a path in the site")
+            root = node
         stats = RenderStats()
         os.makedirs(self.build_root, exist_ok=True)
         with RenderDirectory.open(self.build_root) as render_dir:
