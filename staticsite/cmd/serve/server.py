@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING
 import os
 import gc
 import mimetypes
@@ -35,19 +35,19 @@ class ChangeMonitor:
         # See https://stackoverflow.com/questions/26414052/watch-for-a-file-with-asyncio
         self.watch_manager = pyinotify.WatchManager()
         # Map absolute paths to Watch handlers
-        self.watches: Dict[str, pyinotify.Watch] = {}
+        self.watches: dict[str, dict[str, int]] = {}
         # self.watch = self.watch_manager.add_watch(self.media_dir, pyinotify.IN_DELETE)
         self.notifier = pyinotify.AsyncioNotifier(
                 self.watch_manager, self.loop, default_proc_fun=self.on_event)
         # Pending trigger
         self.pending = None
 
-    def update_watch_dirs(self, dirs: List[str]):
+    def update_watch_dirs(self, dirs: list[str]):
         dirs = [os.path.realpath(d) for d in dirs]
 
         for path in self.watches.keys() - dirs:
             watch = self.watches.pop(path)
-            self.watch_manager.rm_watch(watch)
+            self.watch_manager.rm_watch(list(watch.values()))
             log.info("%s: removing watch", path)
 
         for path in set(dirs) - self.watches.keys():
@@ -173,7 +173,7 @@ class Application(tornado.web.Application):
         self.pages = PageFS(self.site)
         gc.collect()
 
-    def get_source_dirs(self) -> List[str]:
+    def get_source_dirs(self) -> list[str]:
         """
         Get the directories used as sources to the site
         """
