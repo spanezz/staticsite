@@ -137,7 +137,8 @@ class Application(tornado.web.Application):
         ]
 
         super().__init__(
-            urls,
+            # TODO: this seems like a glitch in tornado's typing
+            urls,  # type: ignore
             xsrf_cookies=True,
         )
 
