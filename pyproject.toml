@@ -19,6 +19,14 @@ warn_return_any = true
 # Warn about statements or expressions inferred to be unreachable (inverse: --no-warn-unreachable)
 warn_unreachable = true
 
+[[tool.mypy.overrides]]
+module = ["staticsite.fields"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_reexport = true
+
 # [[tool.mypy.overrides]]
 # module = ["staticsite.site", "staticsite.page", "staticsite.theme"]
 # 
@@ -34,7 +42,7 @@ warn_unreachable = true
 # #  --disallow-untyped-calls  Disallow calling functions without type annotations from functions with type annotations (inverse: --allow-untyped-calls)
 # 
 # # Disallow defining functions without type annotations or with incomplete type annotations (inverse: --allow-untyped-defs)
-# # disallow_untyped_defs = true
+# disallow_untyped_defs = true
 # 
 # # Disallow defining functions with incomplete type annotations (inverse: --allow-incomplete-defs)
 # disallow_incomplete_defs = true
