@@ -214,16 +214,6 @@ class RootNode(SourcePageNode):
     def __init__(self, site: Site, *, src: file.File):
         super().__init__(site, name="", src=src, parent=None)
 
-    def root_for_site_path(self, path: Path) -> SourceNode:
-        """
-        Return the subnode at the given path, creating it if missing
-        """
-        res: SourceNode = self
-        while path:
-            res = self.page_child(path.head, src=self.src)
-            path = path.tail
-        return res
-
     def static_root(self, path: Path) -> SourceNode:
         """
         Return the subnode at the given path, creating it if missing
