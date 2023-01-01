@@ -289,7 +289,7 @@ class Theme:
             self.jinja2.globals.update(feature.j2_globals)
             self.jinja2.filters.update(feature.j2_filters)
 
-    def scan_assets(self):
+    def scan_assets(self) -> None:
         """
         Load static assets
         """
@@ -299,9 +299,10 @@ class Theme:
             if not os.path.isdir(root):
                 log.warning("%s: system asset directory not found", root)
                 continue
+            src = File.with_stat(name, root)
             self.site.scan_asset_tree(
-                src=File.with_stat(name, root),
-                node=self.site.static_root.asset_child(name),
+                src=src,
+                node=self.site.static_root.asset_child(name, src=src),
             )
 
         # Load assets from theme directories
