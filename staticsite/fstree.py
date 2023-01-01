@@ -220,7 +220,7 @@ class PageTree(Tree):
         # Create nodes for subtrees
         for name, tree in self.sub.items():
             # Compute metadata for this directory
-            dir_node = self.node.page_child(name, src=tree.src)
+            dir_node = self.node.sub[name]
             for pattern, dmeta in self.dir_rules:
                 if pattern.match(name):
                     dir_node.update_fields(dmeta)

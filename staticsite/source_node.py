@@ -19,12 +19,6 @@ class SourceNode(Node):
     """
     Node corresponding to a source directory
     """
-    def __init__(self, site: Site, name: str, *, src: file.File, parent: Optional[Node]):
-        super().__init__(site, name, parent=parent)
-
-        # The directory corresponding to this node
-        self.src = src
-
     def add_asset(self, *, src: file.File, name: str) -> Asset:
         """
         Add an Asset as a subnode of this one
@@ -73,31 +67,38 @@ class SourceNode(Node):
         Create the given child as a SourceNode
         """
         if (node := self.sub.get(name)) is not None:
-            if not isinstance(node, SourceNode):
+            if not isinstance(node, SourceAssetNode):
                 raise RuntimeError(
                         f"source node {name} already exists in {self.name}"
-                        f" as virtual node instead of source node {src.abspath}")
-            if node.src != src:
-                log.debug("assets: merging %s with %s", node.src.abspath, src.abspath)
-                # Replace src, since for assets we allow merging multiple dirs
-                node.src = src
+                        f" as {node.__class__.__name__} instead of SourceAssetNode {src.abspath}")
+            if src not in node.srcs:
+                log.debug("assets: merging %s into %s", src.abspath, node)
+                node.srcs.append(src)
             return node
-
-        node = self.site.features.get_node_class(SourceAssetNode)(site=self.site, name=name, parent=self, src=src)
-        self.sub[name] = node
-        return node
+        else:
+            node = self.site.features.get_node_class(
+                    SourceAssetNode)(site=self.site, name=name, parent=self, src=src)
+            self.sub[name] = node
+            return node
 
 
 class SourceAssetNode(SourceNode):
     """
     Node corresponding to a source directory that contains only asset pages
     """
+    def __init__(self, site: Site, name: str, *, src: file.File, parent: Node):
+        super().__init__(site, name, parent=parent)
+        self.srcs: list[file.File] = [src]
 
 
 class SourcePageNode(SourceNode):
     """
     Node corresponding to a source directory that contains non-asset pages
     """
+    def __init__(self, site: Site, name: str, *, src: file.File, parent: Optional[Node]):
+        super().__init__(site, name, parent=parent)
+        self.src: file.File = src
+
     def create_source_page_as_path(
             self,
             src: file.File,
@@ -184,10 +185,10 @@ class SourcePageNode(SourceNode):
         Create the given child as a SourceNode
         """
         if (node := self.sub.get(name)) is not None:
-            if not isinstance(node, SourceNode):
+            if not isinstance(node, SourcePageNode):
                 raise RuntimeError(
                         f"source node {name} already exists in {self.name}"
-                        f" as virtual node instead of source node {src.abspath}")
+                        f" as {node.__class__.__name__} instead of source node {src.abspath}")
             if node.src != src:
                 raise RuntimeError(
                         f"source node {name} already exists in {self.name}"
