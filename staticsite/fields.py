@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Generic, Optional, Sequence, Type, TypeVar
+from typing import (TYPE_CHECKING, Any, Generic, Iterable, Optional, Type,
+                    TypeVar)
 
 import jinja2
 
 if TYPE_CHECKING:
     import datetime
+
     from .site import Site
 
 log = logging.getLogger("fields")
@@ -24,6 +26,7 @@ class Field(Generic[P, V]):
             default: Optional[V] = None,
             structure: bool = False,
             internal: bool = False,
+            inherited: bool = False,
             tracked_by: Optional[str] = None,
             doc: Optional[str] = None):
         """
@@ -40,17 +43,30 @@ class Field(Generic[P, V]):
         self.default: Any = default
         self.structure: bool = structure
         self.internal: bool = internal
+        self.inherited: bool = inherited
         if doc is not None:
             self.__doc__ = doc
 
-    def get_notes(self) -> Sequence[str]:
-        return ()
+    def get_notes(self) -> Iterable[str]:
+        if self.inherited:
+            yield "Inherited from parent pages"
 
     def __set_name__(self, owner: Type[P], name: str) -> None:
         self.name = name
 
     def __get__(self, obj: P, type: Optional[Type] = None) -> V:
-        return obj.__dict__.get(self.name, self.default)
+        if self.inherited:
+            if self.name not in obj.__dict__:
+                if obj._parent is not None and self.name in obj._parent._fields:
+                    value = getattr(obj._parent, self.name)
+                else:
+                    value = self.default
+                obj.__dict__[self.name] = value
+                return value
+            else:
+                return obj.__dict__[self.name]
+        else:
+            return obj.__dict__.get(self.name, self.default)
 
     def __set__(self, obj: P, value: Any) -> None:
         obj.__dict__[self.name] = self._clean(obj, value)
@@ -59,36 +75,14 @@ class Field(Generic[P, V]):
         """
         Hook to allow to clean values before set
         """
-        return value
+        raise NotImplementedError(f"{self.__class__.__name__}._clean for {obj!r}.{self.name} not implemented")
 
 
-class Inherited(Field[P, V]):
+class Template(Field[P, jinja2.Template]):
     """
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
     """
-    def get_notes(self):
-        yield from super().get_notes()
-        yield "Inherited from parent pages"
-
-    def __get__(self, obj: P, type: Optional[Type] = None) -> V:
-        if self.name not in obj.__dict__:
-            if obj._parent is not None and self.name in obj._parent._fields:
-                value = getattr(obj._parent, self.name)
-            else:
-                value = self.default
-            obj.__dict__[self.name] = value
-            return value
-        else:
-            return obj.__dict__[self.name]
-
-
-class TemplateInherited(Inherited[P, jinja2.Template]):
-    """
-    This metadata, when present in a directory index, should be inherited by
-    other files in directories and subdirectories.
-    """
-
     def _clean(self, obj: P, value: Any) -> jinja2.Template:
         # Make sure the template is compiled
         if isinstance(value, jinja2.Template):
@@ -97,6 +91,30 @@ class TemplateInherited(Inherited[P, jinja2.Template]):
             return obj.site.theme.jinja2.from_string(value)
         else:
             raise ValueError(f"{value!r} is not a valid value for a template field")
+
+
+class Str(Field[P, str]):
+    """
+    Field containing a date
+    """
+    def _clean(self, obj: P, value: Any) -> str:
+        return str(value)
+
+
+class Int(Field[P, int]):
+    """
+    Field containing a date
+    """
+    def _clean(self, obj: P, value: Any) -> int:
+        return int(value)
+
+
+class Float(Field[P, float]):
+    """
+    Field containing a date
+    """
+    def _clean(self, obj: P, value: Any) -> float:
+        return float(value)
 
 
 class Date(Field[P, "datetime.datetime"]):

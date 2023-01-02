@@ -150,8 +150,34 @@ class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
             raise ValueError(f"{value!r} is not a string, a list of strings, or a list of Page objects")
 
 
+class TaxonomyPageField(fields.Field["CategoryPage", "TaxonomyPage"]):
+    """
+    Field containing a Page
+    """
+    def _clean(self, page: "CategoryPage", value: Any) -> TaxonomyPage:
+        if isinstance(value, TaxonomyPage):
+            return value
+        else:
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    " expecting, TaxonomyPage")
+
+
+class TaxonomyIndexField(fields.Field["TaxonomyPage", Taxonomy]):
+    """
+    Field containing a Taxonomy object
+    """
+    def _clean(self, page: "TaxonomyPage", value: Any) -> Taxonomy:
+        if isinstance(value, Taxonomy):
+            return value
+        else:
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    " expecting, Taxonomy")
+
+
 class BaseTaxonomyPageMixin(metaclass=fields.FieldsMetaclass):
-    series_title = fields.Field[Page, str](doc="""
+    series_title = fields.Str[Page](doc="""
         Series title from this page onwards.
 
         If this page is part of a series, and it defines `series_title`, then
@@ -419,7 +445,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
     TYPE = "taxonomy"
     TEMPLATE = "taxonomy.html"
 
-    taxonomy = fields.Field["TaxonomyPage", Taxonomy](doc="Structured taxonomy information")
+    taxonomy = TaxonomyIndexField(doc="Structured taxonomy information")
 
     def __init__(self, *args, node: SourcePageNode, **kw):
         kw.setdefault("nav_title", node.name.capitalize())
@@ -505,8 +531,8 @@ class CategoryPage(TemplatePage, AutoPage):
     TYPE = "category"
     TEMPLATE = "blog.html"
 
-    taxonomy = fields.Field["CategoryPage", TaxonomyPage](doc="Page that defined this taxonomy")
-    name = fields.Field["CategoryPage", str](doc="Name of the category shown in this page")
+    taxonomy = TaxonomyPageField(doc="Page that defined this taxonomy")
+    name = fields.Str["CategoryPage"](doc="Name of the category shown in this page")
 
     def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)

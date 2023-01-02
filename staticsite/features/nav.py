@@ -41,7 +41,7 @@ class NavData:
         return self.resolved
 
 
-class NavField(TrackedField[Page, NavData], fields.Inherited[Page, NavData]):
+class NavField(TrackedField[Page, NavData]):
     """
     List of page paths, relative to the page defining the nav element, that
     are used for the navbar.
@@ -49,6 +49,7 @@ class NavField(TrackedField[Page, NavData], fields.Inherited[Page, NavData]):
     tracked_by = "nav"
 
     def __init__(self, **kw):
+        kw.setdefault("inherited", True)
         kw.setdefault("default", ())
         super().__init__(**kw)
 
@@ -65,7 +66,7 @@ class NavNodeMixin(Node):
 
 class NavPageMixin(Page):
     nav = NavField(structure=True)
-    nav_title = fields.Field[Page, str](doc="""
+    nav_title = fields.Str[Page](doc="""
         Title to use when this page is linked in a navbar.
 
         It defaults to `page.title`, or to the series name for series pages.

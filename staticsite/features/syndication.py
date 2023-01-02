@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-from typing import Any, List, Optional, Sequence, Union, Type
+from typing import Any, List, Optional, Sequence, Union, Type, TypeVar
 
 import jinja2
 
@@ -12,6 +12,8 @@ from staticsite.feature import Feature, TrackedField, PageTrackingMixin
 from staticsite.page import AutoPage, Page, PageNotFoundError, ChangeExtent, TemplatePage
 
 log = logging.getLogger("syndication")
+
+P = TypeVar("P", bound="Page")
 
 
 class Syndication:
@@ -333,6 +335,19 @@ class SyndicationPageMixin(Page):
     # """)
 
 
+class SyndicationIndexField(fields.Field[P, SyndicationPageMixin]):
+    """
+    Field containing a Taxonomy object
+    """
+    def _clean(self, page: P, value: Any) -> SyndicationPageMixin:
+        if isinstance(value, SyndicationPageMixin):
+            return value
+        else:
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    " expecting SyndicationPageMixin")
+
+
 def _get_syndicated_pages(page: SyndicationPageMixin, limit: Optional[int] = None) -> List[Page]:
     """
     Get the sorted list of syndicated pages for a page
@@ -483,7 +498,7 @@ class SyndicationPage(TemplatePage, AutoPage):
     """
     Base class for syndication pages
     """
-    index = fields.Field["SyndicationPage", SyndicationPageMixin](doc="""
+    index = SyndicationIndexField["SyndicationPage"](doc="""
         Page that defined the syndication for this feed
     """)
 
@@ -538,8 +553,8 @@ class ArchivePage(TemplatePage, AutoPage):
     * `page.created_from`: the page for which the archive page was created
     """
 
-    index = fields.Field["ArchivePage", SyndicationPageMixin](doc="""
-        Page that defined the syndication for this feed
+    index = SyndicationIndexField["SyndicationPage"](doc="""
+        Page that defined the syndication for this archive
     """)
 
     TYPE = "archive"

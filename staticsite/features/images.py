@@ -40,6 +40,16 @@ class ImageField(TrackedField[Page, Union[str, "Image"]]):
     """
     tracked_by = "images"
 
+    def _clean(self, page: Page, value: Any) -> Union[str, "Image"]:
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, Image):
+            return value
+        else:
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    " expecting str or Image")
+
 
 class ImagePageMixin(Page):
     image = ImageField()
@@ -225,9 +235,9 @@ class Image(ImagePage, SourcePage):
     """
     TYPE = "image"
 
-    lat = fields.Field[Page, float](doc="Image latitude")
-    lon = fields.Field[Page, float](doc="Image longitude")
-    image_orientation = fields.Field[Page, int](doc="Image orientation")
+    lat = fields.Float[Page](doc="Image latitude")
+    lon = fields.Float[Page](doc="Image longitude")
+    image_orientation = fields.Int[Page](doc="Image orientation")
 
     def __init__(self, *args, mimetype: str, **kw):
         super().__init__(*args, **kw)

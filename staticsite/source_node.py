@@ -204,7 +204,7 @@ class RootNode(SourcePageNode):
     """
     Node at the root of the site tree
     """
-    title = fields.Field["Node", str](doc="""
+    title = fields.Str["Node"](doc="""
         Title used as site name.
 
         This only makes sense for the root node of the site hierarchy, and

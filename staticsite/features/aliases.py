@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Sequence, Type
+from typing import Any, Sequence, Type
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
@@ -19,6 +19,31 @@ class AliasField(TrackedField[Page, list[str]]):
     existing links when moving a page to a different location.
     """
     tracked_by = "aliases"
+
+    def _clean(self, page: Page, value: Any) -> list[str]:
+        if isinstance(value, str):
+            return [value]
+        elif isinstance(value, list):
+            return value
+        elif isinstance(value, tuple):
+            return list(value)
+        else:
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    " expecting, str, list[str], or tuple[str]")
+
+
+class SourcePageField(fields.Field["AliasPage", SourcePage]):
+    """
+    Field containing a SourcePage
+    """
+    def _clean(self, page: "AliasPage", value: Any) -> SourcePage:
+        if isinstance(value, SourcePage):
+            return value
+        else:
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    " expecting, SourcePage")
 
 
 class AliasesPageMixin(Page):
@@ -68,7 +93,7 @@ class AliasPage(TemplatePage, AutoPage):
     """
     Page rendering a redirect to another page
     """
-    page = fields.Field["AliasPage", SourcePage](doc="Page this alias redirects to")
+    page = SourcePageField(doc="Page this alias redirects to")
     TYPE = "alias"
     TEMPLATE = "redirect.html"
 
