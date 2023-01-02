@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("links")
 
 
-class LinksField(TrackedField["LinksPageMixin", dict[str, Any]]):
+class LinksField(TrackedField["LinksPageMixin", list[dict[str, Any]]]):
     """
     Extra metadata for external links.
 
@@ -36,6 +36,11 @@ class LinksField(TrackedField["LinksPageMixin", dict[str, Any]]):
       `title` and `url` keys
     """
     tracked_by = "links"
+
+    def _clean(self, page: LinksPageMixin, value: Any) -> list[dict[str, Any]]:
+        if not isinstance(value, list):
+            raise TypeError(f"value for {page!r}.{self.name} has type {type(value).__name__} instead of dict")
+        return value
 
 
 class LinksPageMixin(Page):

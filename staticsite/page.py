@@ -721,20 +721,20 @@ unless draft mode is enabled.
 It defaults to false, or true if `meta.date` is in the future.
 """)
 
-    old_footprint = fields.Field["SourcePage", Optional[dict[str, Any]]](internal=True, doc="""
-        Cached footprint from the previous run, or None
-    """)
-
     def __init__(
             self, site: Site, *,
             node: Node,
             src: File,
+            old_footprint: Optional[dict[str, Any]] = None,
             **kw: Any):
         # Information about the source file for this page
         # Set right away so that __repr__ works
         self.src: File = src
         super().__init__(site, parent=node, node=node, **kw)
         self.source_name: str = os.path.basename(self.src.relpath)
+
+        # Cached footprint from the previous run, or None
+        self.old_footprint: Optional[dict[str, Any]] = old_footprint
 
     def __str__(self) -> str:
         return self.site_path
