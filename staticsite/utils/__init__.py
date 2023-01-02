@@ -5,7 +5,7 @@ import datetime
 import logging
 import os
 import time
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Any, Generator, Optional, Union
 
 import pytz
 
@@ -47,7 +47,7 @@ def format_date_iso8601(dt: datetime.datetime) -> str:
 
 
 @contextlib.contextmanager
-def timings(fmtstr, *args, **kw):
+def timings(fmtstr: str, *args: Any, **kw: Any) -> Generator[None, None, None]:
     """
     Times the running of a command, and writes a log entry afterwards.
 
@@ -60,14 +60,16 @@ def timings(fmtstr, *args, **kw):
     log.info(fmtstr, (end - start) / 1_000_000_000, *args, extra=kw)
 
 
-def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, Dict]:
+def dump_meta(val: Any) -> Union[None, bool, int, float, str, list, tuple, set, dict]:
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """
     import jinja2
 
     from ..page import Page
-    if val in (None, True, False) or isinstance(val, (int, float)):
+    if val is None:
+        return None
+    elif isinstance(val, (bool, int, float)):
         return val
     elif isinstance(val, str):
         return str(val)
@@ -86,7 +88,7 @@ def dump_meta(val: Any) -> Union[None, bool, int, float, str, List, Tuple, Set, 
 
 
 @contextlib.contextmanager
-def open_dir_fd(path, dir_fd=None):
+def open_dir_fd(path: str, dir_fd: Optional[int] = None) -> Generator[int, None, None]:
     """
     Return a dir_fd for a directory. Supports dir_fd for opening.
     """
