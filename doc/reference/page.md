@@ -43,13 +43,6 @@ Return a URL that can be used in this page to link to `target`.
 Set `absolute=True` to force it to be an absolute URL.
 
 
-## `html_full() -> str`
-
-Render the full page, from the `<html>` tag downwards.
-
-This is used to render the page itself.
-
-
 ## `html_body() -> str`
 
 Render the full body of the page, with UI elements excluding

@@ -856,16 +856,6 @@ class TemplatePage(Page):
         return self.site.theme.jinja2.get_template(template)
 
     @jinja2.pass_context
-    def html_full(self, context: jinja2.runtime.Context, **kw: Any) -> str:
-        """
-        Render the full page, from the <html> tag downwards.
-        """
-        context = dict(context)
-        context["render_style"] = "full"
-        context.update(kw)
-        return self.render_template(self.page_template, template_args=context)
-
-    @jinja2.pass_context
     def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         """
         Render the full body of the page, with UI elements excluding
@@ -893,7 +883,11 @@ class TemplatePage(Page):
         return ""
 
     def render(self, **kw: Any) -> RenderedElement:
-        return RenderedString(self.html_full(kw))
+        """
+        Render the full page, from the <html> tag downwards.
+        """
+        rendered = self.render_template(self.page_template, template_args={"render_style": "full"})
+        return RenderedString(rendered)
 
     def render_template(self, template: jinja2.Template, template_args: Optional[dict[Any, Any]] = None) -> str:
         """
