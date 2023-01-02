@@ -309,7 +309,7 @@ class SyndicatedField(fields.Bool[Page]):
     """
     def __get__(self, page: Page, type: Optional[Type] = None) -> bool:
         if (cur := page.__dict__.get(self.name)) is None:
-            value = page.indexed
+            value = cast(bool, page.indexed)
             page.__dict__[self.name] = value
             return value
         else:
@@ -513,6 +513,8 @@ class SyndicationPage(TemplatePage, AutoPage):
             self.date = self.site.generation_time
 
     def _compute_change_extent(self) -> ChangeExtent:
+        if self.created_from is None:
+            raise AssertionError(f"SyndicationPage {self!r} found without created_from")
         return self.created_from._compute_change_extent()
 
 
@@ -571,6 +573,8 @@ class ArchivePage(TemplatePage, AutoPage):
         self.created_from.add_related("archive", self)
 
     def _compute_change_extent(self) -> ChangeExtent:
+        if self.created_from is None:
+            raise AssertionError(f"ArchivePage {self!r} found without created_from")
         return self.created_from._compute_change_extent()
 
 
