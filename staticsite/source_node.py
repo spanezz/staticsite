@@ -2,24 +2,28 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar
 
 from . import fields, file
 from .node import Node, SkipPage
 from .site import Path
 
 if TYPE_CHECKING:
+    from . import dirindex
     from .asset import Asset
+    from .page import Page
     from .site import Site
 
 log = logging.getLogger("node")
+
+P = TypeVar("P", bound="Page")
 
 
 class SourceNode(Node):
     """
     Node corresponding to a source directory
     """
-    def add_asset(self, *, src: file.File, name: str) -> Asset:
+    def add_asset(self, *, src: file.File, name: str) -> Optional[Asset]:
         """
         Add an Asset as a subnode of this one
         """
@@ -29,10 +33,11 @@ class SourceNode(Node):
 
     def create_source_page_as_file(
             self, *,
+            page_cls: Type[P],
             src: file.File,
             dst: str,
             date: Optional[datetime.datetime] = None,
-            **kw):
+            **kw: Any) -> Optional[P]:
         """
         Create a page of the given type, attaching it at the given path
         """
@@ -58,7 +63,7 @@ class SourceNode(Node):
             return None
 
         try:
-            return self._create_leaf_page(dst=dst, src=src, date=date, **kw)
+            return self._create_leaf_page(page_cls=page_cls, dst=dst, src=src, date=date, **kw)
         except SkipPage:
             return None
 
@@ -101,10 +106,11 @@ class SourcePageNode(SourceNode):
 
     def create_source_page_as_path(
             self,
+            page_cls: Type[P],
             src: file.File,
             name: str,
             date: Optional[datetime.datetime] = None,
-            **kw):
+            **kw: Any) -> Optional[P]:
         """
         Create a page of the given type, attaching it at the given path
         """
@@ -132,15 +138,16 @@ class SourcePageNode(SourceNode):
         node = self._child(name)
 
         try:
-            return node._create_index_page(directory_index=False, src=src, date=date, **kw)
+            return node._create_index_page(page_cls=page_cls, directory_index=False, src=src, date=date, **kw)
         except SkipPage:
             return None
 
     def create_source_page_as_index(
             self,
+            page_cls: Type[P],
             src: file.File,
             date: Optional[datetime.datetime] = None,
-            **kw):
+            **kw: Any) -> Optional[P]:
         """
         Create a page of the given type, attaching it at the given path
         """
@@ -166,11 +173,11 @@ class SourcePageNode(SourceNode):
             return None
 
         try:
-            return self._create_index_page(directory_index=True, src=src, date=date, **kw)
+            return self._create_index_page(page_cls=page_cls, directory_index=True, src=src, date=date, **kw)
         except SkipPage:
             return None
 
-    def add_directory_index(self, src: file.File):
+    def add_directory_index(self, src: file.File) -> Optional[dirindex.Dir]:
         """
         Add a directory index to this node
         """

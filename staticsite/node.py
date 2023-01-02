@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Generator, Optional, Sequence, TextIO, Type
+from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, TextIO, Type, TypeVar
 
 from . import fields
 from .site import SiteElement, Path
@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from .site import Site
 
 log = logging.getLogger("node")
+
+P = TypeVar("P", bound="Page")
 
 
 class SkipPage(Exception):
@@ -66,10 +68,10 @@ class Node(SiteElement):
         # Subdirectories
         self.sub: dict[str, Node] = {}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Node({self.name})"
 
-    def print(self, lead: str = "", file: Optional[TextIO] = None):
+    def print(self, lead: str = "", file: Optional[TextIO] = None) -> None:
         if self.page:
             print(f"{lead}{self.name!r} page:{self.page!r}", file=file)
         else:
@@ -131,9 +133,10 @@ class Node(SiteElement):
         return None
 
     def create_auto_page_as_file(
-            self,
+            self, *,
+            page_cls: Type[P],
             dst: str,
-            **kw):
+            **kw: Any) -> Optional[P]:
         """
         Create a page of the given type, attaching it at the given path
         """
@@ -145,16 +148,17 @@ class Node(SiteElement):
 
         try:
             if dst:
-                return self._create_leaf_page(dst=dst, **kw)
+                return self._create_leaf_page(page_cls=page_cls, dst=dst, **kw)
             else:
-                return self._create_index_page(directory_index=False,  **kw)
+                return self._create_index_page(page_cls=page_cls, directory_index=False,  **kw)
         except SkipPage:
             return None
 
     def create_auto_page_as_path(
             self,
+            page_cls: Type[P],
             name: str,
-            **kw):
+            **kw: Any) -> Optional[P]:
         """
         Create a page of the given type, attaching it at the given path
         """
@@ -167,15 +171,15 @@ class Node(SiteElement):
         node = self._child(name)
 
         try:
-            return node._create_index_page(directory_index=False,  **kw)
+            return node._create_index_page(page_cls=page_cls, directory_index=False,  **kw)
         except SkipPage:
             return None
 
     def _create_index_page(
             self, *,
-            page_cls: Type[Page],
+            page_cls: Type[P],
             directory_index: bool = False,
-            **kw):
+            **kw: Any) -> P:
         from .page import PageValidationError
 
         if directory_index:
@@ -214,9 +218,9 @@ class Node(SiteElement):
 
     def _create_leaf_page(
             self, *,
-            page_cls: Type[Page],
+            page_cls: Type[P],
             dst: str,
-            **kw):
+            **kw: Any) -> P:
         from .page import PageValidationError
 
         # Create the page
