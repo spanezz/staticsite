@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("page")
 
+T = TypeVar("T")
+
 
 class ChangeExtent(enum.IntEnum):
     """
@@ -150,11 +152,11 @@ class Pages(collections.abc.Sequence["Page"]):
         return len(self.pages)
 
     @overload
-    def __getitem__(self, int, /) -> Page:
+    def __getitem__(self, key: int, /) -> Page:
         ...
 
     @overload
-    def __getitem__(self, slice, /) -> Sequence[Page]:
+    def __getitem__(self, key: slice, /) -> Sequence[Page]:
         ...
 
     def __getitem__(self, key: Union[int, slice], /) -> Union[Page, Sequence[Page]]:
@@ -368,17 +370,39 @@ class Related(collections.abc.MutableMapping[str, "Page"]):
     def to_dict(self) -> dict[str, Any]:
         return self.pages
 
-    def get(self, *args):
-        return self.pages.get(*args)
+    @overload
+    def get(self, key: str, /) -> Optional[Page]:
+        ...
 
-    def keys(self):
+    @overload
+    def get(self, key: str, /, default: Union[Page, T]) -> Union[Page, T]:
+        ...
+
+    def get(self, key: str, default: Union[Page, T, None] = None) -> Union[Page, T, None]:
+        if (val := self.pages.get(key, None)) is None:
+            return default
+        elif isinstance(val, str):
+            page = self.page.resolve_path(val)
+            self.pages[key] = page
+            return page
+        else:
+            return val
+
+    def _ensure_all_resolved(self) -> None:
+        for name, page in self.pages.items():
+            if isinstance(page, str):
+                self.pages[name] = self.page.resolve_path(page)
+
+    def keys(self) -> collections.abc.KeysView[str]:
         return self.pages.keys()
 
-    def values(self):
-        return self.pages.values()
+    def values(self) -> collections.abc.ValuesView[Page]:
+        self._ensure_all_resolved()
+        return cast(collections.abc.ValuesView[Page], self.pages.values())
 
-    def items(self):
-        return self.pages.items()
+    def items(self) -> collections.abc.ItemsView[str, Page]:
+        self._ensure_all_resolved()
+        return cast(collections.abc.ItemsView[str, Page], self.pages.items())
 
     def __eq__(self, obj: Any) -> bool:
         if isinstance(obj, Related):
@@ -525,7 +549,7 @@ class Page(SiteElement):
             dst: str,
             leaf: bool,
             directory_index: bool = False,
-            **kw) -> None:
+            **kw: Any) -> None:
         # Set these fields early as they are used by __str__/__repr__
 
         # Node where this page is installed in the rendered structure
@@ -577,7 +601,7 @@ class Page(SiteElement):
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,
-            **kw) -> list["Page"]:
+            **kw: Any) -> list["Page"]:
         """
         If not set, default root to the path of the containing directory for
         this page
@@ -636,7 +660,7 @@ class Page(SiteElement):
             max_date = max(p.date for p in self.pages)
             self.date = max(max_date, self.date)
 
-    def render(self, **kw) -> RenderedElement:
+    def render(self, **kw: Any) -> RenderedElement:
         """
         Return a RenderedElement that can produce the built version of this page
         """
@@ -696,7 +720,7 @@ It defaults to false, or true if `meta.date` is in the future.
             self, site: Site, *,
             node: Node,
             src: File,
-            **kw):
+            **kw: Any):
         # Information about the source file for this page
         # Set right away so that __repr__ works
         self.src: File = src
@@ -881,15 +905,15 @@ class TemplatePage(Page):
 
 
 class ImagePage(Page):
-    width = fields.Int[Page](doc="""
+    width = fields.Int["ImagePage"](doc="""
         Image width
     """)
-    height = fields.Int[Page](doc="""
+    height = fields.Int["ImagePage"](doc="""
         Image height
     """)
 
     def get_img_attributes(
-            self, type: Optional[str] = None, absolute=False) -> dict[str, str]:
+            self, type: Optional[str] = None, absolute: bool = False) -> dict[str, str]:
         """
         Given a path to an image page, return a dict with <img> attributes that
         can be used to refer to it
@@ -901,6 +925,9 @@ class ImagePage(Page):
         if type is not None:
             # If a specific version is required, do not use srcset
             rel = self.related.get(type, self)
+            if not isinstance(rel, ImagePage):
+                raise RuntimeError(
+                        f"{self}: related page of type {type!r} has type {rel.__class__.__name__} instead of ImagePage")
             res["width"] = str(rel.width)
             res["height"] = str(rel.height)
             res["src"] = self.url_for(rel, absolute=absolute)
@@ -909,7 +936,7 @@ class ImagePage(Page):
             # https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images
             srcsets = []
             for rel in self.related.values():
-                if rel.TYPE not in ("image", "scaledimage"):
+                if not isinstance(rel, ImagePage):
                     continue
 
                 if (width := rel.width) is None:
