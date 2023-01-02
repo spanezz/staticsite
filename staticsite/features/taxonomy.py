@@ -462,7 +462,10 @@ class TaxonomyPage(TemplatePage, SourcePage):
         # Map categories to list of page relpaths
         taxonomy: dict[str, list[str]] = {}
         for name, category in self.taxonomy.category_pages.items():
-            taxonomy[name] = [page.src.relpath for page in category.pages if getattr(page, "src", None)]
+            if not category.pages:
+                taxonomy[name] = []
+            else:
+                taxonomy[name] = [page.src.relpath for page in category.pages if isinstance(page, SourcePage)]
         res["taxonomy"] = taxonomy
         return res
 
@@ -512,7 +515,7 @@ class CategoryPage(TemplatePage, AutoPage):
         # Category name
         self.name = self.node.name
         # Index of each page in the category sequence
-        self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)}
+        self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)} if self.pages else {}
 
     def to_dict(self):
         res = super().to_dict()
@@ -593,10 +596,15 @@ class CategoryPage(TemplatePage, AutoPage):
         }
 
     def _compute_change_extent(self) -> ChangeExtent:
+        if self.created_from is None:
+            raise AssertionError(f"CategoryPage {self!r} found with empty created_from")
+
+        index = cast(TaxonomyPage, self.created_from)
+
         # No previous footprint
-        if self.created_from.old_footprint is None:
+        if index.old_footprint is None:
             return ChangeExtent.ALL
-        if (old_footprint := self.created_from.old_footprint.get("taxonomy")) is None:
+        if (old_footprint := index.old_footprint.get("taxonomy")) is None:
             return ChangeExtent.ALL
 
         # This category did not previously exist
@@ -605,7 +613,7 @@ class CategoryPage(TemplatePage, AutoPage):
         else:
             old_sources = set(old_sources_list)
 
-        sources = {page.src.relpath for page in self.pages if getattr(page, "src", None)}
+        sources = {page.src.relpath for page in self.pages if isinstance(page, SourcePage)} if self.pages else {}
         if sources != old_sources:
             # If any page added or removed this category, we rebuild
             return ChangeExtent.ALL
