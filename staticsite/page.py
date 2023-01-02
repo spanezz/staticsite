@@ -6,7 +6,8 @@ import enum
 import logging
 import os
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union
+from typing import (TYPE_CHECKING, Any, Iterator, Optional, Sequence, Type,
+                    TypeVar, Union, cast, overload)
 
 import jinja2
 import markupsafe
@@ -148,17 +149,25 @@ class Pages(collections.abc.Sequence["Page"]):
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return len(self.pages)
 
-    def __getitem__(self, key: int) -> Page:
+    @overload
+    def __getitem__(self, int, /) -> Page:
+        ...
+
+    @overload
+    def __getitem__(self, slice, /) -> Sequence[Page]:
+        ...
+
+    def __getitem__(self, key: Union[int, slice], /) -> Union[Page, Sequence[Page]]:
         if self.pages is None:
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return self.pages.__getitem__(key)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Page]:
         if self.pages is None:
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return self.pages.__iter__()
 
-    def __reversed__(self):
+    def __reversed__(self) -> Iterator[Page]:
         if self.pages is None:
             raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
         return self.pages.__reversed__()
@@ -226,19 +235,16 @@ class PagesField(CrossreferenceField["Page", Pages]):
         return Pages(page, value)
 
 
-class TemplateField(fields.Field["Page", Union[str, jinja2.Template]]):
+class TemplateField(fields.Field["TemplatePage", Union[str, jinja2.Template]]):
     """
     Template name or compiled template, taking its default value from Page.TEMPLATE
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> str:
+    def __get__(self, page: "TemplatePage", type: Optional[Type] = None) -> Union[str, jinja2.Template]:
         if self.name not in page.__dict__:
-            if (val := getattr(page, "TEMPLATE", None)):
-                page.__dict__[self.name] = val
-                return val
-            else:
-                return self.default
+            page.__dict__[self.name] = page.TEMPLATE
+            return page.TEMPLATE
         else:
-            return page.__dict__[self.name]
+            return cast(str, page.__dict__[self.name])
 
     def _clean(self, obj: Page, value: Any) -> Union[str, jinja2.Template]:
         if isinstance(value, str):
@@ -282,33 +288,44 @@ class RenderedField(fields.Str["Page"]):
     """
     Field whose value is rendered from other fields
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> str:
-        if (value := page.__dict__.get(self.name)) is None:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> Optional[str]:
+        if (cur := page.__dict__.get(self.name)) is None:
+            value: str
             if (tpl := getattr(page, "template_" + self.name, None)):
                 # If a template exists, render it
                 value = markupsafe.Markup(tpl.render(page=page))
+                self.__dict__[self.name] = value
+                return value
+            elif self.default is not None:
+                self.__dict__[self.name] = self.default
+                return self.default
             else:
-                value = self.default
-            self.__dict__[self.name] = value
-        return value
+                return None
+        else:
+            return cast(str, cur)
 
 
 class RenderedTitleField(fields.Str["Page"]):
     """
-    Make sure the draft exists and is a bool, computed according to the date
+    Render the tile for a page, defaulting to site_name if missing
     """
     def __get__(self, page: Page, type: Optional[Type] = None) -> str:
-        if (value := page.__dict__.get(self.name)) is None:
+        if (cur := page.__dict__.get(self.name)) is None:
+            value: str
             if (tpl := getattr(page, "template_" + self.name, None)):
                 # If a template exists, render it
                 value = markupsafe.Markup(tpl.render(page=page))
+            elif page.site_name is None:
+                raise RuntimeError("site_name not set")
             else:
                 value = page.site_name
             self.__dict__[self.name] = value
-        return value
+            return value
+        else:
+            return cast(str, cur)
 
 
-class Related:
+class Related(collections.abc.MutableMapping[str, "Page"]):
     """
     Container for related pages
     """
@@ -322,13 +339,15 @@ class Related:
     def __str__(self) -> str:
         return self.pages.__str__()
 
-    def __getitem__(self, name: str) -> Optional[Page]:
-        if (val := self.pages.get(name)) is None:
-            pass
-        elif isinstance(val, str):
-            val = self.page.resolve_path(val)
-            self.pages[name] = val
-        return val
+    def __getitem__(self, name: str, /) -> Page:
+        val = self.pages[name]
+
+        if isinstance(val, str):
+            page = self.page.resolve_path(val)
+            self.pages[name] = page
+            return page
+        else:
+            return val
 
     def __setitem__(self, name: str, page: Union[str, Page]) -> None:
         if (old := self.pages.get(name)) is not None and old != self.page:
@@ -336,6 +355,15 @@ class Related:
                      self, name, page, old)
             return
         self.pages[name] = page
+
+    def __delitem__(self, name: str, /) -> None:
+        self.pages.__delitem__(name)
+
+    def __len__(self) -> int:
+        return self.pages.__len__()
+
+    def __iter__(self) -> Iterator[str]:
+        return self.pages.__iter__()
 
     def to_dict(self) -> dict[str, Any]:
         return self.pages
@@ -444,8 +472,6 @@ class Page(SiteElement):
     """
     # Page type
     TYPE: str
-    # Default page template
-    TEMPLATE = "page.html"
 
     date = PageDate(doc="""
         Publication date for the page.
@@ -584,8 +610,14 @@ class Page(SiteElement):
         if self.site_url != page.site_url:
             absolute = True
 
-        path = os.path.join(self.site.root.site_path, page.site_path).strip("/")
+        if self.site.root.site_path:
+            path = os.path.join(self.site.root.site_path, page.site_path).strip("/")
+        else:
+            path = page.site_path.strip("/")
+
         if absolute:
+            if page.site_url is None:
+                raise RuntimeError("site_url is None")
             site_url = page.site_url.rstrip("/")
             return f"{site_url}/{path}"
         else:
@@ -734,7 +766,7 @@ class AutoPage(Page):
     def __init__(
             self, site: Site, *,
             created_from: Optional[Page] = None,
-            **kw) -> None:
+            **kw: Any) -> None:
         if created_from is None:
             raise RuntimeError("created_from is None in AutoPage")
         super().__init__(site, parent=created_from, created_from=created_from, **kw)
@@ -773,6 +805,8 @@ class TemplatePage(Page):
     """
     Page that renders using a Jinja2 template
     """
+    # Default page template
+    TEMPLATE = "page.html"
 
     template = TemplateField(doc="""
         Template used to render the page. Defaults to `page.html`, although specific
@@ -789,7 +823,7 @@ class TemplatePage(Page):
         return self.site.theme.jinja2.get_template(template)
 
     @jinja2.pass_context
-    def html_full(self, context, **kw) -> str:
+    def html_full(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         """
         Render the full page, from the <html> tag downwards.
         """
@@ -799,7 +833,7 @@ class TemplatePage(Page):
         return self.render_template(self.page_template, template_args=context)
 
     @jinja2.pass_context
-    def html_body(self, context, **kw) -> str:
+    def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         """
         Render the full body of the page, with UI elements excluding
         navigation, headers, footers
@@ -807,7 +841,7 @@ class TemplatePage(Page):
         return ""
 
     @jinja2.pass_context
-    def html_inline(self, context, **kw) -> str:
+    def html_inline(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         """
         Render the content of the page to be shown inline, like in a blog page.
 
@@ -816,7 +850,7 @@ class TemplatePage(Page):
         return ""
 
     @jinja2.pass_context
-    def html_feed(self, context, **kw) -> str:
+    def html_feed(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         """
         Render the content of the page to be shown in a RSS/Atom feed.
 
@@ -825,7 +859,7 @@ class TemplatePage(Page):
         """
         return ""
 
-    def render(self, **kw) -> RenderedElement:
+    def render(self, **kw: Any) -> RenderedElement:
         return RenderedString(self.html_full(kw))
 
     def render_template(self, template: jinja2.Template, template_args: Optional[dict[Any, Any]] = None) -> str:
@@ -855,7 +889,7 @@ class ImagePage(Page):
     """)
 
     def get_img_attributes(
-            self, type: Optional[str] = None, absolute=False) -> Dict[str, str]:
+            self, type: Optional[str] = None, absolute=False) -> dict[str, str]:
         """
         Given a path to an image page, return a dict with <img> attributes that
         can be used to refer to it

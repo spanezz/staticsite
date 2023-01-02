@@ -40,7 +40,7 @@ class Field(Generic[P, V]):
         :arg doc: documentation for this metadata element
         """
         self.name: str
-        self.default: Any = default
+        self.default: Optional[V] = default
         self.structure: bool = structure
         self.internal: bool = internal
         self.inherited: bool = inherited
@@ -54,7 +54,7 @@ class Field(Generic[P, V]):
     def __set_name__(self, owner: Type[P], name: str) -> None:
         self.name = name
 
-    def __get__(self, obj: P, type: Optional[Type] = None) -> V:
+    def __get__(self, obj: P, type: Optional[Type] = None) -> Optional[V]:
         if self.inherited:
             if self.name not in obj.__dict__:
                 if obj._parent is not None and self.name in obj._parent._fields:

@@ -100,7 +100,7 @@ class PageFilter:
 
         # print(f"PageFilter({path=!r}, {self.root.path=!r}, {self.re_path=!r}, {self.taxonomy_filters=}")
 
-    def filter(self):
+    def filter(self) -> list[Page]:
         # print("PageFilter.filter")
         pages = []
 
