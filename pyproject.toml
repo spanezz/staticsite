@@ -20,7 +20,7 @@ warn_return_any = true
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["staticsite.fields", "staticsite.page", "staticsite.node", "staticsite.source_node", "staticsite.site"]
+module = ["staticsite.fields", "staticsite.page", "staticsite.node", "staticsite.source_node", "staticsite.site", "staticsite.theme"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true

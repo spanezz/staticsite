@@ -5,9 +5,11 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
+from typing import (TYPE_CHECKING, Any, Callable, List, MutableMapping,
+                    Optional, Sequence, Type, Union)
 
 import jinja2
+import jinja2.sandbox
 import markupsafe
 
 from . import toposort
@@ -18,6 +20,7 @@ from .utils.arrange import arrange
 
 if TYPE_CHECKING:
     from .page import Pages
+    from .site import Site
 
 log = logging.getLogger("theme")
 
@@ -65,7 +68,7 @@ class Loader:
         sorted_names = toposort.sort(self.deps)
         return [self.configs[name] for name in sorted_names]
 
-    def load_configs(self, name: str):
+    def load_configs(self, name: str) -> None:
         """
         Populate self.configs with the configuration of the named theme,
         preceded by all its dependencies
@@ -123,18 +126,21 @@ class Loader:
 class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
     re_content = re.compile(r"^content:(.+)")
 
-    def __init__(self, theme):
+    def __init__(self, theme: Theme):
         self.loader_content = jinja2.FileSystemLoader(theme.site.content_root)
         self.loader_theme = jinja2.FileSystemLoader(theme.template_lookup_paths)
 
-    def get_loader(self, template):
+    def get_loader(self, template: str) -> tuple[jinja2.loaders.BaseLoader, str]:
         mo = self.re_content.match(template)
         if mo:
             return self.loader_content, mo.group(1)
         else:
             return self.loader_theme, template
 
-    def get_source(self, environment, template):
+    def get_source(
+            self,
+            environment: jinja2.Environment,
+            template: str) -> tuple[str, Optional[str], Optional[Callable[[], bool]]]:
         loader, name = self.get_loader(template)
         try:
             return loader.get_source(environment, name)
@@ -144,7 +150,11 @@ class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
             raise jinja2.TemplateNotFound(template)
 
     @jinja2.utils.internalcode
-    def load(self, environment, name, globals=None):
+    def load(
+            self,
+            environment: jinja2.Environment,
+            name: str,
+            globals: Optional[MutableMapping[str, Any]] = None) -> jinja2.Template:
         loader, local_name = self.get_loader(name)
         try:
             return loader.load(environment, local_name, globals)
@@ -153,7 +163,7 @@ class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
             # (the one that includes the prefix)
             raise jinja2.TemplateNotFound(name)
 
-    def list_templates(self):
+    def list_templates(self) -> list[str]:
         result = []
         for template in self.loader_theme.list_templates():
             result.append(template)
@@ -163,7 +173,7 @@ class Jinja2TemplateLoader(jinja2.loaders.BaseLoader):
 
 
 class Theme:
-    def __init__(self, site, name, configs: List[dict[str, Any]]):
+    def __init__(self, site: Site, name: str, configs: list[dict[str, Any]]):
         # Site object
         self.site = site
 
@@ -213,10 +223,13 @@ class Theme:
                 self.meta[key] = config[key]
 
     @classmethod
-    def create(cls, site, name: str, search_paths: Optional[Sequence[str]] = None) -> "Theme":
+    def create(cls, site: Site, name: str, search_paths: Optional[Sequence[str]] = None) -> "Theme":
         """
         Create a Theme looking up its name in the theme search paths
         """
+        if site.settings.PROJECT_ROOT is None:
+            raise RuntimeError("PROJECT_ROOT is None")
+
         if search_paths is None:
             search_paths = [
                 os.path.join(site.settings.PROJECT_ROOT, path) for path in site.settings.THEME_PATHS
@@ -225,10 +238,13 @@ class Theme:
         return cls(site, name, loader.load(name))
 
     @classmethod
-    def create_legacy(cls, site, paths: Sequence[str]) -> "Theme":
+    def create_legacy(cls, site: Site, paths: Sequence[str]) -> "Theme":
         """
         Create a theme from a list of possible theme paths
         """
+        if site.settings.PROJECT_ROOT is None:
+            raise RuntimeError("PROJECT_ROOT is None")
+
         loader = Loader(site.settings.THEME_PATHS)
 
         for root in paths:
@@ -238,19 +254,18 @@ class Theme:
 
         raise ThemeNotFoundError(f"Theme not found in {paths!r}")
 
-    def load(self):
+    def load(self) -> None:
         # Load feature plugins from the theme directories
         self.site.features.load_feature_dir(self.feature_dirs)
         self.site.features.commit()
         self.site.stage_features_constructed = True
 
+        env_cls: Type[jinja2.Environment]
         # Jinja2 template engine
         if self.site.settings.JINJA2_SANDBOXED:
-            from jinja2.sandbox import ImmutableSandboxedEnvironment
-            env_cls = ImmutableSandboxedEnvironment
+            env_cls = jinja2.sandbox.ImmutableSandboxedEnvironment
         else:
-            from jinja2 import Environment
-            env_cls = Environment
+            env_cls = jinja2.Environment
 
         self.jinja2 = env_cls(
             loader=Jinja2TemplateLoader(self),
@@ -316,7 +331,8 @@ class Theme:
         return os.path.basename(val)
 
     @jinja2.pass_context
-    def jinja2_datetime_format(self, context, dt: Union[str, datetime.datetime], format: str) -> str:
+    def jinja2_datetime_format(
+            self, context: jinja2.runtime.Context, dt: Union[str, datetime.datetime], format: str) -> str:
         if not isinstance(dt, datetime.datetime):
             import dateutil.parser
             dt = dateutil.parser.parse(dt)
@@ -340,8 +356,7 @@ class Theme:
             return "(unknown datetime format {})".format(format)
 
     @jinja2.pass_context
-    def jinja2_next_month(
-            self, context, dt: Union[str, datetime.date, datetime.datetime]) -> Union[datetime.date, datetime.datetime]:
+    def jinja2_next_month(self, context: jinja2.runtime.Context, dt: Any) -> Union[datetime.date, datetime.datetime]:
         if isinstance(dt, str):
             import dateutil.parser
             dt = dateutil.parser.parse(dt)
@@ -357,7 +372,7 @@ class Theme:
             return f"(unknown value {dt!r})"
 
     @jinja2.pass_context
-    def jinja2_has_page(self, context, arg: str) -> bool:
+    def jinja2_has_page(self, context: jinja2.runtime.Context, arg: str) -> bool:
         cur_page = context.get("page")
         try:
             cur_page.resolve_path(arg)
@@ -367,14 +382,14 @@ class Theme:
             return True
 
     @jinja2.pass_context
-    def jinja2_page_for(self, context, arg: Union[str, Page]) -> Page:
+    def jinja2_page_for(self, context: jinja2.runtime.Context, arg: Union[str, Page]) -> Page:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
         if isinstance(arg, Page):
             return arg
 
-        cur_page = context.get("page")
+        cur_page: Optional[Page] = context.get("page")
         if cur_page is None:
             log.warn("%s+%s: page_for(%s): current page is not defined", cur_page, context.name, arg)
             # TODO: link to somewhere like a missing page
@@ -387,11 +402,16 @@ class Theme:
             return ""
 
     @jinja2.pass_context
-    def jinja2_url_for(self, context, arg: Union[str, Page], absolute=False, static=False) -> str:
+    def jinja2_url_for(
+            self,
+            context: jinja2.runtime.Context,
+            arg: Union[str, Page],
+            absolute: bool = False,
+            static: bool = False) -> str:
         """
         Generate a URL for a page, specified by path or with the page itself
         """
-        cur_page = context.get("page")
+        cur_page: Optional[Page] = context.get("page")
         # print(f"Theme.jinja2_url_for {cur_page=!r}")
         if cur_page is None:
             log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
@@ -404,8 +424,8 @@ class Theme:
             return ""
 
     @jinja2.pass_context
-    def jinja2_site_pages(self, context, **kw) -> List[Page]:
-        cur_page = context.get("page")
+    def jinja2_site_pages(self, context: jinja2.runtime.Context, **kw: Any) -> list[Page]:
+        cur_page: Optional[Page] = context.get("page")
         if cur_page is None:
             log.warn("%s+%s: site_pages: current page is not defined", cur_page, context.name)
             return []
@@ -414,11 +434,11 @@ class Theme:
 
     @jinja2.pass_context
     def jinja2_img_for(
-            self, context,
+            self, context: jinja2.runtime.Context,
             path: Union[str, Page],
             type: Optional[str] = None,
             absolute: bool = False,
-            **attrs) -> str:
+            **attrs: Any) -> str:
         cur_page = context.get("page")
         if cur_page is None:
             log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
@@ -438,7 +458,10 @@ class Theme:
         res.append("></img>")
         return markupsafe.Markup("".join(res))
 
-    def jinja2_arrange(self, pages: Union[Pages, list[Page]], *args, **kw) -> list[Page]:
+    def jinja2_arrange(
+            self,
+            pages: Union[Pages, list[Page]],
+            *args: Any, **kw: Any) -> list[Page]:
         from .page import Pages
         if isinstance(pages, Pages):
             return pages.arrange(*args, **kw)

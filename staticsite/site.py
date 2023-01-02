@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .archetypes import Archetypes
     from .node import Node
     from .page import Page
-    from .source_node import RootNode, SourceNode, SourceAssetNode
+    from .source_node import RootNode, SourceNode
     from .theme import Theme
 
 log = logging.getLogger("site")
@@ -428,7 +428,7 @@ class Site:
         self.fstrees[src.abspath] = tree
         return tree
 
-    def scan_asset_tree(self, src: File, node: SourceAssetNode) -> fstree.Tree:
+    def scan_asset_tree(self, src: File, node: SourceNode) -> fstree.Tree:
         """
         Scan the contents of the given directory, adding it to self.fstrees
         """

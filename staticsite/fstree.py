@@ -13,7 +13,7 @@ from .utils import front_matter, open_dir_fd
 
 if TYPE_CHECKING:
     from .site import Site
-    from .source_node import SourceNode, SourcePageNode, SourceAssetNode
+    from .source_node import SourceNode, SourcePageNode
 
 log = logging.getLogger("fstree")
 
@@ -269,7 +269,7 @@ class AssetTree(Tree):
     """
     Filesystem tree that only contains assets
     """
-    def __init__(self, *, site: Site, src: File, node: SourceAssetNode):
+    def __init__(self, *, site: Site, src: File, node: SourceNode):
         super().__init__(site=site, src=src, node=node)
 
     def _scandir(self):
@@ -298,8 +298,6 @@ class AssetTree(Tree):
     def populate_node(self) -> None:
         # Load every file as an asset
         for fname, src in self.files.items():
-            if src.stat is None:
-                continue
             if stat.S_ISREG(src.stat.st_mode):
                 log.debug("Loading static file %s", src.relpath)
                 self.node.add_asset(src=src, name=fname)
