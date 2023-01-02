@@ -272,7 +272,7 @@ class PageDate(fields.Date["Page"]):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> Any:
+    def __get__(self, page: Page, type: Optional[Type] = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             if (src := getattr(page, "src", None)) is not None and src.stat is not None:
                 date = page.site.localized_timestamp(src.stat.st_mtime)

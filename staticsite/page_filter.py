@@ -4,7 +4,7 @@ import fnmatch
 import os
 import re
 from typing import (TYPE_CHECKING, Any, Callable, FrozenSet, Generator,
-                    Optional, Sequence, Union)
+                    Optional, Sequence, Union, cast)
 
 from . import site
 from .page import Page
@@ -51,15 +51,13 @@ def sort_args(sort: Optional[str]) -> tuple[Optional[str], bool, Optional[Callab
 
     # Add a sort key function
     if sort == "url":
-        sort = None
-
-        def key(page):
+        def key(page: Page) -> Any:
             return page.site_path
+        return None, reverse, key
     else:
-        def key(page):
-            return getattr(page, sort, None)
-
-    return sort, reverse, key
+        def key(page: Page) -> Any:
+            return getattr(page, cast(str, sort), None)
+        return sort, reverse, key
 
 
 class PageFilter:
@@ -75,7 +73,7 @@ class PageFilter:
             sort: Optional[str] = None,
             root: Optional[Node] = None,
             allow: Optional[Sequence[Page]] = None,
-            **kw):
+            **kw: str):
         self.site = site
         self.root = root or site.root
 
@@ -88,11 +86,13 @@ class PageFilter:
         self.sort_meta, self.sort_reverse, self.sort_key = sort_args(sort)
 
         self.taxonomy_filters: list[tuple[str, FrozenSet[str]]] = []
-        for taxonomy in self.site.features["taxonomy"].taxonomies.values():
-            t_filter = kw.get(taxonomy.name)
-            if t_filter is None:
-                continue
-            self.taxonomy_filters.append((taxonomy.name, frozenset(t_filter)))
+        if taxonomy_feature := self.site.features.get("taxonomy") is not None:
+            from staticsite.features.taxonomy import TaxonomyFeature
+            for taxonomy in cast(TaxonomyFeature, taxonomy_feature).taxonomies.values():
+                t_filter = kw.get(taxonomy.name)
+                if t_filter is None:
+                    continue
+                self.taxonomy_filters.append((taxonomy.name, frozenset(t_filter)))
 
         self.limit = limit
 

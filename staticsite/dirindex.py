@@ -98,7 +98,8 @@ class Dir(TemplatePage, SourcePage):
         for subdir in self.subdirs:
             if subdir.change_extent == ChangeExtent.ALL:
                 res = ChangeExtent.ALL
-        for page in self.pages:
-            if page.change_extent == ChangeExtent.ALL:
-                res = ChangeExtent.ALL
+        if self.pages:
+            for page in self.pages:
+                if page.change_extent == ChangeExtent.ALL:
+                    res = ChangeExtent.ALL
         return res
