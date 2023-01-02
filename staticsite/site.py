@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .archetypes import Archetypes
     from .node import Node
     from .page import Page
-    from .source_node import RootNode, SourceAssetNode
+    from .source_node import RootNode, SourceNode, SourceAssetNode
     from .theme import Theme
 
 log = logging.getLogger("site")
@@ -137,7 +137,7 @@ class SiteElement(fields.FieldContainer):
         """
         raise NotImplementedError(f"{self.__class__.__name__}.lookup_page() not implemented")
 
-    def resolve_path(self, target: Union[str, "Page"], static=False) -> "Page":
+    def resolve_path(self, target: Union[str, "Page"], static: bool = False) -> "Page":
         """
         Return a Page from the site, given a source or site path relative to
         this page.
@@ -220,7 +220,7 @@ class Site:
         self.root: RootNode
 
         # Root node for the static contents of the site
-        self.static_root: SourceAssetNode
+        self.static_root: SourceNode
 
         # Last load step performed
         self.last_load_step = self.LOAD_STEP_INITIAL
@@ -266,27 +266,26 @@ class Site:
             raise RuntimeError("Site.theme called before the theme was loaded")
         return self._theme
 
-    def clear_footprints(self):
+    def clear_footprints(self) -> None:
         """
         Clear the previous-build page footprints.
 
         This is used when something failed during a build, and the build
         directory is left in an inconsistent state
         """
-        self.footprints = {}
-        self.build_cache.put("footprints", self.footprints)
+        self.build_cache.put("footprints", {})
 
-    def save_footprints(self):
+    def save_footprints(self) -> None:
         """
         Save the current set of page footprints as reference for a future build
 
         This is used after a build completed successfully, to allow incremental
         future builds
         """
-        self.footprints = {
+        footprints = {
             page.src.relpath: page.footprint for page in self.iter_pages(source_only=True)
         }
-        self.build_cache.put("footprints", self.footprints)
+        self.build_cache.put("footprints", footprints)
         for feature in self.features.ordered():
             self.build_cache.put(f"footprint_{feature.name}", feature.get_footprint())
 
@@ -322,7 +321,7 @@ class Site:
             raise RuntimeError("PROJECT_ROOT is not set and cannot be inferred")
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
 
-    def load_features(self):
+    def load_features(self) -> None:
         """
         Load default features
         """
@@ -332,7 +331,7 @@ class Site:
         if self.previous_source_footprints is None:
             self.previous_source_footprints = {}
 
-    def load_theme(self):
+    def load_theme(self) -> None:
         """
         Load a theme from the given directory.
 
@@ -342,8 +341,7 @@ class Site:
         from .theme import Theme
 
         if self._theme is not None:
-            raise RuntimeError(
-                    F"load_theme called while a theme was already loaded from {self._theme.root}")
+            raise RuntimeError(f"load_theme called while theme {self._theme.name} was already loaded")
 
         if isinstance(self.settings.THEME, str):
             self._theme = Theme.create(self, self.settings.THEME)
@@ -361,7 +359,7 @@ class Site:
             footprint = self.build_cache.get(f"footprint_{feature.name}")
             feature.set_previous_footprint(footprint if footprint is not None else {})
 
-    def _settings_to_meta(self):
+    def _settings_to_meta(self) -> None:
         """
         Build directory metadata based on site settings
         """
@@ -385,7 +383,7 @@ class Site:
 
         # log.debug("Initial settings: %r", res)
 
-    def scan_content(self):
+    def scan_content(self) -> None:
         """
         Scan content root directories, building metadata for the directories in
         the site tree
@@ -415,7 +413,7 @@ class Site:
             self.root.site_name = os.path.basename(tree.src.abspath)
 
         # Scan asset trees from themes
-        self._theme.scan_assets()
+        self.theme.scan_assets()
 
     def scan_content_tree(self, src: File) -> fstree.Tree:
         """
@@ -443,7 +441,7 @@ class Site:
         self.fstrees[src.abspath] = tree
         return tree
 
-    def load_content(self):
+    def load_content(self) -> None:
         """
         Load site page and assets from scanned content roots.
         """
@@ -452,7 +450,7 @@ class Site:
             with tree.open_tree():
                 tree.populate_node()
 
-    def load(self, until: int = LOAD_STEP_ALL):
+    def load(self, until: int = LOAD_STEP_ALL) -> None:
         """
         Load all site components
         """
@@ -508,7 +506,7 @@ class Site:
         if until <= self.last_load_step:
             return
 
-    def _organize(self):
+    def _organize(self) -> None:
         """
         Call features to organize the pages that have just been loaded from
         sources
@@ -517,7 +515,7 @@ class Site:
         for feature in self.features.ordered():
             feature.organize()
 
-    def _generate(self):
+    def _generate(self) -> None:
         """
         Call features to generate new pages
         """
@@ -525,7 +523,7 @@ class Site:
         for feature in self.features.ordered():
             feature.generate()
 
-    def _crossreference(self):
+    def _crossreference(self) -> None:
         """
         Call features to cross-reference pages after the site structure has
         been finalized
@@ -538,7 +536,7 @@ class Site:
         for feature in self.features.ordered():
             feature.crossreference()
 
-    def slugify(self, text):
+    def slugify(self, text: str) -> str:
         """
         Return the slug version of an arbitrary string, that can be used as an
         url component or file name.
@@ -546,7 +544,7 @@ class Site:
         from slugify import slugify
         return slugify(text)
 
-    def localized_timestamp(self, ts):
+    def localized_timestamp(self, ts: float) -> datetime.datetime:
         return datetime.datetime.fromtimestamp(ts, tz=pytz.utc).astimezone(self.timezone)
 
     # TODO: support partial dates?
