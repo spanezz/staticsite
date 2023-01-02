@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-from typing import Any, List, Optional, Sequence, Union, Type, TypeVar
+from typing import Any, List, Optional, Sequence, Union, Type, TypeVar, cast
 
 import jinja2
 
@@ -298,7 +298,7 @@ class SyndicationDateField(fields.Date[Page]):
         if (date := page.__dict__.get(self.name)) is None:
             date = page.date
             page.__dict__[self.name] = date
-        return date
+        return cast(datetime.datetime, date)
 
 
 class SyndicatedField(fields.Bool[Page]):
@@ -308,12 +308,12 @@ class SyndicatedField(fields.Bool[Page]):
     If not set, it defaults to the value of `indexed`.
     """
     def __get__(self, page: Page, type: Optional[Type] = None) -> bool:
-        if (value := page.__dict__.get(self.name)) is None:
+        if (cur := page.__dict__.get(self.name)) is None:
             value = page.indexed
             page.__dict__[self.name] = value
             return value
         else:
-            return value
+            return cast(bool, cur)
 
 
 class SyndicationPageMixin(Page):
@@ -443,7 +443,10 @@ class SyndicationFeature(PageTrackingMixin, Feature):
 
     @jinja2.pass_context
     def jinja2_syndicated_pages(
-            self, context, what: Union[str, SyndicationPageMixin, None] = None, limit=None) -> list[Page]:
+            self,
+            context: jinja2.runtime.Context,
+            what: Union[str, SyndicationPageMixin, jinja2.Undefined, None] = None,
+            limit: Optional[int] = None) -> list[Page]:
         """
         Get the list of pages to be syndicated
         """

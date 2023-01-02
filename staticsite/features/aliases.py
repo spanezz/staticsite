@@ -5,7 +5,7 @@ from typing import Any, Sequence, Type
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
-from staticsite.node import Path
+from staticsite.site import Path
 from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
                              TemplatePage)
 

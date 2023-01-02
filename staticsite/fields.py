@@ -84,12 +84,28 @@ class Const(Field[P, V]):
     def __get__(self, obj: P, type: Optional[Type] = None) -> V:
         if self.name not in obj.__dict__:
             raise RuntimeError(f"{obj!r}.{self.name} has not been set")
-        return obj.__dict__[self.name]
+        return cast(V, obj.__dict__[self.name])
 
-    def __set__(self, obj: P, value: V) -> None:
+    def __set__(self, obj: P, value: Any) -> None:
         if self.name in obj.__dict__:
             raise RuntimeError(f"{obj!r}.{self.name} has already been set")
-        obj.__dict__[self.name] = value
+        obj.__dict__[self.name] = self._clean(obj, value)
+
+
+class ConstTypeField(Const[P, V]):
+    """
+    Field containing a string
+    """
+    def __init__(self, *, cls: Type[V], **kw: Any):
+        super().__init__(**kw)
+        self.cls = cls
+
+    def _clean(self, page: P, value: Any) -> V:
+        if not isinstance(value, self.cls):
+            raise TypeError(
+                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                    f" expecting {self.cls.__name__}")
+        return value
 
 
 class Template(Field[P, jinja2.Template]):
@@ -109,7 +125,7 @@ class Template(Field[P, jinja2.Template]):
 
 class Str(Field[P, str]):
     """
-    Field containing a date
+    Field containing a string
     """
     def _clean(self, obj: P, value: Any) -> str:
         return str(value)
@@ -117,7 +133,15 @@ class Str(Field[P, str]):
 
 class Int(Field[P, int]):
     """
-    Field containing a date
+    Field containing an integer
+    """
+    def _clean(self, obj: P, value: Any) -> int:
+        return int(value)
+
+
+class ConstInt(Const[P, int]):
+    """
+    Const field containing an integer
     """
     def _clean(self, obj: P, value: Any) -> int:
         return int(value)

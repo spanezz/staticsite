@@ -157,9 +157,10 @@ class Images(PageTrackingMixin, Feature):
                 mimetype=mimetype,
                 dst=fname,
                 **kwargs)
-            pages.append(page)
 
-            self.images.add(page)
+            if page is not None:
+                pages.append(page)
+                self.images.add(page)
 
         for fname in taken:
             del files[fname]
@@ -291,14 +292,14 @@ class ScaledImage(ImagePage, AutoPage):
         if (title := created_from.title):
             self.title = title
 
-        if self.height is None:
+        if "height" not in kw:
             self.height = round(
                     created_from.height * (
                         info["width"] / created_from.width))
 
         created_from.add_related(name, self)
 
-    def render(self, **kw) -> RenderedElement:
+    def render(self, **kw: Any) -> RenderedElement:
         return RenderedScaledImage(cast(Image, self.created_from).src, self.width, self.height)
 
     def _compute_change_extent(self) -> ChangeExtent:

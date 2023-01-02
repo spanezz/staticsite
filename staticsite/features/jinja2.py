@@ -111,7 +111,9 @@ class J2Pages(Feature):
                         dst=fname,
                         **kwargs)
 
-            pages.append(page)
+            if page is not None:
+                pages.append(page)
+
             taken.append(fname)
 
         for fname in taken:

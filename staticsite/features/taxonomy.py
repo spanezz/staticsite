@@ -11,7 +11,7 @@ from staticsite import fields
 from staticsite.feature import Feature, TrackedField
 from staticsite.features.syndication import Syndication
 from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
-                             TemplatePage)
+                             TemplatePage, ConstPageField)
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -417,7 +417,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
     TYPE = "taxonomy"
     TEMPLATE = "taxonomy.html"
 
-    taxonomy = fields.Const["TaxonomyPage", Taxonomy](doc="Structured taxonomy information")
+    taxonomy = fields.ConstTypeField["TaxonomyPage", Taxonomy](cls=Taxonomy, doc="Structured taxonomy information")
 
     def __init__(self, *args, node: SourcePageNode, **kw):
         kw.setdefault("nav_title", node.name.capitalize())
@@ -503,7 +503,8 @@ class CategoryPage(TemplatePage, AutoPage):
     TYPE = "category"
     TEMPLATE = "blog.html"
 
-    taxonomy = fields.Const["CategoryPage", TaxonomyPage](doc="Page that defined this taxonomy")
+    taxonomy = ConstPageField["CategoryPage", TaxonomyPage](
+            cls=TaxonomyPage, doc="Page that defined this taxonomy")
     name = fields.Str["CategoryPage"](doc="Name of the category shown in this page")
 
     def __init__(self, *args, **kw) -> None:
