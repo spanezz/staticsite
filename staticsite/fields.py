@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import (TYPE_CHECKING, Any, Generic, Iterable, Optional, Type,
-                    TypeVar)
+                    TypeVar, cast)
 
 import jinja2
 
@@ -62,9 +62,9 @@ class Field(Generic[P, V]):
                 else:
                     value = self.default
                 obj.__dict__[self.name] = value
-                return value
+                return cast(V, value)
             else:
-                return obj.__dict__[self.name]
+                return cast(V, obj.__dict__[self.name])
         else:
             return obj.__dict__.get(self.name, self.default)
 
@@ -132,12 +132,12 @@ class Bool(Field[P, bool]):
     def __init__(
             self, *,
             default: Optional[bool] = None,
-            **kw):
+            **kw: Any):
         super().__init__(**kw)
         self.default = default
 
     def _clean(self, obj: P, val: Any) -> bool:
-        if val in (True, False):
+        if isinstance(val, bool):
             return val
         elif isinstance(val, str):
             return val.lower() in ("yes", "true", "1")
@@ -169,7 +169,9 @@ class FieldsMetaclass(type):
     Allow a class to have a set of Field members, defining self-documenting
     metadata elements
     """
-    def __new__(cls, name, bases, dct):
+    _fields: dict[str, Field]
+
+    def __new__(cls: Type[FieldsMetaclass], name: str, bases: tuple[type], dct: dict[str, Any]) -> FieldsMetaclass:
         _fields = {}
 
         # Add fields from subclasses
@@ -198,7 +200,7 @@ class FieldContainer(metaclass=FieldsMetaclass):
             self,
             site: Site, *,
             parent: Optional[FieldContainer] = None,
-            **kw):
+            **kw: Any):
         # Reference to Site, so that fields can access configuration, template
         # compilers, and so on
         self.site = site
@@ -207,7 +209,7 @@ class FieldContainer(metaclass=FieldsMetaclass):
 
         self.update_fields(kw)
 
-    def update_fields(self, values: dict[str, Any]):
+    def update_fields(self, values: dict[str, Any]) -> None:
         for name, value in values.items():
             if name in self._fields:
                 setattr(self, name, value)
