@@ -97,14 +97,14 @@ def read_whole(fd: TextIO) -> Tuple[str, dict[str, Any]]:
     """
     content = fd.read()
     if content.startswith("{"):
-        return "json", json.loads(content)
+        return "json", (val if (val := json.loads(content)) is not None else {})
 
     mo = re_toml.match(content)
     if mo:
         import toml
-        return "toml", toml.loads(mo.group(1))
+        return "toml", (val if (val := toml.loads(mo.group(1))) is not None else {})
 
-    return "yaml", yaml_codec.loads(content)
+    return "yaml", (val if (val := yaml_codec.loads(content)) is not None else {})
 
 
 def read_string(content: str) -> Tuple[str, dict[str, Any]]:

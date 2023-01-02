@@ -86,7 +86,7 @@ class RestructuredText(MarkupFeature, Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [RstPage]
 
-    def parse_rest(self, fd: BinaryIO, remove_docinfo=True):
+    def parse_rest(self, fd: BinaryIO, remove_docinfo=True) -> tuple[dict[str, Any], DoctreeScan]:
         """
         Parse a rest document.
 
@@ -326,12 +326,12 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
         Check if the front matter read from fd is different from ours
         """
         meta, doctree_scan = self.feature.parse_rest(fd)
-        return self.front_matter != meta
+        return (self.front_matter != meta)
 
     def check(self, checker):
         self._render_page()
 
-    def _render_page(self, absolute: bool = False):
+    def _render_page(self, absolute: bool = False) -> str:
         cache_key = self.src.relpath
         with self.markup_render_context(cache_key, absolute=absolute) as context:
             if (rendered := context.cache.get("rendered")):
@@ -367,15 +367,15 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
             return rendered
 
     @jinja2.pass_context
-    def html_body(self, context, **kw) -> str:
+    def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         return self._render_page(absolute=self != context["page"])
 
     @jinja2.pass_context
-    def html_inline(self, context, **kw) -> str:
+    def html_inline(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         return self._render_page(absolute=self != context["page"])
 
     @jinja2.pass_context
-    def html_feed(self, context, **kw) -> str:
+    def html_feed(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         return self._render_page(absolute=self != context["page"])
 
 

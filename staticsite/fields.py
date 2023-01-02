@@ -27,7 +27,6 @@ class Field(Generic[P, V]):
             structure: bool = False,
             internal: bool = False,
             inherited: bool = False,
-            tracked_by: Optional[str] = None,
             doc: Optional[str] = None):
         """
         :arg name: name of this metadata element
@@ -76,6 +75,21 @@ class Field(Generic[P, V]):
         Hook to allow to clean values before set
         """
         raise NotImplementedError(f"{self.__class__.__name__}._clean for {obj!r}.{self.name} not implemented")
+
+
+class Const(Field[P, V]):
+    """
+    Field that takes a const value once and never changes it
+    """
+    def __get__(self, obj: P, type: Optional[Type] = None) -> V:
+        if self.name not in obj.__dict__:
+            raise RuntimeError(f"{obj!r}.{self.name} has not been set")
+        return obj.__dict__[self.name]
+
+    def __set__(self, obj: P, value: V) -> None:
+        if self.name in obj.__dict__:
+            raise RuntimeError(f"{obj!r}.{self.name} has already been set")
+        obj.__dict__[self.name] = value
 
 
 class Template(Field[P, jinja2.Template]):

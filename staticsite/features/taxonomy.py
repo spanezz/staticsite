@@ -4,8 +4,8 @@ import functools
 import heapq
 import logging
 from collections import defaultdict
-from typing import (TYPE_CHECKING, Any, Iterable, Optional,
-                    Sequence, Type, Union)
+from typing import (TYPE_CHECKING, Any, Iterable, Optional, Sequence, Type,
+                    Union, cast)
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
@@ -70,7 +70,7 @@ class Taxonomy:
             **self.index_meta)
         return self.index
 
-    def create_category_page(self, name: str, pages: list[Page]) -> CategoryPage:
+    def create_category_page(self, name: str, pages: list[Page]) -> Optional[CategoryPage]:
         """
         Generate the page for one category in this taxonomy
         """
@@ -120,8 +120,8 @@ class Taxonomy:
 
         # Create category pages
         for category, pages in by_category.items():
-            if (page := self.create_category_page(category, pages)) is not None:
-                self.category_pages[category] = page
+            if (cpage := self.create_category_page(category, pages)) is not None:
+                self.category_pages[category] = cpage
 
         # Replace category names with category pages in each categorized page
         for page in self.pages:
@@ -141,39 +141,13 @@ class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
 
     def _clean(self, page: Page, value: Union[None, str, list[str], list[Page]]) -> Union[list[str], list[Page]]:
         if not value:
-            return []
+            return cast(list[Page], [])
         elif isinstance(value, str):
             return [value]
         elif isinstance(value, list):
             return value
         else:
             raise ValueError(f"{value!r} is not a string, a list of strings, or a list of Page objects")
-
-
-class TaxonomyPageField(fields.Field["CategoryPage", "TaxonomyPage"]):
-    """
-    Field containing a Page
-    """
-    def _clean(self, page: "CategoryPage", value: Any) -> TaxonomyPage:
-        if isinstance(value, TaxonomyPage):
-            return value
-        else:
-            raise TypeError(
-                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
-                    " expecting, TaxonomyPage")
-
-
-class TaxonomyIndexField(fields.Field["TaxonomyPage", Taxonomy]):
-    """
-    Field containing a Taxonomy object
-    """
-    def _clean(self, page: "TaxonomyPage", value: Any) -> Taxonomy:
-        if isinstance(value, Taxonomy):
-            return value
-        else:
-            raise TypeError(
-                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
-                    " expecting, Taxonomy")
 
 
 class BaseTaxonomyPageMixin(metaclass=fields.FieldsMetaclass):
@@ -411,8 +385,6 @@ class TaxonomyFeature(Feature):
         """
         with directory.open(fname, "rt") as fd:
             fmt, meta = front_matter.read_whole(fd)
-        if meta is None:
-            meta = {}
         return meta
 
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
@@ -445,7 +417,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
     TYPE = "taxonomy"
     TEMPLATE = "taxonomy.html"
 
-    taxonomy = TaxonomyIndexField(doc="Structured taxonomy information")
+    taxonomy = fields.Const["TaxonomyPage", Taxonomy](doc="Structured taxonomy information")
 
     def __init__(self, *args, node: SourcePageNode, **kw):
         kw.setdefault("nav_title", node.name.capitalize())
@@ -488,7 +460,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
     def _compute_footprint(self) -> dict[str, Any]:
         res = super()._compute_footprint()
         # Map categories to list of page relpaths
-        taxonomy = {}
+        taxonomy: dict[str, list[str]] = {}
         for name, category in self.taxonomy.category_pages.items():
             taxonomy[name] = [page.src.relpath for page in category.pages if getattr(page, "src", None)]
         res["taxonomy"] = taxonomy
@@ -531,7 +503,7 @@ class CategoryPage(TemplatePage, AutoPage):
     TYPE = "category"
     TEMPLATE = "blog.html"
 
-    taxonomy = TaxonomyPageField(doc="Page that defined this taxonomy")
+    taxonomy = fields.Const["CategoryPage", TaxonomyPage](doc="Page that defined this taxonomy")
     name = fields.Str["CategoryPage"](doc="Name of the category shown in this page")
 
     def __init__(self, *args, **kw) -> None:

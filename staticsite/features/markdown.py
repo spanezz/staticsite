@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type
+from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type, cast
 
 import jinja2
 import markdown
@@ -126,19 +126,17 @@ class MarkdownPages(MarkupFeature, Feature):
         It renders the page content by default, unless `content` is set to a
         different markdown string.
         """
-        if content is None:
-            content = page.get_content()
         self.link_resolver.set_page(page, absolute=False)
         self.markdown.reset()
-        return self.markdown.convert(content)
+        return cast(str, self.markdown.convert(content))
 
     def load_dir(
             self,
             node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
-        taken: List[str] = []
-        pages: List[Page] = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
             if not fname.endswith(".md"):
                 continue
@@ -158,6 +156,7 @@ class MarkdownPages(MarkupFeature, Feature):
             kwargs["front_matter"] = fm_meta
             kwargs["body"] = body
 
+            page: Optional[Page]
             if fname in ("index.md", "README.md"):
                 page = node.create_source_page_as_index(**kwargs)
             else:
@@ -165,7 +164,8 @@ class MarkdownPages(MarkupFeature, Feature):
                         name=fname[:-3],
                         **kwargs)
 
-            pages.append(page)
+            if page is not None:
+                pages.append(page)
 
         for fname in taken:
             del files[fname]
