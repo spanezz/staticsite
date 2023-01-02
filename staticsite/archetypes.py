@@ -1,18 +1,21 @@
 from __future__ import annotations
-from typing import Tuple, Dict, Any
+from typing import TYPE_CHECKING, Any, Optional
 import os
 import logging
+
+if TYPE_CHECKING:
+    from .site import Site
 
 log = logging.getLogger("archetypes")
 
 
 class Archetype:
-    def __init__(self, archetypes, relpath):
+    def __init__(self, archetypes: Archetypes, relpath: str):
         self.archetypes = archetypes
         self.site = archetypes.site
         self.relpath = relpath
 
-    def render(self, **kw) -> Tuple[Dict[str, Any], str]:
+    def render(self, **kw: Any) -> tuple[dict[str, Any], str]:
         """
         Render the archetype with the given context information.
 
@@ -28,13 +31,13 @@ class Archetype:
 
 
 class Archetypes:
-    def __init__(self, site, root):
+    def __init__(self, site: Site, root: str):
         self.site = site
 
         # Root directory where archetypes are found
         self.root = root
 
-    def find(self, name: str):
+    def find(self, name: str) -> Optional[Archetype]:
         """
         Read the archetypes directory and return the archetype that matches the given name.
 

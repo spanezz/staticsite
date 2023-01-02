@@ -56,7 +56,7 @@ class PageMissesFieldError(PageValidationError):
 
 
 P = TypeVar("P", bound="Page")
-P1 = TypeVar("P", bound="Page")
+P1 = TypeVar("P1", bound="Page")
 V = TypeVar("V")
 
 
@@ -88,7 +88,7 @@ class ConstPageField(fields.ConstTypeField[P, P1]):
     """
     Field containing a string
     """
-    def __init__(self, *, cls: Type["Page"], **kw: Any):
+    def __init__(self, *, cls: Type[P1], **kw: Any):
         super().__init__(cls=cls, **kw)
 
 

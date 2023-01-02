@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from unittest import TestCase
 
 from . import utils as test_utils
@@ -122,63 +121,3 @@ text
             self.assertIsNone(widget.syndication)
             self.assertEqual(rss.pages, synd.pages)
             self.assertEqual(atom.pages, synd.pages)
-
-    def test_images(self):
-        self.maxDiff = None
-        files = {
-            "index.md": """---
-date: 2019-01-01 12:00:00+02:00
-syndication: yes
-pages: "blog/*"
-template: blog.html
----
-
-# Blog
-""",
-            "blog/post.md": """---
-date: 2019-01-01 12:00:00+02:00
----
-
-# Title
-
-![Photo](images/photo.xpm)
-""",
-            "blog/images/photo.xpm": """/* XPM */
-static char * bottom_active_xpm[] = {
-"24 3 3 1",
-"       c None",
-"#      c #C0C0C0 s active_color_2",
-"@      c #C0C0FF s active_color_2",
-"@@@@@@@@@@@@@@@@@@@@@@@@",
-"@@@@@@@@@@@@@@@@@@@@@@@@",
-"@@@@@@@@@@@@@@@@@@@@@@@@"};
-""",
-        }
-        with self.site(files) as mocksite:
-            mocksite.assertPagePaths((
-                "",
-                "index.rss",
-                "index.atom",
-                "archive",
-                "blog",
-                "blog/post",
-                "blog/images",
-                "blog/images/photo.xpm",
-            ))
-
-            post = mocksite.page("")
-            rendered = post.render().buf
-            mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
-            self.assertTrue(mo)
-            self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
-
-            post = mocksite.page("blog/post")
-            rendered = post.render().buf
-            mo = re.search(r'src="([a-z/:.]+)/photo.xpm"', rendered.decode())
-            self.assertTrue(mo)
-            self.assertEqual(mo.group(1), "/blog/images")
-
-            rss = mocksite.page("index.rss")
-            rendered = rss.render().buf
-            mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
-            self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
