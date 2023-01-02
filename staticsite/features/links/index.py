@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from staticsite.page import AutoPage, ChangeExtent, SourcePage, TemplatePage
+from staticsite.page import AutoPage, ChangeExtent, Optional, SourcePage, TemplatePage
 
 from .data import Link, LinkCollection
 
@@ -23,7 +23,7 @@ class LinkIndexPage(TemplatePage, SourcePage):
     TYPE = "links_index"
     TEMPLATE = "data-links.html"
 
-    def __init__(self, *args, node: Node, links: Links, link_collection: LinkCollection, **kw):
+    def __init__(self, *args: Any, node: Node, links: Links, link_collection: LinkCollection, **kw: Any):
         kw.setdefault("nav_title", node.name.capitalize())
         kw.setdefault("title", "All links shared in the site")
         super().__init__(*args, node=node, **kw)
@@ -41,7 +41,7 @@ class LinkIndexPage(TemplatePage, SourcePage):
 #        res["category_meta"] = dump_meta(self.category_meta)
 #        return res
 
-    def organize(self):
+    def organize(self) -> None:
         pages = []
         for tag, links in self.feature_links.by_tag.items():
             name = tag + "-links"
@@ -77,7 +77,7 @@ class LinksTagPage(TemplatePage, AutoPage):
     TYPE = "links_tag"
     TEMPLATE = "data-links.html"
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         links = kw.pop("links", None)
         super().__init__(*args, **kw)
         self.syndicated = False
@@ -87,7 +87,7 @@ class LinksTagPage(TemplatePage, AutoPage):
             self.link_collection = links
 
     @property
-    def src_abspath(self):
+    def src_abspath(self) -> Optional[str]:
         return None
 
     def _compute_change_extent(self) -> ChangeExtent:

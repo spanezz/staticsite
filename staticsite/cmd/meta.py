@@ -19,7 +19,7 @@ class Meta(Command):
     """
     Edit metadata for a file
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.scanner = images.ImageScanner(DisabledCache())
 
@@ -47,7 +47,7 @@ class Meta(Command):
             with open(fd.name, "rt") as newfd:
                 return yaml.load(newfd)
 
-    def save_changes(self, old_meta: dict[str, Any], new_meta: dict[str, Any]):
+    def save_changes(self, old_meta: dict[str, Any], new_meta: dict[str, Any]) -> None:
         # Compute and store the changes
         changed = {}
         removed = []
@@ -69,7 +69,7 @@ class Meta(Command):
         if not self.scanner.edit_meta_exiftool(self.args.file, changed, removed):
             raise Fail("Failed to store metadatä changes")
 
-    def run(self):
+    def run(self) -> None:
         # TODO: Build a Site if possible
         # TODO: or load settings from a settings.py if one can be found in reasonable places
 

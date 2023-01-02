@@ -1,8 +1,15 @@
-import os
-import subprocess
-import shlex
-from .command import SiteCommand, Fail
+from __future__ import annotations
+
 import logging
+import os
+import shlex
+import subprocess
+from typing import TYPE_CHECKING, Optional
+
+from .command import Fail, SiteCommand
+
+if TYPE_CHECKING:
+    from ..site import Site
 
 log = logging.getLogger("new")
 
@@ -14,15 +21,15 @@ class LazyTitle:
     If no value has been provided and one is requested by the template, ask the
     user for one.
     """
-    def __init__(self, title=None):
+    def __init__(self, title: Optional[str] = None) -> None:
         self.title = title
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.title is None:
             self.title = input("Please enter the post title: ")
         return self.title
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(str(self))
 
 
@@ -30,18 +37,18 @@ class LazySlug:
     """
     Generate a slug from the value of LazyTitle
     """
-    def __init__(self, site, lazy_title):
+    def __init__(self, site: Site, lazy_title: LazyTitle):
         self.site = site
         self.lazy_title = lazy_title
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.site.slugify(str(self.lazy_title))
 
 
 class New(SiteCommand):
     "create a new page"
 
-    def run(self):
+    def run(self) -> Optional[int]:
         site = self.load_site()
 
         archetype = site.archetypes.find(self.args.archetype)
@@ -75,6 +82,7 @@ class New(SiteCommand):
                 log.warn("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
                 return e.returncode
         print(abspath)
+        return None
 
     @classmethod
     def make_subparser(cls, subparsers):

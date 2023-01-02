@@ -1,20 +1,24 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-import os
-import gc
-import mimetypes
+
 import asyncio
-import logging
+import gc
 import json
+import logging
+import mimetypes
+import os
+from typing import TYPE_CHECKING, Awaitable, Optional, Union, cast
+
 import pyinotify
-import tornado.web
-from tornado.web import url
 import tornado.httpserver
-import tornado.netutil
-import tornado.websocket
 import tornado.ioloop
+import tornado.netutil
+import tornado.web
+import tornado.websocket
+from tornado.web import url
+
 from staticsite.site import Site
 from staticsite.utils import timings
+
 from .pagefs import PageFS
 
 if TYPE_CHECKING:
@@ -98,20 +102,22 @@ class ChangeMonitor:
 
 
 class PageSocket(tornado.websocket.WebSocketHandler):
-    def open(self):
+    def open(self, *args: str, **kwargs: str) -> Optional[Awaitable[None]]:
         log.debug("WebSocket connection opened")
-        self.application.add_page_socket(self)
+        cast(Application, self.application).add_page_socket(self)
+        return None
 
-    def on_message(self, message):
+    def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:
         log.debug("WebSocket message received: %r", message)
+        return None
 
-    def on_close(self):
+    def on_close(self) -> None:
         log.debug("WebSocket connection closed")
-        self.application.remove_page_socket(self)
+        cast(Application, self.application).remove_page_socket(self)
 
 
 class ServePage(tornado.web.RequestHandler):
-    def get(self):
+    def get(self) -> None:
         if self.request.protocol == "http":
             self.ws_url = "ws://" + self.request.host + \
                           self.application.reverse_url("page_socket")
@@ -119,7 +125,8 @@ class ServePage(tornado.web.RequestHandler):
             self.ws_url = "wss://" + self.request.host + \
                           self.application.reverse_url("page_socket")
 
-        relpath, content = self.application.pages.render(self.request.path, server=self.application, handler=self)
+        relpath, content = cast(Application, self.application).pages.render(
+                self.request.path, server=self.application, handler=self)
         if relpath is None:
             self.send_error(404)
         else:
@@ -148,10 +155,10 @@ class Application(tornado.web.Application):
         self.page_sockets: set[PageSocket] = set()
         self.change_monitor = ChangeMonitor(self)
 
-    def add_page_socket(self, handler) -> None:
+    def add_page_socket(self, handler: PageSocket) -> None:
         self.page_sockets.add(handler)
 
-    def remove_page_socket(self, handler) -> None:
+    def remove_page_socket(self, handler: PageSocket) -> None:
         self.page_sockets.discard(handler)
 
     def trigger_reload(self) -> None:

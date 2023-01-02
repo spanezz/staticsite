@@ -11,7 +11,7 @@ class LinkLint(FeatureCommand):
 
     NAME = "link_lint"
 
-    def run(self):
+    def run(self) -> None:
         # links = self.site.features["links"]
         seen = defaultdict(list)
         data = self.site.features["data"]

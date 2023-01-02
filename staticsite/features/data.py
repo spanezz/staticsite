@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Sequence, Type
+from typing import TYPE_CHECKING, Any, Optional, Sequence, TextIO, Type
 
 import jinja2
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from staticsite import file, fstree
     from staticsite.site import Site
     from staticsite.source_node import SourcePageNode
+    from staticsite.archetypes import Archetypes
 
 log = logging.getLogger("data")
 
@@ -63,16 +64,16 @@ class DataPages(PageTrackingMixin, Feature):
     taxonomy names are handled as with other pages. The rest of the dictionary
     is ignored and can contain any data one wants.
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
-        self.by_type = defaultdict(list)
+        self.by_type: dict[str, list[Page]] = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
-        self.page_class_by_type = {}
+        self.page_class_by_type: dict[str, Type[Page]] = {}
 
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
         return (DataPageMixin,)
 
-    def register_page_class(self, type: str, cls):
+    def register_page_class(self, type: str, cls: Type[Page]) -> None:
         self.page_class_by_type[type] = cls
 
     def get_used_page_types(self) -> list[Type[Page]]:
@@ -137,7 +138,7 @@ class DataPages(PageTrackingMixin, Feature):
             return None
         return DataArchetype(archetypes, relpath, self, fmt)
 
-    def organize(self):
+    def organize(self) -> None:
         # Dispatch pages by type
         for page in self.tracked_pages:
             data_type = page.data_type
@@ -148,12 +149,19 @@ class DataPages(PageTrackingMixin, Feature):
             pages.sort(key=lambda x: x.date)
 
     @jinja2.pass_context
-    def jinja2_data_pages(self, context, type, path=None, limit=None, sort=None, **kw):
+    def jinja2_data_pages(
+            self,
+            context: jinja2.runtime.Context,
+            type: str,
+            path: Optional[str] = None,
+            limit: Optional[int] = None,
+            sort: Optional[str] = None,
+            **kw: str) -> list[Page]:
         page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, allow=self.by_type.get(type, []), **kw)
         return page_filter.filter()
 
 
-def parse_data(fd, fmt):
+def parse_data(fd: TextIO, fmt: str) -> dict[str, Any]:
     if fmt == "json":
         import json
         return json.load(fd)
@@ -166,7 +174,7 @@ def parse_data(fd, fmt):
         raise NotImplementedError("data format {} is not supported".format(fmt))
 
 
-def write_data(fd, data, fmt):
+def write_data(fd: TextIO, data: dict[str, Any], fmt: str) -> None:
     if fmt == "json":
         import json
         json.dump(data, fd)
@@ -195,7 +203,7 @@ class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     """
     TYPE = "data"
 
-    def __init__(self, site: Site, **kw):
+    def __init__(self, site: Site, **kw: Any):
         # Indexed by default
         kw.setdefault("indexed", True)
         if "template" not in kw:
@@ -205,12 +213,12 @@ class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
 
 
 class DataArchetype(Archetype):
-    def __init__(self, archetypes, relpath, data_pages, fmt):
+    def __init__(self, archetypes: Archetypes, relpath: str, data_pages: DataPages, fmt: str):
         super().__init__(archetypes, relpath)
         self.data_pages = data_pages
         self.format = fmt
 
-    def render(self, **kw):
+    def render(self, **kw: Any) -> tuple[dict[str, Any], str]:
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version

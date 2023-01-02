@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type, cast
+from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type
 
 import jinja2
 import markdown
@@ -19,6 +19,8 @@ from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.archetypes import Archetypes
+    from staticsite.markup import LinkResolver
     from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("markdown")
@@ -28,7 +30,7 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
     """
     Markdown Treeprocessor that fixes internal links in HTML tags
     """
-    def __init__(self, *args, link_resolver, **kw) -> None:
+    def __init__(self, *args: Any, link_resolver: LinkResolver, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.link_resolver = link_resolver
 
@@ -42,7 +44,7 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
             return False
         return True
 
-    def run(self, root):
+    def run(self, root) -> None:
         # Replace <a href=…>
         for a in root.iter("a"):
             if (orig_url := a.attrib.get("href", None)) is None:
@@ -77,18 +79,18 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
 
 
 class StaticSiteExtension(markdown.extensions.Extension):
-    def __init__(self, *, link_resolver, **kwargs):
+    def __init__(self, *, link_resolver: LinkResolver, **kwargs: Any):
         super().__init__(**kwargs)
         self.link_resolver = link_resolver
 
-    def extendMarkdown(self, md):
+    def extendMarkdown(self, md) -> None:
         md.treeprocessors.register(FixURLs(md, link_resolver=self.link_resolver), 'staticsite', 0)
         md.registerExtension(self)
 
-    def reset(self):
+    def reset(self) -> None:
         pass
 
-    def set_page(self, page: Page, absolute: bool):
+    def set_page(self, page: Page, absolute: bool) -> None:
         self.link_resolver.set_page(page, absolute)
 
 
@@ -98,7 +100,7 @@ class MarkdownPages(MarkupFeature, Feature):
 
     See doc/reference/markdown.md for details.
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.markdown = markdown.Markdown(
             extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
@@ -116,7 +118,7 @@ class MarkdownPages(MarkupFeature, Feature):
         return [MarkdownPage]
 
     @jinja2.pass_context
-    def jinja2_markdown(self, context, mdtext):
+    def jinja2_markdown(self, context: jinja2.runtime.Context, mdtext: str) -> str:
         return markupsafe.Markup(self.render_snippet(context.parent["page"], mdtext))
 
     def render_snippet(self, page: Page, content: str) -> str:
@@ -128,7 +130,7 @@ class MarkdownPages(MarkupFeature, Feature):
         """
         self.link_resolver.set_page(page, absolute=False)
         self.markdown.reset()
-        return cast(str, self.markdown.convert(content))
+        return self.markdown.convert(content)
 
     def load_dir(
             self,
@@ -226,18 +228,18 @@ class MarkdownPages(MarkupFeature, Feature):
 
         return meta, body
 
-    def try_load_archetype(self, archetypes, relpath, name):
+    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str) -> Optional[MarkdownArchetype]:
         if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
 
 
 class MarkdownArchetype(Archetype):
-    def __init__(self, archetypes, relpath, feature):
+    def __init__(self, archetypes: Archetypes, relpath: str, feature: MarkdownPages):
         super().__init__(archetypes, relpath)
         self.feature = feature
 
-    def render(self, **kw):
+    def render(self, **kw: Any) -> tuple[dict[str, Any], str]:
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version
@@ -258,12 +260,12 @@ class MarkdownArchetype(Archetype):
 
             # Reserialize the page with the edited metadata
             fmatter = front_matter.write(meta, style)
-            with io.StringIO() as fd:
-                fd.write(fmatter)
-                print(file=fd)
+            with io.StringIO() as out:
+                out.write(fmatter)
+                print(file=out)
                 for line in body:
-                    print(line, file=fd)
-                post_body = fd.getvalue()
+                    print(line, file=out)
+                post_body = out.getvalue()
 
         return archetype_meta, post_body
 
@@ -394,7 +396,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     # Match a Markdown divider line
     re_divider = re.compile(r"^____+$")
 
-    def __init__(self, *, body: List[str], **kw):
+    def __init__(self, *, body: List[str], **kw: Any):
         self.feature: MarkdownPages
         # Indexed by default
         kw.setdefault("indexed", True)
@@ -454,7 +456,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
         return rendered
 
     @jinja2.pass_context
-    def html_body(self, context, **kw) -> str:
+    def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         absolute = self != context["page"]
         if self.body_rest is not None:
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
@@ -463,7 +465,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
             return self._render_page(self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.pass_context
-    def html_inline(self, context, **kw) -> str:
+    def html_inline(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         absolute = self != context["page"]
         if self.body_rest is not None:
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
@@ -472,7 +474,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
             return self._render_page(self.body_start, render_type="s", absolute=absolute)
 
     @jinja2.pass_context
-    def html_feed(self, context, **kw) -> str:
+    def html_feed(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         absolute = self != context["page"]
         if self.body_rest is not None:
             body = self.body_start + [""] + self.body_rest

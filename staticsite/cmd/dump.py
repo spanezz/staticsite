@@ -29,21 +29,21 @@ class Dump(SiteCommand):
                            help="regenerate reference documentation")
         return parser
 
-    def dump_fstree(self, site: Site):
+    def dump_fstree(self, site: Site) -> None:
         for name, fstree in site.fstrees.items():
             print(f"# {name}")
             fstree.print()
 
-    def dump_nodes(self, site: Site):
+    def dump_nodes(self, site: Site) -> None:
         site.root.print()
 
-    def dump_changes(self, site: Site):
+    def dump_changes(self, site: Site) -> None:
         for page in site.iter_pages():
             change = page.change_extent
             if change > 0:
                 print(f"{page!r} {change}")
 
-    def run(self):
+    def run(self) -> None:
         site = self.load_site()
         if self.args.fstree:
             self.dump_fstree(site)

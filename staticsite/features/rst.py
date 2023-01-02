@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, Any, List, Optional, BinaryIO, Tuple, Type
+from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Tuple, Type
 
 import docutils.core
 import docutils.io
@@ -14,18 +14,19 @@ import jinja2
 from staticsite.archetypes import Archetype
 from staticsite.feature import Feature
 from staticsite.markup import MarkupFeature, MarkupPage
-from staticsite.page import FrontMatterPage, TemplatePage, Page
+from staticsite.page import FrontMatterPage, Page, TemplatePage
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.archetypes import Archetypes
     from staticsite.source_node import SourcePageNode
 
 log = logging.getLogger("rst")
 
 
 class DoctreeScan:
-    def __init__(self, doctree, remove_docinfo=True):
+    def __init__(self, doctree, remove_docinfo: bool = True) -> None:
         # Doctree root node
         self.doctree = doctree
         # Information useful to locate and remove the docinfo element
@@ -74,7 +75,7 @@ class RestructuredText(MarkupFeature, Feature):
 
     See doc/reference/rst.rst for details.
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
 
         self.render_cache = self.site.caches.get("rst")
@@ -86,7 +87,7 @@ class RestructuredText(MarkupFeature, Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [RstPage]
 
-    def parse_rest(self, fd: BinaryIO, remove_docinfo=True) -> tuple[dict[str, Any], DoctreeScan]:
+    def parse_rest(self, fd: BinaryIO, remove_docinfo: bool = True) -> tuple[dict[str, Any], DoctreeScan]:
         """
         Parse a rest document.
 
@@ -182,7 +183,8 @@ class RestructuredText(MarkupFeature, Feature):
                 page = node.create_source_page_as_path(
                         name=fname[:-4],
                         **kwargs)
-            pages.append(page)
+            if page is not None:
+                pages.append(page)
 
         for fname in taken:
             del files[fname]
@@ -196,18 +198,18 @@ class RestructuredText(MarkupFeature, Feature):
 
         return meta, doctree_scan
 
-    def try_load_archetype(self, archetypes, relpath, name):
+    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str):
         if os.path.basename(relpath) != name + ".rst":
             return None
         return RestArchetype(archetypes, relpath, self)
 
 
 class RestArchetype(Archetype):
-    def __init__(self, archetypes, relpath, feature):
+    def __init__(self, archetypes: Archetypes, relpath: str, feature: RestructuredText):
         super().__init__(archetypes, relpath)
         self.feature = feature
 
-    def render(self, **kw):
+    def render(self, **kw: Any) -> tuple[dict[str, Any], str]:
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version

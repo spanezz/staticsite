@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List, Sequence, Type, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Type, cast
 
 import jinja2
 
@@ -50,7 +50,7 @@ class LinksPageMixin(Page):
 
 class LinksTemplatePageMixin(LinksPageMixin, TemplatePage):
     @jinja2.pass_context
-    def html_body(self, context, **kw) -> str:
+    def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         rendered = super().html_body(context, **kw)
 
         # If the page has rendered pointers to external links, add a dataset
@@ -97,7 +97,7 @@ class LinksPage(LinksPageMixin, DataPage):
     """
     TYPE = "links"
 
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.links})
 
@@ -149,7 +149,7 @@ class Links(PageTrackingMixin, Feature):
     """
     RUN_AFTER = ["data"]
 
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.j2_globals["links_merged"] = self.links_merged
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
@@ -208,9 +208,9 @@ class Links(PageTrackingMixin, Feature):
                     links=self,
                     link_collection=self.links,
                     **kwargs)
-            pages.append(page)
-
-            self.indices.append(page)
+            if page is not None:
+                pages.append(page)
+                self.indices.append(page)
 
         for fname in taken:
             del files[fname]
@@ -229,7 +229,14 @@ class Links(PageTrackingMixin, Feature):
         return meta
 
     @jinja2.pass_context
-    def links_merged(self, context, path=None, limit=None, sort=None, link_tags=None, **kw):
+    def links_merged(
+            self,
+            context: jinja2.runtime.Context,
+            path: Optional[str] = None,
+            limit: Optional[int] = None,
+            sort: Optional[str] = None,
+            link_tags=None,
+            **kw: Any):
         page_filter = PageFilter(
                 self.site, path=path, limit=limit, sort=sort, allow=self.data.by_type.get("links", ()), **kw)
 

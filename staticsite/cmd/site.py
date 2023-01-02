@@ -1,7 +1,14 @@
-from .command import SiteCommand
+from __future__ import annotations
+
 import argparse
-import sys
 import logging
+import sys
+from typing import TYPE_CHECKING, Optional
+
+from .command import SiteCommand
+
+if TYPE_CHECKING:
+    import staticsite.site
 
 log = logging.getLogger("site")
 
@@ -9,13 +16,13 @@ log = logging.getLogger("site")
 class FeatureCommand:
     # Command name (as used in command line)
     # Defaults to the lowercased class name
-    NAME = None
+    NAME: Optional[str] = None
 
     # Command description (as used in command line help)
     # Defaults to the strip()ped class docstring.
-    DESC = None
+    DESC: Optional[str] = None
 
-    def __init__(self, site, args):
+    def __init__(self, site: staticsite.site.Site, args):
         self.site = site
         self.args = args
 
@@ -36,7 +43,8 @@ class FeatureCommand:
 
 class List(FeatureCommand):
     "list available features"
-    def run(self):
+
+    def run(self) -> None:
         for feature in self.site.features.ordered():
             print("{} - {}".format(feature.name, feature.get_short_description()))
 
@@ -50,7 +58,7 @@ class Site(SiteCommand):
         parser.add_argument("--cmd", nargs=argparse.REMAINDER, help="site-specific command (try 'help')")
         return parser
 
-    def run(self):
+    def run(self) -> None:
         site = self.load_site()
 
         # Build the site-specific command line parser

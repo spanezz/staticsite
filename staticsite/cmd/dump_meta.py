@@ -24,7 +24,7 @@ class DumpMeta(SiteCommand):
                             help="print documentation for all known metadata")
         return parser
 
-    def run(self):
+    def run(self) -> None:
         site = self.load_site()
         if self.args.doc:
             print("""# Common page metadata

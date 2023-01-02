@@ -1,8 +1,17 @@
-import subprocess
-import shlex
-from .command import SiteCommand, Fail
-from staticsite.page_filter import PageFilter
+from __future__ import annotations
+
 import logging
+import shlex
+import subprocess
+from typing import TYPE_CHECKING, Any, Optional
+
+from staticsite.page_filter import PageFilter
+
+from .command import Fail, SiteCommand
+
+if TYPE_CHECKING:
+    from ..page import SourcePage
+
 
 log = logging.getLogger("edit")
 
@@ -12,7 +21,7 @@ class Edit(SiteCommand):
 
     MENU_SIZE = 5
 
-    def select_page_menu(self, pages):
+    def select_page_menu(self, pages: list[SourcePage]) -> Optional[SourcePage]:
         """
         Prompt the user to select a page from `pages`.
 
@@ -60,10 +69,10 @@ class Edit(SiteCommand):
                 else:
                     return pages[idx - 1]
 
-    def run(self):
+    def run(self) -> Optional[int]:
         site = self.load_site()
 
-        filter_args = {
+        filter_args: dict[str, Any] = {
             "sort": "-date",
         }
 
@@ -81,7 +90,7 @@ class Edit(SiteCommand):
                 else:
                     args.append(arg)
 
-        def match_page(page):
+        def match_page(page: SourcePage) -> bool:
             for m in args:
                 if (m.lower() not in page.meta.get("title", "").lower()
                         and m.lower() not in page.src.relpath.lower()):
@@ -91,18 +100,19 @@ class Edit(SiteCommand):
         # Build a list of all findable pages, present on disk, sorted with the newest first
         f = PageFilter(site, **filter_args)
         pages = [page for page in f.filter()
-                 if page.src.stat is not None and match_page(page)]
+                 if isinstance(page, SourcePage) and match_page(page)]
 
         if len(pages) == 0:
             raise Fail("No page found matching {}".format(" ".join(shlex.quote(x) for x in self.args.match)))
 
+        page: Optional[SourcePage]
         if len(pages) == 1:
             page = pages[0]
         else:
             page = self.select_page_menu(pages)
 
         if page is None:
-            return
+            return None
 
         abspath = page.src.abspath
 
@@ -115,6 +125,7 @@ class Edit(SiteCommand):
                 log.warn("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
                 return e.returncode
         print(abspath)
+        return None
 
     @classmethod
     def make_subparser(cls, subparsers):

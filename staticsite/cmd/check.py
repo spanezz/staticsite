@@ -1,8 +1,16 @@
+from __future__ import annotations
+
 import datetime
-from staticsite.utils import timings
-from collections import Counter
-from .command import SiteCommand
 import logging
+from collections import Counter
+from typing import TYPE_CHECKING
+
+from staticsite.utils import timings
+
+from .command import SiteCommand
+
+if TYPE_CHECKING:
+    from ..site import Site
 
 log = logging.getLogger("check")
 
@@ -10,13 +18,13 @@ log = logging.getLogger("check")
 class Check(SiteCommand):
     "check the site, going through all the motions of rendering it without writing anything"
 
-    def run(self):
+    def run(self) -> None:
         site = self.load_site()
         with timings("Checked site in %fs"):
             self.check(site)
 
-    def check(self, site):
-        counts = Counter()
+    def check(self, site: Site) -> None:
+        counts: dict[str, int] = Counter()
         for page in site.iter_pages():
             counts[page.TYPE] += 1
             page.check()
@@ -24,7 +32,7 @@ class Check(SiteCommand):
             date = page.meta.get("date", None)
             if date is not None:
                 if not isinstance(date, datetime.datetime):
-                    log.info("%s: meta date %r is not an instance of datetime", page.src.relpath, date)
+                    log.info("%r: meta date %r is not an instance of datetime", page, date)
 
         for type, count in sorted(counts.items()):
             print("{} {} pages".format(count, type))

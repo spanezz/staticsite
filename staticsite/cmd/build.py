@@ -7,10 +7,10 @@ import os
 import shutil
 import time
 from collections import Counter
-from typing import TYPE_CHECKING, Generator, Optional
+from typing import TYPE_CHECKING, Any, Generator, Optional
 
 from .. import utils
-from ..node import Path
+from ..site import Path
 from ..page import ChangeExtent
 from .command import Fail, SiteCommand
 
@@ -39,7 +39,7 @@ class Build(SiteCommand):
                             help="always do a full rebuild")
         return parser
 
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.site: Site
 
@@ -59,12 +59,12 @@ class RenderStats:
     """
     Statistics collected during rendering
     """
-    def __init__(self):
-        self.sums = Counter()
-        self.counts = Counter()
+    def __init__(self) -> None:
+        self.sums: dict[str, int] = Counter()
+        self.counts: dict[str, int] = Counter()
 
     @contextlib.contextmanager
-    def collect(self, page: Page):
+    def collect(self, page: Page) -> Generator[None, None, None]:
         start = time.perf_counter_ns()
         yield
         end = time.perf_counter_ns()
@@ -145,7 +145,7 @@ class RenderDirectory:
         else:
             return None
 
-    def cleanup_leftovers(self):
+    def cleanup_leftovers(self) -> None:
         """
         Remove previously existing files and directories that have disappeared
         in the current version of the site
@@ -267,7 +267,7 @@ class Builder:
                      stats.sums[type] / 1_000_000_000,
                      stats.counts[type] / stats.sums[type] * 60 * 1_000_000_000)
 
-    def write_subtree(self, node: Node, render_dir: RenderDirectory, stats: RenderStats):
+    def write_subtree(self, node: Node, render_dir: RenderDirectory, stats: RenderStats) -> None:
         """
         Recursively render the given node in the given render directory
         """
