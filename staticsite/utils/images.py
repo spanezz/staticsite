@@ -34,7 +34,7 @@ class ImageScanner:
 
     def scan(self, src: File, mimetype: str) -> dict[str, Any]:
         key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
-        meta = self.cache.get(key)
+        meta: dict[str, Any] = self.cache.get(key)
         if meta is None:
             meta = self.read_meta(src.abspath, mimetype)
             self.cache.put(key, meta)

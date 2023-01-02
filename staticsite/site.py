@@ -32,6 +32,11 @@ class Path(tuple[str]):
     """
     re_pathsep = re.compile(re.escape(os.sep) + "+")
 
+    # TODO: this is not needed, but mypy is currently unable to understand that
+    # Path can be False
+    def __bool__(self) -> bool:
+        return len(self) > 0
+
     @property
     def head(self) -> str:
         """

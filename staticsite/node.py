@@ -181,6 +181,7 @@ class Node(SiteElement):
             directory_index: bool = False,
             **kw: Any) -> P:
         from .page import PageValidationError
+        from .asset import Asset
 
         if directory_index:
             search_root_node = self
@@ -201,12 +202,12 @@ class Node(SiteElement):
             raise SkipPage()
 
         if self.page is not None:
-            page.old_footprint = self.page.old_footprint
-            if self.page.TYPE == "asset" and page.TYPE == "asset":
-                # First one wins, to allow overriding of assets in theme
-                pass
+            if isinstance(self.page, Asset) and isinstance(page, Asset):
+                # Allow replacement of assets
+                page.old_footprint = self.page.old_footprint
             else:
-                log.warn("%s: page %r replaces page %r", self.path, page, self.page)
+                log.warn("%s: page %r attempts to replace page %r: skipped", self.path, page, self.page)
+                raise SkipPage()
 
         self.page = page
         if page.source_name is not None:
@@ -222,6 +223,7 @@ class Node(SiteElement):
             dst: str,
             **kw: Any) -> P:
         from .page import PageValidationError
+        from .asset import Asset
 
         # Create the page
         try:
@@ -236,13 +238,12 @@ class Node(SiteElement):
             raise SkipPage()
 
         if (old := self.build_pages.get(dst)):
-            if (old_footprint := getattr(old, "old_footprint", None)) is not None:
-                page.old_footprint = old_footprint
-            if old.TYPE == "asset" and page.TYPE == "asset":
-                # First one wins, to allow overriding of assets in theme
-                pass
+            if isinstance(old, Asset) and isinstance(page, Asset):
+                # Allow replacement of assets
+                page.old_footprint = old.old_footprint
             else:
-                log.warn("%s: page %r replaces page %r", self.path, page, old)
+                log.warn("%s: page %r attempts to replace page %r: skipped", self.path, page, self.page)
+                raise SkipPage()
 
         self.build_pages[dst] = page
         if page.source_name is not None:
