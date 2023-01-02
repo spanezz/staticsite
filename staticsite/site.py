@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Generator, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Generator, Iterable, Optional, Union
 
 import dateutil.parser
 import pytz
@@ -19,8 +19,8 @@ from .utils import timings
 if TYPE_CHECKING:
     from .archetypes import Archetypes
     from .node import Node
-    from .source_node import RootNode, SourceAssetNode
     from .page import Page
+    from .source_node import RootNode, SourceAssetNode
     from .theme import Theme
 
 log = logging.getLogger("site")
@@ -229,7 +229,7 @@ class Site:
         self.stage_features_constructed = False
 
         # Theme used to render pages
-        self._theme = None
+        self._theme: Optional[Theme] = None
 
         # Feature implementation registry
         self.features = Features(self)
@@ -290,7 +290,7 @@ class Site:
         for feature in self.features.ordered():
             self.build_cache.put(f"footprint_{feature.name}", feature.get_footprint())
 
-    def deleted_source_pages(self) -> Sequence[str]:
+    def deleted_source_pages(self) -> Iterable[str]:
         """
         Return a sequence with the source relpaths of pages deleted since the
         last run
