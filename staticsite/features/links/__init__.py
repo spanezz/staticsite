@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List, Sequence, Type
+from typing import TYPE_CHECKING, Any, List, Sequence, Type, cast
 
 import jinja2
 
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
-from staticsite.features.data import DataPage
+from staticsite.features.data import DataPage, DataPages
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
 from staticsite.page import Page, TemplatePage
@@ -58,7 +58,7 @@ class LinksTemplatePageMixin(LinksPageMixin, TemplatePage):
         if not (external_links := getattr(self, "rendered_external_links", ())):
             return rendered
 
-        feature = self.site.features["links"]
+        feature = cast(Links, self.site.features["links"])
         links = feature.links
         if not feature.indices:
             return rendered
@@ -155,7 +155,7 @@ class Links(PageTrackingMixin, Feature):
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
 
         # Shortcut to access the Data feature
-        self.data = self.site.features["data"]
+        self.data = cast(DataPages, self.site.features["data"])
 
         # Let the Data feature render link collections from pure yaml files,
         # when they have a `data_type: links` metadata
@@ -254,14 +254,14 @@ class Links(PageTrackingMixin, Feature):
         return links
 
     @jinja2.pass_context
-    def links_tag_index_url(self, context, tag) -> str:
+    def links_tag_index_url(self, context: jinja2.runtime.Context, tag: str) -> str:
         dest = self.indices[0].by_tag[tag]
-        page = context.parent["page"]
+        page: Page = context.parent["page"]
         return page.url_for(dest)
 
     def organize(self) -> None:
         # Index links by tag
-        self.by_tag = defaultdict(LinkCollection)
+        self.by_tag: dict[str, LinkCollection] = defaultdict(LinkCollection)
         for page in self.tracked_pages:
             for link in page.links:
                 link = Link(link)
