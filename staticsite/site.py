@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import re
+import zoneinfo
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Generator, Iterable, Optional, Union
 
@@ -19,7 +20,7 @@ from .utils import timings
 if TYPE_CHECKING:
     from .archetypes import Archetypes
     from .node import Node
-    from .page import Page
+    from .page import Page, SourcePage
     from .source_node import RootNode, SourceNode
     from .theme import Theme
 
@@ -205,11 +206,12 @@ class Site:
             self.settings.CONTENT = "."
 
         # Site time zone
+        self.timezone: datetime.tzinfo
         if settings.TIMEZONE is None:
             from dateutil.tz import tzlocal
             self.timezone = tzlocal()
         else:
-            self.timezone = pytz.timezone(settings.TIMEZONE)
+            self.timezone = zoneinfo.ZoneInfo(settings.TIMEZONE)
 
         # Current datetime
         self.generation_time: datetime.datetime
@@ -288,7 +290,7 @@ class Site:
         future builds
         """
         footprints = {
-            page.src.relpath: page.footprint for page in self.iter_pages(source_only=True)
+            page.src.relpath: page.footprint for page in self._iter_source_pages()
         }
         self.build_cache.put("footprints", footprints)
         for feature in self.features.ordered():
@@ -316,6 +318,14 @@ class Site:
             prune = ()
         yield from self.root.iter_pages(prune=prune, source_only=source_only)
 
+    def _iter_source_pages(self) -> Generator[SourcePage, None, None]:
+        """
+        Iterate all source pages in the site.
+
+        This is the same as iter_pages(source_only=True), but has the right generator type
+        """
+        yield from self.root.iter_pages(source_only=True)
+
     @cached_property
     def archetypes(self) -> "Archetypes":
         """
@@ -332,9 +342,11 @@ class Site:
         """
         self.features.load_default_features()
         # We can now load source files footprint, before theme loads assets
-        self.previous_source_footprints = self.build_cache.get("footprints")
-        if self.previous_source_footprints is None:
+        previous_source_footprints = self.build_cache.get("footprints")
+        if previous_source_footprints is None:
             self.previous_source_footprints = {}
+        else:
+            self.previous_source_footprints = previous_source_footprints
 
     def load_theme(self) -> None:
         """
