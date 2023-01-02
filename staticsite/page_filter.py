@@ -86,7 +86,7 @@ class PageFilter:
         self.sort_meta, self.sort_reverse, self.sort_key = sort_args(sort)
 
         self.taxonomy_filters: list[tuple[str, FrozenSet[str]]] = []
-        if taxonomy_feature := self.site.features.get("taxonomy") is not None:
+        if (taxonomy_feature := self.site.features.get("taxonomy")) is not None:
             from staticsite.features.taxonomy import TaxonomyFeature
             for taxonomy in cast(TaxonomyFeature, taxonomy_feature).taxonomies.values():
                 t_filter = kw.get(taxonomy.name)

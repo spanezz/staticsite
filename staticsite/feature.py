@@ -44,13 +44,15 @@ class TrackedField(fields.Field[P, V]):
         super().__set_name__(owner, name)
         self.track_feature_key = f"_{self.name}_feature"
 
-    def track(self, obj: fields.FieldContainer, value: Any) -> None:
+    def track(self, obj: P, value: Any) -> None:
         # We cannot store a reference to the Feature in the field, because it
         # would persist in the class definition, making it impossible to build
         # two sites one after the other.
-        if (feature := obj.__dict__.get(self.track_feature_key)) is None:
-            feature = obj.site.features[self.tracked_by]
+        if (f := obj.__dict__.get(self.track_feature_key)) is None:
+            feature = cast(PageTrackingMixin[P], obj.site.features[self.tracked_by])
             obj.__dict__[self.track_feature_key] = feature
+        else:
+            feature = cast(PageTrackingMixin[P], f)
         feature.track_field(self, obj, value)
 
     def __set__(self, obj: P, value: Any) -> None:
@@ -319,7 +321,7 @@ class Features:
         from . import features
         self.load_feature_dir(features.__path__)
 
-    def load_feature_dir(self, path: str, namespace="staticsite.features") -> None:
+    def load_feature_dir(self, paths: Sequence[str], namespace: str = "staticsite.features") -> None:
         """
         Load all features found in the given directory.
 
@@ -328,7 +330,7 @@ class Features:
         import importlib
         import pkgutil
 
-        for module_finder, name, ispkg in pkgutil.iter_modules(path):
+        for module_finder, name, ispkg in pkgutil.iter_modules(paths):
             full_name = namespace + "." + name
             mod = sys.modules.get(full_name)
             if not mod:
