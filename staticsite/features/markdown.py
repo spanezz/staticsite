@@ -430,7 +430,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
         meta, body = self.feature.read_file_meta(fd)
         return self.front_matter != meta
 
-    def check(self, checker):
+    def check(self) -> None:
         self.render()
 
     def _render_page(self, body: List[str], render_type: str, absolute: bool = False) -> str:

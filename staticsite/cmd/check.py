@@ -19,7 +19,7 @@ class Check(SiteCommand):
         counts = Counter()
         for page in site.iter_pages():
             counts[page.TYPE] += 1
-            page.check(self)
+            page.check()
 
             date = page.meta.get("date", None)
             if date is not None:

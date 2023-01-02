@@ -675,7 +675,7 @@ class Page(SiteElement):
         """
         raise NotImplementedError(f"{self.__class__.__name__}.render not implemented")
 
-    def check(self, checker):
+    def check(self) -> None:
         pass
 
     def __str__(self) -> str:
@@ -763,7 +763,7 @@ It defaults to false, or true if `meta.date` is in the future.
         }
         # We can cast to list[Page] since we made sure we only run after the crossreference stage
         if (pages := self.pages):
-            res["pages"] = [page.src.relpath for page in pages if getattr(page, "src", None)]
+            res["pages"] = [page.src.relpath for page in pages if isinstance(page, SourcePage)]
         return res
 
     @cached_property

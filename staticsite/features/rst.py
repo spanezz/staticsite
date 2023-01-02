@@ -328,7 +328,7 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
         meta, doctree_scan = self.feature.parse_rest(fd)
         return (self.front_matter != meta)
 
-    def check(self, checker):
+    def check(self) -> None:
         self._render_page()
 
     def _render_page(self, absolute: bool = False) -> str:

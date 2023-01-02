@@ -324,7 +324,9 @@ class Site:
 
         This is the same as iter_pages(source_only=True), but has the right generator type
         """
-        yield from self.root.iter_pages(source_only=True)
+        # Ignore typing, as casting the generator currently requires importing
+        # SourcePage at runtime
+        yield from self.root.iter_pages(source_only=True)  # type: ignore
 
     @cached_property
     def archetypes(self) -> "Archetypes":
