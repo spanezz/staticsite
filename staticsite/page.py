@@ -914,10 +914,10 @@ class TemplatePage(Page):
 
 
 class ImagePage(Page):
-    width = fields.ConstInt["ImagePage"](doc="""
+    width = fields.Int["ImagePage"](doc="""
         Image width
     """)
-    height = fields.ConstInt["ImagePage"](doc="""
+    height = fields.Int["ImagePage"](doc="""
         Image height
     """)
 
