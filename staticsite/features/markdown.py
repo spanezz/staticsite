@@ -4,10 +4,11 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type
+from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type, cast
 
 import jinja2
 import markdown
+import markdown.treeprocessors
 import markupsafe
 from markdown.util import AMP_SUBSTITUTE
 
@@ -18,6 +19,8 @@ from staticsite.page import FrontMatterPage, ImagePage, Page, TemplatePage
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
     from staticsite import file, fstree
     from staticsite.archetypes import Archetypes
     from staticsite.markup import LinkResolver
@@ -44,7 +47,7 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
             return False
         return True
 
-    def run(self, root) -> None:
+    def run(self, root: ET.ElementTree) -> None:
         # Replace <a href=…>
         for a in root.iter("a"):
             if (orig_url := a.attrib.get("href", None)) is None:
@@ -65,14 +68,15 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
             if not self.should_resolve(orig_url):
                 continue
 
-            page, parsed = self.link_resolver.resolve_page(orig_url)
-            if page is None:
+            if (resolved := self.link_resolver.resolve_page(orig_url)) is None:
                 continue
 
-            if isinstance(page, ImagePage):
-                attrs = page.get_img_attributes(absolute=self.link_resolver.absolute)
+            if isinstance(resolved.page, ImagePage):
+                attrs = resolved.page.get_img_attributes(absolute=self.link_resolver.absolute)
             else:
-                log.warning("%s: img src= resolves to %s which is not an image page", self.page, page)
+                log.warning(
+                        "%s: img src= resolves to %s which is not an image page",
+                        self.link_resolver.page, resolved.page)
                 continue
 
             img.attrib.update(attrs)
@@ -83,7 +87,7 @@ class StaticSiteExtension(markdown.extensions.Extension):
         super().__init__(**kwargs)
         self.link_resolver = link_resolver
 
-    def extendMarkdown(self, md) -> None:
+    def extendMarkdown(self, md: markdown.Markdown) -> None:
         md.treeprocessors.register(FixURLs(md, link_resolver=self.link_resolver), 'staticsite', 0)
         md.registerExtension(self)
 
@@ -107,7 +111,7 @@ class MarkdownPages(MarkupFeature, Feature):
                 StaticSiteExtension(link_resolver=self.link_resolver),
             ],
             extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
-            output_format="html5",
+            output_format="html",
         )
 
         self.j2_filters["markdown"] = self.jinja2_markdown
@@ -444,7 +448,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
         with self.markup_render_context(cache_key, absolute=absolute) as context:
             if (rendered := context.cache.get("rendered")):
                 # log.info("%s: markdown cache hit", page.src.relpath)
-                return rendered
+                return cast(str, rendered)
 
             self.feature.markdown.reset()
             rendered = self.feature.markdown.convert("\n".join(body))

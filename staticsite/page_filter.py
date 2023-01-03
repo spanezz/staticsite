@@ -67,7 +67,7 @@ class PageFilter:
 
     def __init__(
             self,
-            site: "site.Site",
+            site: "site.Site", *,
             path: Optional[str] = None,
             limit: Optional[int] = None,
             sort: Optional[str] = None,

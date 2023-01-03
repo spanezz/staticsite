@@ -43,7 +43,8 @@ class Meta(Command):
         Edit the given metadata in an editor
         """
         with tempfile.NamedTemporaryFile(suffix=".yaml", mode="wt") as fd:
-            yaml.dump(meta, fd)
+            # FIXME: ignoring type, as yaml.dump should declare IO[str] instead of TextIO
+            yaml.dump(meta, fd)  # type: ignore [arg-type]
             fd.flush()
             self.edit(fd.name)
             with open(fd.name, "rt") as newfd:

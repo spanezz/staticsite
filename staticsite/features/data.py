@@ -19,9 +19,9 @@ from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
     from staticsite import file, fstree
+    from staticsite.archetypes import Archetypes
     from staticsite.site import Site
     from staticsite.source_node import SourcePageNode
-    from staticsite.archetypes import Archetypes
 
 log = logging.getLogger("data")
 
@@ -84,8 +84,8 @@ class DataPages(PageTrackingMixin, Feature):
             node: SourcePageNode,
             directory: fstree.Tree,
             files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
-        taken = []
-        pages = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
             mo = re_ext.search(fname)
             if not mo:
@@ -122,14 +122,15 @@ class DataPages(PageTrackingMixin, Feature):
                 page = node.create_source_page_as_path(
                     name=page_name,
                     **kwargs)
-            pages.append(page)
+            if page is not None:
+                pages.append(page)
 
         for fname in taken:
             del files[fname]
 
         return pages
 
-    def try_load_archetype(self, archetypes, relpath, name):
+    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str) -> Optional[Archetype]:
         mo = re_ext.search(relpath)
         if not mo:
             return None
@@ -157,11 +158,12 @@ class DataPages(PageTrackingMixin, Feature):
             limit: Optional[int] = None,
             sort: Optional[str] = None,
             **kw: str) -> list[Page]:
-        page_filter = PageFilter(self.site, path=path, limit=limit, sort=sort, allow=self.by_type.get(type, []), **kw)
+        page_filter = PageFilter(
+                self.site, path=path, limit=limit, sort=sort, allow=self.by_type.get(type, []), root=None, **kw)
         return page_filter.filter()
 
 
-def parse_data(fd: TextIO, fmt: str) -> dict[str, Any]:
+def parse_data(fd: TextIO, fmt: str) -> Any:
     if fmt == "json":
         import json
         return json.load(fd)

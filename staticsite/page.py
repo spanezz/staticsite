@@ -616,7 +616,7 @@ class Page(SiteElement):
         this page
         """
         from .page_filter import PageFilter
-        f = PageFilter(self.site, path, limit, sort, root=self.search_root_node, **kw)
+        f = PageFilter(self.site, path=path, limit=limit, sort=sort, root=self.search_root_node, **kw)
         return f.filter()
 
     def lookup_page(self, path: Path) -> Optional[Page]:

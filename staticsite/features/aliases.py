@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Sequence, Type
+from typing import TYPE_CHECKING, Any, Sequence, Type, cast
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
 from staticsite.site import Path
 from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
                              TemplatePage)
+
+if TYPE_CHECKING:
+    from staticsite.features import rst
 
 log = logging.getLogger("aliases")
 
@@ -59,14 +62,14 @@ class AliasesFeature(PageTrackingMixin, Feature):
     """
     RUN_AFTER = ["rst"]
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
-        self.site.features["rst"].yaml_tags.add("aliases")
+        cast("rst.RestructuredText", self.site.features["rst"]).yaml_tags.add("aliases")
 
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
         return (AliasesPageMixin,)
 
-    def generate(self):
+    def generate(self) -> None:
         # Build alias pages from pages with an 'aliases' metadata
         for page in self.tracked_pages:
             if not (aliases := page.aliases):
@@ -98,6 +101,8 @@ class AliasPage(TemplatePage, AutoPage):
     TEMPLATE = "redirect.html"
 
     def _compute_change_extent(self) -> ChangeExtent:
+        if self.created_from is None:
+            raise AssertionError(f"AliasPage {self!r} has empty created_from")
         res = self.created_from.change_extent
         if res == ChangeExtent.CONTENTS:
             res = ChangeExtent.UNCHANGED
