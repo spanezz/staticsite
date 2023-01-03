@@ -332,11 +332,17 @@ class Theme:
 
     @jinja2.pass_context
     def jinja2_datetime_format(
-            self, context: jinja2.runtime.Context, dt: Union[str, datetime.datetime], format: str) -> str:
+            self,
+            context: jinja2.runtime.Context,
+            dt: Union[str, datetime.datetime],
+            format: Optional[str] = None) -> str:
         if not isinstance(dt, datetime.datetime):
             import dateutil.parser
             dt = dateutil.parser.parse(dt)
-        if format in ("rss2", "rfc822"):
+        if format is None or format == "iso8601":
+            from .utils import format_date_iso8601
+            return format_date_iso8601(dt)
+        elif format in ("rss2", "rfc822"):
             from .utils import format_date_rfc822
             return format_date_rfc822(dt)
         elif format in ("atom", "rfc3339"):
@@ -345,9 +351,6 @@ class Theme:
         elif format == "w3cdtf":
             from .utils import format_date_w3cdtf
             return format_date_w3cdtf(dt)
-        elif format == "iso8601" or not format:
-            from .utils import format_date_iso8601
-            return format_date_iso8601(dt)
         elif format[0] == '%':
             return dt.strftime(format)
         else:
