@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .command import SiteCommand, register
+from . import cli
 
 if TYPE_CHECKING:
     import staticsite.site
@@ -13,28 +14,14 @@ if TYPE_CHECKING:
 log = logging.getLogger("site")
 
 
-class FeatureCommand:
-    # Command name (as used in command line)
-    # Defaults to the lowercased class name
-    NAME: Optional[str] = None
-
+class FeatureCommand(cli.Command):
+    """
+    Command parser that can be run after the site is loaded
+    """
     def __init__(self, site: staticsite.site.Site, args: argparse.Namespace):
+        # Intentionally do not call super().__init__, to avoid reinitializing logs
         self.site = site
         self.args = args
-
-    @classmethod
-    def add_subparser(cls, subparsers):
-        name = cls.NAME
-        if name is None:
-            name = cls.__name__.lower()
-
-        desc = cls.DESC
-        if desc is None:
-            desc = cls.__doc__.strip()
-
-        parser = subparsers.add_parser(name, help=desc)
-        parser.set_defaults(handler=cls)
-        return parser
 
 
 class List(FeatureCommand):

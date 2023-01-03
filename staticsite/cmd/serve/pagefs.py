@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Optional, Union
-import os
+
 import locale
-import mimetypes
 import logging
+import mimetypes
+import os
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 if TYPE_CHECKING:
-    from staticsite.site import Site
-    from staticsite.page import Page
     from staticsite.node import Node
+    from staticsite.page import Page
+    from staticsite.site import Site
 
 log = logging.getLogger("serve")
 
@@ -24,7 +25,7 @@ class PageFS:
         self.paths: dict[str, Page] = {}
         self.add_tree(site.root)
 
-    def add_tree(self, root: Node, relpath: str = ""):
+    def add_tree(self, root: Node, relpath: str = "") -> None:
         for name, page in root.build_pages.items():
             self.paths[os.path.join(relpath, name)] = page
 
@@ -46,7 +47,7 @@ class PageFS:
 
         return None, None
 
-    def render(self, path, **kw) -> Tuple[Optional[str], Optional[bytes]]:
+    def render(self, path: str, **kw: Any) -> Tuple[Optional[str], Optional[bytes]]:
         """
         Find the page for the given path and return its rendered contents
         """
@@ -65,7 +66,7 @@ class PageFS:
         build_path = os.path.join(page.node.path, page.dst)
         return build_path, rendered.content()
 
-    def serve_path(self, path, environ, start_response):
+    def serve_path(self, path: str, environ: dict[str, Any], start_response: Callable) -> list[bytes]:
         """
         Render a page on the fly and serve it.
 
@@ -77,8 +78,15 @@ class PageFS:
         Returns None without calling start_response if no page was found.
         """
         relpath, content = self.render(path)
-        start_response("200 OK", [
-            ("Content-Type", mimetypes.guess_type(relpath)[0]),
-            ("Content-Length", str(len(content))),
-        ])
-        return [content]
+        if relpath is None or content is None:
+            start_response("404 NOT FOUND", [
+                ("Content-Type", "text/plain"),
+                ("Content-Length", "0"),
+            ])
+            return []
+        else:
+            start_response("200 OK", [
+                ("Content-Type", mimetypes.guess_type(relpath)[0]),
+                ("Content-Length", str(len(content))),
+            ])
+            return [content]

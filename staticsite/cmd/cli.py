@@ -44,11 +44,10 @@ class Command:
     Base class for actions run from command line
     """
 
-    NAME: Optional[str] = None
+    NAME: str
 
     def __init__(self, args: argparse.Namespace):
-        if self.NAME is None:
-            self.NAME = self.__class__.__name__.lower()
+        self.NAME = getattr(self.__class__, "NAME", self.__class__.__name__.lower())
         self.args = args
         self.setup_logging()
 
@@ -68,8 +67,7 @@ class Command:
 
     @classmethod
     def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
-        if cls.NAME is None:
-            cls.NAME = cls.__name__.lower()
+        cls.NAME = getattr(cls, "NAME", cls.__name__.lower())
         parser: argparse.ArgumentParser = subparsers.add_parser(
             cls.NAME,
             help=_get_first_docstring_line(cls),

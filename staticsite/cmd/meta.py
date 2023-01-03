@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import shlex
 import subprocess
@@ -22,7 +23,7 @@ class Meta(Command):
     """
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
-        self.scanner = images.ImageScanner(DisabledCache())
+        self.scanner = images.ImageScanner(DisabledCache("disabled"))
 
     def edit(self, fname: str) -> subprocess.CompletedProcess:
         """
@@ -41,12 +42,14 @@ class Meta(Command):
         """
         Edit the given metadata in an editor
         """
-        with tempfile.NamedTemporaryFile(suffix=".yaml") as fd:
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="wt") as fd:
             yaml.dump(meta, fd)
             fd.flush()
             self.edit(fd.name)
             with open(fd.name, "rt") as newfd:
-                return yaml.load(newfd)
+                if not isinstance((res := yaml.load(newfd)), dict):
+                    raise RuntimeError("YAML did not parse as a dict")
+                return res
 
     def save_changes(self, old_meta: dict[str, Any], new_meta: dict[str, Any]) -> None:
         # Compute and store the changes

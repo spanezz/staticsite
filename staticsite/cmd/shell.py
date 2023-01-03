@@ -1,6 +1,10 @@
-import os
-from .command import SiteCommand, Fail, register
+from __future__ import annotations
+
 import logging
+import os
+from typing import Any
+
+from .command import Fail, SiteCommand, register
 
 log = logging.getLogger("shell")
 
@@ -13,16 +17,17 @@ class Shell(SiteCommand):
 
     shells = ['ipython', 'bpython', 'python']
 
-    def ipython(self, **kw):
+    def ipython(self, **kw: Any) -> None:
         from IPython import start_ipython
         start_ipython(argv=[], user_ns=kw)
 
-    def bpython(self, **kw):
+    def bpython(self, **kw: Any) -> None:
         import bpython
         bpython.embed(locals_=kw)
 
-    def python(self, **kw):
+    def python(self, **kw: Any) -> None:
         import code
+
         # Set up a dictionary to serve as the environment for the shell, so
         # that tab completion works on objects that are imported at runtime.
         imported_objects = kw
@@ -57,12 +62,12 @@ class Shell(SiteCommand):
                 pass
         code.interact(local=imported_objects)
 
-    def run(self):
+    def run(self) -> None:
         site = self.load_site()
 
         for shell in self.shells:
             try:
-                return getattr(self, shell)(site=site)
+                getattr(self, shell)(site=site)
             except ModuleNotFoundError:
                 pass
 

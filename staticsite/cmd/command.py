@@ -3,8 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import sys
-from typing import Optional, Type
+from typing import Any, Type
 
 from staticsite.settings import Settings
 from staticsite.site import Site
@@ -31,7 +30,7 @@ class Command(cli.Command):
         self.settings = Settings()
         self.settings.BUILD_COMMAND = self.NAME
 
-    def load_site(self):
+    def load_site(self) -> Site:
         # Instantiate site
         site = Site(settings=self.settings)
         with timings("Loaded site in %fs"):
@@ -49,7 +48,7 @@ class Command(cli.Command):
 
 
 class SiteCommand(Command):
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
 
         # Look for extra settings
