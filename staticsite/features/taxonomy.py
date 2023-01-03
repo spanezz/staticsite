@@ -150,8 +150,8 @@ class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
             raise ValueError(f"{value!r} is not a string, a list of strings, or a list of Page objects")
 
 
-class BaseTaxonomyPageMixin(metaclass=fields.FieldsMetaclass):
-    series_title = fields.Str[Page](doc="""
+class BaseTaxonomyPageMixin(Page):
+    series_title = fields.Str["BaseTaxonomyPageMixin"](doc="""
         Series title from this page onwards.
 
         If this page is part of a series, and it defines `series_title`, then
@@ -439,7 +439,6 @@ class TaxonomyPage(TemplatePage, SourcePage):
         res = super().to_dict()
         res["name"] = self.name
         res["categories"] = dump_meta(self.categories)
-        res["category_meta"] = dump_meta(self.category_meta)
         return res
 
     def __getitem__(self, name: str) -> CategoryPage:
@@ -449,7 +448,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
         """
         Return the ``count`` categories with the most pages
         """
-        return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.pages))
+        return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.pages) if c.pages else 0)
 
     def most_recent(self, count: int = 10) -> list[CategoryPage]:
         """
@@ -548,15 +547,16 @@ class CategoryPage(TemplatePage, AutoPage):
         return hash((self.taxonomy.name, self.name))
 
     @functools.cached_property
-    def series_info(self):
+    def series_info(self) -> Optional[dict[str, Any]]:
         """
         Return a dict describing this category as a series
         """
         # Compute a series title for this page.
         # Look for the last defined series title, defaulting to the title of
         # the first page in the series.
-        pages = self.pages
-        series_title = pages[0].series_title or pages[0].title
+        if (pages := self.pages) is None:
+            return None
+        series_title = cast(BaseTaxonomyPageMixin, pages[0]).series_title or pages[0].title
         return {
             # Array with all the pages in the series
             "pages": pages,
@@ -574,10 +574,11 @@ class CategoryPage(TemplatePage, AutoPage):
         # Compute a series title for this page.
         # Look for the last defined series title, defaulting to the title of
         # the first page in the series.
-        pages = self.pages
+        if (pages := self.pages) is None:
+            return None
         series_title = pages[0].title
         for p in pages:
-            if (title := p.series_title) is not None:
+            if (title := cast(BaseTaxonomyPageMixin, p).series_title) is not None:
                 series_title = title
             if p == page:
                 break
