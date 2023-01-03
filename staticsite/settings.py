@@ -3,12 +3,16 @@ from __future__ import annotations
 import importlib
 import logging
 import sys
+import types
 from typing import Any, Optional, Sequence, Union
 
 log = logging.getLogger("settings")
 
 
 class Settings:
+    # `ssite` command being run
+    BUILD_COMMAND: str
+
     # Root directory used to resolve relative path in settings
     # Default if None: the directory where the settings file is found
     PROJECT_ROOT: Optional[str]
@@ -89,18 +93,18 @@ class Settings:
     # Override with "" to merge them with the rest of the contents
     STATIC_PATH: str
 
-    def __init__(self, default_settings="staticsite.global_settings"):
+    def __init__(self, default_settings: str = "staticsite.global_settings") -> None:
         if default_settings is not None:
             self.add_module(importlib.import_module(default_settings))
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         res = {}
         for setting in dir(self):
             if setting.isupper():
                 res[setting] = getattr(self, setting)
         return res
 
-    def add_module(self, mod):
+    def add_module(self, mod: types.ModuleType) -> None:
         """
         Add uppercase settings from mod into this module
         """
@@ -108,7 +112,7 @@ class Settings:
             if setting.isupper():
                 setattr(self, setting, getattr(mod, setting))
 
-    def load(self, pathname):
+    def load(self, pathname: str) -> None:
         """
         Load settings from a python file, importing only uppercase symbols
         """

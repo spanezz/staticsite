@@ -26,7 +26,8 @@ disallow_untyped_defs = true
 module = [
 	"staticsite.fields", "staticsite.page", "staticsite.node",
 	"staticsite.source_node", "staticsite.site", "staticsite.theme",
-	"staticsite.feature", "staticsite.utils", "staticsite.page_filter"]
+	"staticsite.feature", "staticsite.utils", "staticsite.page_filter",
+	"staticsite.file", "staticsite.fstree"]
 disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true

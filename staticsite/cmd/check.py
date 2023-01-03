@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from staticsite.utils import timings
 
-from .command import SiteCommand
+from .command import SiteCommand, register
 
 if TYPE_CHECKING:
     from ..site import Site
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("check")
 
 
+@register
 class Check(SiteCommand):
     "check the site, going through all the motions of rendering it without writing anything"
 

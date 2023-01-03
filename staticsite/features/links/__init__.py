@@ -284,7 +284,7 @@ class Links(PageTrackingMixin, Feature):
     def add_site_commands(self, subparsers):
         super().add_site_commands(subparsers)
         from staticsite.features.links.cmdline import LinkLint
-        LinkLint.make_subparser(subparsers)
+        LinkLint.add_subparser(subparsers)
 
 
 FEATURES = {

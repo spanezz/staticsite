@@ -5,7 +5,7 @@ import logging
 import sys
 from typing import TYPE_CHECKING, Optional
 
-from .command import SiteCommand
+from .command import SiteCommand, register
 
 if TYPE_CHECKING:
     import staticsite.site
@@ -18,16 +18,12 @@ class FeatureCommand:
     # Defaults to the lowercased class name
     NAME: Optional[str] = None
 
-    # Command description (as used in command line help)
-    # Defaults to the strip()ped class docstring.
-    DESC: Optional[str] = None
-
-    def __init__(self, site: staticsite.site.Site, args):
+    def __init__(self, site: staticsite.site.Site, args: argparse.Namespace):
         self.site = site
         self.args = args
 
     @classmethod
-    def make_subparser(cls, subparsers):
+    def add_subparser(cls, subparsers):
         name = cls.NAME
         if name is None:
             name = cls.__name__.lower()
@@ -49,12 +45,13 @@ class List(FeatureCommand):
             print("{} - {}".format(feature.name, feature.get_short_description()))
 
 
+@register
 class Site(SiteCommand):
     "run feature-specifc commands"
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         parser.add_argument("--cmd", nargs=argparse.REMAINDER, help="site-specific command (try 'help')")
         return parser
 
@@ -65,7 +62,7 @@ class Site(SiteCommand):
         parser = argparse.ArgumentParser(description="Site-specific commands.")
         subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
-        List.make_subparser(subparsers)
+        List.add_subparser(subparsers)
 
         for feature in site.features.ordered():
             feature.add_site_commands(subparsers)

@@ -10,11 +10,12 @@ from ..cache import DisabledCache
 from ..utils import images
 from ..utils import yaml_codec as yaml
 
-from .command import Command, Fail, Success
+from .command import Command, Fail, Success, register
 
 log = logging.getLogger("meta")
 
 
+@register
 class Meta(Command):
     """
     Edit metadata for a file
@@ -93,7 +94,7 @@ class Meta(Command):
         self.save_changes(meta, new_meta)
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         parser.add_argument("file", help="edit the metadata of this file")
         return parser

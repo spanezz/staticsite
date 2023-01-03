@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import contextlib
 import locale
 import logging
@@ -12,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Generator, Optional
 from .. import utils
 from ..site import Path
 from ..page import ChangeExtent
-from .command import Fail, SiteCommand
+from .command import Fail, SiteCommand, register
 
 
 if TYPE_CHECKING:
@@ -23,12 +24,13 @@ if TYPE_CHECKING:
 log = logging.getLogger("build")
 
 
+@register
 class Build(SiteCommand):
     "build the site into the web/ directory of the project"
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         parser.add_argument("--type", action="store",
                             help="render only pages of this type")
         parser.add_argument("--path", action="store",

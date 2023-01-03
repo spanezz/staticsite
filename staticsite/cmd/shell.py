@@ -1,10 +1,11 @@
 import os
-from .command import SiteCommand, Fail
+from .command import SiteCommand, Fail, register
 import logging
 
 log = logging.getLogger("shell")
 
 
+@register
 class Shell(SiteCommand):
     "start a shell with the global `site` set to the current site"
 

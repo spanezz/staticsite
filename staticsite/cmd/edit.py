@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import shlex
 import subprocess
@@ -7,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from staticsite.page_filter import PageFilter
 
-from .command import Fail, SiteCommand
+from .command import Fail, SiteCommand, register
 
 if TYPE_CHECKING:
     from ..page import SourcePage
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("edit")
 
 
+@register
 class Edit(SiteCommand):
     "edit an existing page. Bare keywords match titles and file names, '+tag' matches tags"
 
@@ -128,8 +130,8 @@ class Edit(SiteCommand):
         return None
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         parser.add_argument("match", nargs="*", help="keywords used to look for the page to edit")
         parser.add_argument("-n", "--noedit", action="store_true",
                             help="do not run an editor, only output the file name of the new post")

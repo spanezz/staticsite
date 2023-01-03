@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import logging
 from typing import TYPE_CHECKING
 
-from .command import SiteCommand, Fail
+from .command import SiteCommand, Fail, register
 
 if TYPE_CHECKING:
     from ..site import Site
@@ -11,12 +12,13 @@ if TYPE_CHECKING:
 log = logging.getLogger("dump")
 
 
+@register
 class Dump(SiteCommand):
     "Dump information about a site"
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument("--fstree", action="store_true",
                            help="dump information about the scanned directory trees")

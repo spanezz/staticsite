@@ -1,21 +1,26 @@
 from __future__ import annotations
-from .command import SiteCommand
-from staticsite.utils import front_matter
-from staticsite.page_filter import compile_page_match
-import sys
+
+import argparse
 import logging
+import sys
+
+from staticsite.page_filter import compile_page_match
+from staticsite.utils import front_matter
+
+from .command import SiteCommand, register
 
 log = logging.getLogger("dump_meta")
 
 
+@register
 class DumpMeta(SiteCommand):
     "Dump the metadata of each page in the site"
 
     NAME = "dump_meta"
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         parser.add_argument("-f", "--format", action="store", default="yaml",
                             help="format to use for output")
         parser.add_argument("-p", "--pages", nargs="+", default=(),

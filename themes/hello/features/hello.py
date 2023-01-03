@@ -1,6 +1,11 @@
-from staticsite.feature import Feature
-from staticsite.cmd.site import FeatureCommand
+from __future__ import annotations
+
+from typing import Any
+
 import jinja2
+
+from staticsite.cmd.site import FeatureCommand
+from staticsite.feature import Feature
 
 
 class Hello(Feature):
@@ -12,12 +17,12 @@ class Hello(Feature):
     * adds a hello() function to jinja2 that fetches the contents of their hello
       element
     """
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.j2_globals["hello"] = self.hello
 
     @jinja2.contextfunction
-    def hello(self, context):
+    def hello(self, context: jinja2.runtime.Context):
         # This function, called from a jinja2 template, has access to the
         # render context. staticsite puts 'page' in the render context,
         # pointing to the Page object being rendered.
@@ -33,7 +38,7 @@ class Hello(Feature):
     def add_site_commands(self, subparsers):
         # Add an example command as ssite site --cmd hello
         super().add_site_commands(subparsers)
-        HelloCmd.make_subparser(subparsers)
+        HelloCmd.add_subparser(subparsers)
 
 
 class HelloCmd(FeatureCommand):
@@ -41,7 +46,7 @@ class HelloCmd(FeatureCommand):
 
     NAME = "hello"
 
-    def run(self):
+    def run(self) -> None:
         count = 0
         for page in self.site.iter_pages(static=False):
             count += 1

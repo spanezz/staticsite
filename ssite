@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import argparse
+import importlib
 import logging
 
 log = logging.getLogger("ssite")
@@ -10,42 +11,19 @@ def main():
     parser = argparse.ArgumentParser(description="Static site generator.")
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
-    from staticsite.cmd.check import Check
-    Check.make_subparser(subparsers)
+    modules = ("check", "dump", "dump_meta", "build", "serve", "new", "edit", "site", "meta", "shell")
+    for name in modules:
+        importlib.import_module("staticsite.cmd." + name)
 
-    from staticsite.cmd.dump import Dump
-    Dump.make_subparser(subparsers)
-
-    from staticsite.cmd.dump_meta import DumpMeta
-    DumpMeta.make_subparser(subparsers)
-
-    from staticsite.cmd.build import Build
-    Build.make_subparser(subparsers)
-
-    from staticsite.cmd.serve import Serve, Show
-    Show.make_subparser(subparsers)
-    Serve.make_subparser(subparsers)
-
-    from staticsite.cmd.new import New
-    New.make_subparser(subparsers)
-
-    from staticsite.cmd.edit import Edit
-    Edit.make_subparser(subparsers)
-
-    from staticsite.cmd.site import Site
-    Site.make_subparser(subparsers)
-
-    from staticsite.cmd.meta import Meta
-    Meta.make_subparser(subparsers)
-
-    from staticsite.cmd.shell import Shell
-    Shell.make_subparser(subparsers)
+    from staticsite.cmd.command import COMMANDS
+    for c in COMMANDS:
+        c.add_subparser(subparsers)
 
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
     else:
-        handler = args.handler(args)
+        handler = args.command(args)
         return handler.run()
 
 

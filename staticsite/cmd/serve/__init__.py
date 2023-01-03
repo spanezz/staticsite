@@ -1,7 +1,10 @@
 from __future__ import annotations
-from ..command import Command, SiteCommand, Fail
-import os
+
+import argparse
 import logging
+import os
+
+from ..command import Command, Fail, SiteCommand, register
 
 log = logging.getLogger("serve")
 
@@ -13,9 +16,10 @@ class ServerMixin:
             import tornado.netutil
         except ModuleNotFoundError:
             raise Fail("python3-tornado is not installed")
-        from .server import Application
         import asyncio
         import webbrowser
+
+        from .server import Application
 
         sockets = tornado.netutil.bind_sockets(self.args.port, self.args.host)
         pairs = []
@@ -53,12 +57,13 @@ class ServerMixin:
         self.start_server()
 
 
+@register
 class Serve(ServerMixin, SiteCommand):
     "Serve the site over HTTP, building it in memory on demand"
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
         parser.add_argument("--port", "-p", action="store", type=int, default=8000,
                             help="port to use (default: 8000)")
         parser.add_argument("--host", action="store", type=str, default="localhost",
@@ -66,6 +71,7 @@ class Serve(ServerMixin, SiteCommand):
         return parser
 
 
+@register
 class Show(ServerMixin, Command):
     "Show the current directory in a browser"
 
@@ -87,8 +93,8 @@ class Show(ServerMixin, Command):
         self.settings.CACHE_REBUILDS = False
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
 
         parser.add_argument("dir", nargs="?",
                             help="directory to show (default: the current directory)")

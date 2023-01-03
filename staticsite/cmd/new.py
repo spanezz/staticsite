@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import shlex
 import subprocess
 from typing import TYPE_CHECKING, Optional
 
-from .command import Fail, SiteCommand
+from .command import Fail, SiteCommand, register
 
 if TYPE_CHECKING:
     from ..site import Site
@@ -45,6 +46,7 @@ class LazySlug:
         return self.site.slugify(str(self.lazy_title))
 
 
+@register
 class New(SiteCommand):
     "create a new page"
 
@@ -85,8 +87,8 @@ class New(SiteCommand):
         return None
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
         parser.add_argument("-a", "--archetype", default="default", help="page archetype")
         parser.add_argument("-t", "--title", help="page title")
         parser.add_argument("-n", "--noedit", action="store_true",

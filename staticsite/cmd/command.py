@@ -1,61 +1,35 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Type
 
-from staticsite.site import Site
 from staticsite.settings import Settings
+from staticsite.site import Site
 from staticsite.utils import timings
+
+from . import cli
+
+Fail = cli.Fail
+Success = cli.Success
 
 log = logging.getLogger("command")
 
-
-class Fail(RuntimeError):
-    """
-    Exception raised when the program should exit with an error but without a
-    backtrace
-    """
-    pass
+COMMANDS: list[Type["Command"]] = []
 
 
-class Success(Exception):
-    """
-    Exception raised when a command has been successfully handled, and no
-    further processing should happen
-    """
-    pass
+def register(c: Type["Command"]) -> Type["Command"]:
+    COMMANDS.append(c)
+    return c
 
 
-class Command:
-    # Command name (as used in command line)
-    # Defaults to the lowercased class name
-    NAME: Optional[str] = None
-
-    # Command description (as used in command line help)
-    # Defaults to the strip()ped class docstring.
-    DESC: Optional[str] = None
-
-    def __init__(self, args):
-        self.args = args
-        self.setup_logging()
+class Command(cli.Command):
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
         self.settings = Settings()
-        self.settings.BUILD_COMMAND = self.get_name()
-
-    def setup_logging(self):
-        FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-        if self.args.debug is True:
-            logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-        else:
-            if self.args.debug and self.args.debug != "list":
-                # TODO: set up debug for the listed loggers
-                pass
-
-            if self.args.verbose:
-                logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
-            else:
-                logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
+        self.settings.BUILD_COMMAND = self.NAME
 
     def load_site(self):
         # Instantiate site
@@ -70,23 +44,8 @@ class Command:
             raise Success()
         return site
 
-    @classmethod
-    def get_name(cls):
-        if cls.NAME is not None:
-            return cls.NAME
-        return cls.__name__.lower()
-
-    @classmethod
-    def make_subparser(cls, subparsers):
-        desc = cls.DESC
-        if desc is None:
-            desc = cls.__doc__.strip()
-
-        parser = subparsers.add_parser(cls.get_name(), help=desc)
-        parser.set_defaults(handler=cls)
-        parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
-        parser.add_argument("--debug", nargs="?", action="store", const=True, help="verbose output")
-        return parser
+# TODO: enable debugging for specific loggers only
+#         parser.add_argument("--debug", nargs="?", action="store", const=True, help="verbose output")
 
 
 class SiteCommand(Command):
@@ -137,8 +96,8 @@ class SiteCommand(Command):
             self.settings.DRAFT_MODE = True
 
     @classmethod
-    def make_subparser(cls, subparsers):
-        parser = super().make_subparser(subparsers)
+    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+        parser = super().add_subparser(subparsers)
 
         parser.add_argument("project", nargs="?",
                             help="project directory or .py configuration file (default: the current directory)")

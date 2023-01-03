@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import NamedTuple
+from typing import Generator, NamedTuple
 
 log = logging.getLogger("contents")
 
@@ -20,7 +20,7 @@ class File(NamedTuple):
     # File stats if the file exists, else None
     stat: os.stat_result
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.abspath:
             return self.abspath
         else:
@@ -34,11 +34,15 @@ class File(NamedTuple):
                 stat=entry.stat())
 
     @classmethod
-    def with_stat(cls, relpath: str, abspath: str):
+    def with_stat(cls, relpath: str, abspath: str) -> File:
         return cls(relpath, abspath, os.stat(abspath))
 
     @classmethod
-    def scan(cls, abspath, follow_symlinks=False, ignore_hidden=False):
+    def scan(
+            cls,
+            abspath: str,
+            follow_symlinks: bool = False,
+            ignore_hidden: bool = False) -> Generator[File, None, None]:
         """
         Scan tree_root, generating relative paths based on it
         """
