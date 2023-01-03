@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Tuple, Type, Union, cast
 
 import docutils.core
 import docutils.io
@@ -18,6 +18,8 @@ from staticsite.page import FrontMatterPage, Page, TemplatePage
 from staticsite.utils import yaml_codec
 
 if TYPE_CHECKING:
+    import docutils.node
+
     from staticsite import file, fstree
     from staticsite.archetypes import Archetypes
     from staticsite.source_node import SourcePageNode
@@ -26,29 +28,30 @@ log = logging.getLogger("rst")
 
 
 class DoctreeScan:
-    def __init__(self, doctree, remove_docinfo: bool = True) -> None:
+    def __init__(self, doctree: docutils.nodes.document) -> None:
         # Doctree root node
         self.doctree = doctree
         # Information useful to locate and remove the docinfo element
-        self.docinfo = None
-        self.docinfo_idx = None
+        self.docinfo: Optional[docutils.nodes.docinfo] = None
+        self.docinfo_idx: Optional[int] = None
         # First title element
-        self.first_title = None
+        self.first_title: Optional[docutils.nodes.title] = None
         # All <target> link elements that need rewriting on rendering
-        self.links_target = []
+        self.links_target: list[Union[docutils.nodes.target, docutils.nodes.reference]] = []
         # All <image> link elements that need rewriting on rendering
-        self.links_image = []
+        self.links_image: list[docutils.nodes.image] = []
         # Return True if the link targets have been rewritten
         self.links_rewritten = False
 
         # Scan tree contents looking for significant nodes
         self.scan(self.doctree)
 
+    def remove_docinfo(self) -> None:
         # Remove docinfo element from tree
-        if remove_docinfo and self.docinfo is not None:
+        if self.docinfo is not None:
             self.docinfo.parent.pop(self.docinfo_idx)
 
-    def scan(self, element):
+    def scan(self, element: docutils.node.Node) -> None:
         """
         Scan the doctree collecting significant elements
         """
@@ -98,7 +101,7 @@ class RestructuredText(MarkupFeature, Feature):
         # Parse input into doctree
         doctree = docutils.core.publish_doctree(fd, source_class=docutils.io.FileInput)
 
-        doctree_scan = DoctreeScan(doctree, remove_docinfo=remove_docinfo)
+        doctree_scan = DoctreeScan(doctree)
 
         # Get metadata fields from docinfo
         meta = {}
@@ -128,6 +131,9 @@ class RestructuredText(MarkupFeature, Feature):
                 val = meta.get(tag)
                 if val is not None and isinstance(val, str):
                     meta[tag] = yaml_codec.loads(val)
+
+        if remove_docinfo:
+            doctree_scan.remove_docinfo()
 
         return meta, doctree_scan
 
@@ -198,7 +204,7 @@ class RestructuredText(MarkupFeature, Feature):
 
         return meta, doctree_scan
 
-    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str):
+    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str) -> Optional[Archetype]:
         if os.path.basename(relpath) != name + ".rst":
             return None
         return RestArchetype(archetypes, relpath, self)
@@ -213,7 +219,7 @@ class RestArchetype(Archetype):
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version
-        with io.StringIO(rendered) as fd:
+        with io.BytesIO(rendered.encode()) as fd:
             parsed_meta, doctree_scan = self.feature.parse_rest(fd, remove_docinfo=False)
 
         meta.update(**parsed_meta)
@@ -314,7 +320,7 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
     """
     TYPE = "rst"
 
-    def __init__(self, *, doctree_scan: DoctreeScan, **kw):
+    def __init__(self, *, doctree_scan: DoctreeScan, **kw: Any):
         self.feature: RestructuredText
         # Indexed by default
         kw.setdefault("indexed", True)
@@ -336,9 +342,9 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
     def _render_page(self, absolute: bool = False) -> str:
         cache_key = self.src.relpath
         with self.markup_render_context(cache_key, absolute=absolute) as context:
-            if (rendered := context.cache.get("rendered")):
+            if (cached := context.cache.get("rendered")):
                 # log.info("%s: rst cache hit", page.src.relpath)
-                return rendered
+                return cast(str, cached)
 
             if not self.doctree_scan.links_rewritten:
                 for node in self.doctree_scan.links_target:
@@ -364,7 +370,7 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
                 enable_exit_status=False
                 )
             parts = pub.writer.parts
-            rendered = parts["body"]
+            rendered: str = parts["body"]
             context.cache["rendered"] = rendered
             return rendered
 
