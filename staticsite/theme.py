@@ -367,9 +367,9 @@ class Theme:
         elif isinstance(dt, datetime.date):
             return (dt.replace(day=1) + datetime.timedelta(days=40)).replace(day=1)
         else:
-            log.warn("%s+%s: invalid datetime %r of type %r: accepted are str, datetime, date",
-                     context.parent["page"].src.relpath, context.name, dt, type(dt))
-            return f"(unknown value {dt!r})"
+            raise RuntimeError(
+                    f"{context.parent['page']}+{context.name}: invalid datetime {dt!r} of type {type(dt)}:"
+                    " accepted are str, datetime, date")
 
     @jinja2.pass_context
     def jinja2_has_page(self, context: jinja2.runtime.Context, arg: str) -> bool:
@@ -391,15 +391,12 @@ class Theme:
 
         cur_page: Optional[Page] = context.get("page")
         if cur_page is None:
-            log.warn("%s+%s: page_for(%s): current page is not defined", cur_page, context.name, arg)
-            # TODO: link to somewhere like a missing page
-            return ""
+            raise RuntimeError(f"{cur_page}+{context.name}: page_for({arg!r}): current page is not defined")
 
         try:
             return cur_page.resolve_path(arg)
         except PageNotFoundError as e:
-            log.warn("%s:%s: %s", cur_page, context.name, e)
-            return ""
+            raise RuntimeError(f"{cur_page}+{context.name}: {e}")
 
     @jinja2.pass_context
     def jinja2_url_for(

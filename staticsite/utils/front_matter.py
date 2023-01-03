@@ -3,15 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import (IO, Any, BinaryIO, Dict, Generator, Iterable, Optional,
-                    Tuple)
+from typing import IO, Any, Generator, Iterable, Optional
 
 from . import yaml_codec
 
 log = logging.getLogger("utils")
 
 
-def write(meta: Dict[str, Any], style: str = "toml") -> str:
+def write(meta: dict[str, Any], style: str = "toml") -> str:
     if style == "json":
         return json.dumps(meta, indent=4, sort_keys=True)
     elif style == "toml":
@@ -22,7 +21,7 @@ def write(meta: Dict[str, Any], style: str = "toml") -> str:
     return ""
 
 
-def read_markdown_partial(fd: BinaryIO) -> tuple[Optional[str], dict[str, Any], Iterable[str]]:
+def read_markdown_partial(fd: IO[bytes]) -> tuple[Optional[str], dict[str, Any], Iterable[str]]:
     """
     Parse lines front matter from a markdown file header.
 
@@ -87,7 +86,7 @@ def read_markdown_partial(fd: BinaryIO) -> tuple[Optional[str], dict[str, Any], 
 re_toml = re.compile(r"^\+\+\+[ \t]*\n(.+?)\n\+\+\+[ \t]*\n$", re.DOTALL)
 
 
-def read_whole(fd: IO[str]) -> Tuple[str, dict[str, Any]]:
+def read_whole(fd: IO[str]) -> tuple[str, dict[str, Any]]:
     """
     Parse lines front matter from a file header.
 
@@ -107,7 +106,7 @@ def read_whole(fd: IO[str]) -> Tuple[str, dict[str, Any]]:
     return "yaml", (val if (val := yaml_codec.loads(content)) is not None else {})
 
 
-def read_string(content: str) -> Tuple[str, dict[str, Any]]:
+def read_string(content: str) -> tuple[str, dict[str, Any]]:
     """
     Parse lines front matter from a file header.
 

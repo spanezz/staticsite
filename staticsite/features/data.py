@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Optional, Sequence, TextIO, Type
+from typing import IO, TYPE_CHECKING, Any, Optional, Sequence, Type
 
 import jinja2
 
@@ -49,7 +49,7 @@ class DataPageMixin(Page):
     data_type = DataTypeField()
 
 
-class DataPages(PageTrackingMixin, Feature):
+class DataPages(PageTrackingMixin["DataPageMixin"], Feature):
     """
     Handle datasets in content directories.
 
@@ -143,6 +143,8 @@ class DataPages(PageTrackingMixin, Feature):
         # Dispatch pages by type
         for page in self.tracked_pages:
             data_type = page.data_type
+            if data_type is None:
+                continue
             self.by_type[data_type].append(page)
 
         # Sort the pages of each type by date
@@ -163,7 +165,7 @@ class DataPages(PageTrackingMixin, Feature):
         return page_filter.filter()
 
 
-def parse_data(fd: TextIO, fmt: str) -> Any:
+def parse_data(fd: IO[str], fmt: str) -> Any:
     if fmt == "json":
         import json
         return json.load(fd)
@@ -176,7 +178,7 @@ def parse_data(fd: TextIO, fmt: str) -> Any:
         raise NotImplementedError("data format {} is not supported".format(fmt))
 
 
-def write_data(fd: TextIO, data: dict[str, Any], fmt: str) -> None:
+def write_data(fd: IO[str], data: dict[str, Any], fmt: str) -> None:
     if fmt == "json":
         import json
         json.dump(data, fd)

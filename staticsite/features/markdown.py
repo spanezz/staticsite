@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Type, cast
+from typing import IO, TYPE_CHECKING, Any, BinaryIO, List, Optional, Type, cast
 
 import jinja2
 import markdown
@@ -207,7 +207,7 @@ class MarkdownPages(MarkupFeature, Feature):
         with directory.open(fname, "rb") as fd:
             return self.read_file_meta(fd)
 
-    def read_file_meta(self, fd: BinaryIO) -> tuple[dict[str, Any], list[str]]:
+    def read_file_meta(self, fd: IO[bytes]) -> tuple[dict[str, Any], list[str]]:
         """
         Load metadata for a file.
 
@@ -252,9 +252,10 @@ class MarkdownArchetype(Archetype):
             try:
                 style, meta, body = front_matter.read_markdown_partial(fd)
             except Exception as e:
-                log.debug("archetype %s: failed to parse front matter", self.relpath, exc_info=e)
-                log.warn("archetype %s: failed to parse front matter", self.relpath)
-                return
+                raise RuntimeError(f"archetype {self.relpath}: failed to parse front matter") from e
+
+            if style is None:
+                raise RuntimeError(f"archetype {self.relpath}: unrecognized style of front matter")
 
             # Make a copy of the full parsed metadata
             archetype_meta = dict(meta)

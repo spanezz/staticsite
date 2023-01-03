@@ -145,7 +145,7 @@ class RestructuredText(MarkupFeature, Feature):
             return None
 
         # Parse to get at the front matter
-        with directory.open("index.rst", "rt") as fd:
+        with directory.open("index.rst", "rb") as fd:
             meta, doctree_scan = self.parse_rest(fd, remove_docinfo=False)
 
         return meta
