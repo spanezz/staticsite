@@ -66,6 +66,11 @@ class New(SiteCommand):
         if relpath is None:
             raise Fail("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
 
+        if site.settings.PROJECT_ROOT is None:
+            raise Fail("PROJECT_ROOT is empty")
+        if site.settings.CONTENT is None:
+            raise Fail("CONTENT is empty")
+
         content_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.CONTENT)
         abspath = os.path.join(content_root, relpath)
         if self.args.overwrite or not os.path.exists(abspath):

@@ -4,9 +4,10 @@ import argparse
 import logging
 import shlex
 import subprocess
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from staticsite.page_filter import PageFilter
+from staticsite.features.taxonomy import TaxonomyFeature
 
 from .command import Fail, SiteCommand, register
 
@@ -79,7 +80,7 @@ class Edit(SiteCommand):
         }
 
         # Filter by taxonomy
-        taxonomies = site.features["taxonomy"]
+        taxonomies: TaxonomyFeature = cast(TaxonomyFeature, site.features["taxonomy"])
         args = []
         for arg in self.args.match:
             if arg.startswith("+"):
