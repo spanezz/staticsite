@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+
+import re
+import shutil
+import sys
+import subprocess
+import tempfile
+
+COMMAND = "ssite"
+SECTION = 1
+
+res = subprocess.run([sys.executable, "setup.py", "--version"], stdout=subprocess.PIPE, text=True, check=True)
+version = res.stdout.strip()
+
+res = subprocess.run([sys.executable, COMMAND, "--help"], stdout=subprocess.PIPE, text=True, check=True)
+subcommands = re.sub(r"^.+\{(.+)\}.+$", r"\1", res.stdout, flags=re.DOTALL).split(",")
+
+with tempfile.NamedTemporaryFile("wt") as tf:
+    print("[>DESCRIPTION]", file=tf)
+
+    for subcommand in subcommands:
+        res = subprocess.run(
+            [
+                "help2man",
+                "--name=" + COMMAND,
+                f"--section={SECTION}",
+                "--no-info",
+                "--version-string=dummy",
+                f"./{COMMAND} {subcommand}",
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        subcommand_doc = re.sub(r"^.+.SH DESCRIPTION", "", res.stdout, flags=re.DOTALL)
+        print(".SH ", subcommand.upper(), " SUBCOMMAND", file=tf)
+        tf.write(subcommand_doc)
+
+    try:
+        with open(f"{COMMAND}.1.in", "rt") as fd:
+            shutil.copyfileobj(fd, tf)
+    except FileNotFoundError:
+        pass
+
+    tf.flush()
+
+    subprocess.run(
+        [
+            "help2man",
+            f"--include={tf.name}",
+            f"--name={COMMAND}",
+            f"--section={SECTION}",
+            "--no-info",
+            f"--version-string={version}",
+            f"--output={COMMAND}.{SECTION}",
+            f"./{COMMAND}",
+        ],
+        check=True,
+    )
