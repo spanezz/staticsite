@@ -26,7 +26,7 @@ are used for the navbar.
 * [pages](../fields/pages.md): The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
-* [related](../fields/related.md): Dict of pages related to this page.
+* [related](../fields/related.md): Readonly mapping of pages related to this page, indexed by name.
 * [series](../fields/series.md): List of categories for the `series` taxonomy.
 * [series_title](../fields/series_title.md): Series title from this page onwards.
 * [site_name](../fields/site_name.md): Name of the site. If missing, it defaults to the title of the toplevel index
@@ -36,8 +36,6 @@ page. If missing, it defaults to the name of the content directory.
 * [syndication](../fields/syndication.md): Defines syndication for the contents of this page.
 * [syndication_date](../fields/syndication_date.md): Syndication date for this page.
 * [tags](../fields/tags.md): List of categories for the `tags` taxonomy.
-* [template](../fields/template.md): Template used to render the page. Defaults to `page.html`, although specific
-pages of some features can default to other template names.
 * [template_copyright](../fields/template_copyright.md): jinja2 template to use to generate `copyright` when it is not explicitly set.
 * [template_description](../fields/template_description.md): jinja2 template to use to generate `description` when it is not
 explicitly set.

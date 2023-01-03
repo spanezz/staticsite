@@ -16,7 +16,6 @@ would load it.
 * [description](../fields/description.md): The page description. If omitted, the page will have no description.
 * [draft](../fields/draft.md): If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
-* [height](../fields/height.md): Image height
 * [image](../fields/image.md): Image used for this post.
 * [indexed](../fields/indexed.md): If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).
@@ -24,11 +23,10 @@ unless draft mode is enabled.
 * [nav](../fields/nav.md): List of page paths, relative to the page defining the nav element, that
 are used for the navbar.
 * [nav_title](../fields/nav_title.md): Title to use when this page is linked in a navbar.
-* [old_footprint](../fields/old_footprint.md): Cached footprint from the previous run, or None
 * [pages](../fields/pages.md): The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
-* [related](../fields/related.md): Dict of pages related to this page.
+* [related](../fields/related.md): Readonly mapping of pages related to this page, indexed by name.
 * [series](../fields/series.md): List of categories for the `series` taxonomy.
 * [series_title](../fields/series_title.md): Series title from this page onwards.
 * [site_name](../fields/site_name.md): Name of the site. If missing, it defaults to the title of the toplevel index
@@ -46,7 +44,6 @@ pages of some features can default to other template names.
 explicitly set.
 * [template_title](../fields/template_title.md): jinja2 template to use to generate `title` when it is not explicitly set.
 * [title](../fields/title.md): Page title.
-* [width](../fields/width.md): Image width
 
 ## Documentation
 

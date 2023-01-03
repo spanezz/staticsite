@@ -1,5 +1,10 @@
 # staticsite user-relevant changes
 
+# New in version 2.1
+
+* Fixed using `datetime_format()` with no `format` argument
+* Updated reference documentation
+
 # New in version 2.0
 
 * staticsite can now detect changes since the last build and only rebuild the
