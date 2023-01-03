@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .page import SourcePage
 from .render import RenderedElement, RenderedFile
@@ -15,7 +15,7 @@ class Asset(SourcePage):
     """
     TYPE = "asset"
 
-    def __init__(self, site: Site, *, name: str, **kw):
+    def __init__(self, site: Site, *, name: str, **kw: Any):
         super().__init__(site, **kw)
         self.date = site.localized_timestamp(self.src.stat.st_mtime)
         self.title = name
@@ -25,5 +25,5 @@ class Asset(SourcePage):
         self.name = name
         self.ready_to_render = True
 
-    def render(self, **kw) -> RenderedElement:
+    def render(self, **kw: Any) -> RenderedElement:
         return RenderedFile(self.src)

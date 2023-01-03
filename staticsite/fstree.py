@@ -6,7 +6,8 @@ import logging
 import os
 import re
 import stat
-from typing import TYPE_CHECKING, Any, Optional, TextIO
+from typing import (IO, TYPE_CHECKING, Any, Generator, Literal, Optional,
+                    Union, overload)
 
 from .file import File
 from .utils import front_matter, open_dir_fd
@@ -39,7 +40,7 @@ class Tree:
         # Subdirectories
         self.sub: dict[str, Tree] = {}
 
-    def print(self, lead: str = "", file: Optional[TextIO] = None):
+    def print(self, lead: str = "", file: Optional[IO[str]] = None) -> None:
         print(f"{lead}", file=file)
         for name, src in self.files.items():
             print(f"{lead}→ {name}", file=file)
@@ -48,7 +49,7 @@ class Tree:
             tree.print(lead + "  ", file=file)
 
     @contextlib.contextmanager
-    def open_tree(self):
+    def open_tree(self) -> Generator[None, None, None]:
         """
         Open self.dir_fd for the duration of this context manager
         """
@@ -60,7 +61,7 @@ class Tree:
                 self.dir_fd = None
 
     @contextlib.contextmanager
-    def open_subtree(self, name: str, tree: Tree):
+    def open_subtree(self, name: str, tree: Tree) -> Generator[None, None, None]:
         """
         Open tree.dir_fd for the duration of this context manager
         """
@@ -71,14 +72,14 @@ class Tree:
             finally:
                 tree.dir_fd = None
 
-    def _scandir(self):
+    def _scandir(self) -> None:
         """
         Scan the contents of a directory, filling in structures but without
         recursing
         """
         raise NotImplementedError(f"{self.__class__.__name__}._scandir not implemented")
 
-    def scan(self):
+    def scan(self) -> None:
         """
         Scan directory contents, recursively
         """
@@ -88,22 +89,30 @@ class Tree:
             with self.open_subtree(name, tree):
                 tree.scan()
 
-    def populate_node(self):
+    def populate_node(self) -> None:
         """
         Recursively popuplate the node with information from this tree
         """
         raise NotImplementedError(f"{self.__class__.__name__}.populate_node not implemented")
 
-    def open(self, name, *args, **kw):
+    @overload
+    def open(self, name: str, mode: Literal["rt"]) -> IO[str]:
+        ...
+
+    @overload
+    def open(self, name: str, mode: Literal["rb"]) -> IO[bytes]:
+        ...
+
+    def open(self, name: str, mode: str) -> Union[IO[str], IO[bytes]]:
         """
         Open a file contained in this directory
         """
         if self.dir_fd is None:
             raise RuntimeError("Tree.open called without a dir_fd")
 
-        def _file_opener(fname, flags):
+        def _file_opener(fname: str, flags: int) -> int:
             return os.open(fname, flags, dir_fd=self.dir_fd)
-        return io.open(name, *args, opener=_file_opener, **kw)
+        return io.open(name, mode=mode, opener=_file_opener)
 
 
 class PageTree(Tree):
@@ -120,12 +129,13 @@ class PageTree(Tree):
         # Rules for assigning metadata to files
         self.file_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
 
-    def _take_dir_rules(self, meta: dict[str, Any]):
+    def _take_dir_rules(self, meta: dict[str, Any]) -> None:
         """
         Remove file and directory rules from the meta dict, and compile them
         for this Tree
         """
         from .page_filter import compile_page_match
+
         # Compile directory matching rules
         dir_meta = meta.pop("dirs", None)
         if dir_meta is None:
@@ -272,7 +282,7 @@ class AssetTree(Tree):
     def __init__(self, *, site: Site, src: File, node: SourceNode):
         super().__init__(site=site, src=src, node=node)
 
-    def _scandir(self):
+    def _scandir(self) -> None:
         with os.scandir(self.dir_fd) as entries:
             for entry in entries:
                 if entry.name.startswith("."):

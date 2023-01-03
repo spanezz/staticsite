@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import (Any, BinaryIO, Dict, Generator, Iterable, Optional, TextIO,
+from typing import (IO, Any, BinaryIO, Dict, Generator, Iterable, Optional,
                     Tuple)
 
 from . import yaml_codec
@@ -87,7 +87,7 @@ def read_markdown_partial(fd: BinaryIO) -> tuple[Optional[str], dict[str, Any], 
 re_toml = re.compile(r"^\+\+\+[ \t]*\n(.+?)\n\+\+\+[ \t]*\n$", re.DOTALL)
 
 
-def read_whole(fd: TextIO) -> Tuple[str, dict[str, Any]]:
+def read_whole(fd: IO[str]) -> Tuple[str, dict[str, Any]]:
     """
     Parse lines front matter from a file header.
 

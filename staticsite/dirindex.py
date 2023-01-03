@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 from .page import SourcePage, Page, ChangeExtent, TemplatePage
 from . import fields
@@ -43,7 +43,7 @@ class Dir(TemplatePage, SourcePage):
 
     parent = ParentField(doc="Page one level above in the site hierarchy")
 
-    def __init__(self, site: Site, *, name: Optional[str] = None, **kw):
+    def __init__(self, site: Site, *, name: Optional[str] = None, **kw: Any):
         super().__init__(site, **kw)
         # Directory name
         self.name: Optional[str] = name
