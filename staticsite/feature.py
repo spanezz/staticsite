@@ -12,6 +12,7 @@ from .node import Node
 from .page import Page
 
 if TYPE_CHECKING:
+    import argparse
     from .source_node import SourcePageNode
     from .archetypes import Archetypes, Archetype
 
@@ -159,7 +160,7 @@ class Feature:
         """
         pass
 
-    def add_site_commands(self, subparsers):
+    def add_site_commands(self, subparsers: argparse._SubParsersAction) -> None:
         """
         Add commands to `ssite site --cmd …` command line parser
         """

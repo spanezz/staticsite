@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Type, cast
+from typing import TYPE_CHECKING, Any, List, Sequence, Type, cast
 
 import jinja2
 
@@ -12,9 +12,10 @@ from staticsite.features.data import DataPage, DataPages
 from staticsite.features.links.data import Link, LinkCollection
 from staticsite.features.links.index import LinkIndexPage
 from staticsite.page import Page, TemplatePage
-from staticsite.page_filter import PageFilter
 
 if TYPE_CHECKING:
+    import argparse
+
     from staticsite import file, fstree
     from staticsite.source_node import SourcePageNode
 
@@ -64,12 +65,11 @@ class LinksTemplatePageMixin(LinksPageMixin, TemplatePage):
             return rendered
 
         tag_indices = feature.indices[0].by_tag
-        data = {}
+        data: dict[str, dict[str, Any]] = {}
         for url in external_links:
-            info = links.get(url)
-            if info is None:
+            if (linfo := links.get(url)) is None:
                 continue
-            info = info.as_dict()
+            info = linfo.as_dict()
 
             # Resolve tag urls for page into a { title: …,  url: … } dict
             tags = info.get("tags")
@@ -151,7 +151,6 @@ class Links(PageTrackingMixin, Feature):
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
-        self.j2_globals["links_merged"] = self.links_merged
         self.j2_globals["links_tag_index_url"] = self.links_tag_index_url
 
         # Shortcut to access the Data feature
@@ -166,6 +165,8 @@ class Links(PageTrackingMixin, Feature):
 
         # Pages for .links files found in the site
         self.indices: List[LinkIndexPage] = []
+
+        self.by_tag: dict[str, LinkCollection]
 
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
         if issubclass(page_cls, TemplatePage):
@@ -224,41 +225,7 @@ class Links(PageTrackingMixin, Feature):
         from staticsite.utils import front_matter
         with directory.open(fname, "rt") as fd:
             fmt, meta = front_matter.read_whole(fd)
-        if meta is None:
-            meta = {}
         return meta
-
-    @jinja2.pass_context
-    def links_merged(
-            self,
-            context: jinja2.runtime.Context,
-            path: Optional[str] = None,
-            limit: Optional[int] = None,
-            sort: Optional[str] = None,
-            link_tags=None,
-            **kw: Any):
-        page_filter = PageFilter(
-                self.site, path=path, limit=limit, sort=sort, allow=self.data.by_type.get("links", ()), **kw)
-
-        # Build link tag filter
-        if link_tags is not None:
-            if isinstance(link_tags, str):
-                link_tags = {link_tags}
-            else:
-                link_tags = set(link_tags)
-
-        links = LinkCollection()
-        if link_tags is None:
-            for page in page_filter.filter():
-                links.merge(page.links)
-        else:
-            for page in page_filter.filter():
-                for link in page.link_collection:
-                    if link_tags is not None and not link_tags.issubset(link.tags):
-                        continue
-                    links.append(link)
-
-        return links
 
     @jinja2.pass_context
     def links_tag_index_url(self, context: jinja2.runtime.Context, tag: str) -> str:
@@ -268,10 +235,10 @@ class Links(PageTrackingMixin, Feature):
 
     def organize(self) -> None:
         # Index links by tag
-        self.by_tag: dict[str, LinkCollection] = defaultdict(LinkCollection)
+        self.by_tag = defaultdict(LinkCollection)
         for page in self.tracked_pages:
-            for link in page.links:
-                link = Link(link)
+            for link_dict in page.links:
+                link = Link(link_dict)
                 self.links.append(link)
                 for tag in link.tags:
                     self.by_tag[tag].append(link)
@@ -281,7 +248,7 @@ class Links(PageTrackingMixin, Feature):
         for index in self.indices:
             index.organize()
 
-    def add_site_commands(self, subparsers):
+    def add_site_commands(self, subparsers: argparse._SubParsersAction) -> None:
         super().add_site_commands(subparsers)
         from staticsite.features.links.cmdline import LinkLint
         LinkLint.add_subparser(subparsers)

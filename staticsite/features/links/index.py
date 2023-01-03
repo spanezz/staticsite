@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
-from staticsite.page import AutoPage, ChangeExtent, Optional, SourcePage, TemplatePage
+from staticsite.page import AutoPage, ChangeExtent, SourcePage, TemplatePage
 
-from .data import Link, LinkCollection
+from .data import LinkCollection
 
 if TYPE_CHECKING:
     from staticsite.node import Node
@@ -56,9 +56,10 @@ class LinkIndexPage(TemplatePage, SourcePage):
                     page_cls=LinksTagPage,
                     data_type="links",
                     title=f"{tag} links",
-                    links=links)
-            self.by_tag[tag] = page
-            pages.append(page)
+                    link_collection=links)
+            if page is not None:
+                self.by_tag[tag] = page
+                pages.append(page)
 
         # Set self.meta.pages to the sorted list of categories
         pages.sort(key=lambda x: x.title)
@@ -77,14 +78,10 @@ class LinksTagPage(TemplatePage, AutoPage):
     TYPE = "links_tag"
     TEMPLATE = "data-links.html"
 
-    def __init__(self, *args: Any, **kw: Any):
-        links = kw.pop("links", None)
+    def __init__(self, *args: Any, link_collection: LinkCollection, **kw: Any):
         super().__init__(*args, **kw)
         self.syndicated = False
-        if links is None:
-            self.link_collection = LinkCollection([Link(link) for link in self.links])
-        else:
-            self.link_collection = links
+        self.link_collection = link_collection
 
     @property
     def src_abspath(self) -> Optional[str]:

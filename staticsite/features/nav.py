@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterator, Optional, Sequence, Type
+from typing import Any, Iterator, Optional, Sequence, Type, cast
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
@@ -27,18 +27,15 @@ class NavData:
             except PageNotFoundError as e:
                 log.warning("%r: skipping page in nav: %s", self.page, e)
                 continue
-            if page is None:
-                log.warning("%r: path %r resolved as None: skipping", self.page, path)
-                continue
-            self.resolved.append(page)
+            self.resolved.append(cast(NavPageMixin, page))
 
     def __iter__(self) -> Iterator["NavPageMixin"]:
         self._resolve()
-        return self.resolved.__iter__()
+        return cast(list["NavPageMixin"], self.resolved).__iter__()
 
     def to_dict(self) -> list["NavPageMixin"]:
         self._resolve()
-        return self.resolved
+        return cast(list["NavPageMixin"], self.resolved)
 
 
 class NavField(TrackedField[Page, NavData]):

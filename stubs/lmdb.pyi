@@ -1,21 +1,59 @@
 from __future__ import annotations
 
-from typing import ContextManager
+from __future__ import annotations
+from typing import ContextManager, Optional, TypeVar, Union, overload
+
+T = TypeVar("T")
+
+
+class _Database:
+    ...
 
 
 class Environment:
-    def begin(self, db=None, parent=None, write=False, buffers=False) -> ContextManager[Transaction]:
+    def begin(
+            self,
+            db: Optional[_Database] = None,
+            parent: Optional[Transaction] = None,
+            write: bool = False,
+            buffers: bool = False) -> ContextManager[Transaction]:
         ...
 
-    def get(self, key: str, default=None, db=None) -> bytes:
+    @overload
+    def get(self, key: bytes, default: bytes, db: Optional[_Database] = None) -> bytes:
         ...
 
-    def put(self, key: str, value: bytes, dupdata=True, overwrite=True, append=False, db=None):
+    @overload
+    def get(self, key: bytes, default: T, db: Optional[_Database] = None) -> Union[bytes, T]:
+        ...
+
+    def put(
+            self,
+            key: str, value: bytes,
+            dupdata: bool = True,
+            overwrite: bool = True,
+            append: bool = False,
+            db: Optional[_Database] = None) -> None:
         ...
 
 
 class Transaction:
-    ...
+    @overload
+    def get(self, key: bytes, default: bytes) -> bytes:
+        ...
+
+    @overload
+    def get(self, key: bytes, default: T) -> Union[bytes, T]:
+        ...
+
+    def put(
+            self,
+            key: bytes, value: bytes,
+            dupdata: bool = True,
+            overwrite: bool = True,
+            append: bool = False,
+            db: Optional[_Database] = None) -> None:
+        ...
 
 
 def open(
