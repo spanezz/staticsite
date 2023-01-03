@@ -20,7 +20,6 @@
 * [links](features/links.md): Collect links and link metadata from page metadata.
 * [md](features/md.md): Render ``.md`` markdown pages, with front matter.
 * [nav](features/nav.md): Expand a 'pages' metadata containing a page filter into a list of pages.
-* [pages](features/pages.md): Expand a 'pages' metadata containing a page filter into a list of pages.
 * [rst](features/rst.md): Render ``.rst`` reStructuredText pages, with front matter.
 * [syndication](features/syndication.md): Build syndication feeds for groups of pages.
 * [taxonomy](features/taxonomy.md): Tag pages using one or more taxonomies.
@@ -32,7 +31,7 @@
 * [atom](pages/atom.md): An Atom syndication page
 * [category](pages/category.md): Index page showing all the pages tagged with a given taxonomy item
 * [data](pages/data.md): Data files
-* [dir](pages/dir.md): Page with a directory index
+* [dir](pages/dir.md): Page with a directory index.
 * [image](pages/image.md): An image as found in the source directory
 * [jinja2](pages/jinja2.md): Jinja2 pages
 * [links](pages/links.md): Page with a link collection posted as metadata only.
@@ -75,12 +74,11 @@ unless draft mode is enabled.
 * [nav](fields/nav.md): List of page paths, relative to the page defining the nav element, that
 are used for the navbar.
 * [nav_title](fields/nav_title.md): Title to use when this page is linked in a navbar.
-* [old_footprint](fields/old_footprint.md): Cached footprint from the previous run, or None
 * [pages](fields/pages.md): The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
 * [parent](fields/parent.md): Page one level above in the site hierarchy
-* [related](fields/related.md): Dict of pages related to this page.
+* [related](fields/related.md): Readonly mapping of pages related to this page, indexed by name.
 * [series](fields/series.md): List of categories for the `series` taxonomy.
 * [series_title](fields/series_title.md): Series title from this page onwards.
 * [site_name](fields/site_name.md): Name of the site. If missing, it defaults to the title of the toplevel index

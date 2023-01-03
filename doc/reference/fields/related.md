@@ -1,6 +1,4 @@
-# related: Dict of pages related to this page.
-
-Dict values will be resolved as pages.
+# related: Readonly mapping of pages related to this page, indexed by name.
 
 If there are no related pages, `page.meta.related` will be guaranteed to exist
 as an empty dictionary.
