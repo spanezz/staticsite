@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TextIO, Optional, Callable, Any
+from typing import IO, Optional, Callable, Any, cast
 import io
 
 #
@@ -18,9 +18,9 @@ import io
 # dumping.
 #
 
-Load = Callable[[TextIO], Any]
+Load = Callable[[IO[str]], Any]
 Loads = Callable[[str], Any]
-Dump = Callable[[Any, TextIO], None]
+Dump = Callable[[Any, IO[str]], None]
 Dumps = Callable[[Any], str]
 
 load_ruamel: Optional[Load]
@@ -43,10 +43,10 @@ try:
 
     yaml_loader = ruamel.yaml.YAML(typ="safe", pure=True)
 
-    def loads_ruamel(string):
+    def loads_ruamel(string: str) -> Any:
         return yaml_loader.load(string)
 
-    def load_ruamel(file):
+    def load_ruamel(file: IO[str]) -> Any:
         return yaml_loader.load(file)
 
     # Hack to do unsorted serialization with ruamel
@@ -56,13 +56,13 @@ try:
     # TODO: yaml does not have explicit_start typed correctly
     yaml_dumper.explicit_start = True  # type: ignore
 
-    def dumps_ruamel(data):
+    def dumps_ruamel(data: Any) -> str:
         # YAML dump with unsorted keys
         with io.StringIO() as fd:
             yaml_dumper.dump(data, fd)
             return fd.getvalue()
 
-    def dump_ruamel(data, file):
+    def dump_ruamel(data: Any, file: IO[str]) -> None:
         yaml_dumper.dump(data, file)
 except ModuleNotFoundError:
     load_ruamel = None
@@ -73,22 +73,22 @@ except ModuleNotFoundError:
 try:
     import yaml
 
-    def loads_pyyaml(string):
+    def loads_pyyaml(string: str) -> Any:
         return yaml.load(string, Loader=yaml.CLoader)
 
-    def load_pyyaml(file):
+    def load_pyyaml(file: IO[str]) -> Any:
         return yaml.load(file, Loader=yaml.CLoader)
 
-    def dumps_pyyaml(data):
+    def dumps_pyyaml(data: Any) -> str:
         # From pyyaml 5.1, one can add sort_keys=False
         # Before that version, it seems impossible to do unsorted serialization
         # with pyyaml
         # https://stackoverflow.com/questions/16782112/can-pyyaml-dump-dict-items-in-non-alphabetical-order
-        return yaml.dump(
+        return cast(str, yaml.dump(
                 data, stream=None, default_flow_style=False,
-                allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
+                allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper))
 
-    def dump_pyyaml(data, file):
+    def dump_pyyaml(data: Any, file: IO[str]) -> None:
         yaml.dump(data, file, default_flow_style=False, allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
 except ModuleNotFoundError:
     load_pyyaml = None
