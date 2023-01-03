@@ -1,7 +1,14 @@
 from __future__ import annotations
+
 import logging
 from collections import defaultdict
+from typing import TYPE_CHECKING, cast
+
 from staticsite.cmd.site import FeatureCommand
+
+if TYPE_CHECKING:
+    from staticsite.features.data import DataPages
+    from staticsite.features.links import LinksPage
 
 log = logging.getLogger("links")
 
@@ -14,8 +21,11 @@ class LinkLint(FeatureCommand):
     def run(self) -> None:
         # links = self.site.features["links"]
         seen = defaultdict(list)
-        data = self.site.features["data"]
-        for page in data.by_type.get("links", ()):
+        data = cast(DataPages, self.site.features["data"])
+        for lpage in data.by_type.get("links", ()):
+            page = cast(LinksPage, lpage)
+            if not page.links:
+                continue
             for link in page.links:
                 seen[link.url].append(page)
 

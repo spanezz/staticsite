@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, Any, BinaryIO, List, Optional, Tuple, Type, Union, cast
+from typing import IO, TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union, cast
 
 import docutils.core
 import docutils.io
@@ -90,7 +90,7 @@ class RestructuredText(MarkupFeature, Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [RstPage]
 
-    def parse_rest(self, fd: BinaryIO, remove_docinfo: bool = True) -> tuple[dict[str, Any], DoctreeScan]:
+    def parse_rest(self, fd: IO[bytes], remove_docinfo: bool = True) -> tuple[dict[str, Any], DoctreeScan]:
         """
         Parse a rest document.
 
@@ -329,7 +329,7 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
         # Document doctree root node
         self.doctree_scan = doctree_scan
 
-    def front_matter_changed(self, fd: BinaryIO) -> bool:
+    def front_matter_changed(self, fd: IO[bytes]) -> bool:
         """
         Check if the front matter read from fd is different from ours
         """

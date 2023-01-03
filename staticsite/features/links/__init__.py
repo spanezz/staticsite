@@ -99,10 +99,13 @@ class LinksPage(LinksPageMixin, DataPage):
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
-        self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.links})
+        if self.links:
+            self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.links})
+        else:
+            self.link_collection = LinkCollection({})
 
 
-class Links(PageTrackingMixin, Feature):
+class Links(PageTrackingMixin[LinksPageMixin], Feature):
     """
     Collect links and link metadata from page metadata.
 
@@ -237,6 +240,8 @@ class Links(PageTrackingMixin, Feature):
         # Index links by tag
         self.by_tag = defaultdict(LinkCollection)
         for page in self.tracked_pages:
+            if not page.links:
+                continue
             for link_dict in page.links:
                 link = Link(link_dict)
                 self.links.append(link)
