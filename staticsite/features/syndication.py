@@ -308,7 +308,7 @@ class SyndicationDateField(fields.Date[Page]):
 
     If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> datetime.datetime:
+    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             date = page.date
             page.__dict__[self.name] = date
@@ -321,7 +321,7 @@ class SyndicatedField(fields.Bool[Page]):
 
     If not set, it defaults to the value of `indexed`.
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> bool:
+    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> bool:
         if (cur := page.__dict__.get(self.name)) is None:
             value = cast(bool, page.indexed)
             page.__dict__[self.name] = value
@@ -375,7 +375,7 @@ def _get_syndicated_pages(page: SyndicationPageMixin, limit: Optional[int] = Non
     return pages.arrange("-syndication_date", limit=limit)
 
 
-class SyndicationFeature(PageTrackingMixin, Feature):
+class SyndicationFeature(PageTrackingMixin[SyndicationPageMixin], Feature):
     r"""
     Build syndication feeds for groups of pages.
 

@@ -53,7 +53,7 @@ class Field(Generic[P, V]):
     def __set_name__(self, owner: Type[P], name: str) -> None:
         self.name = name
 
-    def __get__(self, obj: P, type: Optional[Type] = None) -> Optional[V]:
+    def __get__(self, obj: P, type: Optional[Type[P]] = None) -> Optional[V]:
         if self.inherited:
             if self.name not in obj.__dict__:
                 if obj._parent is not None and self.name in obj._parent._fields:
@@ -81,7 +81,7 @@ class Const(Field[P, V]):
     """
     Field that takes a const value once and never changes it
     """
-    def __get__(self, obj: P, type: Optional[Type] = None) -> V:
+    def __get__(self, obj: P, type: Optional[Type[P]] = None) -> V:
         if self.name not in obj.__dict__:
             raise RuntimeError(f"{obj!r}.{self.name} has not been set")
         return cast(V, obj.__dict__[self.name])
@@ -187,7 +187,7 @@ class Dict(Field[P, dict[str, Any]]):
     """
     Make sure the field is a dict
     """
-    def __get__(self, obj: P, type: Optional[Type] = None) -> dict[str, Any]:
+    def __get__(self, obj: P, type: Optional[Type[P]] = None) -> dict[str, Any]:
         if (value := obj.__dict__.get(self.name)) is None:
             value = {}
             obj.__dict__[self.name] = value
@@ -207,7 +207,7 @@ class FieldsMetaclass(type):
     Allow a class to have a set of Field members, defining self-documenting
     metadata elements
     """
-    _fields: dict[str, Field]
+    _fields: dict[str, Field[Any, Any]]
 
     def __new__(cls: Type[FieldsMetaclass], name: str, bases: tuple[type], dct: dict[str, Any]) -> FieldsMetaclass:
         _fields = {}
@@ -232,7 +232,7 @@ class FieldsMetaclass(type):
 
 
 class FieldContainer(metaclass=FieldsMetaclass):
-    _fields: dict[str, Field]
+    _fields: dict[str, Field[Any, Any]]
 
     def __init__(
             self,

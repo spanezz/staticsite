@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+from typing import Any
 
 from ..command import Command, Fail, SiteCommand, register
 
 log = logging.getLogger("serve")
 
 
-class ServerMixin:
+class ServerMixin(Command):
     def start_server(self) -> None:
         try:
             import tornado.httpserver
@@ -33,7 +34,7 @@ class ServerMixin:
         url = f"http://{host}:{port}"
         log.info("Serving on %s", url)
 
-        if self.settings.SITE_URL is None:
+        if not hasattr(self.settings, "SITE_URL"):
             self.settings.SITE_URL = url
 
         app = Application(self.settings)
@@ -62,7 +63,7 @@ class Serve(ServerMixin, SiteCommand):
     "Serve the site over HTTP, building it in memory on demand"
 
     @classmethod
-    def add_subparser(cls, subparsers):
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("--port", "-p", action="store", type=int, default=8000,
                             help="port to use (default: 8000)")
@@ -75,7 +76,7 @@ class Serve(ServerMixin, SiteCommand):
 class Show(ServerMixin, Command):
     "Show the current directory in a browser"
 
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
 
         # Set default project root if undefined
@@ -93,7 +94,7 @@ class Show(ServerMixin, Command):
         self.settings.CACHE_REBUILDS = False
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
 
         parser.add_argument("dir", nargs="?",

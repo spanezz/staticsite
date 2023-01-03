@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .command import SiteCommand, register
 from . import cli
@@ -37,7 +37,7 @@ class Site(SiteCommand):
     "run feature-specifc commands"
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("--cmd", nargs=argparse.REMAINDER, help="site-specific command (try 'help')")
         return parser

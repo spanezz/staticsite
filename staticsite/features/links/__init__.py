@@ -248,7 +248,7 @@ class Links(PageTrackingMixin, Feature):
         for index in self.indices:
             index.organize()
 
-    def add_site_commands(self, subparsers: argparse._SubParsersAction) -> None:
+    def add_site_commands(self, subparsers: "argparse._SubParsersAction[Any]") -> None:
         super().add_site_commands(subparsers)
         from staticsite.features.links.cmdline import LinkLint
         LinkLint.add_subparser(subparsers)

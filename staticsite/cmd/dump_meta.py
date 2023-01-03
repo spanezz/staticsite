@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from typing import Any
 
 from staticsite.page_filter import compile_page_match
 from staticsite.utils import front_matter
@@ -19,7 +20,7 @@ class DumpMeta(SiteCommand):
     NAME = "dump_meta"
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("-f", "--format", action="store", default="yaml",
                             help="format to use for output")

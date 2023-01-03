@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .node import Node
 
 
-def compile_page_match(pattern: Union[str, re.Pattern]) -> re.Pattern:
+def compile_page_match(pattern: Union[str, re.Pattern[str]]) -> re.Pattern[str]:
     """
     Return a compiled re.Pattern from a glob or regular expression.
 
@@ -77,7 +77,7 @@ class PageFilter:
         self.site = site
         self.root = root or site.root
 
-        self.re_path: Optional[re.Pattern]
+        self.re_path: Optional[re.Pattern[str]]
         if path is not None:
             self.re_path = compile_page_match(path)
         else:

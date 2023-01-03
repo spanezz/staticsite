@@ -60,7 +60,7 @@ def timings(fmtstr: str, *args: Any, **kw: Any) -> Generator[None, None, None]:
     log.info(fmtstr, (end - start) / 1_000_000_000, *args, extra=kw)
 
 
-def dump_meta(val: Any) -> Union[None, bool, int, float, str, list, tuple, set, dict]:
+def dump_meta(val: Any) -> Union[None, bool, int, float, str, list[Any], tuple[Any, ...], set[Any], dict[str, Any]]:
     """
     Dump data into a dict, for use with dump_meta in to_dict methods
     """

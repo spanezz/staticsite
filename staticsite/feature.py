@@ -13,8 +13,11 @@ from .page import Page
 
 if TYPE_CHECKING:
     import argparse
+
+    import jinja2
+
+    from .archetypes import Archetype, Archetypes
     from .source_node import SourcePageNode
-    from .archetypes import Archetypes, Archetype
 
 log = logging.getLogger("feature")
 
@@ -87,11 +90,11 @@ class Feature:
         # Site object
         self.site = site
         # Feature-provided jinja2 globals
-        self.j2_globals: dict[str, Callable] = {}
+        self.j2_globals: dict[str, Callable[..., Any]] = {}
         # Feature-provided jinja2 filters
-        self.j2_filters: dict[str, Callable] = {}
+        self.j2_filters: dict[str, Callable[..., Any]] = {}
         # Feature-provided page mixins
-        self.page_mixins: list[Type] = []
+        self.page_mixins: list[Type[Page]] = []
 
     def __str__(self) -> str:
         return self.name
@@ -160,7 +163,7 @@ class Feature:
         """
         pass
 
-    def add_site_commands(self, subparsers: argparse._SubParsersAction) -> None:
+    def add_site_commands(self, subparsers: "argparse._SubParsersAction[Any]") -> None:
         """
         Add commands to `ssite site --cmd …` command line parser
         """
@@ -374,5 +377,5 @@ class PageTrackingMixin(Generic[PG]):
         # Collect pages notified by track_field, regardless of field name
         self.tracked_pages: set[PG] = set()
 
-    def track_field(self, field: fields.Field, obj: PG, value: Any) -> None:
+    def track_field(self, field: fields.Field[PG, Any], obj: PG, value: Any) -> None:
         self.tracked_pages.add(obj)

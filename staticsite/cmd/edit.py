@@ -131,7 +131,7 @@ class Edit(SiteCommand):
         return None
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("match", nargs="*", help="keywords used to look for the page to edit")
         parser.add_argument("-n", "--noedit", action="store_true",

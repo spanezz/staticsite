@@ -66,7 +66,7 @@ class Command:
             logging.basicConfig(level=level, stream=sys.stderr, format=FORMAT)
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         cls.NAME = getattr(cls, "NAME", cls.__name__.lower())
         parser: argparse.ArgumentParser = subparsers.add_parser(
             cls.NAME,

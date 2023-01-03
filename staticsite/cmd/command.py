@@ -95,7 +95,7 @@ class SiteCommand(Command):
             self.settings.DRAFT_MODE = True
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
 
         parser.add_argument("project", nargs="?",

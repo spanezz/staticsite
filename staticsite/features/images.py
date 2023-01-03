@@ -4,7 +4,7 @@ import itertools
 import logging
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast, Iterable
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
@@ -55,7 +55,7 @@ class ImagePageMixin(Page):
     image = ImageField()
 
 
-class Images(PageTrackingMixin, Feature):
+class Images(PageTrackingMixin[ImagePageMixin], Feature):
     """
     Handle images in content directory.
 
@@ -199,19 +199,24 @@ class Images(PageTrackingMixin, Feature):
         for page in self.tracked_pages:
             val = page.image
             if isinstance(val, str):
-                page.image = page.resolve_path(val)
-                if page.image.TYPE not in ("image", "scaledimage"):
+                resolved = page.resolve_path(val)
+                if not isinstance(resolved, (Image, ScaledImage)):
                     log.warning("%s: image field resolves to %s which is not an image page",
                                 self, page.image)
+                else:
+                    page.image = resolved
 
         # If an image exists with the same basename as a page, auto-add an
         # "image" metadata to it
         for image in self.images:
             name = basename_no_ext(image.src.relpath)
             # print(f"Images.analyze {image=!r} {image.node.name=!r} {image.node.page=!r}")
-            pages = image.node.build_pages.values()
+            pages: Iterable[ImagePageMixin]
+            pages = cast(Iterable[ImagePageMixin], image.node.build_pages.values())
             if image.node.sub is not None:
-                pages = itertools.chain(pages, (subnode.page for subnode in image.node.sub.values() if subnode.page))
+                pages = itertools.chain(
+                        pages,
+                        (cast(ImagePageMixin, subnode.page) for subnode in image.node.sub.values() if subnode.page))
 
             # Find pages matching this image's name
             for page in pages:

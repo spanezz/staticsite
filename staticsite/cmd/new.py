@@ -5,7 +5,7 @@ import logging
 import os
 import shlex
 import subprocess
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from .command import Fail, SiteCommand, register
 
@@ -92,7 +92,7 @@ class New(SiteCommand):
         return None
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("-a", "--archetype", default="default", help="page archetype")
         parser.add_argument("-t", "--title", help="page title")

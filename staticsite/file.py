@@ -27,7 +27,7 @@ class File(NamedTuple):
             return self.relpath
 
     @classmethod
-    def from_dir_entry(cls, dir: "File", entry: os.DirEntry) -> "File":
+    def from_dir_entry(cls, dir: "File", entry: os.DirEntry[str]) -> "File":
         return cls(
                 relpath=os.path.join(dir.relpath, entry.name),
                 abspath=os.path.join(dir.abspath, entry.name),

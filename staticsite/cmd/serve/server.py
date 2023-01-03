@@ -44,7 +44,7 @@ class ChangeMonitor:
         self.notifier = pyinotify.AsyncioNotifier(
                 self.watch_manager, self.loop, default_proc_fun=self.on_event)
         # Pending trigger
-        self.pending = None
+        self.pending: Optional[asyncio.TimerHandler] = None
 
     def update_watch_dirs(self, dirs: list[str]) -> None:
         dirs = [os.path.realpath(d) for d in dirs]
@@ -63,7 +63,7 @@ class ChangeMonitor:
         self.pending = None
         self.app.trigger_reload()
 
-    def on_event(self, event) -> None:
+    def on_event(self, event: pyinotify.Event) -> None:
         """
         Handle incoming asyncio events
         """

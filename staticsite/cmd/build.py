@@ -29,7 +29,7 @@ class Build(SiteCommand):
     "build the site into the web/ directory of the project"
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("--type", action="store",
                             help="render only pages of this type")

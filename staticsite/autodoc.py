@@ -149,7 +149,7 @@ class Autodoc:
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 
-    def write_field(self, name: str, field: Field) -> None:
+    def write_field(self, name: str, field: Field[Any, Any]) -> None:
         path = os.path.join(self.root, "fields")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:

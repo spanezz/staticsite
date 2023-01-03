@@ -322,7 +322,7 @@ class TaxonomyFeature(Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [TaxonomyPage, CategoryPage]
 
-    def track_field(self, field: fields.Field, obj: Page, value: Any) -> None:
+    def track_field(self, field: fields.Field[Any, Any], obj: Page, value: Any) -> None:
         self.taxonomies[field.name].pages.add(obj)
 
     def register_taxonomy(self, name: str, src: file.File) -> None:

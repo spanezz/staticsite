@@ -250,7 +250,7 @@ class TemplateField(fields.Field["TemplatePage", Union[str, jinja2.Template]]):
     """
     Template name or compiled template, taking its default value from Page.TEMPLATE
     """
-    def __get__(self, page: "TemplatePage", type: Optional[Type] = None) -> Union[str, jinja2.Template]:
+    def __get__(self, page: "TemplatePage", type: Optional[Type["TemplatePage"]] = None) -> Union[str, jinja2.Template]:
         if self.name not in page.__dict__:
             page.__dict__[self.name] = page.TEMPLATE
             return page.TEMPLATE
@@ -272,7 +272,7 @@ class PageDate(fields.Date["Page"]):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> datetime.datetime:
+    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             if (src := getattr(page, "src", None)) is not None and src.stat is not None:
                 date = page.site.localized_timestamp(src.stat.st_mtime)
@@ -286,7 +286,7 @@ class Draft(fields.Bool["SourcePage"]):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def __get__(self, page: SourcePage, type: Optional[Type] = None) -> Any:
+    def __get__(self, page: SourcePage, type: Optional[Type["SourcePage"]] = None) -> Any:
         if (value := page.__dict__.get(self.name)) is None:
             value = page.date > page.site.generation_time
             page.__dict__[self.name] = value
@@ -299,7 +299,7 @@ class RenderedField(fields.Str["Page"]):
     """
     Field whose value is rendered from other fields
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> Optional[str]:
+    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> Optional[str]:
         if (cur := page.__dict__.get(self.name)) is None:
             value: str
             if (tpl := getattr(page, "template_" + self.name, None)):
@@ -320,7 +320,7 @@ class RenderedTitleField(fields.Str["Page"]):
     """
     Render the tile for a page, defaulting to site_name if missing
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> str:
+    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> str:
         if (cur := page.__dict__.get(self.name)) is None:
             value: str
             if (tpl := getattr(page, "template_" + self.name, None)):
@@ -434,7 +434,7 @@ class RelatedField(fields.Field["Page", Related]):
     Features can add to this. For example, [syndication](syndication.md) can add
     `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
     """
-    def __get__(self, page: Page, type: Optional[Type] = None) -> Related:
+    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> Related:
         if (value := page.__dict__.get(self.name)) is None:
             value = Related(page)
             page.__dict__[self.name] = value

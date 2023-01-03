@@ -53,7 +53,7 @@ class AliasesPageMixin(Page):
     aliases = AliasField(structure=True)
 
 
-class AliasesFeature(PageTrackingMixin, Feature):
+class AliasesFeature(PageTrackingMixin[AliasesPageMixin], Feature):
     """
     Build redirection pages for page aliases.
 

@@ -25,7 +25,7 @@ class Meta(Command):
         super().__init__(*args, **kw)
         self.scanner = images.ImageScanner(DisabledCache("disabled"))
 
-    def edit(self, fname: str) -> subprocess.CompletedProcess:
+    def edit(self, fname: str) -> subprocess.CompletedProcess[bytes]:
         """
         Run the editor on this file
         """
@@ -44,7 +44,7 @@ class Meta(Command):
         """
         with tempfile.NamedTemporaryFile(suffix=".yaml", mode="wt") as fd:
             # FIXME: ignoring type, as yaml.dump should declare IO[str] instead of TextIO
-            yaml.dump(meta, fd)  # type: ignore [arg-type]
+            yaml.dump(meta, fd)
             fd.flush()
             self.edit(fd.name)
             with open(fd.name, "rt") as newfd:
@@ -98,7 +98,7 @@ class Meta(Command):
         self.save_changes(meta, new_meta)
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("file", help="edit the metadata of this file")
         return parser

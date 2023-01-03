@@ -124,10 +124,10 @@ class PageTree(Tree):
         self.node: SourcePageNode
 
         # Rules for assigning metadata to subdirectories
-        self.dir_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
+        self.dir_rules: list[tuple[re.Pattern[str], dict[str, Any]]] = []
 
         # Rules for assigning metadata to files
-        self.file_rules: list[tuple[re.Pattern, dict[str, Any]]] = []
+        self.file_rules: list[tuple[re.Pattern[str], dict[str, Any]]] = []
 
     def _take_dir_rules(self, meta: dict[str, Any]) -> None:
         """

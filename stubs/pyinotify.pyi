@@ -24,6 +24,11 @@ class Watch:
     ...
 
 
+class Event:
+    name: str
+    path: str
+
+
 class AsyncioNotifier:
     def __init__(
             self, watch_manager: WatchManager, loop: Any, callback: Any = None,

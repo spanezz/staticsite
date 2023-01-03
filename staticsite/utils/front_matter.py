@@ -66,12 +66,12 @@ def read_markdown_partial(fd: BinaryIO) -> tuple[Optional[str], dict[str, Any], 
             if not line or line.rstrip() == b"```":
                 break
             buf += line
-        if head[3:] == "yaml":
+        if head[3:] == b"yaml":
             return "yaml", yaml_codec.loads(buf.decode()), (x.rstrip().decode() for x in fd)
-        elif head[3:] == "toml":
+        elif head[3:] == b"toml":
             import toml
             return "toml", toml.loads(buf.decode()), (x.rstrip().decode() for x in fd)
-        elif head[3:] == "json":
+        elif head[3:] == b"json":
             return "json", json.loads(buf.decode()), (x.rstrip().decode() for x in fd)
         else:
             return "yaml", yaml_codec.loads(buf.decode()), (x.rstrip().decode() for x in fd)
