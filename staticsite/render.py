@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
-from typing import Optional
+from typing import IO, Literal, Optional, Union, overload
 
 from .file import File
 
@@ -12,7 +12,7 @@ class RenderedElement:
     """
     Abstract interface for a rendered site page
     """
-    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]) -> None:
         """
         Write the rendered contents to the given file
         """
@@ -24,21 +24,31 @@ class RenderedElement:
         """
         raise NotImplementedError("{}.write", self.__class__.__name__)
 
+    @overload
     @classmethod
-    def dirfd_open(cls, name: str, mode: str = "r", *, dir_fd: int, **kw):
+    def dirfd_open(cls, name: str, mode: Literal["wt"], dir_fd: int) -> IO[str]:
+        ...
+
+    @overload
+    @classmethod
+    def dirfd_open(cls, name: str, mode: Literal["wb"], dir_fd: int) -> IO[bytes]:
+        ...
+
+    @classmethod
+    def dirfd_open(cls, name: str, mode: Literal["wt", "wb"], dir_fd: int) -> Union[IO[str], IO[bytes]]:
         """
         Open a file contained in the directory pointed to by dir_fd
         """
         def _file_opener(fname: str, flags: int) -> int:
             return os.open(fname, flags, mode=0o666, dir_fd=dir_fd)
-        return io.open(name, mode=mode, opener=_file_opener, **kw)
+        return io.open(name, mode=mode, opener=_file_opener)
 
 
 class RenderedFile(RenderedElement):
     def __init__(self, src: File):
         self.src = src
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]) -> None:
         try:
             st = os.stat(name, dir_fd=dir_fd)
         except FileNotFoundError:
@@ -60,13 +70,13 @@ class RenderedFile(RenderedElement):
 
 
 class RenderedString(RenderedElement):
-    def __init__(self, s):
+    def __init__(self, s: Optional[str]):
         if s is None:
             self.buf = b"Error in page: see build logs"
         else:
             self.buf = s.encode("utf-8")
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]) -> None:
         with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
             out.write(self.buf)
 

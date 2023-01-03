@@ -5,7 +5,7 @@ import logging
 import os
 import shlex
 import subprocess
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any, List, Optional
 
 import PIL
 import PIL.Image
@@ -17,24 +17,13 @@ if TYPE_CHECKING:
 log = logging.getLogger("utils.images")
 
 
-def parse_coord(ref, vals):
-    vdeg, vmin, vsec = vals
-
-    val = vdeg[0] / vdeg[1] + vmin[0] / (vmin[1] * 60) + vsec[0] / (vsec[1] * 3600)
-
-    if ref in ("S", "W"):
-        return -val
-    else:
-        return val
-
-
 class ImageScanner:
     def __init__(self, cache: Cache):
         self.cache = cache
 
     def scan(self, src: File, mimetype: str) -> dict[str, Any]:
         key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
-        meta: dict[str, Any] = self.cache.get(key)
+        meta: Optional[dict[str, Any]] = self.cache.get(key)
         if meta is None:
             meta = self.read_meta(src.abspath, mimetype)
             self.cache.put(key, meta)
@@ -114,7 +103,7 @@ class ImageScanner:
 
         return meta
 
-    def edit_meta_exiftool(self, pathname: str, changed: dict[str, Any], removed: List[str]):
+    def edit_meta_exiftool(self, pathname: str, changed: dict[str, Any], removed: List[str]) -> bool:
         exif_args: List[str] = []
 
         if "title" in changed:
