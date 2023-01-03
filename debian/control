@@ -17,8 +17,8 @@ Build-Depends-Indep: help2man
 Standards-Version: 4.6.1
 Rules-Requires-Root: no
 Homepage: https://github.com/spanezz/staticsite
-Vcs-Git: https://github.com/spanezz/staticsite.git
-Vcs-Browser: https://github.com/spanezz/staticsite
+Vcs-Git: https://salsa.debian.org/enrico/staticsite.git
+Vcs-Browser: https://salsa.debian.org/enrico/staticsite
 
 Package: staticsite
 Architecture: all

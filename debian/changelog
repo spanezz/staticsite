@@ -1,6 +1,7 @@
 staticsite (2.1-1) unstable; urgency=medium
 
   * New upstream version (see NEWS.md for changes)
+  * Point Vcs-* to Salsa
 
  -- Enrico Zini <enrico@debian.org>  Wed, 04 Jan 2023 00:43:54 +0100
 
