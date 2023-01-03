@@ -117,7 +117,7 @@ class Images(PageTrackingMixin, Feature):
     Scaled versions of the image will be available in the image's [`related`
     field](../fields/related.md).
     """
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         mimetypes.init()
         self.scanner = ImageScanner(self.site.caches.get("images_meta"))
@@ -167,7 +167,7 @@ class Images(PageTrackingMixin, Feature):
 
         return pages
 
-    def generate(self):
+    def generate(self) -> None:
         for image in self.images:
             # Look at theme's image_sizes and generate ScaledImage pages
             image_sizes = self.site.theme.meta.get("image_sizes")
@@ -194,7 +194,7 @@ class Images(PageTrackingMixin, Feature):
                         dst=scaled_fname,
                         **rel_kwargs)
 
-    def crossreference(self):
+    def crossreference(self) -> None:
         # Resolve image from strings to Image pages
         for page in self.tracked_pages:
             val = page.image
@@ -240,12 +240,12 @@ class Image(ImagePage, SourcePage):
     lon = fields.Float[Page](doc="Image longitude")
     image_orientation = fields.Int[Page](doc="Image orientation")
 
-    def __init__(self, *args, mimetype: str, **kw):
+    def __init__(self, *args: Any, mimetype: str, **kw: Any):
         super().__init__(*args, **kw)
         self.mimetype = mimetype
         # self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
-    def render(self, **kw) -> RenderedElement:
+    def render(self, **kw: Any) -> RenderedElement:
         return RenderedFile(self.src)
 
 
@@ -255,7 +255,7 @@ class RenderedScaledImage(RenderedElement):
         self.width = width
         self.height = height
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]):
+    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]) -> None:
         # If target exists and mtime is ok, keep it
         if old and old.st_mtime >= self.src.stat.st_mtime:
             return
@@ -265,7 +265,7 @@ class RenderedScaledImage(RenderedElement):
             with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
                 img.save(out)
 
-    def content(self):
+    def content(self) -> bytes:
         with open(self.src.abspath, "rb") as fd:
             return fd.read()
 
@@ -284,7 +284,7 @@ class ScaledImage(ImagePage, AutoPage):
     # With 3.12 we can remove the casts in favour of an extra type in the page
     # definition
 
-    def __init__(self, *args, mimetype: str, name: str, info: dict[str, Any], **kw):
+    def __init__(self, *args: Any, mimetype: str, name: str, info: dict[str, Any], **kw: Any):
         super().__init__(*args, **kw)
         self.name = name
         created_from = cast(Image, self.created_from)
@@ -303,6 +303,8 @@ class ScaledImage(ImagePage, AutoPage):
         return RenderedScaledImage(cast(Image, self.created_from).src, self.width, self.height)
 
     def _compute_change_extent(self) -> ChangeExtent:
+        if self.created_from is None:
+            raise AssertionError(f"ScaledImage {self!r} has empty created_from")
         return self.created_from.change_extent
 
 

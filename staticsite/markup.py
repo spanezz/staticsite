@@ -36,7 +36,7 @@ class LinkResolver:
         self.substituted: dict[str, ResolvedLink] = {}
         self.external_links: set[str] = set()
 
-    def set_page(self, page: Page, absolute: bool = False):
+    def set_page(self, page: Page, absolute: bool = False) -> None:
         self.page = page
         self.absolute = absolute
         self.substituted = {}
@@ -107,7 +107,7 @@ class LinkResolver:
 
 
 class MarkupFeature:
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.link_resolver = LinkResolver()
 
@@ -122,7 +122,7 @@ class MarkupRenderContext:
         self.cache_key = cache_key
         self.cache: dict[str, Any]
 
-    def load(self):
+    def load(self) -> None:
         if (cache := self.page.feature.render_cache.get(self.cache_key)) is None:
             self.reset_cache()
             return
@@ -138,12 +138,12 @@ class MarkupRenderContext:
 
         self.cache = cache
 
-    def reset_cache(self):
+    def reset_cache(self) -> None:
         self.cache = {
             "mtime": self.page.src.stat.st_mtime,
         }
 
-    def save(self):
+    def save(self) -> None:
         self.cache["paths"] = self.link_resolver.to_cache()
         self.page.feature.render_cache.put(self.cache_key, self.cache)
 
@@ -154,7 +154,7 @@ class MarkupPage(SourcePage):
 
     This is a base for pages like Markdown or Rst
     """
-    def __init__(self, *, feature: MarkupFeature, **kw):
+    def __init__(self, *, feature: MarkupFeature, **kw: Any):
         super().__init__(**kw)
         self.feature = feature
 

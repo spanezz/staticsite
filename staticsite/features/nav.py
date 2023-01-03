@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional, Sequence, Type
+from typing import Any, Iterator, Optional, Sequence, Type
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
@@ -17,7 +17,7 @@ class NavData:
         self.paths = paths
         self.resolved: Optional[list["NavPageMixin"]] = None
 
-    def _resolve(self):
+    def _resolve(self) -> None:
         if self.resolved is not None:
             return
         self.resolved = []
@@ -32,11 +32,11 @@ class NavData:
                 continue
             self.resolved.append(page)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator["NavPageMixin"]:
         self._resolve()
         return self.resolved.__iter__()
 
-    def to_dict(self):
+    def to_dict(self) -> list["NavPageMixin"]:
         self._resolve()
         return self.resolved
 
@@ -48,7 +48,7 @@ class NavField(TrackedField[Page, NavData]):
     """
     tracked_by = "nav"
 
-    def __init__(self, **kw):
+    def __init__(self, **kw: Any):
         kw.setdefault("inherited", True)
         kw.setdefault("default", ())
         super().__init__(**kw)

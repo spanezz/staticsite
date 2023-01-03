@@ -123,7 +123,7 @@ class J2Pages(Feature):
 
 
 class RenderPartialTemplateMixin(TemplatePage):
-    def _find_block(self, *names):
+    def _find_block(self, *names: str):
         for name in names:
             block = self.page_template.blocks.get("page_content")
             block_name = "page_content"
@@ -133,27 +133,27 @@ class RenderPartialTemplateMixin(TemplatePage):
         return None, None
 
     @jinja2.pass_context
-    def html_body(self, context, **kw) -> str:
+    def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
         return self.render_template_block(block, block_name, context, render_style="body")
 
     @jinja2.pass_context
-    def html_inline(self, context, **kw) -> str:
+    def html_inline(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
         return self.render_template_block(block, block_name, context, render_style="inline")
 
     @jinja2.pass_context
-    def html_feed(self, context, **kw) -> str:
+    def html_feed(self, context: jinja2.runtime.Context, **kw: Any) -> str:
         block_name, block = self._find_block("page_content", "content")
         if block is None:
             return ""
         return self.render_template_block(block, block_name, context, render_style="feed")
 
-    def render_template_block(self, block, block_name, context, **kw) -> str:
+    def render_template_block(self, block, block_name: str, context: jinja2.runtime.Context, **kw: Any) -> str:
         render_stack = list(context.get("render_stack", ()))
 
         render_style = kw.get("render_style")
