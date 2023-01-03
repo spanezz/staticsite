@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Iterator, List, NamedTuple, Optional, Type
 
 import jinja2
 import markupsafe
@@ -122,38 +122,40 @@ class J2Pages(Feature):
         return pages
 
 
+class Block(NamedTuple):
+    name: str
+    block: Callable[[jinja2.runtime.Context], Iterator[str]]
+
+
 class RenderPartialTemplateMixin(TemplatePage):
-    def _find_block(self, *names: str):
+    def _find_block(self, *names: str) -> Optional[Block]:
         for name in names:
             block = self.page_template.blocks.get("page_content")
             block_name = "page_content"
             if block is not None:
-                return block_name, block
+                return Block(block_name, block)
         log.warn("%s: `page_content` and `content` not found in template %s", self, self.page_template.name)
-        return None, None
+        return None
 
     @jinja2.pass_context
     def html_body(self, context: jinja2.runtime.Context, **kw: Any) -> str:
-        block_name, block = self._find_block("page_content", "content")
-        if block is None:
+        if (block := self._find_block("page_content", "content")) is None:
             return ""
-        return self.render_template_block(block, block_name, context, render_style="body")
+        return self.render_template_block(block, context, render_style="body")
 
     @jinja2.pass_context
     def html_inline(self, context: jinja2.runtime.Context, **kw: Any) -> str:
-        block_name, block = self._find_block("page_content", "content")
-        if block is None:
+        if (block := self._find_block("page_content", "content")) is None:
             return ""
-        return self.render_template_block(block, block_name, context, render_style="inline")
+        return self.render_template_block(block, context, render_style="inline")
 
     @jinja2.pass_context
     def html_feed(self, context: jinja2.runtime.Context, **kw: Any) -> str:
-        block_name, block = self._find_block("page_content", "content")
-        if block is None:
+        if (block := self._find_block("page_content", "content")) is None:
             return ""
-        return self.render_template_block(block, block_name, context, render_style="feed")
+        return self.render_template_block(block, context, render_style="feed")
 
-    def render_template_block(self, block, block_name: str, context: jinja2.runtime.Context, **kw: Any) -> str:
+    def render_template_block(self, block: Block, context: jinja2.runtime.Context, **kw: Any) -> str:
         render_stack = list(context.get("render_stack", ()))
 
         render_style = kw.get("render_style")
@@ -168,11 +170,12 @@ class RenderPartialTemplateMixin(TemplatePage):
         kw["page"] = self
 
         try:
-            return markupsafe.Markup("".join(block(self.page_template.new_context(context, shared=True, locals=kw))))
+            return markupsafe.Markup(
+                    "".join(block.block(self.page_template.new_context(context, shared=True, locals=kw))))
         except jinja2.TemplateError as e:
-            log.error("%s: %s: failed to render block %s: %s", self, self.page_template.filename, block_name, e)
+            log.error("%s: %s: failed to render block %s: %s", self, self.page_template.filename, block.name, e)
             log.debug("%s: %s: failed to render block %s: %s",
-                      self, self.page_template.filename, block_name, e, exc_info=True)
+                      self, self.page_template.filename, block.name, e, exc_info=True)
             # TODO: return a "render error" page? But that risks silent errors
             return ""
 
@@ -215,7 +218,7 @@ class J2Page(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     """
     TYPE = "jinja2"
 
-    def __init__(self, *args, template: jinja2.Template, **kw):
+    def __init__(self, *args: Any, template: jinja2.Template, **kw: Any):
         # Indexed by default
         kw.setdefault("indexed", True)
         super().__init__(*args, **kw)

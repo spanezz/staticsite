@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 log = logging.getLogger("autodoc")
 
 
-def summary(obj: Any):
+def summary(obj: Any) -> str:
     if obj.__doc__ is None:
         return f"Missing documentation for {obj!r}"
     return inspect.cleandoc(obj.__doc__).strip().split("\n\n", 1)[0]
 
 
-def body(obj: Any):
+def body(obj: Any) -> str:
     if obj.__doc__ is None:
         return f"Missing documentation for {obj!r}"
     res = inspect.cleandoc(obj.__doc__).strip().split("\n\n", 1)
@@ -108,7 +108,7 @@ class Autodoc:
         #      by the metaclass, or by the documenter by following the MRO, for more
         #      documentation content
 
-    def write_feature(self, feature: Feature):
+    def write_feature(self, feature: Feature) -> None:
         page_types = feature.get_used_page_types()
         path = os.path.join(self.root, "features")
         os.makedirs(path, exist_ok=True)
@@ -129,7 +129,7 @@ class Autodoc:
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 
-    def write_page_type(self, name: str, page_type: Type[Page]):
+    def write_page_type(self, name: str, page_type: Type[Page]) -> None:
         if page_type.__doc__ is None:
             log.error("%s: page type is undocumented in %s", name, page_type)
             return
@@ -149,7 +149,7 @@ class Autodoc:
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 
-    def write_field(self, name: str, field: Field):
+    def write_field(self, name: str, field: Field) -> None:
         path = os.path.join(self.root, "fields")
         os.makedirs(path, exist_ok=True)
         with open(os.path.join(path, f"{name}.md"), "wt") as out:

@@ -25,7 +25,7 @@ class Taxonomy:
     """
     Definition of a taxonomy for the site
     """
-    def __init__(self, *, name: str, src: file.File, **kw):
+    def __init__(self, *, name: str, src: file.File, **kw: Any):
         self.name = name
         self.src = src
         self.index: Optional[TaxonomyPage] = None
@@ -44,7 +44,7 @@ class Taxonomy:
             self,
             category: Optional[dict[str, Any]] = None,
             archive: Optional[dict[str, Any]] = None,
-            **kw):
+            **kw: Any) -> None:
         """
         Add information from a parsed taxonomy file
         """
@@ -307,7 +307,7 @@ class TaxonomyFeature(Feature):
     """
     RUN_BEFORE = ["syndication"]
 
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         # All TaxonomyPages found
         self.taxonomies: dict[str, Taxonomy] = {}
@@ -322,10 +322,10 @@ class TaxonomyFeature(Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [TaxonomyPage, CategoryPage]
 
-    def track_field(self, field: fields.Field, obj: Page, value: Any):
+    def track_field(self, field: fields.Field, obj: Page, value: Any) -> None:
         self.taxonomies[field.name].pages.add(obj)
 
-    def register_taxonomy(self, name, src: file.File):
+    def register_taxonomy(self, name: str, src: file.File) -> None:
         # Note that if we want to make the tags inheritable, we need to
         # interface with 'rst' (or 'rst' to interface with us) because rst
         # needs to know which metadata items are taxonomies in order to parse
@@ -390,12 +390,12 @@ class TaxonomyFeature(Feature):
     def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
         return [t.index for t in self.taxonomies.values() if t.index is not None]
 
-    def jinja2_taxonomy(self, name) -> Optional["TaxonomyPage"]:
+    def jinja2_taxonomy(self, name: str) -> Optional["TaxonomyPage"]:
         if (taxonomy := self.taxonomies.get(name)):
             return taxonomy.index
         return None
 
-    def generate(self):
+    def generate(self) -> None:
         # Call analyze on all taxonomy pages, to populate them by scanning
         # site pages
         for taxonomy in self.taxonomies.values():
@@ -419,7 +419,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
 
     taxonomy = fields.ConstTypeField["TaxonomyPage", Taxonomy](cls=Taxonomy, doc="Structured taxonomy information")
 
-    def __init__(self, *args, node: SourcePageNode, **kw):
+    def __init__(self, *args: Any, node: SourcePageNode, **kw: Any):
         kw.setdefault("nav_title", node.name.capitalize())
         super().__init__(*args, node=node, **kw)
 
@@ -427,14 +427,14 @@ class TaxonomyPage(TemplatePage, SourcePage):
         self.name = self.node.name
 
     @property
-    def categories(self):
+    def categories(self) -> dict[str, CategoryPage]:
         """
         Map all possible values for this taxonomy to the pages that reference
         them
         """
         return self.taxonomy.category_pages
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         from staticsite.utils import dump_meta
         res = super().to_dict()
         res["name"] = self.name
@@ -442,16 +442,16 @@ class TaxonomyPage(TemplatePage, SourcePage):
         res["category_meta"] = dump_meta(self.category_meta)
         return res
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> CategoryPage:
         return self.categories[name]
 
-    def top_categories(self, count=10):
+    def top_categories(self, count: int = 10) -> list[CategoryPage]:
         """
         Return the ``count`` categories with the most pages
         """
         return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.pages))
 
-    def most_recent(self, count=10):
+    def most_recent(self, count: int = 10) -> list[CategoryPage]:
         """
         Return the ``count`` categories with the most recent date
         """
@@ -510,19 +510,19 @@ class CategoryPage(TemplatePage, AutoPage):
             cls=TaxonomyPage, doc="Page that defined this taxonomy")
     name = fields.Str["CategoryPage"](doc="Name of the category shown in this page")
 
-    def __init__(self, *args, **kw) -> None:
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         # Category name
         self.name = self.node.name
         # Index of each page in the category sequence
         self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)} if self.pages else {}
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         res = super().to_dict()
         res["name"] = self.name
         return res
 
-    def __lt__(self, o):
+    def __lt__(self, o: Any) -> bool:
         o_taxonomy = getattr(o, "taxonomy", None)
         if o_taxonomy is None:
             return NotImplemented
@@ -533,7 +533,7 @@ class CategoryPage(TemplatePage, AutoPage):
 
         return (self.taxonomy.name, self.name) < (o_taxonomy.name, o_name)
 
-    def __eq__(self, o):
+    def __eq__(self, o: Any) -> bool:
         o_taxonomy = getattr(o, "taxonomy", None)
         if o_taxonomy is None:
             return NotImplemented
@@ -544,7 +544,7 @@ class CategoryPage(TemplatePage, AutoPage):
 
         return (self.taxonomy.name, self.name) == (o_taxonomy.name, o_name)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.taxonomy.name, self.name))
 
     @functools.cached_property
@@ -566,7 +566,7 @@ class CategoryPage(TemplatePage, AutoPage):
             "title": series_title,
         }
 
-    def sequence(self, page):
+    def sequence(self, page: Page) -> Optional[dict[str, Any]]:
         idx = self.page_index.get(page)
         if idx is None:
             return None
@@ -625,7 +625,7 @@ class CategoryPage(TemplatePage, AutoPage):
 
 
 class TestTaxonomyPage(TaxonomyPage):
-    def _read_taxonomy_description(self):
+    def _read_taxonomy_description(self) -> None:
         pass
 
 
