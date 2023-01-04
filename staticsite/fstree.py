@@ -236,6 +236,11 @@ class PageTree(Tree):
                 # print(f"PageTree.populate_node  enqueue file {fname}")
                 files_meta[fname] = (res, src)
 
+        # Recurse into subtrees
+        for name, tree in self.sub.items():
+            with self.open_subtree(name, tree):
+                tree.populate_node()
+
         # Let features pick their files
         # print(f"PageTree.populate_node  initial files to pick {files_meta.keys()}")
         for handler in self.site.features.ordered():
@@ -250,15 +255,6 @@ class PageTree(Tree):
             if src.stat and stat.S_ISREG(src.stat.st_mode):
                 log.debug("Loading static file %s", src.relpath)
                 self.node.add_asset(src=src, name=fname)
-
-        # Recurse into subtrees
-        for name, tree in self.sub.items():
-            with self.open_subtree(name, tree):
-                tree.populate_node()
-
-        # If no feature added a directory index, synthesize one
-        if not self.node.is_empty() and not self.node.page:
-            self.node.add_directory_index(self.src)
 
 
 class RootPageTree(PageTree):
