@@ -4,6 +4,7 @@ import os
 from unittest import TestCase
 
 from staticsite.cmd.build import Builder
+from staticsite.site import Path
 
 from . import utils as test_utils
 
@@ -36,3 +37,4 @@ class TestBuiltTutorial(test_utils.SiteTestMixin, TestCase):
     @test_utils.assert_no_logs()
     def test_render_paths(self):
         self.assertBuilt("index.md", "", "index.html", sample="Welcome to my new blog")
+        self.assertIsNone(self.site.root.lookup_page(Path.from_string("/built_site/")))
