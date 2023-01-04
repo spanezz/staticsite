@@ -1,3 +1,9 @@
+staticsite (2.3-1) unstable; urgency=medium
+
+  * New upstream version (see NEWS.md for changes)
+
+ -- Enrico Zini <enrico@debian.org>  Wed, 04 Jan 2023 14:33:26 +0100
+
 staticsite (2.2-1) unstable; urgency=medium
 
   * New upstream version (see NEWS.md for changes)
