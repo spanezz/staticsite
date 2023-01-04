@@ -104,4 +104,4 @@ class TestPage(test_utils.MockSiteTestMixin, TestCase):
                 else:
                     pages.append(page)
             self.assertCountEqual(assets, [asset])
-            self.assertCountEqual(pages, [index, tags, lev1, lev1page1])
+            self.assertCountEqual(pages, [index, tags, lev1page1])
