@@ -158,18 +158,19 @@ class SiteElement(fields.FieldContainer):
 
         path = Path.from_string(target)
 
+        root: SiteElement
         if target.startswith("/"):
-            root: Node
             if static:
                 root = self.site.static_root
             else:
                 root = self.site.root
-            page = root.lookup_page(path)
         else:
-            page = self.lookup_page(path)
+            root = self
+
+        page = root.lookup_page(path)
 
         if page is None:
-            raise PageNotFoundError(f"cannot resolve {target!r} relative to {self!r}")
+            raise PageNotFoundError(f"cannot resolve {target!r} relative to {root!r}")
         else:
             return page
 
