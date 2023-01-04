@@ -207,6 +207,8 @@ class PageTree(Tree):
                 if pattern.match(name):
                     meta.update(dmeta)
 
+            node: SourceNode
+            tree: Tree
             if meta.get("asset"):
                 node = self.node.asset_child(name, src)
                 tree = AssetTree(site=self.site, src=src, node=node)
