@@ -208,9 +208,14 @@ class PageTree(Tree):
                     meta.update(dmeta)
 
             if meta.get("asset"):
-                self.sub[name] = AssetTree(site=self.site, src=src, node=self.node.asset_child(name, src))
+                node = self.node.asset_child(name, src)
+                tree = AssetTree(site=self.site, src=src, node=node)
             else:
-                self.sub[name] = PageTree(site=self.site, src=src, node=self.node.page_child(name, src))
+                node = self.node.page_child(name, src)
+                tree = PageTree(site=self.site, src=src, node=node)
+
+            node.update_fields(meta)
+            self.sub[name] = tree
 
     def populate_node(self) -> None:
         # Add the metadata scanned for this directory
@@ -230,14 +235,6 @@ class PageTree(Tree):
             else:
                 # print(f"PageTree.populate_node  enqueue file {fname}")
                 files_meta[fname] = (res, src)
-
-        # Create nodes for subtrees
-        for name, tree in self.sub.items():
-            # Compute metadata for this directory
-            dir_node = self.node.sub[name]
-            for pattern, dmeta in self.dir_rules:
-                if pattern.match(name):
-                    dir_node.update_fields(dmeta)
 
         # Let features pick their files
         # print(f"PageTree.populate_node  initial files to pick {files_meta.keys()}")
