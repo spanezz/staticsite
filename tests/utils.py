@@ -62,13 +62,16 @@ class MockSiteBase:
     def populate_workdir(self):
         raise NotImplementedError(f"{self.__class__.__name__}.populate_workdir not implemented")
 
-    @cached_property
-    def site(self) -> Site:
+    def create_site(self) -> Site:
         return Site(
                 self.settings,
                 generation_time=(
                     datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
                     if self.generation_time else None))
+
+    @cached_property
+    def site(self) -> Site:
+        return self.create_site()
 
     @cached_property
     def build_root(self) -> str:
@@ -232,6 +235,9 @@ class MockSite(MockSiteBase):
 
 
 class ExampleSite(MockSiteBase):
+    """
+    Site taken from the example/ directory
+    """
     def __init__(self, name: str, **kw):
         super().__init__(**kw)
         self.name = name
@@ -255,6 +261,9 @@ class ExampleSite(MockSiteBase):
 
 
 class MockSiteTestMixin:
+    """
+    Test a site built from a mock description
+    """
     @contextmanager
     def site(self, mocksite: Union[MockSite, MockFiles], **kw):
         if not isinstance(mocksite, MockSite):
@@ -340,8 +349,12 @@ class Args:
 
 
 class SiteTestMixin:
+    """
+    Test a real site found on disk
+    """
     site_name: str
     site_settings: dict[str, Any] = {}
+    site_cls = ExampleSite
 
     @classmethod
     def setUpClass(cls):
@@ -349,7 +362,7 @@ class SiteTestMixin:
 
         cls.stack = ExitStack()
 
-        cls.mocksite = cls.stack.enter_context(ExampleSite(name=cls.site_name, settings=cls.site_settings))
+        cls.mocksite = cls.stack.enter_context(cls.site_cls(name=cls.site_name, settings=cls.site_settings))
         cls.site = cls.mocksite.site
 
         cls.mocksite.build_site()
