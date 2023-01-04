@@ -1,8 +1,8 @@
-# aliases: Build redirection pages for page aliases.
+# dirindex: Build redirection pages for page aliases.
 
 ## Page types
 
-* [alias](../pages/alias.md): Page rendering a redirect to another page
+* [dir](../pages/dir.md): Page with a directory index.
 
 ## Documentation
 

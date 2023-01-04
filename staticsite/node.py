@@ -71,6 +71,34 @@ class Node(SiteElement):
     def __repr__(self) -> str:
         return f"Node({self.name})"
 
+    def is_empty(self) -> bool:
+        """
+        Check if this node does not contain any content
+        """
+        if self.page is not None:
+            return False
+        if self.by_src_relpath:
+            return False
+        if self.build_pages:
+            return False
+        if self.sub:
+            return False
+        return True
+
+    def prune_empty_subnodes(self) -> None:
+        """
+        Prune empty subnodes
+        """
+        empty: list[str] = []
+
+        for name, node in self.sub.items():
+            if node.is_empty():
+                empty.append(name)
+
+        # Remve empty subnodes
+        for name in empty:
+            del self.sub[name]
+
     def print(self, lead: str = "", file: Optional[TextIO] = None) -> None:
         if self.page:
             print(f"{lead}{self.name!r} page:{self.page!r}", file=file)
@@ -172,6 +200,24 @@ class Node(SiteElement):
 
         try:
             return node._create_index_page(page_cls=page_cls, directory_index=False,  **kw)
+        except SkipPage:
+            return None
+
+    def create_auto_page_as_index(
+            self,
+            page_cls: Type[P],
+            **kw: Any) -> Optional[P]:
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        if "src" in kw:
+            raise RuntimeError("auto page created with 'src' set")
+
+        if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
+            raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
+
+        try:
+            return self._create_index_page(page_cls=page_cls, directory_index=True, **kw)
         except SkipPage:
             return None
 
