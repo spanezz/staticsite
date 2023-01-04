@@ -10,7 +10,7 @@ import time
 from collections import Counter
 from typing import TYPE_CHECKING, Any, Generator, Optional
 
-from .. import utils
+from .. import utils, render
 from ..site import Path
 from ..page import ChangeExtent
 from .command import Fail, SiteCommand, register
@@ -182,6 +182,9 @@ class Builder:
         self.fail_fast = fail_fast
         self.full = full
         self.has_errors = False
+        self.built_marker = render.RenderedString("""---
+skip: yes
+""")
 
     def write(self) -> None:
         """
@@ -260,7 +263,13 @@ class Builder:
             root = node
         stats = RenderStats()
         os.makedirs(self.build_root, exist_ok=True)
+
         with RenderDirectory.open(self.build_root) as render_dir:
+            # Write built marker
+            old_file = render_dir.prepare_file(".staticsite")
+            self.built_marker.write(name=".staticsite", dir_fd=render_dir.dir_fd, old=old_file)
+
+            # Write rendered contents
             self.write_subtree(root, render_dir, stats=stats)
         for type in sorted(stats.sums.keys()):
             log.info("%s: %d in %.3fs (%.1f per minute)",

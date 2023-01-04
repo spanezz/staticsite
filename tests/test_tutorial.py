@@ -34,6 +34,12 @@ class TestBuiltTutorial(test_utils.SiteTestMixin, TestCase):
     site_settings = {"SITE_AUTHOR": "Test User"}
     site_cls = BuiltExampleSite
 
+    def test_built_marker(self):
+        built_marker = os.path.join(self.mocksite.root, "built_site", ".staticsite")
+        self.assertTrue(os.path.exists(built_marker))
+        with open(built_marker, "rt") as fd:
+            self.assertEqual(fd.read(), "---\nskip: yes\n")
+
     @test_utils.assert_no_logs()
     def test_render_paths(self):
         self.assertBuilt("index.md", "", "index.html", sample="Welcome to my new blog")

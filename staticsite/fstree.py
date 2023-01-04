@@ -179,6 +179,9 @@ class PageTree(Tree):
                     # Load dir metadata from .staticsite
                     with self.open(entry.name, "rt") as fd:
                         fmt, meta = front_matter.read_whole(fd)
+                        # Honor skip: yes, completely skipping this subdir
+                        if meta.get("skip", False):
+                            return
                         self._take_dir_rules(meta)
                         self.node.update_fields(meta)
                 elif entry.name.startswith("."):
