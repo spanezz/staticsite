@@ -1,4 +1,4 @@
-# asset: A static asset, copied as is
+# alias: Page rendering a redirect to another page
 
 ## Fields
 
@@ -11,11 +11,10 @@ would load it.
 * [author](../fields/author.md): A string with the name of the author for this page.
 * [copyright](../fields/copyright.md): Copyright notice for the page. If missing, it's generated using
 `template_copyright`.
+* [created_from](../fields/created_from.md): Page that generated this page.
 * [data_type](../fields/data_type.md): Type of data for this file.
 * [date](../fields/date.md): Publication date for the page.
 * [description](../fields/description.md): The page description. If omitted, the page will have no description.
-* [draft](../fields/draft.md): If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
 * [image](../fields/image.md): Image used for this post.
 * [indexed](../fields/indexed.md): If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).
@@ -23,6 +22,7 @@ unless draft mode is enabled.
 * [nav](../fields/nav.md): List of page paths, relative to the page defining the nav element, that
 are used for the navbar.
 * [nav_title](../fields/nav_title.md): Title to use when this page is linked in a navbar.
+* [page](../fields/page.md): Page this alias redirects to
 * [pages](../fields/pages.md): The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
@@ -36,6 +36,8 @@ page. If missing, it defaults to the name of the content directory.
 * [syndication](../fields/syndication.md): Defines syndication for the contents of this page.
 * [syndication_date](../fields/syndication_date.md): Syndication date for this page.
 * [tags](../fields/tags.md): List of categories for the `tags` taxonomy.
+* [template](../fields/template.md): Template used to render the page. Defaults to `page.html`, although specific
+pages of some features can default to other template names.
 * [template_copyright](../fields/template_copyright.md): jinja2 template to use to generate `copyright` when it is not explicitly set.
 * [template_description](../fields/template_description.md): jinja2 template to use to generate `description` when it is not
 explicitly set.
@@ -44,6 +46,6 @@ explicitly set.
 
 ## Documentation
 
-A static asset, copied as is
+Page rendering a redirect to another page
 
 [Back to reference index](../README.md)

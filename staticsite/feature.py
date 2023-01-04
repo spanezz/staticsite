@@ -7,14 +7,11 @@ from typing import (TYPE_CHECKING, Any, Callable, Generic, Optional, Sequence,
                     Type, TypeVar, cast)
 
 from . import fields, file, fstree, site, toposort
-from .asset import Asset
 from .node import Node
 from .page import Page
 
 if TYPE_CHECKING:
     import argparse
-
-    import jinja2
 
     from .archetypes import Archetype, Archetypes
     from .source_node import SourcePageNode
@@ -216,11 +213,7 @@ class Features:
         self.node_classes: dict[Type[Node], Type[Node]] = {}
 
         # Cached final page classes indexed by original page class
-        self.page_classes: dict[Type[Page], Type[Page]] = {
-            # Preinit with Asset being a final page, without any mixin added
-            # from features
-            Asset: Asset,
-        }
+        self.page_classes: dict[Type[Page], Type[Page]] = {}
 
         # Features sorted by topological order
         self.sorted: Optional[list[Feature]] = None

@@ -4,13 +4,18 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Optional, Type
 
-from .page import SourcePage, Page, ChangeExtent, TemplatePage
-from . import fields
+from staticsite.feature import Feature
+from staticsite.source_node import SourcePageNode
+from staticsite import fields
+
+from staticsite.page import ChangeExtent, Page, StandaloneAutoPage, TemplatePage
 
 if TYPE_CHECKING:
-    from .site import Site
+    from ..site import Site
+    from ..node import Node
+    from .. import file
 
-log = logging.getLogger("dir")
+log = logging.getLogger("dirindex")
 
 
 class ParentField(fields.Field["Dir", Optional[Page]]):
@@ -23,7 +28,7 @@ class ParentField(fields.Field["Dir", Optional[Page]]):
         return parent.page
 
 
-class Dir(TemplatePage, SourcePage):
+class Dir(TemplatePage, StandaloneAutoPage):
     """
     Page with a directory index.
 
@@ -50,6 +55,9 @@ class Dir(TemplatePage, SourcePage):
         # Subdirectory of this directory
         self.subdirs: list[Page] = []
 
+        # Pointer to the directory in the file system
+        self.src: file.File
+
         self.syndicated = False
         self.indexed = False
 
@@ -71,10 +79,11 @@ class Dir(TemplatePage, SourcePage):
 
         # self.indexed = bool(self.pages) or any(p.indexed for p in self.subdirs)
 
-        # Since finalize is called from the bottom up, subdirs have their date
-        # up to date
+        # Since directory indices is called from the bottom up, subdirs have
+        # their date up to date
         self.subdirs.sort(key=lambda p: p.date)
 
+    def crossreference(self) -> None:
         date_pages = []
         if self.subdirs:
             date_pages.append(self.subdirs[-1].date)
@@ -103,3 +112,43 @@ class Dir(TemplatePage, SourcePage):
                 if page.change_extent == ChangeExtent.ALL:
                     res = ChangeExtent.ALL
         return res
+
+
+class DirindexFeature(Feature):
+    """
+    Build redirection pages for page aliases.
+
+    A page can define 'aliases=[...]' to generate pages in those locations that
+    redirect to the page.
+    """
+    def __init__(self, *args: Any, **kw: Any):
+        super().__init__(*args, **kw)
+        self.dir_pages: list[Dir] = []
+
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [Dir]
+
+    def scan(self, node: Node):
+        for subnode in node.sub.values():
+            self.scan(subnode)
+
+        if isinstance(node, SourcePageNode) and not node.page:
+            page = node.create_auto_page_as_index(
+                page_cls=Dir,
+                name=node.name)
+            page.src = node.src
+            self.dir_pages.append(page)
+
+    def generate(self) -> None:
+        # Scan the node hierarchy creating indices for nodes without an index
+        # page
+        self.scan(self.site.root)
+
+    def crossreference(self) -> None:
+        for page in self.dir_pages:
+            page.crossreference()
+
+
+FEATURES = {
+    "dirindex": DirindexFeature,
+}

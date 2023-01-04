@@ -14,8 +14,6 @@ would load it.
 * [data_type](../fields/data_type.md): Type of data for this file.
 * [date](../fields/date.md): Publication date for the page.
 * [description](../fields/description.md): The page description. If omitted, the page will have no description.
-* [draft](../fields/draft.md): If true, the page is still a draft and will not appear in the destination site,
-unless draft mode is enabled.
 * [image](../fields/image.md): Image used for this post.
 * [indexed](../fields/indexed.md): If true, the page appears in [directory indices](dir.md) and in
 [page filter results](page_filter.md).

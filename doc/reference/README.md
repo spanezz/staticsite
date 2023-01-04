@@ -15,6 +15,7 @@
 
 * [aliases](features/aliases.md): Build redirection pages for page aliases.
 * [data](features/data.md): Handle datasets in content directories.
+* [dirindex](features/dirindex.md): Build redirection pages for page aliases.
 * [images](features/images.md): Handle images in content directory.
 * [jinja2](features/jinja2.md): Render jinja2 templates from the contents directory.
 * [links](features/links.md): Collect links and link metadata from page metadata.
@@ -26,6 +27,7 @@
 
 ## Page types
 
+* [alias](pages/alias.md): Page rendering a redirect to another page
 * [archive](pages/archive.md): An archive page is automatically created for each syndication.
 * [asset](pages/asset.md): A static asset, copied as is
 * [atom](pages/atom.md): An Atom syndication page
@@ -74,6 +76,7 @@ unless draft mode is enabled.
 * [nav](fields/nav.md): List of page paths, relative to the page defining the nav element, that
 are used for the navbar.
 * [nav_title](fields/nav_title.md): Title to use when this page is linked in a navbar.
+* [page](fields/page.md): Page this alias redirects to
 * [pages](fields/pages.md): The `pages` metadata can use to select a set of pages shown by the current
 page. Although default `page.html` template will not do anything with them,
 other page templates, like `blog.html`, use this to select the pages to show.
