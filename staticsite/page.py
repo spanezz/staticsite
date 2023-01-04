@@ -886,7 +886,8 @@ class TemplatePage(Page):
         """
         Render the full page, from the <html> tag downwards.
         """
-        rendered = self.render_template(self.page_template, template_args={"render_style": "full"})
+        kw["render_style"] = "full"
+        rendered = self.render_template(self.page_template, template_args=kw)
         return RenderedString(rendered)
 
     def render_template(self, template: jinja2.Template, template_args: Optional[dict[Any, Any]] = None) -> str:
