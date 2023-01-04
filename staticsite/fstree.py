@@ -181,6 +181,7 @@ class PageTree(Tree):
                         fmt, meta = front_matter.read_whole(fd)
                         # Honor skip: yes, completely skipping this subdir
                         if meta.get("skip", False):
+                            self.files.clear()
                             return
                         self._take_dir_rules(meta)
                         self.node.update_fields(meta)
