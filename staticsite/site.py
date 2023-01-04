@@ -248,7 +248,7 @@ class Site:
             if os.access(self.settings.PROJECT_ROOT, os.W_OK):
                 self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache"))
             else:
-                log.warn("%s: directory not writable: disabling caching", self.settings.PROJECT_ROOT)
+                log.warning("%s: directory not writable: disabling caching", self.settings.PROJECT_ROOT)
                 self.caches = DisabledCaches()
         else:
             self.caches = DisabledCaches()
@@ -410,7 +410,7 @@ class Site:
         """
         from .source_node import RootNode
         if not self.stage_features_constructed:
-            log.warn("scan_content called before site features have been loaded")
+            log.warning("scan_content called before site features have been loaded")
 
         if not os.path.exists(self.content_root):
             log.info("%s: content tree does not exist", self.content_root)
@@ -591,7 +591,7 @@ class Site:
                 try:
                     clean_date = dateutil.parser.parse(date)
                 except ValueError as e:
-                    log.warn("cannot parse datetime %s: %s", date, e)
+                    log.warning("cannot parse datetime %s: %s", date, e)
                     return self.generation_time
         else:
             clean_date = date

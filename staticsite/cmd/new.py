@@ -86,7 +86,7 @@ class New(SiteCommand):
             try:
                 subprocess.check_call(cmd)
             except subprocess.CalledProcessError as e:
-                log.warn("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
+                log.warning("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
                 return e.returncode
         print(abspath)
         return None

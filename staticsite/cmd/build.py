@@ -195,7 +195,7 @@ skip: yes
             lname = self.site.settings.LANGUAGES[0]["locale"]
             locale.setlocale(locale.LC_ALL, lname)
         except locale.Error as e:
-            log.warn("Cannot set locale to %s: %s", lname, e)
+            log.warning("Cannot set locale to %s: %s", lname, e)
 
         with utils.timings("Built site in %fs"):
             # cpu_count = os.cpu_count()

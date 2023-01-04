@@ -362,8 +362,8 @@ class Related(collections.abc.MutableMapping[str, "Page"]):
 
     def __setitem__(self, name: str, page: Union[str, Page]) -> None:
         if (old := self.pages.get(name)) is not None and old != self.page:
-            log.warn("%s: attempt to set related.%s to %r but it was already %r",
-                     self, name, page, old)
+            log.warning("%s: attempt to set related.%s to %r but it was already %r",
+                        self, name, page, old)
             return
         self.pages[name] = page
 

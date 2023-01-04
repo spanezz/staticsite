@@ -64,7 +64,7 @@ class ImageScanner:
         # at least the file name will start with a /
         res = subprocess.run(["exiftool", "-json", "-n", "-c", "%f", pathname], capture_output=True)
         if res.returncode != 0:
-            log.warn("%s: exiftool failed with code %d: %s", pathname, res.returncode, res.stderr.strip())
+            log.warning("%s: exiftool failed with code %d: %s", pathname, res.returncode, res.stderr.strip())
             return meta
 
         info = json.loads(res.stdout)[0]
@@ -142,8 +142,8 @@ class ImageScanner:
         cmd = ["exiftool", "-c", "%f", "-overwrite_original", "-quiet", pathname] + exif_args
         res = subprocess.run(cmd)
         if res.returncode != 0:
-            log.warn("%s: %s failed with code %d: %s",
-                     pathname, " ".join(shlex.quote(x) for x in cmd), res.returncode)
+            log.warning("%s: %s failed with code %d: %s",
+                        pathname, " ".join(shlex.quote(x) for x in cmd), res.returncode)
             return False
 
         return True
