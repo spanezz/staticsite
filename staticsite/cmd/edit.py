@@ -7,12 +7,12 @@ import subprocess
 from typing import TYPE_CHECKING, Any, Optional, cast
 
 from staticsite.page_filter import PageFilter
-from staticsite.features.taxonomy import TaxonomyFeature
 
 from .command import Fail, SiteCommand, register
+from ..page import SourcePage
 
 if TYPE_CHECKING:
-    from ..page import SourcePage
+    from staticsite.features.taxonomy import TaxonomyFeature
 
 
 log = logging.getLogger("edit")
@@ -80,7 +80,7 @@ class Edit(SiteCommand):
         }
 
         # Filter by taxonomy
-        taxonomies: TaxonomyFeature = cast(TaxonomyFeature, site.features["taxonomy"])
+        taxonomies: TaxonomyFeature = cast("TaxonomyFeature", site.features["taxonomy"])
         args = []
         for arg in self.args.match:
             if arg.startswith("+"):
@@ -125,7 +125,8 @@ class Edit(SiteCommand):
             try:
                 subprocess.check_call(cmd)
             except subprocess.CalledProcessError as e:
-                log.warning("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
+                log.warning(
+                        "Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
                 return e.returncode
         print(abspath)
         return None
