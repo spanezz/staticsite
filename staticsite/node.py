@@ -71,6 +71,18 @@ class Node(SiteElement):
     def __repr__(self) -> str:
         return f"Node({self.name})"
 
+    def empty(self) -> bool:
+        """
+        Check if this node does not contain any content
+        """
+        if self.page is not None:
+            return False
+        if self.by_src_relpath:
+            return False
+        if self.sub:
+            return False
+        return True
+
     def print(self, lead: str = "", file: Optional[TextIO] = None) -> None:
         if self.page:
             print(f"{lead}{self.name!r} page:{self.page!r}", file=file)
