@@ -69,6 +69,9 @@ class AliasesFeature(PageTrackingMixin[AliasesPageMixin], Feature):
     def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
         return (AliasesPageMixin,)
 
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [AliasPage]
+
     def generate(self) -> None:
         # Build alias pages from pages with an 'aliases' metadata
         for page in self.tracked_pages:

@@ -128,6 +128,9 @@ class DirindexFeature(Feature):
         super().__init__(*args, **kw)
         self.dir_pages: list[Dir] = []
 
+    def get_used_page_types(self) -> list[Type[Page]]:
+        return [Dir]
+
     def scan(self, node: Node):
         for subnode in node.sub.values():
             self.scan(subnode)

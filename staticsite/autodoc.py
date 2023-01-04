@@ -5,7 +5,6 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Type
 from . import asset
-from . import dirindex
 
 if TYPE_CHECKING:
     from .fields import Field
@@ -42,7 +41,7 @@ class Autodoc:
 
     def generate(self) -> None:
         # Iterate features to generate per-feature documentation
-        page_types: set[Type[Page]] = {asset.Asset, dirindex.Dir}
+        page_types: set[Type[Page]] = {asset.Asset}
         for feature in self.site.features.ordered():
             self.write_feature(feature)
             page_types.update(feature.get_used_page_types())
