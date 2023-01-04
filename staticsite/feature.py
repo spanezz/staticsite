@@ -269,15 +269,15 @@ class Features:
 
             for name in feature.RUN_AFTER:
                 if name not in features and name not in graph:
-                    log.warn("feature %s: ignoring RUN_AFTER relation on %s which is not available",
-                             feature, name)
+                    log.warning("feature %s: ignoring RUN_AFTER relation on %s which is not available",
+                                feature, name)
                     continue
                 graph[feature.NAME].add(name)
 
             for name in feature.RUN_BEFORE:
                 if name not in features and name not in graph:
-                    log.warn("feature %s: ignoring RUN_BEFORE relation on %s which is not available",
-                             feature, name)
+                    log.warning("feature %s: ignoring RUN_BEFORE relation on %s which is not available",
+                                feature, name)
                     continue
                 graph[name].add(feature.NAME)
 
@@ -345,7 +345,7 @@ class Features:
 
             features = getattr(mod, "FEATURES", None)
             if features is None:
-                log.warn("%r: feature module did not define a FEATURES dict", name)
+                log.warning("%r: feature module did not define a FEATURES dict", name)
                 continue
 
             # Register features with site

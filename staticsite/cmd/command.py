@@ -60,7 +60,7 @@ class SiteCommand(Command):
                 settings_file = os.path.abspath(self.args.project)
                 settings_dir, settings_file = os.path.split(settings_file)
                 if not self.args.project.endswith(".py"):
-                    log.warn("%s: project settings does not end in `.py`: contents ignored", settings_file)
+                    log.warning("%s: project settings does not end in `.py`: contents ignored", settings_file)
                 else:
                     settings_files = [settings_file]
             else:

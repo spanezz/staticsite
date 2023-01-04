@@ -244,7 +244,7 @@ class Node(SiteElement):
                 leaf=False,
                 directory_index=directory_index, **kw)
         except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
+            log.warning("%s: skipping page: %s", e.page, e.msg)
             raise SkipPage()
 
         if self.page is not None:
@@ -252,7 +252,7 @@ class Node(SiteElement):
                 # Allow replacement of assets
                 page.old_footprint = self.page.old_footprint
             else:
-                log.warn("%s: page %r attempts to replace page %r: skipped", self.path, page, self.page)
+                log.warning("%s: page %r attempts to replace page %r: skipped", self.path, page, self.page)
                 raise SkipPage()
 
         self.page = page
@@ -280,7 +280,7 @@ class Node(SiteElement):
                 leaf=True,
                 directory_index=False, **kw)
         except PageValidationError as e:
-            log.warn("%s: skipping page: %s", e.page, e.msg)
+            log.warning("%s: skipping page: %s", e.page, e.msg)
             raise SkipPage()
 
         if (old := self.build_pages.get(dst)):
@@ -288,7 +288,7 @@ class Node(SiteElement):
                 # Allow replacement of assets
                 page.old_footprint = old.old_footprint
             else:
-                log.warn("%s: page %r attempts to replace page %r: skipped", self.path, page, self.page)
+                log.warning("%s: page %r attempts to replace page %r: skipped", self.path, page, self.page)
                 raise SkipPage()
 
         self.build_pages[dst] = page

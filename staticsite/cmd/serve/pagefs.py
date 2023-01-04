@@ -60,7 +60,7 @@ class PageFS:
             lname = page.site.settings.LANGUAGES[0]["locale"]
             locale.setlocale(locale.LC_ALL, lname)
         except locale.Error as e:
-            log.warn("%s: cannot set locale to %s: %s", page, lname, e)
+            log.warning("%s: cannot set locale to %s: %s", page, lname, e)
 
         rendered = page.render(**kw)
         build_path = os.path.join(page.node.path, page.dst)

@@ -74,7 +74,7 @@ class Loader:
         preceded by all its dependencies
         """
         if name in self.configs:
-            log.warn("%s: dependency loop found between themes: ignoring dependency", name)
+            log.warning("%s: dependency loop found between themes: ignoring dependency", name)
             return
 
         config = self.load_config(self.find_root(name), name)
@@ -354,8 +354,8 @@ class Theme:
         elif format[0] == '%':
             return dt.strftime(format)
         else:
-            log.warn("%s+%s: invalid datetime format %r requested",
-                     context.parent["page"].src.relpath, context.name, format)
+            log.warning("%s+%s: invalid datetime format %r requested",
+                        context.parent["page"].src.relpath, context.name, format)
             return "(unknown datetime format {})".format(format)
 
     @jinja2.pass_context
@@ -414,20 +414,20 @@ class Theme:
         cur_page: Optional[Page] = context.get("page")
         # print(f"Theme.jinja2_url_for {cur_page=!r}")
         if cur_page is None:
-            log.warn("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
+            log.warning("%s+%s: url_for(%s): current page is not defined", cur_page, context.name, arg)
             return ""
 
         try:
             return cur_page.url_for(arg, absolute=absolute, static=static)
         except PageNotFoundError as e:
-            log.warn("%s:%s: %s", cur_page, context.name, e)
+            log.warning("%s:%s: %s", cur_page, context.name, e)
             return ""
 
     @jinja2.pass_context
     def jinja2_site_pages(self, context: jinja2.runtime.Context, **kw: Any) -> list[Page]:
         cur_page: Optional[Page] = context.get("page")
         if cur_page is None:
-            log.warn("%s+%s: site_pages: current page is not defined", cur_page, context.name)
+            log.warning("%s+%s: site_pages: current page is not defined", cur_page, context.name)
             return []
 
         return cur_page.find_pages(**kw)
@@ -441,7 +441,7 @@ class Theme:
             **attrs: Any) -> str:
         cur_page = context.get("page")
         if cur_page is None:
-            log.warn("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
+            log.warning("%s+%s: img(%s): current page is not defined", cur_page, context.name, path)
             return ""
 
         image_page = cur_page.resolve_path(path)

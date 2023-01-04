@@ -181,6 +181,7 @@ class PageTree(Tree):
                         fmt, meta = front_matter.read_whole(fd)
                         # Honor skip: yes, completely skipping this subdir
                         if meta.get("skip", False):
+                            self.files.clear()
                             return
                         self._take_dir_rules(meta)
                         self.node.update_fields(meta)
@@ -207,6 +208,8 @@ class PageTree(Tree):
                 if pattern.match(name):
                     meta.update(dmeta)
 
+            node: SourceNode
+            tree: Tree
             if meta.get("asset"):
                 node = self.node.asset_child(name, src)
                 tree = AssetTree(site=self.site, src=src, node=node)

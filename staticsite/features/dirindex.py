@@ -128,7 +128,7 @@ class DirindexFeature(Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [Dir]
 
-    def scan(self, node: Node):
+    def scan(self, node: Node) -> None:
         for subnode in node.sub.values():
             self.scan(subnode)
 
@@ -136,8 +136,9 @@ class DirindexFeature(Feature):
             page = node.create_auto_page_as_index(
                 page_cls=Dir,
                 name=node.name)
-            page.src = node.src
-            self.dir_pages.append(page)
+            if page is not None:
+                page.src = node.src
+                self.dir_pages.append(page)
 
     def generate(self) -> None:
         # Scan the node hierarchy creating indices for nodes without an index

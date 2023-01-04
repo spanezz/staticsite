@@ -151,7 +151,7 @@ class MarkdownPages(MarkupFeature, Feature):
             try:
                 fm_meta, body = self.load_file_meta(directory, fname)
             except Exception as e:
-                log.warn("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
+                log.warning("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
                 log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
                 continue
 
@@ -189,7 +189,7 @@ class MarkdownPages(MarkupFeature, Feature):
             meta, body = self.load_file_meta(directory, "index.md")
         except Exception as e:
             log.debug("%s: failed to parse front matter", src.relpath, exc_info=e)
-            log.warn("%s: failed to parse front matter", src.relpath)
+            log.warning("%s: failed to parse front matter", src.relpath)
         else:
             return meta
 

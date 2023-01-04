@@ -78,7 +78,7 @@ class LinkResolver:
         try:
             page = self.page.resolve_path(parsed.path)
         except PageNotFoundError as e:
-            log.warn("%s: %s", self.page, e)
+            log.warning("%s: %s", self.page, e)
             return None
 
         # Cache the page site_path

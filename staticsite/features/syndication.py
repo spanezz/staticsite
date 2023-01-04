@@ -479,7 +479,7 @@ class SyndicationFeature(PageTrackingMixin[SyndicationPageMixin], Feature):
                 try:
                     page = src.resolve_path(what)
                 except PageNotFoundError as e:
-                    log.warn("%s: %s", context.name, e)
+                    log.warning("%s: %s", context.name, e)
                     return []
 
                 return _get_syndicated_pages(page, limit=limit)
@@ -489,7 +489,7 @@ class SyndicationFeature(PageTrackingMixin[SyndicationPageMixin], Feature):
                 raise SyndicatedPageError(
                         f"syndicated_pages called with a page argument of unsupported type {what.__class__.__name__}")
         except SyndicatedPageError as e:
-            log.warn("%s: %s", context.name, e)
+            log.warning("%s: %s", context.name, e)
             return []
 
     def generate(self) -> None:

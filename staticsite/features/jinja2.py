@@ -37,7 +37,7 @@ def load_front_matter(template: jinja2.Template) -> dict[str, Any]:
             try:
                 title = "".join(title_block(template.new_context())).strip()
             except jinja2.exceptions.TemplateError as e:
-                log.warn("%s: cannot extract title from {%% block title %%}: %s", template.name, e)
+                log.warning("%s: cannot extract title from {%% block title %%}: %s", template.name, e)
                 title = None
             if title:
                 meta["title"] = title
@@ -134,7 +134,7 @@ class RenderPartialTemplateMixin(TemplatePage):
             block_name = "page_content"
             if block is not None:
                 return Block(block_name, block)
-        log.warn("%s: `page_content` and `content` not found in template %s", self, self.page_template.name)
+        log.warning("%s: `page_content` and `content` not found in template %s", self, self.page_template.name)
         return None
 
     @jinja2.pass_context

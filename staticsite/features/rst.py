@@ -173,7 +173,7 @@ class RestructuredText(MarkupFeature, Feature):
                 fm_meta, doctree_scan = self.load_file_meta(directory, fname)
             except Exception as e:
                 log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
-                log.warn("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
+                log.warning("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
                 continue
 
             kwargs.update(fm_meta)
