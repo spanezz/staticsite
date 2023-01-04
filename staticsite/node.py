@@ -71,7 +71,7 @@ class Node(SiteElement):
     def __repr__(self) -> str:
         return f"Node({self.name})"
 
-    def empty(self) -> bool:
+    def is_empty(self) -> bool:
         """
         Check if this node does not contain any content
         """

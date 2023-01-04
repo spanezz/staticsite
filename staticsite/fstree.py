@@ -260,10 +260,7 @@ class PageTree(Tree):
                 tree.populate_node()
 
         # If no feature added a directory index, synthesize one
-        # TODO: if no feature added any page, this node becomes empty. Add a unit test for this case.
-        # TODO: potentially we need to be able to skip adding a directory index
-        #       and this Node as an empty leaf
-        if not self.node.page:
+        if not self.node.is_empty() and not self.node.page:
             self.node.add_directory_index(self.src)
 
 
