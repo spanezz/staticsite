@@ -1,5 +1,9 @@
 # staticsite user-relevant changes
 
+# New in version 2.2
+
+* Fixed autoreload in `ssite serve` and `ssite show`
+
 # New in version 2.1
 
 * Fixed using `datetime_format()` with no `format` argument

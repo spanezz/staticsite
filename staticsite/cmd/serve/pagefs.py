@@ -66,7 +66,8 @@ class PageFS:
         build_path = os.path.join(page.node.path, page.dst)
         return build_path, rendered.content()
 
-    def serve_path(self, path: str, environ: dict[str, Any], start_response: Callable) -> list[bytes]:
+    # FIXME: using a generic callable until I find the right type for the WSGI start_response interface
+    def serve_path(self, path: str, environ: dict[str, Any], start_response: Callable[..., Any]) -> list[bytes]:
         """
         Render a page on the fly and serve it.
 
