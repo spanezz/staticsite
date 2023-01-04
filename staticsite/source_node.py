@@ -9,7 +9,6 @@ from .node import Node, SkipPage
 from .site import Path
 
 if TYPE_CHECKING:
-    from . import dirindex
     from .asset import Asset
     from .page import Page
     from .site import Site
@@ -176,16 +175,6 @@ class SourcePageNode(SourceNode):
             return self._create_index_page(page_cls=page_cls, directory_index=True, src=src, date=date, **kw)
         except SkipPage:
             return None
-
-    def add_directory_index(self, src: file.File) -> Optional[dirindex.Dir]:
-        """
-        Add a directory index to this node
-        """
-        from . import dirindex
-        return self.create_source_page_as_index(
-            page_cls=dirindex.Dir,
-            name=self.name,
-            src=src)
 
     def page_child(self, name: str, src: file.File) -> SourcePageNode:
         """

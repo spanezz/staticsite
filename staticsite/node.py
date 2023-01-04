@@ -187,6 +187,24 @@ class Node(SiteElement):
         except SkipPage:
             return None
 
+    def create_auto_page_as_index(
+            self,
+            page_cls: Type[P],
+            **kw: Any) -> Optional[P]:
+        """
+        Create a page of the given type, attaching it at the given path
+        """
+        if "src" in kw:
+            raise RuntimeError("auto page created with 'src' set")
+
+        if self.site.last_load_step != self.site.LOAD_STEP_ORGANIZE:
+            raise RuntimeError("Node.create_auto_page created outside the 'generate' step")
+
+        try:
+            return self._create_index_page(page_cls=page_cls, directory_index=True, **kw)
+        except SkipPage:
+            return None
+
     def _create_index_page(
             self, *,
             page_cls: Type[P],
