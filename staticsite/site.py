@@ -470,8 +470,6 @@ class Site:
             with tree.open_tree():
                 tree.populate_node()
 
-        # TODO: prune empty leaf nodes
-
     def load(self, until: int = LOAD_STEP_ALL) -> None:
         """
         Load all site components

@@ -256,6 +256,8 @@ class PageTree(Tree):
                 log.debug("Loading static file %s", src.relpath)
                 self.node.add_asset(src=src, name=fname)
 
+        self.node.prune_empty_subnodes()
+
 
 class RootPageTree(PageTree):
     """
@@ -299,14 +301,16 @@ class AssetTree(Tree):
                                     os.path.join(self.src.abspath, entry.name))
 
     def populate_node(self) -> None:
+        # Recurse into subdirectories
+        for name, tree in self.sub.items():
+            # Recursively descend into the directory
+            with self.open_subtree(name, tree):
+                tree.populate_node()
+
         # Load every file as an asset
         for fname, src in self.files.items():
             if stat.S_ISREG(src.stat.st_mode):
                 log.debug("Loading static file %s", src.relpath)
                 self.node.add_asset(src=src, name=fname)
 
-        # Recurse into subdirectories
-        for name, tree in self.sub.items():
-            # Recursively descend into the directory
-            with self.open_subtree(name, tree):
-                tree.populate_node()
+        self.node.prune_empty_subnodes()

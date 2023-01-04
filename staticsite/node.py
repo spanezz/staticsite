@@ -79,9 +79,25 @@ class Node(SiteElement):
             return False
         if self.by_src_relpath:
             return False
+        if self.build_pages:
+            return False
         if self.sub:
             return False
         return True
+
+    def prune_empty_subnodes(self) -> None:
+        """
+        Prune empty subnodes
+        """
+        empty: list[str] = []
+
+        for name, node in self.sub.items():
+            if node.is_empty():
+                empty.append(name)
+
+        # Remve empty subnodes
+        for name in empty:
+            del self.sub[name]
 
     def print(self, lead: str = "", file: Optional[TextIO] = None) -> None:
         if self.page:

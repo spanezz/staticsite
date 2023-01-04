@@ -95,9 +95,6 @@ class Dir(TemplatePage, StandaloneAutoPage):
         else:
             self.date = self.site.localized_timestamp(self.src.stat.st_mtime)
 
-    def is_empty(self) -> bool:
-        return not self.subdirs and not self.pages
-
     def _compute_change_extent(self) -> ChangeExtent:
         res = super()._compute_change_extent()
 

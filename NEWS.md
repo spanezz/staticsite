@@ -1,5 +1,15 @@
 # staticsite user-relevant changes
 
+# New in version 2.3
+
+* Add a marker file in built directories to make staticsite skip them if found
+  inside contents. (#60)
+* Removed a premature optimization that caused issues when processing assets
+  (#60)
+* Prune empty leaf nodes from loaded contents, to avoid generating empty
+  directory indices for empty directories, directories that are skipped, or
+  directories that only contain drafts (#60)
+
 # New in version 2.2
 
 * Fixed autoreload in `ssite serve` and `ssite show`
