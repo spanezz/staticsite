@@ -24,7 +24,9 @@ class BuiltExampleSite(test_utils.ExampleSite):
         # Build the site inside the workdir
         site = self.create_site()
         site.settings.OUTPUT = os.path.join(self.root, "built_site")
-        site.load()
+        overrides = {"st_mtime": self.mock_file_mtime}
+        with test_utils.mock_file_stat(overrides):
+            site.load()
         builder = Builder(site)
         builder.write()
 
@@ -34,6 +36,7 @@ class TestBuiltTutorial(test_utils.SiteTestMixin, TestCase):
     site_settings = {"SITE_AUTHOR": "Test User"}
     site_cls = BuiltExampleSite
 
+    @test_utils.assert_no_logs()
     def test_built_marker(self):
         built_marker = os.path.join(self.mocksite.root, "built_site", ".staticsite")
         self.assertTrue(os.path.exists(built_marker))
