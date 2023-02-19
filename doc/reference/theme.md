@@ -28,8 +28,8 @@ These templates are used by default by `staticsite`:
 * `redirect.html` is used to render placeholder pages that redirect to the new
   location where a page can now be found.
 
-These templates are expected to be present by the Jinja2 templates
-inside `content`:
+These templates are expected to be present by the Jinja2 templates in the
+default template:
 
 * `base.html` is used for the common parts of all pages.
 * `syndication.xml` contains jinja2 macros used to generate RSS2 and Atom
