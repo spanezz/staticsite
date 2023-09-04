@@ -21,3 +21,18 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             mocksite.assertPagePaths((
                 "",
             ))
+
+    def test_ignore(self):
+        files = {
+            "index.md": {},
+            "index.md.swp": {},
+            "index.md~": {},
+            ".staticsite": {"ignore": ["*.swp", "*~"]},
+            "drafts/index.md": {"date": "2040-01-01"},
+            "drafts/index.md~": {"date": "2040-01-01"},
+            "drafts/index.md.swp": {"date": "2040-01-01"},
+        }
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
+                "", "drafts",
+            ))
