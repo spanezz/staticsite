@@ -1,3 +1,11 @@
+staticsite (2.4-1) unstable; urgency=medium
+
+  * New upstream version (see NEWS.md for changes)
+  * Disabled manpage generation in debian/rules, as the manpage is shipped
+    upstream
+
+ -- Enrico Zini <enrico@debian.org>  Mon, 04 Sep 2023 17:22:24 +0530
+
 staticsite (2.3-1) unstable; urgency=medium
 
   * New upstream version (see NEWS.md for changes)
