@@ -5,6 +5,8 @@
 * Updated bundled jquery assets
 * Made default theme extensible (#64)
 * Implemented `-V/--version` (#62)
+* Implemented `ignore: [patterns]` in `.staticsite` to set patterns for
+  filenames to ignore (#63)
 
 # New in version 2.3
 
