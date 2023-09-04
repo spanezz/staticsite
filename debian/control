@@ -13,7 +13,6 @@ Build-Depends: debhelper-compat (= 13),
                python3-tz, python3-slugify,
                python3-tornado, python3-pyinotify,
                exiftool
-Build-Depends-Indep: help2man
 Standards-Version: 4.6.1
 Rules-Requires-Root: no
 Homepage: https://github.com/spanezz/staticsite

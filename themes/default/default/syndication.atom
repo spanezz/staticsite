@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  {% if page.meta.author -%}
+  <author><name>{{page.meta.author}}</name></author>
+  {%- endif %}
+  <link rel="self" href="{{url_for(page.meta.index, absolute=True)}}"/>
+  <id>{{url_for(page.meta.index, absolute=True)}}</id>
+  <generator uri="https://github.com/spanezz/staticsite">staticsite</generator>
+  <updated>{{page.meta.date|datetime_format("atom")}}</updated>
+  <title>{{page.meta.title}}</title>
+  {% for page in syndicated_pages(limit=15) -%}
+  <entry>
+    <title>{{page.meta.title}}</title>
+    <id>{{url_for(page, absolute=True)}}</id>
+    <link href="{{url_for(page, absolute=True)}}"/>
+    {% for tag in page.meta.tags -%}
+    <category term="{{tag.name}}"/>
+    {%- endfor %}
+    <updated>{{page.meta.date|datetime_format("atom")}}</updated>
+    <published>{{page.meta.syndication_date|datetime_format("atom")}}</published>
+    <content type="html">
+      {% if page.meta.image %}{{img_for(page.meta.image, type="small", absolute=True)|forceescape}}{% endif %}
+      {{page.html_feed()|forceescape}}
+    </content>
+  </entry>
+  {%- endfor %}
+</feed>

@@ -40,6 +40,9 @@ class Tree:
         # Subdirectories
         self.sub: dict[str, Tree] = {}
 
+        # Rules for ignoring files
+        self.ignore_rules: list[re.Pattern[str]] = []
+
     def print(self, lead: str = "", file: Optional[IO[str]] = None) -> None:
         print(f"{lead}", file=file)
         for name, src in self.files.items():
@@ -78,6 +81,15 @@ class Tree:
         recursing
         """
         raise NotImplementedError(f"{self.__class__.__name__}._scandir not implemented")
+
+    def _apply_ignore_rules(self) -> None:
+        """
+        Remove from self.files all entries that match self.ignore_rules
+        """
+        for name in list(self.files.keys()):
+            for rule in self.ignore_rules:
+                if rule.match(name):
+                    del self.files[name]
 
     def scan(self) -> None:
         """
@@ -148,6 +160,12 @@ class PageTree(Tree):
             file_meta = {}
         self.file_rules.extend((compile_page_match(k), v) for k, v in file_meta.items())
 
+        # Compute file ignore rules
+        ignore = meta.pop("ignore", None)
+        if ignore is None:
+            ignore = []
+        self.ignore_rules.extend((compile_page_match(k) for k in ignore))
+
     def _load_dir_meta(self) -> dict[str, Any]:
         """
         Let features add to directory metadata
@@ -199,6 +217,9 @@ class PageTree(Tree):
         # Let features add to directory metadata
         self.node.update_fields(self._load_dir_meta())
 
+        # Apply ignore rules
+        self._apply_ignore_rules()
+
         # Instantiate subtrees
         for name, src in subdirs:
             meta = {}
@@ -216,6 +237,9 @@ class PageTree(Tree):
             else:
                 node = self.node.page_child(name, src)
                 tree = PageTree(site=self.site, src=src, node=node)
+
+            # Inherit ignore rules
+            tree.ignore_rules.extend(self.ignore_rules)
 
             node.update_fields(meta)
             self.sub[name] = tree
@@ -291,10 +315,12 @@ class AssetTree(Tree):
                 if entry.is_dir():
                     # Take note of directories
                     src = File.from_dir_entry(self.src, entry)
-                    self.sub[entry.name] = AssetTree(
+                    tree = AssetTree(
                             site=self.site,
                             src=src,
                             node=self.node.asset_child(entry.name, src))
+                    tree.ignore_rules.extend(self.ignore_rules)
+                    self.sub[entry.name] = tree
                 else:
                     # Take note of files
                     try:
@@ -302,6 +328,9 @@ class AssetTree(Tree):
                     except FileNotFoundError:
                         log.warning("%s: cannot stat() file: broken symlink?",
                                     os.path.join(self.src.abspath, entry.name))
+
+        # Apply ignore rules
+        self._apply_ignore_rules()
 
     def populate_node(self) -> None:
         # Recurse into subdirectories

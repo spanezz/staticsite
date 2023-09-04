@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
+from staticsite import __version__
 
 setup(
     name="staticsite",
-    python_requires=">= 3.7",
+    python_requires=">= 3.10",
     install_requires=[
         'markdown', 'docutils',
         'toml', 'pyyaml', 'ruamel.yaml',
@@ -16,7 +17,7 @@ setup(
         'serve': ['tornado', 'pyinotify'],
         'fast_caching': ['lmdb'],
     },
-    version="2.3",
+    version=__version__,
     description="Static site generator",
     author="Enrico Zini",
     author_email="enrico@enricozini.org",

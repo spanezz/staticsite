@@ -15,10 +15,6 @@ export PYBUILD_AFTER_TEST=rm -rf {build_dir}/example {build_dir}/themes
 override_dh_python3:
 	dh_python3 --recommends-section=serve
 
-override_dh_auto_build:
-	dh_auto_build
-	COLUMNS=200 help2man --name='Static site generator' --section=1 --version-string="$(version)" --no-info ./ssite > ssite.1
-
 override_dh_compress:
 	dh_compress --exclude=.ico
 

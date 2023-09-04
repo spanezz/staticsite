@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    {% block meta %}
+    {% block meta_common %}
+    <meta name="language" content="EN">
+    <meta name="robots" content="index, follow"/>
+    <meta name="keywords" content="{% for tag in page.meta.tags -%}{% if loop.index0 %}, {% endif %}{{tag.name}}{% endfor %}"/>
+    {% if page.meta.author -%}
+    <meta name="author" content="{{page.meta.author}}"/>
+    {%- endif %}
+    <meta name="generator" content="staticsite"/>
+    {% endblock %}
+
+    {% block meta_opengraph %}
+    <meta property="og:title" content="{{page.meta.title}}">
+    {% if page.meta.description -%}
+      <meta name="description" property="og:description" content="{{page.meta.description|striptags}}" />
+    {%- endif %}
+    {% if page.meta.image -%}
+      <meta property="og:image" content="{{url_for(page.meta.image, absolute=True)}}" />
+      {% if page.meta.image.meta.title %}<meta property="og:image:alt" content="{{page.meta.image.meta.title}}" />{% endif %}
+      <meta name="twitter:card" content="{{url_for(page.meta.image, absolute=True)}}" />
+    {%- endif %}
+    <meta property="og:url" content="{{url_for(page, absolute=True)}}" />
+
+    <meta property="og:site_name" content="{{page.meta.site_name}}" />
+    {% block meta_opengraph_article %}
+    <meta property="og:type" content="article" />
+    {% if page.meta.author -%}
+    <meta property="og:article:author" content="{{page.meta.author}}" />
+    {%- endif %}
+    <meta property="og:article:published_time" content="{{page.meta.date.isoformat()}}" />
+    {% for tag in page.meta.tags -%}
+    <meta property="og:article:tag" content="{{tag.name}}" />
+    {% endfor %}
+    {% endblock %}
+    {% endblock %}
+    {% endblock %}
+
+    {% block head_syndication %}
+    {% if page.meta.related.rss_feed -%}
+      <link href="{{ url_for(page.meta.related.rss_feed) }}" rel="alternate" type="application/rss+xml" title="{{page.meta.related.rss_feed.meta.title}}"/>
+    {%- endif %}
+    {% if page.meta.related.atom_feed -%}
+      <link href="{{ url_for(page.meta.related.atom_feed) }}" rel="alternate" type="application/atom+xml" title="{{page.meta.related.atom_feed.meta.title}}"/>
+    {% endif %}
+    {% endblock %}
+
+    <!-- Bootstrap 4 -->
+    <link href="{{ url_for('/bootstrap4/css/bootstrap.min.css', static=True) }}" rel="stylesheet"/>
+    <script src="{{ url_for('/jquery/jquery.min.js', static=True) }}"></script>
+    <script src="{{ url_for('/popper.js/umd/popper.min.js', static=True) }}"></script>
+    <script src="{{ url_for('/bootstrap4/js/bootstrap.min.js', static=True) }}"></script>
+    <script src="{{ url_for('/js/links.js', static=True) }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('/fork-awesome/css/fork-awesome.css', static=True) }}"/>
+
+    <link href="{{ url_for('/css/site.css', static=True) }}" rel="stylesheet"/>
+    <link href="{{ url_for('/css/github.css', static=True) }}" rel="stylesheet"/>
+
+    {% block favicon %}<link rel="icon" href="{{ url_for('/images/favicon.ico', static=True) }}">{% endblock %}
+
+    <title>{% block title %}{{page.meta.title}}{% endblock %}</title>
+
+    {% if server %}
+    {% import "lib/server.html" as srv %}
+    {{srv.head(server, handler, page)}}
+    {% endif %}
+
+    {% block head %}
+    {% endblock %}
+  </head>
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+      <a class="navbar-brand" href="{{url_for('/')}}">{{page.meta.site_name}}</a>
+
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          {% block nav %}
+          {% for nav_page in page.meta.nav %}
+            <li class="nav-item"><a class="nav-link" href="{{url_for(nav_page)}}">{{nav_page.meta.nav_title}}</a></li>
+          {% endfor %}
+          {% endblock %}
+        </ul>
+        {% block nav_extra %}
+        {% if page.meta.related.rss_feed %}
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="{{url_for(page.meta.related.rss_feed) }}" alt="{{page.meta.related.rss_feed.meta.title}}" title="{{page.meta.related.rss_feed.meta.title}}">
+            <img src="{{ url_for('/images/feed-icon-16x16.png', static=True) }}">
+          </a>
+          </li>
+        </ul>
+        {% endif %}
+        {% endblock %}
+      </div>
+    </nav>
+
+    <div class="container-fluid clearfix" role="main">
+    {% block content %}
+    {% endblock %}
+    </div>
+
+    {% block footer %}
+    <div class="card hidden-print mt-3">
+      <div class="card-body">
+      {% block footer_content %}
+      {% if page.meta.copyright %}<small>{{page.meta.copyright}}.</small>{% endif %}
+      <small>Generated with <a href="https://github.com/spanezz/staticsite">staticsite</a> on {{now|datetime_format("%Y-%m-%d %H:%M %Z")}}.</small>
+      {% endblock %}
+      </div>
+    </div>
+    {% endblock %}
+  </body>
+</html>

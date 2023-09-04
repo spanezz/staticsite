@@ -21,3 +21,29 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             mocksite.assertPagePaths((
                 "",
             ))
+
+    def test_ignore(self):
+        files = {
+            "index.md": {},
+            "index.md.swp": {},
+            "index.md~": {},
+            ".staticsite": {
+                "dirs": {
+                    "assets": {"asset": True}
+                },
+                "ignore": ["*.swp", "*~"]
+            },
+            "drafts/index.md": {},
+            "drafts/index.md~": {},
+            "drafts/index.md.swp": {},
+            "assets/file.txt": "",
+            "assets/file.txt.swp": "",
+            "assets/file.txt~": "",
+            "assets/sub/file1.txt": "",
+            "assets/sub/file1.txt.swp": "",
+            "assets/sub/file1.txt~": "",
+        }
+        with self.site(files) as mocksite:
+            mocksite.assertPagePaths((
+                "", "drafts", "assets/file.txt", "assets/sub/file1.txt",
+            ))

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<rss version="2.0"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:dcterms="http://purl.org/dc/terms/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>{{page.meta.title}}</title>
+  <link>{{url_for(page.meta.index, absolute=True)}}</link>
+  <atom:link href="{{url_for(page.meta.index, absolute=True)}}" rel="self" type="application/rss+xml"/>
+  {% if page.meta.description -%}
+  <description>{{page.meta.description}}</description>
+  {%- else -%}
+  <description>{{page.meta.title}}</description>
+  {%- endif %}
+  <generator>staticsite</generator>
+  <pubDate>{{page.meta.date|datetime_format("rss2")}}</pubDate>
+  {% for page in syndicated_pages(limit=15) -%}
+  <item>
+    <title>{{page.meta.title}}</title>
+    <guid>{{url_for(page, absolute=True)}}</guid>
+    <link>{{url_for(page, absolute=True)}}</link>
+    {% for tag in page.meta.tags -%}
+    <category>{{tag.name}}</category>
+    {%- endfor %}
+    <pubDate>{{page.meta.syndication_date|datetime_format("rss2")}}</pubDate>
+    <dcterms:modified>{{page.meta.date|datetime_format("w3cdtf")}}</dcterms:modified>
+    <description>
+      {% if page.meta.image %}{{img_for(page.meta.image, type="small", absolute=True)|forceescape}}{% endif %}
+      {{page.html_feed()|forceescape}}
+    </description>
+  </item>
+  {%- endfor %}
+  </channel>
+</rss>

@@ -1,5 +1,5 @@
-# taxonomy: Page that defined this taxonomy
+# taxonomy: Structured taxonomy information
 
-Page that defined this taxonomy
+Structured taxonomy information
 
 [Back to reference index](../README.md)
