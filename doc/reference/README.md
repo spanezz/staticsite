@@ -91,7 +91,7 @@ page. If missing, it defaults to the name of the content directory.
 * [syndication](fields/syndication.md): Defines syndication for the contents of this page.
 * [syndication_date](fields/syndication_date.md): Syndication date for this page.
 * [tags](fields/tags.md): List of categories for the `tags` taxonomy.
-* [taxonomy](fields/taxonomy.md): Page that defined this taxonomy
+* [taxonomy](fields/taxonomy.md): Structured taxonomy information
 * [template](fields/template.md): Template used to render the page. Defaults to `page.html`, although specific
 pages of some features can default to other template names.
 * [template_copyright](fields/template_copyright.md): jinja2 template to use to generate `copyright` when it is not explicitly set.
