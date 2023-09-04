@@ -3,12 +3,14 @@ import sys
 import argparse
 import importlib
 import logging
+from staticsite import __version__
 
 log = logging.getLogger("ssite")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Static site generator.")
+    parser.add_argument('--version', "-V", action='version', version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
     modules = ("check", "dump", "dump_meta", "build", "serve", "new", "edit", "site", "meta", "shell")

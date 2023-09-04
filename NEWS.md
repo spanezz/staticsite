@@ -2,7 +2,9 @@
 
 # New in version UNRELEASED
 
+* Updated bundled jquery assets
 * Made default theme extensible (#64)
+* Implemented `-V/--version` (#62)
 
 # New in version 2.3
 
