@@ -27,12 +27,20 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             "index.md": {},
             "index.md.swp": {},
             "index.md~": {},
-            ".staticsite": {"ignore": ["*.swp", "*~"]},
-            "drafts/index.md": {"date": "2040-01-01"},
-            "drafts/index.md~": {"date": "2040-01-01"},
-            "drafts/index.md.swp": {"date": "2040-01-01"},
+            ".staticsite": {
+                "dirs": {
+                    "assets": {"asset": True}
+                },
+                "ignore": ["*.swp", "*~"]
+            },
+            "drafts/index.md": {},
+            "drafts/index.md~": {},
+            "drafts/index.md.swp": {},
+            "assets/file.txt": "",
+            "assets/file.txt.swp": "",
+            "assets/file.txt~": "",
         }
         with self.site(files) as mocksite:
             mocksite.assertPagePaths((
-                "", "drafts",
+                "", "drafts", "assets/file.txt"
             ))

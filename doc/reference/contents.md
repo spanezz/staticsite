@@ -60,6 +60,16 @@ File names can be given as glob expressions or regular expressions, as with
 all the matching metadata, with the later ones potentially overwriting the
 previous ones.
 
+### `ignore`
+
+Provides a list of expressions for ignoring files in this directory and all its
+subdirectories.
+
+The name of files to be ignored can be given as glob expressions or regular
+expressions, as with [page selection](page-filter.md).
+
+If you redefine `ignore` in a subdirectory, it *replaces* the setting in its
+parent directories.
 
 ### Example directory metadata
 
@@ -79,6 +89,10 @@ files:
 dirs:
   "static-*:
       asset: true
+
+ignore:
+ - *.swp
+ - *~
 ```
 
 
