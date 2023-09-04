@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% import 'lib/blog.html' as blog with context %}
+
+<h1 class="display-4">{{page.meta.title}}</h1>
+
+{% block page_content %}
+{{page.html_inline()|safe}}
+{% endblock %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-9">
+    {{blog.pages(limit=10)}}
+    </div>
+    <div class="col-3">
+      {{blog.archive_link()}}
+
+      {{blog.top_tags(limit=15)}}
+
+      {{blog.recent_series(limit=5)}}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

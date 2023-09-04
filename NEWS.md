@@ -1,5 +1,9 @@
 # staticsite user-relevant changes
 
+# New in version UNRELEASED
+
+* Made default theme extensible (#64)
+
 # New in version 2.3
 
 * Add a marker file in built directories to make staticsite skip them if found

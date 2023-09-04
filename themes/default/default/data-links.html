@@ -1,0 +1,20 @@
+{% extends "page.html" %}
+
+{% block page_content %}
+{% import "lib/links.html" as links with context %}
+{% set all = page.link_collection %}
+
+{# <script src="{{ url_for('/js/links.js') }}"></script> #}
+
+{% if page.meta.description %}
+<p class="lead">{{page.meta.description}}</p>
+{% endif %}
+
+{% if render_style in ("feed", "inline") %}
+{{links.render_ungrouped(all)}}
+{% else %}
+{% set groups = all.make_groups() %}
+{{links.render_links(all, groups)}}
+{% endif %}
+
+{% endblock %}

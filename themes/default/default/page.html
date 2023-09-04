@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{# Render navigation for page series #}
+{% block nav %}
+{{super()}}
+{% if page.meta.series %}
+{% with place = page.meta.series[0].sequence(page) %}
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(place.first)}}"><span class="fa fa-backward"></a>
+  </li>
+
+  {% if place.prev %}
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(place.prev)}}"><span class="fa fa-chevron-left"></a>
+  {% else %}
+  <li class="nav-item">
+    <a class="nav-link disabled" href="#"><span class="fa fa-chevron-left"></a>
+  {% endif %}
+  </li>
+
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="nav_series_dropdown"
+       role="button" data-toggle="dropdown" aria-haspopup="true"
+      aria-expanded="false">
+      {{place.title}} {{place.index}}/{{place.length}}
+    </a>
+      <div class="dropdown-menu" aria-labelledby="nav_series_dropdown">
+        {% for s_page in place.pages|arrange("date") %}
+          {% if page == s_page %}
+            <span class="dropdown-item font-weight-bolder">{{s_page.meta.title}}</span>
+          {% else %}
+            <a class="dropdown-item" href="{{url_for(s_page)}}">{{s_page.meta.title}}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+  </li>
+
+  {% if place.next %}
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(place.next)}}"><span class="fa fa-chevron-right"></a>
+  {% else %}
+  <li class="nav-item">
+    <a class="nav-link disabled" href="#"><span class="fa fa-chevron-right"></a>
+  {% endif %}
+  </li>
+
+  {% if place.last %}
+  <li class="nav-item">
+    <a class="nav-link" href="{{url_for(place.last)}}"><span class="fa fa-forward"></a>
+  </li>
+  {% endif %}
+{% endwith %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-top mb-4">
+  <h1 class="display-4">{{page.meta.title}}</h1>
+  <div class="text-right">
+    {% for tag in page.meta.tags %}
+    <a class="badge badge-pill badge-primary" href="{{ url_for(tag) }}" class="label label-default">{{tag.name}}</a>
+    {% endfor %}
+  </div>
+</div>
+
+{% if page.meta.image %}
+{% with img = page.meta.image %}
+<figure class="figure float-right ml-3 text-center">
+  {{img_for(img, class="figure-img img-fluid rounded", sizes="(min-width: 1200px) 50vw, (min-width: 576px) 33vw, 100vw")}}
+  {% if img.meta.title %}<figcaption class="figure-caption text-center">{{img.meta.title}}</figcaption>{% endif %}
+</figure>
+{% endwith %}
+{% endif %}
+
+{% block page_content %}
+{{page.html_body()|safe}}
+{% endblock %}
+
+{% endblock %}
+
+{% block footer_content %}
+<div class="row">
+  <div class="col col-lg-8">
+    <small>{{page.meta.date.strftime("%Y-%m-%d %H:%M")}}</small>
+  </div>
+  <div class="col-sm-4 text-right">
+    {% for tag in page.meta.tags %}
+    <a class="badge badge-pill badge-primary" href="{{ url_for(tag) }}" class="label label-default">{{tag.name}}</a>
+    {% endfor %}
+  </div>
+</div>
+{{super()}}
+{% endblock %}
