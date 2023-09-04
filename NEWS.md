@@ -1,6 +1,6 @@
 # staticsite user-relevant changes
 
-# New in version UNRELEASED
+# New in version 2.4
 
 * Updated bundled jquery assets
 * Made default theme extensible (#64)
