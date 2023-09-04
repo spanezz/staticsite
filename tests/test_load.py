@@ -39,8 +39,11 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             "assets/file.txt": "",
             "assets/file.txt.swp": "",
             "assets/file.txt~": "",
+            "assets/sub/file1.txt": "",
+            "assets/sub/file1.txt.swp": "",
+            "assets/sub/file1.txt~": "",
         }
         with self.site(files) as mocksite:
             mocksite.assertPagePaths((
-                "", "drafts", "assets/file.txt"
+                "", "drafts", "assets/file.txt", "assets/sub/file1.txt",
             ))
