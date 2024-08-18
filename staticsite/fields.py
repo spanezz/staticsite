@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import (TYPE_CHECKING, Any, Generic, Iterable, Optional, Type,
-                    TypeVar, cast)
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import jinja2
 
@@ -21,13 +21,16 @@ class Field(Generic[P, V]):
     """
     Declarative description of a metadata element used by staticsite
     """
+
     def __init__(
-            self, *,
-            default: Optional[V] = None,
-            structure: bool = False,
-            internal: bool = False,
-            inherited: bool = False,
-            doc: Optional[str] = None):
+        self,
+        *,
+        default: V | None = None,
+        structure: bool = False,
+        internal: bool = False,
+        inherited: bool = False,
+        doc: str | None = None,
+    ):
         """
         :arg name: name of this metadata element
         :arg default: default value when this field has not been set
@@ -39,7 +42,7 @@ class Field(Generic[P, V]):
         :arg doc: documentation for this metadata element
         """
         self.name: str
-        self.default: Optional[V] = default
+        self.default: V | None = default
         self.structure: bool = structure
         self.internal: bool = internal
         self.inherited: bool = inherited
@@ -50,10 +53,10 @@ class Field(Generic[P, V]):
         if self.inherited:
             yield "Inherited from parent pages"
 
-    def __set_name__(self, owner: Type[P], name: str) -> None:
+    def __set_name__(self, owner: type[P], name: str) -> None:
         self.name = name
 
-    def __get__(self, obj: P, type: Optional[Type[P]] = None) -> Optional[V]:
+    def __get__(self, obj: P, type: type[P] | None = None) -> V | None:
         if self.inherited:
             if self.name not in obj.__dict__:
                 if obj._parent is not None and self.name in obj._parent._fields:
@@ -74,14 +77,17 @@ class Field(Generic[P, V]):
         """
         Hook to allow to clean values before set
         """
-        raise NotImplementedError(f"{self.__class__.__name__}._clean for {obj!r}.{self.name} not implemented")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}._clean for {obj!r}.{self.name} not implemented"
+        )
 
 
 class Const(Field[P, V]):
     """
     Field that takes a const value once and never changes it
     """
-    def __get__(self, obj: P, type: Optional[Type[P]] = None) -> V:
+
+    def __get__(self, obj: P, type: type[P] | None = None) -> V:
         if self.name not in obj.__dict__:
             raise RuntimeError(f"{obj!r}.{self.name} has not been set")
         return cast(V, obj.__dict__[self.name])
@@ -96,15 +102,17 @@ class ConstTypeField(Const[P, V]):
     """
     Field containing a string
     """
-    def __init__(self, *, cls: Type[V], **kw: Any):
+
+    def __init__(self, *, cls: type[V], **kw: Any):
         super().__init__(**kw)
         self.cls = cls
 
     def _clean(self, page: P, value: Any) -> V:
         if not isinstance(value, self.cls):
             raise TypeError(
-                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
-                    f" expecting {self.cls.__name__}")
+                f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                f" expecting {self.cls.__name__}"
+            )
         return value
 
 
@@ -113,6 +121,7 @@ class Template(Field[P, jinja2.Template]):
     This metadata, when present in a directory index, should be inherited by
     other files in directories and subdirectories.
     """
+
     def _clean(self, obj: P, value: Any) -> jinja2.Template:
         # Make sure the template is compiled
         if isinstance(value, jinja2.Template):
@@ -127,6 +136,7 @@ class Str(Field[P, str]):
     """
     Field containing a string
     """
+
     def _clean(self, obj: P, value: Any) -> str:
         return str(value)
 
@@ -135,6 +145,7 @@ class Int(Field[P, int]):
     """
     Field containing an integer
     """
+
     def _clean(self, obj: P, value: Any) -> int:
         return int(value)
 
@@ -143,6 +154,7 @@ class ConstInt(Const[P, int]):
     """
     Const field containing an integer
     """
+
     def _clean(self, obj: P, value: Any) -> int:
         return int(value)
 
@@ -151,6 +163,7 @@ class Float(Field[P, float]):
     """
     Field containing a date
     """
+
     def _clean(self, obj: P, value: Any) -> float:
         return float(value)
 
@@ -159,6 +172,7 @@ class Date(Field[P, "datetime.datetime"]):
     """
     Field containing a date
     """
+
     def _clean(self, obj: P, value: Any) -> datetime.datetime:
         return obj.site.clean_date(value)
 
@@ -167,10 +181,8 @@ class Bool(Field[P, bool]):
     """
     Make sure the field is a bool, possibly with a default value
     """
-    def __init__(
-            self, *,
-            default: Optional[bool] = None,
-            **kw: Any):
+
+    def __init__(self, *, default: bool | None = None, **kw: Any):
         super().__init__(**kw)
         self.default = default
 
@@ -187,7 +199,8 @@ class Dict(Field[P, dict[str, Any]]):
     """
     Make sure the field is a dict
     """
-    def __get__(self, obj: P, type: Optional[Type[P]] = None) -> dict[str, Any]:
+
+    def __get__(self, obj: P, type: type[P] | None = None) -> dict[str, Any]:
         if (value := obj.__dict__.get(self.name)) is None:
             value = {}
             obj.__dict__[self.name] = value
@@ -207,14 +220,17 @@ class FieldsMetaclass(type):
     Allow a class to have a set of Field members, defining self-documenting
     metadata elements
     """
+
     _fields: dict[str, Field[Any, Any]]
 
-    def __new__(cls: Type[FieldsMetaclass], name: str, bases: tuple[type], dct: dict[str, Any]) -> FieldsMetaclass:
+    def __new__(
+        cls: type[FieldsMetaclass], name: str, bases: tuple[type], dct: dict[str, Any]
+    ) -> FieldsMetaclass:
         _fields = {}
 
         # Add fields from subclasses
         for b in bases:
-            if (b_fields := getattr(b, "_fields", None)):
+            if b_fields := getattr(b, "_fields", None):
                 _fields.update(b_fields)
 
         # Add fields from the class itself
@@ -234,11 +250,7 @@ class FieldsMetaclass(type):
 class FieldContainer(metaclass=FieldsMetaclass):
     _fields: dict[str, Field[Any, Any]]
 
-    def __init__(
-            self,
-            site: Site, *,
-            parent: Optional[FieldContainer] = None,
-            **kw: Any):
+    def __init__(self, site: Site, *, parent: FieldContainer | None = None, **kw: Any):
         # Reference to Site, so that fields can access configuration, template
         # compilers, and so on
         self.site = site

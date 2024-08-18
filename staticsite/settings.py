@@ -4,7 +4,8 @@ import importlib
 import logging
 import sys
 import types
-from typing import Any, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Any
 
 log = logging.getLogger("settings")
 
@@ -15,7 +16,7 @@ class Settings:
 
     # Root directory used to resolve relative path in settings
     # Default if None: the directory where the settings file is found
-    PROJECT_ROOT: Optional[str]
+    PROJECT_ROOT: str | None
 
     # Base URL for the site, used to generate absolute URLs
     SITE_URL: str
@@ -27,10 +28,10 @@ class Settings:
     SITE_ROOT: str
 
     # Default site name. If None, use the title of the toplevel index
-    SITE_NAME: Optional[str]
+    SITE_NAME: str | None
 
     # Default author of the site
-    SITE_AUTHOR: Optional[str]
+    SITE_AUTHOR: str | None
 
     # Directory with "archetypes" (templates used by ssite new)
     # If None, archetypes are not used by ssite new
@@ -38,7 +39,7 @@ class Settings:
 
     # Directory with the source content of the site
     # Default if None: PROJECT_ROOT
-    CONTENT: Optional[str]
+    CONTENT: str | None
 
     # Directories where themes are looked for
     THEME_PATHS: Sequence[str]
@@ -46,15 +47,15 @@ class Settings:
     # Theme used to render the site.
     # For compatibility, if it is a sequence of strings, it is treated as a list of
     # full paths to theme directories to try in order
-    THEME: Union[str, Sequence[str]]
+    THEME: str | Sequence[str]
 
     # Directory where the static site will be written by build
     # If None, require providing it explicitly to build
-    OUTPUT: Optional[str]
+    OUTPUT: str | None
 
     # Time zone used for timestamps on the site
     # (NONE defaults to the system configured timezone)
-    TIMEZONE: Optional[str]
+    TIMEZONE: str | None
 
     # Editor used to edit new pages
     EDITOR: str
@@ -125,14 +126,13 @@ class Settings:
             # break stable APIs. You can extend them but not break them. And
             # especially, you do not break stable APIs and then complain that people
             # stick to 2.7 until its death, and probably after.
-            if sys.version_info >= (3, 5):
-                import importlib.util
-                spec = importlib.util.spec_from_file_location("staticsite.settings", pathname)
-                user_settings = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(user_settings)
-            else:
-                from importlib.machinery import SourceFileLoader
-                user_settings = SourceFileLoader("staticsite.settings", pathname).load_module()
+            import importlib.util
+
+            spec = importlib.util.spec_from_file_location(
+                "staticsite.settings", pathname
+            )
+            user_settings = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(user_settings)
         finally:
             sys.dont_write_bytecode = orig_dwb
 

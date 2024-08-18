@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from unittest import TestCase
+
 from . import utils as test_utils
 
 
@@ -18,9 +20,7 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             "dir5/dir6/empty/.gitignore": "",
         }
         with self.site(files) as mocksite:
-            mocksite.assertPagePaths((
-                "",
-            ))
+            mocksite.assertPagePaths(("",))
 
     def test_ignore(self):
         files = {
@@ -28,10 +28,8 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             "index.md.swp": {},
             "index.md~": {},
             ".staticsite": {
-                "dirs": {
-                    "assets": {"asset": True}
-                },
-                "ignore": ["*.swp", "*~"]
+                "dirs": {"assets": {"asset": True}},
+                "ignore": ["*.swp", "*~"],
             },
             "drafts/index.md": {},
             "drafts/index.md~": {},
@@ -44,6 +42,11 @@ class TestLoad(test_utils.MockSiteTestMixin, TestCase):
             "assets/sub/file1.txt~": "",
         }
         with self.site(files) as mocksite:
-            mocksite.assertPagePaths((
-                "", "drafts", "assets/file.txt", "assets/sub/file1.txt",
-            ))
+            mocksite.assertPagePaths(
+                (
+                    "",
+                    "drafts",
+                    "assets/file.txt",
+                    "assets/sub/file1.txt",
+                )
+            )

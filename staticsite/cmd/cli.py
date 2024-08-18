@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 try:
     import coloredlogs
@@ -13,7 +13,7 @@ except ModuleNotFoundError:
     HAS_COLOREDLOGS = False
 
 
-def _get_first_docstring_line(obj: Any) -> Optional[str]:
+def _get_first_docstring_line(obj: Any) -> str | None:
     if obj.__doc__ is None:
         raise RuntimeError(f"{obj!r} lacks a docstring")
     try:
@@ -28,7 +28,6 @@ class Fail(BaseException):
 
     No stack trace is printed.
     """
-    pass
 
 
 class Success(BaseException):
@@ -36,7 +35,6 @@ class Success(BaseException):
     Exception raised when a command has been successfully handled, and no
     further processing should happen
     """
-    pass
 
 
 class Command:
@@ -66,7 +64,9 @@ class Command:
             logging.basicConfig(level=level, stream=sys.stderr, format=FORMAT)
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         cls.NAME = getattr(cls, "NAME", cls.__name__.lower())
         parser: argparse.ArgumentParser = subparsers.add_parser(
             cls.NAME,

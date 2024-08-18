@@ -4,7 +4,7 @@ import argparse
 import logging
 from typing import TYPE_CHECKING, Any
 
-from .command import SiteCommand, Fail, register
+from .command import Fail, SiteCommand, register
 
 if TYPE_CHECKING:
     from ..site import Site
@@ -17,18 +17,34 @@ class Dump(SiteCommand):
     "Dump information about a site"
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument("--fstree", action="store_true",
-                           help="dump information about the scanned directory trees")
-        group.add_argument("--nodes", action="store_true",
-                           help="dump information about the built site layout")
-        group.add_argument("--changes", action="store_true",
-                           help="dump information about pages that changed")
-        group.add_argument("--reference-documentation", action="store", nargs="?",
-                           const="doc/reference", metavar="destdir",
-                           help="regenerate reference documentation")
+        group.add_argument(
+            "--fstree",
+            action="store_true",
+            help="dump information about the scanned directory trees",
+        )
+        group.add_argument(
+            "--nodes",
+            action="store_true",
+            help="dump information about the built site layout",
+        )
+        group.add_argument(
+            "--changes",
+            action="store_true",
+            help="dump information about pages that changed",
+        )
+        group.add_argument(
+            "--reference-documentation",
+            action="store",
+            nargs="?",
+            const="doc/reference",
+            metavar="destdir",
+            help="regenerate reference documentation",
+        )
         return parser
 
     def dump_fstree(self, site: Site) -> None:
@@ -55,6 +71,7 @@ class Dump(SiteCommand):
             self.dump_changes(site)
         elif self.args.reference_documentation:
             from ..autodoc import Autodoc
+
             autodoc = Autodoc(site, self.args.reference_documentation)
             autodoc.generate()
         else:

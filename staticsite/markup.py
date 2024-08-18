@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import TYPE_CHECKING, Any, Generator, NamedTuple, Optional
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import urlparse, urlunparse
 
 from .page import PageNotFoundError, SourcePage
@@ -31,7 +32,7 @@ class LinkResolver:
     """
 
     def __init__(self) -> None:
-        self.page: Optional[Page] = None
+        self.page: Page | None = None
         self.absolute: bool = False
         self.substituted: dict[str, ResolvedLink] = {}
         self.external_links: set[str] = set()
@@ -56,9 +57,11 @@ class LinkResolver:
     def to_cache(self) -> list[tuple[str, str]]:
         return [(k, v.site_path) for k, v in self.substituted.items()]
 
-    def resolve_page(self, url: str) -> Optional[ResolvedPage]:
+    def resolve_page(self, url: str) -> ResolvedPage | None:
         if self.page is None:
-            raise RuntimeError("LinkResolver.resolve_page called before LinkResolver.set_page")
+            raise RuntimeError(
+                "LinkResolver.resolve_page called before LinkResolver.set_page"
+            )
         parsed = urlparse(url)
 
         # If it's an absolute url, leave it unchanged
@@ -93,7 +96,9 @@ class LinkResolver:
         Returns None if the URL does not need changing, else returns the new URL.
         """
         if self.page is None:
-            raise RuntimeError("LinkResolver.resolve_page called before LinkResolver.set_page")
+            raise RuntimeError(
+                "LinkResolver.resolve_page called before LinkResolver.set_page"
+            )
         if (resolved := self.resolve_page(url)) is None:
             return url
 
@@ -101,8 +106,14 @@ class LinkResolver:
         dest = urlparse(new_url)
 
         return urlunparse(
-            (dest.scheme, dest.netloc, dest.path,
-             resolved.url.params, resolved.url.query, resolved.url.fragment)
+            (
+                dest.scheme,
+                dest.netloc,
+                dest.path,
+                resolved.url.params,
+                resolved.url.query,
+                resolved.url.fragment,
+            )
         )
 
 
@@ -116,6 +127,7 @@ class MarkupRenderContext:
     """
     State held during rendering of a page markup
     """
+
     def __init__(self, page: MarkupPage, cache_key: str):
         self.page = page
         self.link_resolver = page.feature.link_resolver
@@ -132,7 +144,9 @@ class MarkupRenderContext:
             self.reset_cache()
             return
 
-        if (paths := cache.get("paths")) is None or not self.link_resolver.load_cache(paths):
+        if (paths := cache.get("paths")) is None or not self.link_resolver.load_cache(
+            paths
+        ):
             self.reset_cache()
             return
 
@@ -154,13 +168,15 @@ class MarkupPage(SourcePage):
 
     This is a base for pages like Markdown or Rst
     """
+
     def __init__(self, *, feature: MarkupFeature, **kw: Any):
         super().__init__(**kw)
         self.feature = feature
 
     @contextlib.contextmanager
     def markup_render_context(
-            self, cache_key: str, absolute: bool = False) -> Generator[MarkupRenderContext, None, None]:
+        self, cache_key: str, absolute: bool = False
+    ) -> Generator[MarkupRenderContext, None, None]:
         self.feature.link_resolver.set_page(self, absolute)
         render_context = MarkupRenderContext(self, cache_key)
         render_context.load()

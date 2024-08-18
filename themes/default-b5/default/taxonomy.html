@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="display-4">{{page.meta.title}}</h1>
+
+{% if page.meta.description %}
+<p>{{page.meta.description}}</p>
+{% endif %}
+
+<p class="h5">
+{% for name, category_page in page.categories.items() %}
+<a class="badge rounded-pill bg-primary text-decoration-none" href="{{url_for(category_page)}}">{{name}}
+  <span class="text-dark bg-light rounded-pill px-1">{{category_page.meta.pages|length}}</span>
+</a>
+{% endfor %}
+</p>
+
+{% endblock %}

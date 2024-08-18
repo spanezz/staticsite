@@ -7,9 +7,10 @@ import os
 import shutil
 import stat
 import tempfile
+from collections.abc import Sequence
 from contextlib import ExitStack, contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Union
 from unittest import TestCase, mock
 
 import pytz
@@ -32,12 +33,15 @@ class MockSiteBase:
     """
     Common code for different ways of setting up mock sites
     """
-    def __init__(self, auto_load_site: bool = True, settings: Optional[dict[str, Any]] = None):
+
+    def __init__(
+        self, auto_load_site: bool = True, settings: dict[str, Any] | None = None
+    ):
         # Set to False if you only want to populate the workdir
         self.auto_load_site = auto_load_site
         self.stack = contextlib.ExitStack()
-        self.root: Optional[str] = None
-        self.test_case: Optional[TestCase] = None
+        self.root: str | None = None
+        self.test_case: TestCase | None = None
         self.settings = Settings()
 
         self.settings.CACHE_REBUILDS = False
@@ -50,24 +54,29 @@ class MockSiteBase:
 
         # Timestamp used for mock files and site generation time
         # date +%s --date="2019-06-01 12:30"
-        self.generation_time: Optional[int] = 1559385000
+        self.generation_time: int | None = 1559385000
 
         # Mock stat to return this mtime for files scanned during site load
         # date +%s --date="2019-06-01 12:30"
-        self.mock_file_mtime: Optional[int] = 1559385000
+        self.mock_file_mtime: int | None = 1559385000
 
         self.root = self.stack.enter_context(tempfile.TemporaryDirectory())
-        self.builder: Optional[Builder] = None
+        self.builder: Builder | None = None
 
     def populate_workdir(self):
-        raise NotImplementedError(f"{self.__class__.__name__}.populate_workdir not implemented")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}.populate_workdir not implemented"
+        )
 
     def create_site(self) -> Site:
         return Site(
-                self.settings,
-                generation_time=(
-                    datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
-                    if self.generation_time else None))
+            self.settings,
+            generation_time=(
+                datetime.datetime.fromtimestamp(self.generation_time, pytz.utc)
+                if self.generation_time
+                else None
+            ),
+        )
 
     @cached_property
     def site(self) -> Site:
@@ -116,15 +125,23 @@ class MockSiteBase:
         """
         Check that the list of pages in the site matches the given paths
         """
-        self.test_case.assertCountEqual([p.site_path for p in self.site.iter_pages(static=False)], paths)
+        self.test_case.assertCountEqual(
+            [p.site_path for p in self.site.iter_pages(static=False)], paths
+        )
 
-    def _find_page_by_relpath(self, relpath: str) -> Optional[Page]:
+    def _find_page_by_relpath(self, relpath: str) -> Page | None:
         for page in self.site.iter_pages():
             if page.src.relpath == relpath:
                 return page
         return None
 
-    def assertBuilt(self, srcpath: Optional[str], sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
+    def assertBuilt(
+        self,
+        srcpath: str | None,
+        sitepath: str,
+        dstpath: str,
+        sample: str | bytes | None = None,
+    ):
         """
         Check that page at `srcpath` is in the site at `sitepath` and rendered in `dstpath`.
 
@@ -140,26 +157,33 @@ class MockSiteBase:
             if page is None:
                 found = self._find_page_by_relpath(srcpath)
                 if found is None:
-                    self.test_case.fail("{sitepath!r} not found in site, and {srcpath} not found in website")
+                    self.test_case.fail(
+                        "{sitepath!r} not found in site, and {srcpath} not found in website"
+                    )
                 else:
-                    self.test_case.fail("{sitepath!r} not found in site, and {srcpath} found at {found} instead")
+                    self.test_case.fail(
+                        "{sitepath!r} not found in site, and {srcpath} found at {found} instead"
+                    )
             elif page.src.relpath != srcpath:
                 found = self._find_page_by_relpath(srcpath)
                 if found is None:
                     self.test_case.fail(
-                            f"{sitepath!r} found in site, but for {page.src.relpath} instead of {srcpath}."
-                            f" {srcpath} not found in website")
+                        f"{sitepath!r} found in site, but for {page.src.relpath} instead of {srcpath}."
+                        f" {srcpath} not found in website"
+                    )
                 else:
                     self.test_case.fail(
-                            f"{sitepath!r} found in site, but for {page.src.relpath} instead of {srcpath}."
-                            f" {srcpath} is instead at {found}")
+                        f"{sitepath!r} found in site, but for {page.src.relpath} instead of {srcpath}."
+                        f" {srcpath} is instead at {found}"
+                    )
 
         rendered = self.builder.build_log.get(dstpath)
         if rendered is None:
             for path, pg in self.builder.build_log.items():
                 if pg == page:
                     self.test_case.fail(
-                        f"{dstpath!r} not found in render log; {sitepath!r} was rendered as {path!r} instead")
+                        f"{dstpath!r} not found in render log; {sitepath!r} was rendered as {path!r} instead"
+                    )
                     break
             else:
                 self.test_case.fail(f"{dstpath!r} not found in render log")
@@ -169,10 +193,13 @@ class MockSiteBase:
                 if pg == page:
                     self.test_case.fail(
                         f"{dstpath!r} rendered {rendered!r} instead of {page!r}."
-                        " {sitepath!r} was rendered as {path!r} instead")
+                        " {sitepath!r} was rendered as {path!r} instead"
+                    )
                     break
             else:
-                self.test_case.fail(f"{dstpath!r} rendered {rendered!r} instead of {page!r}")
+                self.test_case.fail(
+                    f"{dstpath!r} rendered {rendered!r} instead of {page!r}"
+                )
 
         if os.path.isdir(os.path.join(self.build_root, dstpath)):
             self.test_case.fail(f"{dstpath!r} rendered as a directory")
@@ -184,9 +211,11 @@ class MockSiteBase:
                 args = {"mode": "rt", "encoding": "utf-8"}
             with open(os.path.join(self.build_root, dstpath), **args) as fd:
                 if sample not in (body := fd.read()):
-                    self.test_case.fail(f"{dstpath!r} does not contain {sample!r}. Renrered contents: {body!r}")
+                    self.test_case.fail(
+                        f"{dstpath!r} does not contain {sample!r}. Renrered contents: {body!r}"
+                    )
 
-    def __enter__(self) -> "MockSite":
+    def __enter__(self) -> MockSite:
         self.populate_workdir()
         if self.auto_load_site:
             self.load_site()
@@ -203,6 +232,7 @@ class MockSite(MockSiteBase):
     """
     Define a mock site for testing
     """
+
     def __init__(self, files: MockFiles, **kw):
         super().__init__(**kw)
         self.files = files
@@ -238,6 +268,7 @@ class ExampleSite(MockSiteBase):
     """
     Site taken from the example/ directory
     """
+
     def __init__(self, name: str, **kw):
         super().__init__(**kw)
         self.name = name
@@ -264,8 +295,9 @@ class MockSiteTestMixin:
     """
     Test a site built from a mock description
     """
+
     @contextmanager
-    def site(self, mocksite: Union[MockSite, MockFiles], **kw):
+    def site(self, mocksite: MockSite | MockFiles, **kw):
         if not isinstance(mocksite, MockSite):
             mocksite = MockSite(mocksite, **kw)
         mocksite.test_case = self
@@ -274,7 +306,7 @@ class MockSiteTestMixin:
 
 
 @contextmanager
-def mock_file_stat(overrides: Optional[dict[int, Any]]):
+def mock_file_stat(overrides: dict[int, Any] | None):
     """
     Override File.stat contents.
 
@@ -303,7 +335,9 @@ def mock_file_stat(overrides: Optional[dict[int, Any]]):
         return res
 
     with mock.patch("staticsite.file.os.stat", new=mock_stat):
-        with mock.patch("staticsite.file.File.from_dir_entry", new=mock_file_from_dir_entry):
+        with mock.patch(
+            "staticsite.file.File.from_dir_entry", new=mock_file_from_dir_entry
+        ):
             yield
 
 
@@ -319,6 +353,7 @@ class TracebackHandler(logging.Handler):
 
     def handle(self, record):
         import traceback
+
         if record.stack_info is None:
             record.stack_info = traceback.print_stack()
         self.collected.append(record)
@@ -341,6 +376,7 @@ class Args:
     """
     Mock argparser namespace initialized with options from constructor
     """
+
     def __init__(self, **kw):
         self._args = kw
 
@@ -352,6 +388,7 @@ class SiteTestMixin:
     """
     Test a real site found on disk
     """
+
     site_name: str
     site_settings: dict[str, Any] = {}
     site_cls = ExampleSite
@@ -362,7 +399,9 @@ class SiteTestMixin:
 
         cls.stack = ExitStack()
 
-        cls.mocksite = cls.stack.enter_context(cls.site_cls(name=cls.site_name, settings=cls.site_settings))
+        cls.mocksite = cls.stack.enter_context(
+            cls.site_cls(name=cls.site_name, settings=cls.site_settings)
+        )
         cls.site = cls.mocksite.site
 
         cls.mocksite.build_site()
@@ -395,7 +434,13 @@ class SiteTestMixin:
         """
         return self.mocksite.assertPagePaths(paths)
 
-    def assertBuilt(self, srcpath: str, sitepath: str, dstpath: str, sample: Union[str, bytes, None] = None):
+    def assertBuilt(
+        self,
+        srcpath: str,
+        sitepath: str,
+        dstpath: str,
+        sample: str | bytes | None = None,
+    ):
         """
         Check that page at `srcpath` is in the site at `sitepath` and rendered in `dstpath`.
 

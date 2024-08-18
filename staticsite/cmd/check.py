@@ -33,7 +33,9 @@ class Check(SiteCommand):
             date = page.meta.get("date", None)
             if date is not None:
                 if not isinstance(date, datetime.datetime):
-                    log.info("%r: meta date %r is not an instance of datetime", page, date)
+                    log.info(
+                        "%r: meta date %r is not an instance of datetime", page, date
+                    )
 
         for type, count in sorted(counts.items()):
-            print("{} {} pages".format(count, type))
+            print(f"{count} {type} pages")

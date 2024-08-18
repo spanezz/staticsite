@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional
 
-from staticsite.feature import Feature
-from staticsite.source_node import SourcePageNode
 from staticsite import fields
-
+from staticsite.feature import Feature
 from staticsite.page import ChangeExtent, Page, StandaloneAutoPage, TemplatePage
+from staticsite.source_node import SourcePageNode
 
 if TYPE_CHECKING:
-    from ..site import Site
-    from ..node import Node
     from .. import file
+    from ..node import Node
+    from ..site import Site
 
 log = logging.getLogger("dirindex")
 
@@ -22,7 +21,8 @@ class ParentField(fields.Field["Dir", Optional[Page]]):
     """
     Field that works as a proxy for page.node.parent.page
     """
-    def __get__(self, page: Page, type: Optional[Type[Dir]] = None) -> Optional[Page]:
+
+    def __get__(self, page: Page, type: type[Dir] | None = None) -> Page | None:
         if (parent := page.node.parent) is None:
             return None
         return parent.page
@@ -43,15 +43,16 @@ class Dir(TemplatePage, StandaloneAutoPage):
     * `page.meta.pages` lists the pages in this directory
     * `page.meta.parent` parent page in the directory hierarchy
     """
+
     TYPE = "dir"
     TEMPLATE = "dir.html"
 
     parent = ParentField(doc="Page one level above in the site hierarchy")
 
-    def __init__(self, site: Site, *, name: Optional[str] = None, **kw: Any):
+    def __init__(self, site: Site, *, name: str | None = None, **kw: Any):
         super().__init__(site, **kw)
         # Directory name
-        self.name: Optional[str] = name
+        self.name: str | None = name
         # Subdirectory of this directory
         self.subdirs: list[Page] = []
 
@@ -121,11 +122,12 @@ class DirindexFeature(Feature):
     A page can define 'aliases=[...]' to generate pages in those locations that
     redirect to the page.
     """
+
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.dir_pages: list[Dir] = []
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [Dir]
 
     def scan(self, node: Node) -> None:
@@ -133,9 +135,7 @@ class DirindexFeature(Feature):
             self.scan(subnode)
 
         if isinstance(node, SourcePageNode) and not node.page:
-            page = node.create_auto_page_as_index(
-                page_cls=Dir,
-                name=node.name)
+            page = node.create_auto_page_as_index(page_cls=Dir, name=node.name)
             if page is not None:
                 page.src = node.src
                 self.dir_pages.append(page)

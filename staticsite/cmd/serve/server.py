@@ -6,7 +6,8 @@ import json
 import logging
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Awaitable, Optional, Union, cast
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, cast
 
 import pyinotify
 import tornado.httpserver
@@ -32,7 +33,8 @@ class ChangeMonitor:
     """
     Trigger an event when a file is removed, then recreate the file
     """
-    def __init__(self, app: "Application"):
+
+    def __init__(self, app: Application):
         self.app = app
         self.loop = asyncio.get_event_loop()
         # Set up pyinotify.
@@ -42,9 +44,10 @@ class ChangeMonitor:
         self.watches: dict[str, dict[str, int]] = {}
         # self.watch = self.watch_manager.add_watch(self.media_dir, pyinotify.IN_DELETE)
         self.notifier = pyinotify.AsyncioNotifier(
-                self.watch_manager, self.loop, default_proc_fun=self.on_event)
+            self.watch_manager, self.loop, default_proc_fun=self.on_event
+        )
         # Pending trigger
-        self.pending: Optional[asyncio.TimerHandle] = None
+        self.pending: asyncio.TimerHandle | None = None
 
     def update_watch_dirs(self, dirs: list[str]) -> None:
         dirs = [os.path.realpath(d) for d in dirs]
@@ -56,7 +59,8 @@ class ChangeMonitor:
 
         for path in set(dirs) - self.watches.keys():
             self.watches[path] = self.watch_manager.add_watch(
-                    path, pyinotify.IN_CLOSE_WRITE | pyinotify.IN_DELETE, rec=True)
+                path, pyinotify.IN_CLOSE_WRITE | pyinotify.IN_DELETE, rec=True
+            )
             log.info("%s: adding watch", path)
 
     def notify(self) -> None:
@@ -102,12 +106,12 @@ class ChangeMonitor:
 
 
 class PageSocket(tornado.websocket.WebSocketHandler):
-    def open(self, *args: str, **kwargs: str) -> Optional[Awaitable[None]]:
+    def open(self, *args: str, **kwargs: str) -> Awaitable[None] | None:
         log.debug("WebSocket connection opened")
         cast(Application, self.application).add_page_socket(self)
         return None
 
-    def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:
+    def on_message(self, message: str | bytes) -> Awaitable[None] | None:
         log.debug("WebSocket message received: %r", message)
         return None
 
@@ -119,14 +123,21 @@ class PageSocket(tornado.websocket.WebSocketHandler):
 class ServePage(tornado.web.RequestHandler):
     def get(self) -> None:
         if self.request.protocol == "http":
-            self.ws_url = "ws://" + self.request.host + \
-                          self.application.reverse_url("page_socket")
+            self.ws_url = (
+                "ws://"
+                + self.request.host
+                + self.application.reverse_url("page_socket")
+            )
         else:
-            self.ws_url = "wss://" + self.request.host + \
-                          self.application.reverse_url("page_socket")
+            self.ws_url = (
+                "wss://"
+                + self.request.host
+                + self.application.reverse_url("page_socket")
+            )
 
         relpath, content = cast(Application, self.application).pages.render(
-                self.request.path, server=self.application, handler=self)
+            self.request.path, server=self.application, handler=self
+        )
         if relpath is None:
             self.send_error(404)
         else:

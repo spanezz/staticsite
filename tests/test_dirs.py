@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from . import utils as test_utils
 
 
@@ -6,6 +7,7 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
     """
     Test dirs feature
     """
+
     def test_dirs(self):
         files = {
             "page_root.md": {},
@@ -16,7 +18,9 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
         }
         with self.site(files) as mocksite:
             # We have a root dir index and dir indices for all subdirs
-            dir_root, dir_dir1, dir_dir2, dir_dir3 = mocksite.page("", "dir1", "dir1/dir2", "dir1/dir2/dir3")
+            dir_root, dir_dir1, dir_dir2, dir_dir3 = mocksite.page(
+                "", "dir1", "dir1/dir2", "dir1/dir2/dir3"
+            )
 
             self.assertEqual(dir_root.TYPE, "dir")
             self.assertEqual(dir_dir1.TYPE, "dir")
@@ -30,7 +34,9 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(dir_root.meta["title"], "Test site")
             self.assertEqual(dir_root.meta["template"], "dir.html")
 
-            self.assertCountEqual(dir_dir1.meta["pages"], [mocksite.page("dir1/page_sub")])
+            self.assertCountEqual(
+                dir_dir1.meta["pages"], [mocksite.page("dir1/page_sub")]
+            )
             self.assertCountEqual(dir_dir1.subdirs, [dir_dir2])
             self.assertEqual(dir_dir1.parent, dir_root)
             self.assertEqual(dir_dir1.meta["title"], "dir1")
@@ -40,10 +46,13 @@ class TestDirs(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(dir_dir2.parent, dir_dir1)
             self.assertEqual(dir_dir2.meta["title"], "dir2")
 
-            self.assertCountEqual(dir_dir3.meta["pages"], [
-                mocksite.page("dir1/dir2/dir3/page_sub3"),
-                mocksite.page("dir1/dir2/dir3/page_sub4"),
-            ])
+            self.assertCountEqual(
+                dir_dir3.meta["pages"],
+                [
+                    mocksite.page("dir1/dir2/dir3/page_sub3"),
+                    mocksite.page("dir1/dir2/dir3/page_sub4"),
+                ],
+            )
             self.assertCountEqual(dir_dir3.subdirs, [])
             self.assertEqual(dir_dir3.parent, dir_dir2)
             self.assertEqual(dir_dir3.meta["title"], "dir3")

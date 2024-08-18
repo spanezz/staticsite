@@ -4,7 +4,7 @@ import io
 import logging
 import os
 import re
-from typing import IO, TYPE_CHECKING, Any, BinaryIO, List, Optional, Type, cast
+from typing import IO, TYPE_CHECKING, Any, BinaryIO, cast
 
 import jinja2
 import markdown
@@ -33,6 +33,7 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
     """
     Markdown Treeprocessor that fixes internal links in HTML tags
     """
+
     def __init__(self, *args: Any, link_resolver: LinkResolver, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.link_resolver = link_resolver
@@ -72,11 +73,15 @@ class FixURLs(markdown.treeprocessors.Treeprocessor):
                 continue
 
             if isinstance(resolved.page, ImagePage):
-                attrs = resolved.page.get_img_attributes(absolute=self.link_resolver.absolute)
+                attrs = resolved.page.get_img_attributes(
+                    absolute=self.link_resolver.absolute
+                )
             else:
                 log.warning(
-                        "%s: img src= resolves to %s which is not an image page",
-                        self.link_resolver.page, resolved.page)
+                    "%s: img src= resolves to %s which is not an image page",
+                    self.link_resolver.page,
+                    resolved.page,
+                )
                 continue
 
             img.attrib.update(attrs)
@@ -88,7 +93,9 @@ class StaticSiteExtension(markdown.extensions.Extension):
         self.link_resolver = link_resolver
 
     def extendMarkdown(self, md: markdown.Markdown) -> None:
-        md.treeprocessors.register(FixURLs(md, link_resolver=self.link_resolver), 'staticsite', 0)
+        md.treeprocessors.register(
+            FixURLs(md, link_resolver=self.link_resolver), "staticsite", 0
+        )
         md.registerExtension(self)
 
     def reset(self) -> None:
@@ -104,10 +111,12 @@ class MarkdownPages(MarkupFeature, Feature):
 
     See doc/reference/markdown.md for details.
     """
+
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.markdown = markdown.Markdown(
-            extensions=self.site.settings.MARKDOWN_EXTENSIONS + [
+            extensions=self.site.settings.MARKDOWN_EXTENSIONS
+            + [
                 StaticSiteExtension(link_resolver=self.link_resolver),
             ],
             extension_configs=self.site.settings.MARKDOWN_EXTENSION_CONFIGS,
@@ -118,7 +127,7 @@ class MarkdownPages(MarkupFeature, Feature):
 
         self.render_cache = self.site.caches.get("markdown")
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [MarkdownPage]
 
     @jinja2.pass_context
@@ -137,10 +146,11 @@ class MarkdownPages(MarkupFeature, Feature):
         return self.markdown.convert(content)
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
+    ) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
@@ -151,8 +161,16 @@ class MarkdownPages(MarkupFeature, Feature):
             try:
                 fm_meta, body = self.load_file_meta(directory, fname)
             except Exception as e:
-                log.warning("%s: Failed to parse markdown page front matter (%s): skipped", src, e)
-                log.debug("%s: Failed to parse markdown page front matter: skipped", src, exc_info=e)
+                log.warning(
+                    "%s: Failed to parse markdown page front matter (%s): skipped",
+                    src,
+                    e,
+                )
+                log.debug(
+                    "%s: Failed to parse markdown page front matter: skipped",
+                    src,
+                    exc_info=e,
+                )
                 continue
 
             kwargs.update(fm_meta)
@@ -162,13 +180,11 @@ class MarkdownPages(MarkupFeature, Feature):
             kwargs["front_matter"] = fm_meta
             kwargs["body"] = body
 
-            page: Optional[Page]
+            page: Page | None
             if fname in ("index.md", "README.md"):
                 page = node.create_source_page_as_index(**kwargs)
             else:
-                page = node.create_source_page_as_path(
-                        name=fname[:-3],
-                        **kwargs)
+                page = node.create_source_page_as_path(name=fname[:-3], **kwargs)
 
             if page is not None:
                 pages.append(page)
@@ -178,7 +194,7 @@ class MarkdownPages(MarkupFeature, Feature):
 
         return pages
 
-    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> dict[str, Any] | None:
         # Load front matter from index.md
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
@@ -195,7 +211,9 @@ class MarkdownPages(MarkupFeature, Feature):
 
         return None
 
-    def load_file_meta(self, directory: fstree.Tree, fname: str) -> tuple[dict[str, Any], list[str]]:
+    def load_file_meta(
+        self, directory: fstree.Tree, fname: str
+    ) -> tuple[dict[str, Any], list[str]]:
         """
         Load metadata for a file.
 
@@ -232,7 +250,9 @@ class MarkdownPages(MarkupFeature, Feature):
 
         return meta, body
 
-    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str) -> Optional[MarkdownArchetype]:
+    def try_load_archetype(
+        self, archetypes: Archetypes, relpath: str, name: str
+    ) -> MarkdownArchetype | None:
         if os.path.basename(relpath) != name + ".md":
             return None
         return MarkdownArchetype(archetypes, relpath, self)
@@ -252,10 +272,14 @@ class MarkdownArchetype(Archetype):
             try:
                 style, meta, body = front_matter.read_markdown_partial(fd)
             except Exception as e:
-                raise RuntimeError(f"archetype {self.relpath}: failed to parse front matter") from e
+                raise RuntimeError(
+                    f"archetype {self.relpath}: failed to parse front matter"
+                ) from e
 
             if style is None:
-                raise RuntimeError(f"archetype {self.relpath}: unrecognized style of front matter")
+                raise RuntimeError(
+                    f"archetype {self.relpath}: unrecognized style of front matter"
+                )
 
             # Make a copy of the full parsed metadata
             archetype_meta = dict(meta)
@@ -396,12 +420,13 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
       it with the [`|safe` filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#safe)
       to prevent double escaping
     """
+
     TYPE = "markdown"
 
     # Match a Markdown divider line
     re_divider = re.compile(r"^____+$")
 
-    def __init__(self, *, body: List[str], **kw: Any):
+    def __init__(self, *, body: list[str], **kw: Any):
         self.feature: MarkdownPages
         # Indexed by default
         kw.setdefault("indexed", True)
@@ -412,7 +437,7 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
 
         # Sequence of lines found in the body including and after the divider
         # line, nor None if there is no divider line
-        self.body_rest: Optional[list[str]]
+        self.body_rest: list[str] | None
 
         # External links found when rendering the page
         self.rendered_external_links: set[str] = set()
@@ -440,21 +465,25 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
     def check(self) -> None:
         self.render()
 
-    def _render_page(self, body: List[str], render_type: str, absolute: bool = False) -> str:
+    def _render_page(
+        self, body: list[str], render_type: str, absolute: bool = False
+    ) -> str:
         """
         Render markdown in the context of the given page.
         """
         cache_key = f"{render_type}:{self.src.relpath}"
 
         with self.markup_render_context(cache_key, absolute=absolute) as context:
-            if (rendered := context.cache.get("rendered")):
+            if rendered := context.cache.get("rendered"):
                 # log.info("%s: markdown cache hit", page.src.relpath)
                 return cast(str, rendered)
 
             self.feature.markdown.reset()
             rendered = self.feature.markdown.convert("\n".join(body))
 
-            self.rendered_external_links.update(self.feature.link_resolver.external_links)
+            self.rendered_external_links.update(
+                self.feature.link_resolver.external_links
+            )
 
             context.cache["rendered"] = rendered
 
@@ -467,7 +496,9 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
             body = self.body_start + ["", "<a name='sep'></a>", ""] + self.body_rest
             return self._render_page(body, render_type="hb", absolute=absolute)
         else:
-            return self._render_page(self.body_start, render_type="s", absolute=absolute)
+            return self._render_page(
+                self.body_start, render_type="s", absolute=absolute
+            )
 
     @jinja2.pass_context
     def html_inline(self, context: jinja2.runtime.Context, **kw: Any) -> str:
@@ -476,7 +507,9 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
             body = self.body_start + ["", f"[(continue reading)](/{self.src.relpath})"]
             return self._render_page(body, render_type="h", absolute=absolute)
         else:
-            return self._render_page(self.body_start, render_type="s", absolute=absolute)
+            return self._render_page(
+                self.body_start, render_type="s", absolute=absolute
+            )
 
     @jinja2.pass_context
     def html_feed(self, context: jinja2.runtime.Context, **kw: Any) -> str:
@@ -485,7 +518,9 @@ class MarkdownPage(TemplatePage, MarkupPage, FrontMatterPage):
             body = self.body_start + [""] + self.body_rest
             return self._render_page(body, render_type="f", absolute=absolute)
         else:
-            return self._render_page(self.body_start, render_type="f", absolute=absolute)
+            return self._render_page(
+                self.body_start, render_type="f", absolute=absolute
+            )
 
 
 FEATURES = {

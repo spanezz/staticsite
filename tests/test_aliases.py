@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from unittest import TestCase
+
 from . import utils as test_utils
 
 
@@ -43,7 +45,12 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
         with self.site(files, auto_load_site=False) as mocksite:
             with self.assertLogs(level="WARNING") as out:
                 mocksite.load_site()
-            self.assertEqual(out.output, ["WARNING:aliases:markdown:page.md defines alias '/page' pointing to itself"])
+            self.assertEqual(
+                out.output,
+                [
+                    "WARNING:aliases:markdown:page.md defines alias '/page' pointing to itself"
+                ],
+            )
             mocksite.assertPagePaths(("", "page", "alias", "dir1/dir2/alias"))
             page, alias, alias1 = mocksite.page("page", "alias", "dir1/dir2/alias")
 
@@ -57,11 +64,18 @@ class TestAliases(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(alias.template, "redirect.html")
             self.assertEqual(alias.page, page)
             self.assertIsNone(alias.aliases)
-            mocksite.assertBuilt(None, "alias", "alias/index.html", sample="href=\"/page")
+            mocksite.assertBuilt(
+                None, "alias", "alias/index.html", sample='href="/page'
+            )
 
             self.assertEqual(alias1.node.path, "dir1/dir2/alias")
             self.assertEqual(alias1.dst, "index.html")
             self.assertEqual(alias1.template, "redirect.html")
             self.assertEqual(alias1.page, page)
             self.assertIsNone(alias.aliases)
-            mocksite.assertBuilt(None, "dir1/dir2/alias", "dir1/dir2/alias/index.html", sample="href=\"/page")
+            mocksite.assertBuilt(
+                None,
+                "dir1/dir2/alias",
+                "dir1/dir2/alias/index.html",
+                sample='href="/page',
+            )

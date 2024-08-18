@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-from typing import Any, Type
+from typing import Any
 
 from staticsite.settings import Settings
 from staticsite.site import Site
@@ -16,10 +16,10 @@ Success = cli.Success
 
 log = logging.getLogger("command")
 
-COMMANDS: list[Type["Command"]] = []
+COMMANDS: list[type[Command]] = []
 
 
-def register(c: Type["Command"]) -> Type["Command"]:
+def register(c: type[Command]) -> type[Command]:
     COMMANDS.append(c)
     return c
 
@@ -43,6 +43,7 @@ class Command(cli.Command):
             raise Success()
         return site
 
+
 # TODO: enable debugging for specific loggers only
 #         parser.add_argument("--debug", nargs="?", action="store", const=True, help="verbose output")
 
@@ -52,7 +53,7 @@ class SiteCommand(Command):
         super().__init__(*args, **kw)
 
         # Look for extra settings
-        settings_files = ['settings.py', '.staticsite.py']
+        settings_files = ["settings.py", ".staticsite.py"]
         if self.args.project:
             if os.path.isfile(self.args.project):
                 # If a project file is mentioned, take its directory as default
@@ -60,7 +61,10 @@ class SiteCommand(Command):
                 settings_file = os.path.abspath(self.args.project)
                 settings_dir, settings_file = os.path.split(settings_file)
                 if not self.args.project.endswith(".py"):
-                    log.warning("%s: project settings does not end in `.py`: contents ignored", settings_file)
+                    log.warning(
+                        "%s: project settings does not end in `.py`: contents ignored",
+                        settings_file,
+                    )
                 else:
                     settings_files = [settings_file]
             else:
@@ -95,15 +99,33 @@ class SiteCommand(Command):
             self.settings.DRAFT_MODE = True
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
 
-        parser.add_argument("project", nargs="?",
-                            help="project directory or .py configuration file (default: the current directory)")
-        parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
-        parser.add_argument("--content", help="content directory location. Overrides settings.CONTENT")
-        parser.add_argument("--archetypes", help="archetypes directory location. Override settings.ARCHETYPES")
-        parser.add_argument("-o", "--output", help="output directory location. Override settings.OUTPUT")
-        parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
+        parser.add_argument(
+            "project",
+            nargs="?",
+            help="project directory or .py configuration file (default: the current directory)",
+        )
+        parser.add_argument(
+            "--theme", help="theme directory location. Overrides settings.THEME"
+        )
+        parser.add_argument(
+            "--content", help="content directory location. Overrides settings.CONTENT"
+        )
+        parser.add_argument(
+            "--archetypes",
+            help="archetypes directory location. Override settings.ARCHETYPES",
+        )
+        parser.add_argument(
+            "-o", "--output", help="output directory location. Override settings.OUTPUT"
+        )
+        parser.add_argument(
+            "--draft",
+            action="store_true",
+            help="do not ignore pages with date in the future",
+        )
 
         return parser

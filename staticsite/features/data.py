@@ -5,7 +5,8 @@ import logging
 import os
 import re
 from collections import defaultdict
-from typing import IO, TYPE_CHECKING, Any, Optional, Sequence, Type
+from collections.abc import Sequence
+from typing import IO, TYPE_CHECKING, Any
 
 import jinja2
 
@@ -42,6 +43,7 @@ class DataTypeField(TrackedField["DataPageMixin", str], fields.Str["DataPageMixi
     The `page.meta.template` metadata for data pages, when not specified, defaults
     to `dir-[type].html`, or if that is missing, to `data.html`.
     """
+
     tracked_by = "data"
 
 
@@ -64,26 +66,28 @@ class DataPages(PageTrackingMixin["DataPageMixin"], Feature):
     taxonomy names are handled as with other pages. The rest of the dictionary
     is ignored and can contain any data one wants.
     """
+
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.by_type: dict[str, list[Page]] = defaultdict(list)
         self.j2_globals["data_pages"] = self.jinja2_data_pages
-        self.page_class_by_type: dict[str, Type[Page]] = {}
+        self.page_class_by_type: dict[str, type[Page]] = {}
 
-    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+    def get_page_bases(self, page_cls: type[Page]) -> Sequence[type[Page]]:
         return (DataPageMixin,)
 
-    def register_page_class(self, type: str, cls: Type[Page]) -> None:
+    def register_page_class(self, type: str, cls: type[Page]) -> None:
         self.page_class_by_type[type] = cls
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [DataPage]
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
+    ) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
@@ -111,7 +115,7 @@ class DataPages(PageTrackingMixin["DataPageMixin"], Feature):
                 log.error("%s: data_type not found: ignoring page", src.relpath)
                 continue
 
-            page_name = fname[:-len(mo.group(0))]
+            page_name = fname[: -len(mo.group(0))]
             kwargs.update(fm_meta)
             kwargs["page_cls"] = self.page_class_by_type.get(data_type, DataPage)
             kwargs["src"] = src
@@ -119,9 +123,7 @@ class DataPages(PageTrackingMixin["DataPageMixin"], Feature):
             if page_name == "index":
                 page = node.create_source_page_as_index(**kwargs)
             else:
-                page = node.create_source_page_as_path(
-                    name=page_name,
-                    **kwargs)
+                page = node.create_source_page_as_path(name=page_name, **kwargs)
             if page is not None:
                 pages.append(page)
 
@@ -130,7 +132,9 @@ class DataPages(PageTrackingMixin["DataPageMixin"], Feature):
 
         return pages
 
-    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str) -> Optional[Archetype]:
+    def try_load_archetype(
+        self, archetypes: Archetypes, relpath: str, name: str
+    ) -> Archetype | None:
         mo = re_ext.search(relpath)
         if not mo:
             return None
@@ -153,42 +157,54 @@ class DataPages(PageTrackingMixin["DataPageMixin"], Feature):
 
     @jinja2.pass_context
     def jinja2_data_pages(
-            self,
-            context: jinja2.runtime.Context,
-            type: str,
-            path: Optional[str] = None,
-            limit: Optional[int] = None,
-            sort: Optional[str] = None,
-            **kw: str) -> list[Page]:
+        self,
+        context: jinja2.runtime.Context,
+        type: str,
+        path: str | None = None,
+        limit: int | None = None,
+        sort: str | None = None,
+        **kw: str,
+    ) -> list[Page]:
         page_filter = PageFilter(
-                self.site, path=path, limit=limit, sort=sort, allow=self.by_type.get(type, []), root=None, **kw)
+            self.site,
+            path=path,
+            limit=limit,
+            sort=sort,
+            allow=self.by_type.get(type, []),
+            root=None,
+            **kw,
+        )
         return page_filter.filter()
 
 
 def parse_data(fd: IO[str], fmt: str) -> Any:
     if fmt == "json":
         import json
+
         return json.load(fd)
     elif fmt == "toml":
         import toml
+
         return toml.load(fd)
     elif fmt == "yaml":
         return yaml_codec.load(fd)
     else:
-        raise NotImplementedError("data format {} is not supported".format(fmt))
+        raise NotImplementedError(f"data format {fmt} is not supported")
 
 
 def write_data(fd: IO[str], data: dict[str, Any], fmt: str) -> None:
     if fmt == "json":
         import json
+
         json.dump(data, fd)
     elif fmt == "toml":
         import toml
+
         toml.dump(data, fd)
     elif fmt == "yaml":
         yaml_codec.dump(data, fd)
     else:
-        raise NotImplementedError("data format {} is not supported".format(fmt))
+        raise NotImplementedError(f"data format {fmt} is not supported")
 
 
 class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
@@ -205,6 +221,7 @@ class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     The metadata of any page with the `data_type` metadata will be also tracked as
     data. This allows to create normal pages that also add to a named dataset.
     """
+
     TYPE = "data"
 
     def __init__(self, site: Site, **kw: Any):
@@ -212,12 +229,15 @@ class DataPage(RenderPartialTemplateMixin, TemplatePage, SourcePage):
         kw.setdefault("indexed", True)
         if "template" not in kw:
             kw["template"] = site.theme.jinja2.select_template(
-                    [f"data-{kw['data_type']}.html", "data.html"])
+                [f"data-{kw['data_type']}.html", "data.html"]
+            )
         super().__init__(site, **kw)
 
 
 class DataArchetype(Archetype):
-    def __init__(self, archetypes: Archetypes, relpath: str, data_pages: DataPages, fmt: str):
+    def __init__(
+        self, archetypes: Archetypes, relpath: str, data_pages: DataPages, fmt: str
+    ):
         super().__init__(archetypes, relpath)
         self.data_pages = data_pages
         self.format = fmt

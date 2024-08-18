@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Iterator, List, NamedTuple, Optional, Type
+from collections.abc import Callable, Iterator
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import jinja2
 import markupsafe
@@ -37,7 +38,11 @@ def load_front_matter(template: jinja2.Template) -> dict[str, Any]:
             try:
                 title = "".join(title_block(template.new_context())).strip()
             except jinja2.exceptions.TemplateError as e:
-                log.warning("%s: cannot extract title from {%% block title %%}: %s", template.name, e)
+                log.warning(
+                    "%s: cannot extract title from {%% block title %%}: %s",
+                    template.name,
+                    e,
+                )
                 title = None
             if title:
                 meta["title"] = title
@@ -51,10 +56,11 @@ class J2Pages(Feature):
 
     See doc/reference/templates.md for details.
     """
-    def get_used_page_types(self) -> list[Type[Page]]:
+
+    def get_used_page_types(self) -> list[type[Page]]:
         return [J2Page]
 
-    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> dict[str, Any] | None:
         # Load front matter from index.html
         if (index := directory.files.get("index.html")) is None:
             return None
@@ -64,20 +70,21 @@ class J2Pages(Feature):
         except Exception:
             log.exception("%s: cannot load template", index.relpath)
         else:
-            if (front_matter := load_front_matter(template)):
+            if front_matter := load_front_matter(template):
                 return front_matter
         return None
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
+    ) -> list[Page]:
         # Precompile JINJA2_PAGES patterns
         want_patterns = [compile_page_match(p) for p in self.site.settings.JINJA2_PAGES]
 
-        taken: List[str] = []
-        pages: List[Page] = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
             # Skip files that do not match JINJA2_PAGES
             for pattern in want_patterns:
@@ -107,9 +114,7 @@ class J2Pages(Feature):
             if fname == "index.html":
                 page = node.create_source_page_as_index(**kwargs)
             else:
-                page = node.create_source_page_as_file(
-                        dst=fname,
-                        **kwargs)
+                page = node.create_source_page_as_file(dst=fname, **kwargs)
 
             if page is not None:
                 pages.append(page)
@@ -128,13 +133,17 @@ class Block(NamedTuple):
 
 
 class RenderPartialTemplateMixin(TemplatePage):
-    def _find_block(self, *names: str) -> Optional[Block]:
+    def _find_block(self, *names: str) -> Block | None:
         for name in names:
             block = self.page_template.blocks.get("page_content")
             block_name = "page_content"
             if block is not None:
                 return Block(block_name, block)
-        log.warning("%s: `page_content` and `content` not found in template %s", self, self.page_template.name)
+        log.warning(
+            "%s: `page_content` and `content` not found in template %s",
+            self,
+            self.page_template.name,
+        )
         return None
 
     @jinja2.pass_context
@@ -155,14 +164,16 @@ class RenderPartialTemplateMixin(TemplatePage):
             return ""
         return self.render_template_block(block, context, render_style="feed")
 
-    def render_template_block(self, block: Block, context: jinja2.runtime.Context, **kw: Any) -> str:
+    def render_template_block(
+        self, block: Block, context: jinja2.runtime.Context, **kw: Any
+    ) -> str:
         render_stack = list(context.get("render_stack", ()))
 
         render_style = kw.get("render_style")
 
         if (self, render_style) in render_stack:
             render_stack.append((self, render_style))
-            render_stack_path = ' → '.join(f"{p}:{s}" for p, s in render_stack)
+            render_stack_path = " → ".join(f"{p}:{s}" for p, s in render_stack)
             raise RuntimeError(f"{self}: render loop detected: {render_stack_path}")
 
         render_stack.append((self, render_style))
@@ -171,11 +182,28 @@ class RenderPartialTemplateMixin(TemplatePage):
 
         try:
             return markupsafe.Markup(
-                    "".join(block.block(self.page_template.new_context(context, shared=True, locals=kw))))
+                "".join(
+                    block.block(
+                        self.page_template.new_context(context, shared=True, locals=kw)
+                    )
+                )
+            )
         except jinja2.TemplateError as e:
-            log.error("%s: %s: failed to render block %s: %s", self, self.page_template.filename, block.name, e)
-            log.debug("%s: %s: failed to render block %s: %s",
-                      self, self.page_template.filename, block.name, e, exc_info=True)
+            log.error(
+                "%s: %s: failed to render block %s: %s",
+                self,
+                self.page_template.filename,
+                block.name,
+                e,
+            )
+            log.debug(
+                "%s: %s: failed to render block %s: %s",
+                self,
+                self.page_template.filename,
+                block.name,
+                e,
+                exc_info=True,
+            )
             # TODO: return a "render error" page? But that risks silent errors
             return ""
 
@@ -216,6 +244,7 @@ class J2Page(RenderPartialTemplateMixin, TemplatePage, SourcePage):
     `{% raw %}` to prevent jinja2 from rendering their contents as part of the rest
     of the template.
     """
+
     TYPE = "jinja2"
 
     def __init__(self, *args: Any, template: jinja2.Template, **kw: Any):

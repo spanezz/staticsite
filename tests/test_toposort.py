@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from staticsite import toposort
 
 
@@ -24,4 +25,6 @@ class TestTopoSort(TestCase):
         graph["a"] = {"c"}
         with self.assertRaises(ValueError) as e:
             self.assertEqual(toposort.sort(graph), ["a", "c", "b"])
-        self.assertEqual(str(e.exception), "('nodes are in a cycle', ['b', 'c', 'a', 'b'])")
+        self.assertEqual(
+            str(e.exception), "('nodes are in a cycle', ['b', 'c', 'a', 'b'])"
+        )

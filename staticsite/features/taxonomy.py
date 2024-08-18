@@ -4,14 +4,20 @@ import functools
 import heapq
 import logging
 from collections import defaultdict
-from typing import (TYPE_CHECKING, Any, Iterable, Optional, Sequence, Type,
-                    Union, cast)
+from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from staticsite import fields
 from staticsite.feature import Feature, TrackedField
 from staticsite.features.syndication import Syndication
-from staticsite.page import (AutoPage, ChangeExtent, Page, SourcePage,
-                             TemplatePage, ConstPageField)
+from staticsite.page import (
+    AutoPage,
+    ChangeExtent,
+    ConstPageField,
+    Page,
+    SourcePage,
+    TemplatePage,
+)
 from staticsite.utils import front_matter
 
 if TYPE_CHECKING:
@@ -25,10 +31,11 @@ class Taxonomy:
     """
     Definition of a taxonomy for the site
     """
+
     def __init__(self, *, name: str, src: file.File, **kw: Any):
         self.name = name
         self.src = src
-        self.index: Optional[TaxonomyPage] = None
+        self.index: TaxonomyPage | None = None
         # Pages that declare categories in this taxonomy
         self.pages: set[Page] = set()
         # Metadata for the taxonomy index page
@@ -41,10 +48,11 @@ class Taxonomy:
         self.category_pages: dict[str, CategoryPage] = {}
 
     def update_meta(
-            self,
-            category: Optional[dict[str, Any]] = None,
-            archive: Optional[dict[str, Any]] = None,
-            **kw: Any) -> None:
+        self,
+        category: dict[str, Any] | None = None,
+        archive: dict[str, Any] | None = None,
+        **kw: Any,
+    ) -> None:
         """
         Add information from a parsed taxonomy file
         """
@@ -59,23 +67,23 @@ class Taxonomy:
         if archive is not None:
             self.archive_meta.update(archive)
 
-    def create_index(self, node: SourcePageNode) -> Optional[TaxonomyPage]:
+    def create_index(self, node: SourcePageNode) -> TaxonomyPage | None:
         """
         Create the index page for this taxonomy
         """
         self.index = node.create_source_page_as_path(
-            page_cls=TaxonomyPage,
-            src=self.src,
-            name=self.name,
-            **self.index_meta)
+            page_cls=TaxonomyPage, src=self.src, name=self.name, **self.index_meta
+        )
         return self.index
 
-    def create_category_page(self, name: str, pages: list[Page]) -> Optional[CategoryPage]:
+    def create_category_page(self, name: str, pages: list[Page]) -> CategoryPage | None:
         """
         Generate the page for one category in this taxonomy
         """
         if self.index is None:
-            raise RuntimeError("Taxonomy.create_category_page called without an index page")
+            raise RuntimeError(
+                "Taxonomy.create_category_page called without an index page"
+            )
         # Sort pages by date, used by series sequencing
         pages.sort(key=lambda p: p.date)
 
@@ -98,10 +106,8 @@ class Taxonomy:
             syndication.add_to = False
 
         return self.index.node.create_auto_page_as_path(
-            created_from=self.index,
-            page_cls=CategoryPage,
-            name=name,
-            **category_meta)
+            created_from=self.index, page_cls=CategoryPage, name=name, **category_meta
+        )
 
     def generate_pages(self) -> None:
         if self.index is None:
@@ -127,7 +133,15 @@ class Taxonomy:
         for page in self.pages:
             if not (categories := getattr(page, self.name, None)):
                 continue
-            setattr(page, self.name, [p for c in categories if (p := self.category_pages.get(c)) is not None])
+            setattr(
+                page,
+                self.name,
+                [
+                    p
+                    for c in categories
+                    if (p := self.category_pages.get(c)) is not None
+                ],
+            )
 
         # Sort categories dict by category name
         self.category_pages = {k: v for k, v in sorted(self.category_pages.items())}
@@ -139,7 +153,9 @@ class Taxonomy:
 class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
     tracked_by = "taxonomy"
 
-    def _clean(self, page: Page, value: Union[None, str, list[str], list[Page]]) -> Union[list[str], list[Page]]:
+    def _clean(
+        self, page: Page, value: None | str | list[str] | list[Page]
+    ) -> list[str] | list[Page]:
         if not value:
             return cast(list[Page], [])
         elif isinstance(value, str):
@@ -147,23 +163,28 @@ class TaxonomyField(TrackedField[Page, Union[list[str], list[Page]]]):
         elif isinstance(value, list):
             return value
         else:
-            raise ValueError(f"{value!r} is not a string, a list of strings, or a list of Page objects")
+            raise ValueError(
+                f"{value!r} is not a string, a list of strings, or a list of Page objects"
+            )
 
 
 class BaseTaxonomyPageMixin(Page):
-    series_title = fields.Str["BaseTaxonomyPageMixin"](doc="""
+    series_title = fields.Str["BaseTaxonomyPageMixin"](
+        doc="""
         Series title from this page onwards.
 
         If this page is part of a series, and it defines `series_title`, then
         the series title will be changed to this, from this page onwards, but
         not for the previous pages
-    """)
+    """
+    )
 
 
 class TaxonomyPageMixin(BaseTaxonomyPageMixin):
     """
     Base class for dynamically generated taxonomy page mixins
     """
+
     # This is empty to begin with, to serve as a base for TaxonomyMixins
     # dynamically generated when taxonomies are found
 
@@ -305,21 +326,22 @@ class TaxonomyFeature(Feature):
     Templates need to choose which categories are relevant for use in generating
     series navigation links.
     """
+
     RUN_BEFORE = ["syndication"]
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         # All TaxonomyPages found
         self.taxonomies: dict[str, Taxonomy] = {}
-        self.page_bases: list[Type[Page]] = []
+        self.page_bases: list[type[Page]] = []
 
         self.j2_globals["taxonomies"] = self.jinja2_taxonomies
         self.j2_globals["taxonomy"] = self.jinja2_taxonomy
 
-    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+    def get_page_bases(self, page_cls: type[Page]) -> Sequence[type[Page]]:
         return self.page_bases
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [TaxonomyPage, CategoryPage]
 
     def track_field(self, field: fields.Field[Any, Any], obj: Page, value: Any) -> None:
@@ -332,16 +354,27 @@ class TaxonomyFeature(Feature):
         # them.
         # Instead of making tags inheritable from normal metadata, we can offer
         # them to be added by 'files' or 'dirs' directives.
-        self.page_bases.append(type("TaxonomyMixin", (TaxonomyPageMixin,), {
-            name: TaxonomyField(structure=True, default=(), doc=f"""
+        self.page_bases.append(
+            type(
+                "TaxonomyMixin",
+                (TaxonomyPageMixin,),
+                {
+                    name: TaxonomyField(
+                        structure=True,
+                        default=(),
+                        doc=f"""
                 List of categories for the `{name}` taxonomy.
 
                 Setting this as a simple string is the same as setting it as a list of one
                 element.
-            """)}))
+            """,
+                    )
+                },
+            )
+        )
         self.taxonomies[name] = Taxonomy(name=name, src=src)
 
-    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> dict[str, Any] | None:
         for fname, src in directory.files.items():
             if not fname.endswith(".taxonomy"):
                 continue
@@ -349,10 +382,11 @@ class TaxonomyFeature(Feature):
         return None
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
+    ) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
@@ -387,11 +421,11 @@ class TaxonomyFeature(Feature):
             fmt, meta = front_matter.read_whole(fd)
         return meta
 
-    def jinja2_taxonomies(self) -> Iterable["TaxonomyPage"]:
+    def jinja2_taxonomies(self) -> Iterable[TaxonomyPage]:
         return [t.index for t in self.taxonomies.values() if t.index is not None]
 
-    def jinja2_taxonomy(self, name: str) -> Optional["TaxonomyPage"]:
-        if (taxonomy := self.taxonomies.get(name)):
+    def jinja2_taxonomy(self, name: str) -> TaxonomyPage | None:
+        if taxonomy := self.taxonomies.get(name):
             return taxonomy.index
         return None
 
@@ -414,10 +448,13 @@ class TaxonomyPage(TemplatePage, SourcePage):
     * The page can be indexed by category name, returning the corresponding
       category index page.
     """
+
     TYPE = "taxonomy"
     TEMPLATE = "taxonomy.html"
 
-    taxonomy = fields.ConstTypeField["TaxonomyPage", Taxonomy](cls=Taxonomy, doc="Structured taxonomy information")
+    taxonomy = fields.ConstTypeField["TaxonomyPage", Taxonomy](
+        cls=Taxonomy, doc="Structured taxonomy information"
+    )
 
     def __init__(self, *args: Any, node: SourcePageNode, **kw: Any):
         kw.setdefault("nav_title", node.name.capitalize())
@@ -436,6 +473,7 @@ class TaxonomyPage(TemplatePage, SourcePage):
 
     def to_dict(self) -> dict[str, Any]:
         from staticsite.utils import dump_meta
+
         res = super().to_dict()
         res["name"] = self.name
         res["categories"] = dump_meta(self.categories)
@@ -448,7 +486,11 @@ class TaxonomyPage(TemplatePage, SourcePage):
         """
         Return the ``count`` categories with the most pages
         """
-        return heapq.nlargest(count, self.categories.values(), key=lambda c: len(c.pages) if c.pages else 0)
+        return heapq.nlargest(
+            count,
+            self.categories.values(),
+            key=lambda c: len(c.pages) if c.pages else 0,
+        )
 
     def most_recent(self, count: int = 10) -> list[CategoryPage]:
         """
@@ -464,7 +506,11 @@ class TaxonomyPage(TemplatePage, SourcePage):
             if not category.pages:
                 taxonomy[name] = []
             else:
-                taxonomy[name] = [page.src.relpath for page in category.pages if isinstance(page, SourcePage)]
+                taxonomy[name] = [
+                    page.src.relpath
+                    for page in category.pages
+                    if isinstance(page, SourcePage)
+                ]
         res["taxonomy"] = taxonomy
         return res
 
@@ -478,7 +524,9 @@ class TaxonomyPage(TemplatePage, SourcePage):
 
         # Aggregate change extends from category pages
         if self.taxonomy.category_pages:
-            return max(page.change_extent for page in self.taxonomy.category_pages.values())
+            return max(
+                page.change_extent for page in self.taxonomy.category_pages.values()
+            )
         else:
             return ChangeExtent.UNCHANGED
 
@@ -502,11 +550,13 @@ class CategoryPage(TemplatePage, AutoPage):
     You can refer to the category page from its archive page, using
     `page.created_from`.
     """
+
     TYPE = "category"
     TEMPLATE = "blog.html"
 
     taxonomy = ConstPageField["CategoryPage", TaxonomyPage](
-            cls=TaxonomyPage, doc="Page that defined this taxonomy")
+        cls=TaxonomyPage, doc="Page that defined this taxonomy"
+    )
     name = fields.Str["CategoryPage"](doc="Name of the category shown in this page")
 
     def __init__(self, *args: Any, **kw: Any) -> None:
@@ -514,7 +564,9 @@ class CategoryPage(TemplatePage, AutoPage):
         # Category name
         self.name = self.node.name
         # Index of each page in the category sequence
-        self.page_index: dict[Page, int] = {page: idx for idx, page in enumerate(self.pages)} if self.pages else {}
+        self.page_index: dict[Page, int] = (
+            {page: idx for idx, page in enumerate(self.pages)} if self.pages else {}
+        )
 
     def to_dict(self) -> dict[str, Any]:
         res = super().to_dict()
@@ -547,7 +599,7 @@ class CategoryPage(TemplatePage, AutoPage):
         return hash((self.taxonomy.name, self.name))
 
     @functools.cached_property
-    def series_info(self) -> Optional[dict[str, Any]]:
+    def series_info(self) -> dict[str, Any] | None:
         """
         Return a dict describing this category as a series
         """
@@ -556,7 +608,9 @@ class CategoryPage(TemplatePage, AutoPage):
         # the first page in the series.
         if (pages := self.pages) is None:
             return None
-        series_title = cast(BaseTaxonomyPageMixin, pages[0]).series_title or pages[0].title
+        series_title = (
+            cast(BaseTaxonomyPageMixin, pages[0]).series_title or pages[0].title
+        )
         return {
             # Array with all the pages in the series
             "pages": pages,
@@ -566,7 +620,7 @@ class CategoryPage(TemplatePage, AutoPage):
             "title": series_title,
         }
 
-    def sequence(self, page: Page) -> Optional[dict[str, Any]]:
+    def sequence(self, page: Page) -> dict[str, Any] | None:
         idx = self.page_index.get(page)
         if idx is None:
             return None
@@ -614,7 +668,11 @@ class CategoryPage(TemplatePage, AutoPage):
         else:
             old_sources = set(old_sources_list)
 
-        sources = {page.src.relpath for page in self.pages if isinstance(page, SourcePage)} if self.pages else {}
+        sources = (
+            {page.src.relpath for page in self.pages if isinstance(page, SourcePage)}
+            if self.pages
+            else {}
+        )
         if sources != old_sources:
             # If any page added or removed this category, we rebuild
             return ChangeExtent.ALL

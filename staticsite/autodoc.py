@@ -3,14 +3,15 @@ from __future__ import annotations
 import inspect
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
+
 from . import asset
 
 if TYPE_CHECKING:
-    from .fields import Field
-    from .site import Site
     from .feature import Feature
+    from .fields import Field
     from .page import Page
+    from .site import Site
 
 log = logging.getLogger("autodoc")
 
@@ -35,24 +36,27 @@ class Autodoc:
     """
     Autogenerate reference documentation
     """
+
     def __init__(self, site: Site, root: str):
         self.site = site
         self.root = root
 
     def generate(self) -> None:
         # Iterate features to generate per-feature documentation
-        page_types: set[Type[Page]] = {asset.Asset}
+        page_types: set[type[Page]] = {asset.Asset}
         for feature in self.site.features.ordered():
             self.write_feature(feature)
             page_types.update(feature.get_used_page_types())
 
         # Iterate page types
-        by_name: dict[str, Type[Page]] = {}
+        by_name: dict[str, type[Page]] = {}
         for base_page_type in page_types:
             page_type = self.site.features.get_page_class(base_page_type)
             name = page_type.TYPE
             if (old := by_name.get(name)) is not None:
-                raise RuntimeError(f"Page type {name} defined as both {old} and {page_type}")
+                raise RuntimeError(
+                    f"Page type {name} defined as both {old} and {page_type}"
+                )
             else:
                 by_name[name] = page_type
         fields: dict[str, Field[Any, Any]] = {}
@@ -85,7 +89,10 @@ class Autodoc:
             print("## Features", file=out)
             print(file=out)
             for feature in sorted(self.site.features.ordered(), key=lambda f: f.name):
-                print(f"* [{feature.name}](features/{feature.name}.md): {summary(feature)}", file=out)
+                print(
+                    f"* [{feature.name}](features/{feature.name}.md): {summary(feature)}",
+                    file=out,
+                )
             print(file=out)
 
             print("## Page types", file=out)
@@ -119,7 +126,10 @@ class Autodoc:
                 print("## Page types", file=out)
                 print(file=out)
                 for page_type in page_types:
-                    print(f"* [{page_type.TYPE}](../pages/{page_type.TYPE}.md): {summary(page_type)}", file=out)
+                    print(
+                        f"* [{page_type.TYPE}](../pages/{page_type.TYPE}.md): {summary(page_type)}",
+                        file=out,
+                    )
                 print(file=out)
 
             print("## Documentation", file=out)
@@ -128,7 +138,7 @@ class Autodoc:
             print(file=out)
             print("[Back to reference index](../README.md)", file=out)
 
-    def write_page_type(self, name: str, page_type: Type[Page]) -> None:
+    def write_page_type(self, name: str, page_type: type[Page]) -> None:
         if page_type.__doc__ is None:
             log.error("%s: page type is undocumented in %s", name, page_type)
             return

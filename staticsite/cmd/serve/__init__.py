@@ -63,12 +63,25 @@ class Serve(ServerMixin, SiteCommand):
     "Serve the site over HTTP, building it in memory on demand"
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
-        parser.add_argument("--port", "-p", action="store", type=int, default=8000,
-                            help="port to use (default: 8000)")
-        parser.add_argument("--host", action="store", type=str, default="localhost",
-                            help="host to bind to (default: localhost)")
+        parser.add_argument(
+            "--port",
+            "-p",
+            action="store",
+            type=int,
+            default=8000,
+            help="port to use (default: 8000)",
+        )
+        parser.add_argument(
+            "--host",
+            action="store",
+            type=str,
+            default="localhost",
+            help="host to bind to (default: localhost)",
+        )
         return parser
 
 
@@ -94,17 +107,41 @@ class Show(ServerMixin, Command):
         self.settings.CACHE_REBUILDS = False
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
 
-        parser.add_argument("dir", nargs="?",
-                            help="directory to show (default: the current directory)")
-        parser.add_argument("--theme", help="theme directory location. Overrides settings.THEME")
-        parser.add_argument("--draft", action="store_true", help="do not ignore pages with date in the future")
-        parser.add_argument("--no-start", "-n", action="store_true",
-                            help="do not start a browser automatically, print the URL instead")
-        parser.add_argument("--port", "-p", action="store", type=int, default=0,
-                            help="port to use (default: randomly allocated)")
-        parser.add_argument("--host", action="store", type=str, default="localhost",
-                            help="host to bind to (default: localhost)")
+        parser.add_argument(
+            "dir", nargs="?", help="directory to show (default: the current directory)"
+        )
+        parser.add_argument(
+            "--theme", help="theme directory location. Overrides settings.THEME"
+        )
+        parser.add_argument(
+            "--draft",
+            action="store_true",
+            help="do not ignore pages with date in the future",
+        )
+        parser.add_argument(
+            "--no-start",
+            "-n",
+            action="store_true",
+            help="do not start a browser automatically, print the URL instead",
+        )
+        parser.add_argument(
+            "--port",
+            "-p",
+            action="store",
+            type=int,
+            default=0,
+            help="port to use (default: randomly allocated)",
+        )
+        parser.add_argument(
+            "--host",
+            action="store",
+            type=str,
+            default="localhost",
+            help="host to bind to (default: localhost)",
+        )
         return parser

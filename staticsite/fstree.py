@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import contextlib
-import io
 import logging
 import os
 import re
 import stat
-from typing import (IO, TYPE_CHECKING, Any, Generator, Literal, Optional,
-                    Union, overload)
+from collections.abc import Generator
+from typing import IO, TYPE_CHECKING, Any, Literal, overload
 
 from .file import File
 from .utils import front_matter, open_dir_fd
@@ -23,13 +22,14 @@ class Tree:
     """
     Recursive information about a filesystem tree
     """
+
     def __init__(self, *, site: Site, src: File, node: SourceNode):
         self.site = site
         self.node = node
 
         # When scanning/itearating, this is set to a path fd opened to this
         # directory
-        self.dir_fd: Optional[int] = None
+        self.dir_fd: int | None = None
 
         # The directory corresponding to this node
         self.src = src
@@ -43,7 +43,7 @@ class Tree:
         # Rules for ignoring files
         self.ignore_rules: list[re.Pattern[str]] = []
 
-    def print(self, lead: str = "", file: Optional[IO[str]] = None) -> None:
+    def print(self, lead: str = "", file: IO[str] | None = None) -> None:
         print(f"{lead}", file=file)
         for name, src in self.files.items():
             print(f"{lead}→ {name}", file=file)
@@ -105,7 +105,9 @@ class Tree:
         """
         Recursively popuplate the node with information from this tree
         """
-        raise NotImplementedError(f"{self.__class__.__name__}.populate_node not implemented")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}.populate_node not implemented"
+        )
 
     @overload
     def open(self, name: str, mode: Literal["rt"]) -> IO[str]:
@@ -115,7 +117,7 @@ class Tree:
     def open(self, name: str, mode: Literal["rb"]) -> IO[bytes]:
         ...
 
-    def open(self, name: str, mode: str) -> Union[IO[str], IO[bytes]]:
+    def open(self, name: str, mode: str) -> IO[str] | IO[bytes]:
         """
         Open a file contained in this directory
         """
@@ -124,13 +126,15 @@ class Tree:
 
         def _file_opener(fname: str, flags: int) -> int:
             return os.open(fname, flags, dir_fd=self.dir_fd)
-        return io.open(name, mode=mode, opener=_file_opener)
+
+        return open(name, mode=mode, opener=_file_opener)
 
 
 class PageTree(Tree):
     """
     Filesystem tree that can contain pages and assets
     """
+
     def __init__(self, *, site: Site, src: File, node: SourcePageNode):
         super().__init__(site=site, src=src, node=node)
         self.node: SourcePageNode
@@ -164,7 +168,7 @@ class PageTree(Tree):
         ignore = meta.pop("ignore", None)
         if ignore is None:
             ignore = []
-        self.ignore_rules.extend((compile_page_match(k) for k in ignore))
+        self.ignore_rules.extend(compile_page_match(k) for k in ignore)
 
     def _load_dir_meta(self) -> dict[str, Any]:
         """
@@ -211,8 +215,10 @@ class PageTree(Tree):
                     try:
                         self.files[entry.name] = File.from_dir_entry(self.src, entry)
                     except FileNotFoundError:
-                        log.warning("%s: cannot stat() file: broken symlink?",
-                                    os.path.join(self.src.abspath, entry.name))
+                        log.warning(
+                            "%s: cannot stat() file: broken symlink?",
+                            os.path.join(self.src.abspath, entry.name),
+                        )
 
         # Let features add to directory metadata
         self.node.update_fields(self._load_dir_meta())
@@ -290,9 +296,14 @@ class RootPageTree(PageTree):
     """
     Special behaviour of the root of the directory hierarchy
     """
+
     def _load_dir_meta(self) -> dict[str, Any]:
         res = super()._load_dir_meta()
-        if (title := res.get("title")) and "site_name" not in res and not self.node.site_name:
+        if (
+            (title := res.get("title"))
+            and "site_name" not in res
+            and not self.node.site_name
+        ):
             res["site_name"] = title
         return res
 
@@ -301,6 +312,7 @@ class AssetTree(Tree):
     """
     Filesystem tree that only contains assets
     """
+
     def __init__(self, *, site: Site, src: File, node: SourceNode):
         super().__init__(site=site, src=src, node=node)
 
@@ -316,9 +328,10 @@ class AssetTree(Tree):
                     # Take note of directories
                     src = File.from_dir_entry(self.src, entry)
                     tree = AssetTree(
-                            site=self.site,
-                            src=src,
-                            node=self.node.asset_child(entry.name, src))
+                        site=self.site,
+                        src=src,
+                        node=self.node.asset_child(entry.name, src),
+                    )
                     tree.ignore_rules.extend(self.ignore_rules)
                     self.sub[entry.name] = tree
                 else:
@@ -326,8 +339,10 @@ class AssetTree(Tree):
                     try:
                         self.files[entry.name] = File.from_dir_entry(self.src, entry)
                     except FileNotFoundError:
-                        log.warning("%s: cannot stat() file: broken symlink?",
-                                    os.path.join(self.src.abspath, entry.name))
+                        log.warning(
+                            "%s: cannot stat() file: broken symlink?",
+                            os.path.join(self.src.abspath, entry.name),
+                        )
 
         # Apply ignore rules
         self._apply_ignore_rules()

@@ -15,7 +15,8 @@ class TestPage(test_utils.MockSiteTestMixin, TestCase):
         }
         with self.site(files) as mocksite:
             index, toplevel, lev1page1, lev1page2, lev2page1 = mocksite.page(
-                    "", "toplevel", "lev1/page1", "lev1/page2", "lev1/lev2/page1")
+                "", "toplevel", "lev1/page1", "lev1/page2", "lev1/lev2/page1"
+            )
 
             self.assertEqual(lev1page1.resolve_path("/lev1/page2.md"), lev1page2)
             self.assertEqual(lev1page1.resolve_path("/lev1/page2"), lev1page2)
@@ -69,9 +70,17 @@ class TestPage(test_utils.MockSiteTestMixin, TestCase):
             "lev1/page1.md": {"tags": ["a"]},
         }
         with self.site(files) as mocksite:
-            index, asset, tags, tag_a, lev1, lev1page1, = mocksite.page(
-                    "", "index.txt", "tags", "tags/a", "lev1", "lev1/page1")
-            rss, atom, archive = mocksite.page("tags/a/index.rss", "tags/a/index.atom", "tags/a/archive")
+            (
+                index,
+                asset,
+                tags,
+                tag_a,
+                lev1,
+                lev1page1,
+            ) = mocksite.page("", "index.txt", "tags", "tags/a", "lev1", "lev1/page1")
+            rss, atom, archive = mocksite.page(
+                "tags/a/index.rss", "tags/a/index.atom", "tags/a/archive"
+            )
 
             # Full iteration
             assets = []
@@ -82,7 +91,9 @@ class TestPage(test_utils.MockSiteTestMixin, TestCase):
                 else:
                     pages.append(page)
             self.assertGreaterEqual(len(assets), 10)
-            self.assertCountEqual(pages, [index, tags, tag_a, lev1, lev1page1, rss, atom, archive])
+            self.assertCountEqual(
+                pages, [index, tags, tag_a, lev1, lev1page1, rss, atom, archive]
+            )
 
             # Skip static
             assets = []
@@ -93,7 +104,9 @@ class TestPage(test_utils.MockSiteTestMixin, TestCase):
                 else:
                     pages.append(page)
             self.assertCountEqual(assets, [asset])
-            self.assertCountEqual(pages, [index, tags, tag_a, lev1, lev1page1, rss, atom, archive])
+            self.assertCountEqual(
+                pages, [index, tags, tag_a, lev1, lev1page1, rss, atom, archive]
+            )
 
             # Only source pages
             assets = []

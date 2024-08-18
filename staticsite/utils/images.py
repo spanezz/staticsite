@@ -5,14 +5,14 @@ import logging
 import os
 import shlex
 import subprocess
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any
 
 import PIL
 import PIL.Image
 
 if TYPE_CHECKING:
-    from staticsite.file import File
     from staticsite.cache import Cache
+    from staticsite.file import File
 
 log = logging.getLogger("utils.images")
 
@@ -23,7 +23,7 @@ class ImageScanner:
 
     def scan(self, src: File, mimetype: str) -> dict[str, Any]:
         key = f"{src.abspath}:{src.stat.st_mtime:.3f}"
-        meta: Optional[dict[str, Any]] = self.cache.get(key)
+        meta: dict[str, Any] | None = self.cache.get(key)
         if meta is None:
             meta = self.read_meta(src.abspath, mimetype)
             self.cache.put(key, meta)
@@ -31,6 +31,7 @@ class ImageScanner:
 
     def scan_file(self, pathname: str) -> dict[str, Any]:
         import mimetypes
+
         mimetypes.init()
         base, ext = os.path.splitext(pathname)
         mimetype = mimetypes.types_map.get(ext)
@@ -62,9 +63,16 @@ class ImageScanner:
         # It is important to use abspath here, as exiftool does not support the
         # usual -- convention to deal with files starting with a dash. With abspath
         # at least the file name will start with a /
-        res = subprocess.run(["exiftool", "-json", "-n", "-c", "%f", pathname], capture_output=True)
+        res = subprocess.run(
+            ["exiftool", "-json", "-n", "-c", "%f", pathname], capture_output=True
+        )
         if res.returncode != 0:
-            log.warning("%s: exiftool failed with code %d: %s", pathname, res.returncode, res.stderr.strip())
+            log.warning(
+                "%s: exiftool failed with code %d: %s",
+                pathname,
+                res.returncode,
+                res.stderr.strip(),
+            )
             return meta
 
         info = json.loads(res.stdout)[0]
@@ -103,8 +111,10 @@ class ImageScanner:
 
         return meta
 
-    def edit_meta_exiftool(self, pathname: str, changed: dict[str, Any], removed: List[str]) -> bool:
-        exif_args: List[str] = []
+    def edit_meta_exiftool(
+        self, pathname: str, changed: dict[str, Any], removed: list[str]
+    ) -> bool:
+        exif_args: list[str] = []
 
         if "title" in changed:
             exif_args.append(f"-ImageDescription={changed['title']}")
@@ -139,11 +149,22 @@ class ImageScanner:
                 exif_args.append("-rights=")
                 exif_args.append("-CopyrightNotice=")
 
-        cmd = ["exiftool", "-c", "%f", "-overwrite_original", "-quiet", pathname] + exif_args
+        cmd = [
+            "exiftool",
+            "-c",
+            "%f",
+            "-overwrite_original",
+            "-quiet",
+            pathname,
+        ] + exif_args
         res = subprocess.run(cmd)
         if res.returncode != 0:
-            log.warning("%s: %s failed with code %d: %s",
-                        pathname, " ".join(shlex.quote(x) for x in cmd), res.returncode)
+            log.warning(
+                "%s: %s failed with code %d: %s",
+                pathname,
+                " ".join(shlex.quote(x) for x in cmd),
+                res.returncode,
+            )
             return False
 
         return True

@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, List, Sequence, Type, cast
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 import jinja2
 
@@ -36,11 +37,14 @@ class LinksField(TrackedField["LinksPageMixin", list[dict[str, Any]]]):
     * `related`: List[Dict[str, str]]: other related links, as a list of dicts with
       `title` and `url` keys
     """
+
     tracked_by = "links"
 
     def _clean(self, page: LinksPageMixin, value: Any) -> list[dict[str, Any]]:
         if not isinstance(value, list):
-            raise TypeError(f"value for {page!r}.{self.name} has type {type(value).__name__} instead of dict")
+            raise TypeError(
+                f"value for {page!r}.{self.name} has type {type(value).__name__} instead of dict"
+            )
         return value
 
 
@@ -95,12 +99,15 @@ class LinksPage(LinksPageMixin, DataPage):
     """
     Page with a link collection posted as metadata only.
     """
+
     TYPE = "links"
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         if self.links:
-            self.link_collection = LinkCollection({link["url"]: Link(link, page=self) for link in self.links})
+            self.link_collection = LinkCollection(
+                {link["url"]: Link(link, page=self) for link in self.links}
+            )
         else:
             self.link_collection = LinkCollection({})
 
@@ -150,6 +157,7 @@ class Links(PageTrackingMixin[LinksPageMixin], Feature):
 
     `data-links.html` is used as default template for `.links`-generated pages.
     """
+
     RUN_AFTER = ["data"]
 
     def __init__(self, *args: Any, **kw: Any) -> None:
@@ -167,30 +175,31 @@ class Links(PageTrackingMixin[LinksPageMixin], Feature):
         self.links = LinkCollection()
 
         # Pages for .links files found in the site
-        self.indices: List[LinkIndexPage] = []
+        self.indices: list[LinkIndexPage] = []
 
         self.by_tag: dict[str, LinkCollection]
 
-    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+    def get_page_bases(self, page_cls: type[Page]) -> Sequence[type[Page]]:
         if issubclass(page_cls, TemplatePage):
             return (LinksTemplatePageMixin,)
         else:
             return (LinksPageMixin,)
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [LinksPage, LinkIndexPage]
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
+    ) -> list[Page]:
         """
         Handle .links pages that generate the browseable archive of annotated
         external links
         """
-        taken: List[str] = []
-        pages: List[Page] = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
             if not fname.endswith(".links"):
                 continue
@@ -206,12 +215,13 @@ class Links(PageTrackingMixin[LinksPageMixin], Feature):
             kwargs.update(fm_meta)
 
             page = node.create_source_page_as_path(
-                    page_cls=LinkIndexPage,
-                    src=src,
-                    name=name,
-                    links=self,
-                    link_collection=self.links,
-                    **kwargs)
+                page_cls=LinkIndexPage,
+                src=src,
+                name=name,
+                links=self,
+                link_collection=self.links,
+                **kwargs,
+            )
             if page is not None:
                 pages.append(page)
                 self.indices.append(page)
@@ -226,6 +236,7 @@ class Links(PageTrackingMixin[LinksPageMixin], Feature):
         Parse the links file to read its description
         """
         from staticsite.utils import front_matter
+
         with directory.open(fname, "rt") as fd:
             fmt, meta = front_matter.read_whole(fd)
         return meta
@@ -253,9 +264,10 @@ class Links(PageTrackingMixin[LinksPageMixin], Feature):
         for index in self.indices:
             index.organize()
 
-    def add_site_commands(self, subparsers: "argparse._SubParsersAction[Any]") -> None:
+    def add_site_commands(self, subparsers: argparse._SubParsersAction[Any]) -> None:
         super().add_site_commands(subparsers)
         from staticsite.features.links.cmdline import LinkLint
+
         LinkLint.add_subparser(subparsers)
 
 

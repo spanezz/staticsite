@@ -5,7 +5,7 @@ import logging
 import os
 import shlex
 import subprocess
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from .command import Fail, SiteCommand, register
 
@@ -22,7 +22,8 @@ class LazyTitle:
     If no value has been provided and one is requested by the template, ask the
     user for one.
     """
-    def __init__(self, title: Optional[str] = None) -> None:
+
+    def __init__(self, title: str | None = None) -> None:
         self.title = title
 
     def __str__(self) -> str:
@@ -38,6 +39,7 @@ class LazySlug:
     """
     Generate a slug from the value of LazyTitle
     """
+
     def __init__(self, site: Site, lazy_title: LazyTitle):
         self.site = site
         self.lazy_title = lazy_title
@@ -50,12 +52,12 @@ class LazySlug:
 class New(SiteCommand):
     "create a new page"
 
-    def run(self) -> Optional[int]:
+    def run(self) -> int | None:
         site = self.load_site()
 
         archetype = site.archetypes.find(self.args.archetype)
         if archetype is None:
-            raise Fail("archetype {} not found".format(self.args.archetype))
+            raise Fail(f"archetype {self.args.archetype} not found")
         log.info("Using archetype %s", archetype.relpath)
 
         title = LazyTitle(self.args.title)
@@ -64,7 +66,9 @@ class New(SiteCommand):
 
         relpath = meta.get("path", None)
         if relpath is None:
-            raise Fail("archetype {} does not contain `path` in its front matter".format(archetype.relpath))
+            raise Fail(
+                f"archetype {archetype.relpath} does not contain `path` in its front matter"
+            )
 
         if site.settings.PROJECT_ROOT is None:
             raise Fail("PROJECT_ROOT is empty")
@@ -82,22 +86,40 @@ class New(SiteCommand):
 
         if not self.args.noedit:
             settings_dict = site.settings.as_dict()
-            cmd = [x.format(name=abspath, slug=slug, **settings_dict) for x in site.settings.EDIT_COMMAND]
+            cmd = [
+                x.format(name=abspath, slug=slug, **settings_dict)
+                for x in site.settings.EDIT_COMMAND
+            ]
             try:
                 subprocess.check_call(cmd)
             except subprocess.CalledProcessError as e:
-                log.warning("Editor command %s exited with error %d", " ".join(shlex.quote(x) for x in cmd), e.returncode)
+                log.warning(
+                    "Editor command %s exited with error %d",
+                    " ".join(shlex.quote(x) for x in cmd),
+                    e.returncode,
+                )
                 return e.returncode
         print(abspath)
         return None
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
-        parser.add_argument("-a", "--archetype", default="default", help="page archetype")
+        parser.add_argument(
+            "-a", "--archetype", default="default", help="page archetype"
+        )
         parser.add_argument("-t", "--title", help="page title")
-        parser.add_argument("-n", "--noedit", action="store_true",
-                            help="do not run an editor, only output the file name of the new post")
-        parser.add_argument("--overwrite", action="store_true",
-                            help="if a post already exists, overwrite it instead of reusing it")
+        parser.add_argument(
+            "-n",
+            "--noedit",
+            action="store_true",
+            help="do not run an editor, only output the file name of the new post",
+        )
+        parser.add_argument(
+            "--overwrite",
+            action="store_true",
+            help="if a post already exists, overwrite it instead of reusing it",
+        )
         return parser

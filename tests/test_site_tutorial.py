@@ -40,7 +40,7 @@ class TestBuiltTutorial(test_utils.SiteTestMixin, TestCase):
     def test_built_marker(self):
         built_marker = os.path.join(self.mocksite.root, "built_site", ".staticsite")
         self.assertTrue(os.path.exists(built_marker))
-        with open(built_marker, "rt") as fd:
+        with open(built_marker) as fd:
             self.assertEqual(fd.read(), "---\nskip: yes\n")
 
     @test_utils.assert_no_logs()

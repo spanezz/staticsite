@@ -1,6 +1,8 @@
 from __future__ import annotations
-from typing import IO, Optional, Callable, Any, cast
+
 import io
+from collections.abc import Callable
+from typing import IO, Any, cast
 
 #
 # This is an unnecessarily complex wrapper to cope efficiently with YAML
@@ -23,15 +25,15 @@ Loads = Callable[[str], Any]
 Dump = Callable[[Any, IO[str]], None]
 Dumps = Callable[[Any], str]
 
-load_ruamel: Optional[Load]
-loads_ruamel: Optional[Loads]
-dump_ruamel: Optional[Dump]
-dumps_ruamel: Optional[Dumps]
+load_ruamel: Load | None
+loads_ruamel: Loads | None
+dump_ruamel: Dump | None
+dumps_ruamel: Dumps | None
 
-load_pyyaml: Optional[Load]
-loads_pyyaml: Optional[Loads]
-dump_pyyaml: Optional[Dump]
-dumps_pyyaml: Optional[Dumps]
+load_pyyaml: Load | None
+loads_pyyaml: Loads | None
+dump_pyyaml: Dump | None
+dumps_pyyaml: Dumps | None
 
 load: Load
 loads: Loads
@@ -64,6 +66,7 @@ try:
 
     def dump_ruamel(data: Any, file: IO[str]) -> None:
         yaml_dumper.dump(data, file)
+
 except ModuleNotFoundError:
     load_ruamel = None
     loads_ruamel = None
@@ -84,12 +87,28 @@ try:
         # Before that version, it seems impossible to do unsorted serialization
         # with pyyaml
         # https://stackoverflow.com/questions/16782112/can-pyyaml-dump-dict-items-in-non-alphabetical-order
-        return cast(str, yaml.dump(
-                data, stream=None, default_flow_style=False,
-                allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper))
+        return cast(
+            str,
+            yaml.dump(
+                data,
+                stream=None,
+                default_flow_style=False,
+                allow_unicode=True,
+                explicit_start=True,
+                Dumper=yaml.CDumper,
+            ),
+        )
 
     def dump_pyyaml(data: Any, file: IO[str]) -> None:
-        yaml.dump(data, file, default_flow_style=False, allow_unicode=True, explicit_start=True, Dumper=yaml.CDumper)
+        yaml.dump(
+            data,
+            file,
+            default_flow_style=False,
+            allow_unicode=True,
+            explicit_start=True,
+            Dumper=yaml.CDumper,
+        )
+
 except ModuleNotFoundError:
     load_pyyaml = None
     loads_pyyaml = None

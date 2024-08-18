@@ -5,9 +5,9 @@ import datetime
 import enum
 import logging
 import os
+from collections.abc import Iterator, Sequence
 from functools import cached_property
-from typing import (TYPE_CHECKING, Any, Iterator, Optional, Sequence, Type,
-                    TypeVar, Union, cast, overload)
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union, cast, overload
 
 import jinja2
 import markupsafe
@@ -32,6 +32,7 @@ class ChangeExtent(enum.IntEnum):
     """
     What kind of changes happened on this page since last build
     """
+
     # Page is unchanged
     UNCHANGED = 0
     # Page changed in contents but not in metadata
@@ -45,13 +46,13 @@ class PageNotFoundError(Exception):
 
 
 class PageValidationError(Exception):
-    def __init__(self, page: "Page", msg: str):
+    def __init__(self, page: Page, msg: str):
         self.page = page
         self.msg = msg
 
 
 class PageMissesFieldError(PageValidationError):
-    def __init__(self, page: "Page", field: str):
+    def __init__(self, page: Page, field: str):
         super().__init__(page, f"missing required field meta.{field}")
 
 
@@ -64,6 +65,7 @@ class CrossreferenceField(fields.Field[P, V]):
     """
     Call crossreference() on the page when this field is set
     """
+
     def __set__(self, page: P, value: Any) -> None:
         page.site.pages_to_crossreference.add(page)
         super().__set__(page, value)
@@ -73,22 +75,25 @@ class CreatedFromField(fields.Const[P, Optional["Page"]]):
     """
     Field containing a Page
     """
-    def _clean(self, page: P, value: Any) -> Optional[Page]:
+
+    def _clean(self, page: P, value: Any) -> Page | None:
         if value is None:
             return None
         elif isinstance(value, Page):
             return value
         else:
             raise TypeError(
-                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
-                    " expecting, None or Page")
+                f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                " expecting, None or Page"
+            )
 
 
 class ConstPageField(fields.ConstTypeField[P, P1]):
     """
     Field containing a string
     """
-    def __init__(self, *, cls: Type[P1], **kw: Any):
+
+    def __init__(self, *, cls: type[P1], **kw: Any):
         super().__init__(cls=cls, **kw)
 
 
@@ -98,15 +103,16 @@ class Pages(collections.abc.Sequence["Page"]):
      - path to another page, relative to this page
      - page filter
     """
+
     def __init__(self, page: Page, value: Any):
         # Reference page for resolving relative paths
         self.page = page
 
         # Resolved list of pages
-        self.pages: Optional[list[Page]] = None
+        self.pages: list[Page] | None = None
 
         # Filter expression to enumerate pages
-        self.query: Optional[dict[str, Any]] = None
+        self.query: dict[str, Any] | None = None
 
         if isinstance(value, str):
             self.query = {"path": value}
@@ -136,7 +142,7 @@ class Pages(collections.abc.Sequence["Page"]):
         # Do not include self in the result list
         self.pages = [p for p in self.page.find_pages(**self.query) if p != self.page]
 
-    def to_dict(self) -> Optional[list[Page]]:
+    def to_dict(self) -> list[Page] | None:
         return self.pages
 
     def __repr__(self) -> str:
@@ -151,13 +157,19 @@ class Pages(collections.abc.Sequence["Page"]):
         elif isinstance(other, dict):
             return self.query == other
         elif isinstance(other, Pages):
-            return self.page == other.page and self.query == other.query or self.pages == other.pages
+            return (
+                self.page == other.page
+                and self.query == other.query
+                or self.pages == other.pages
+            )
         else:
             return False
 
     def __len__(self) -> int:
         if self.pages is None:
-            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+            raise RuntimeError(
+                f"{self.page}.pages is accessed before the crossreference step has run"
+            )
         return len(self.pages)
 
     @overload
@@ -168,27 +180,35 @@ class Pages(collections.abc.Sequence["Page"]):
     def __getitem__(self, key: slice, /) -> Sequence[Page]:
         ...
 
-    def __getitem__(self, key: Union[int, slice], /) -> Union[Page, Sequence[Page]]:
+    def __getitem__(self, key: int | slice, /) -> Page | Sequence[Page]:
         if self.pages is None:
-            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+            raise RuntimeError(
+                f"{self.page}.pages is accessed before the crossreference step has run"
+            )
         return self.pages.__getitem__(key)
 
     def __iter__(self) -> Iterator[Page]:
         if self.pages is None:
-            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+            raise RuntimeError(
+                f"{self.page}.pages is accessed before the crossreference step has run"
+            )
         return self.pages.__iter__()
 
     def __reversed__(self) -> Iterator[Page]:
         if self.pages is None:
-            raise RuntimeError(f"{self.page}.pages is accessed before the crossreference step has run")
+            raise RuntimeError(
+                f"{self.page}.pages is accessed before the crossreference step has run"
+            )
         return self.pages.__reversed__()
 
-    def arrange(self, sort: str, limit: Optional[int] = None) -> list[Page]:
+    def arrange(self, sort: str, limit: int | None = None) -> list[Page]:
         """
         Sort the pages by ``sort`` and take the first ``limit`` ones
         """
         if self.pages is None:
-            raise RuntimeError(f"{self.page}.arrange is accessed before the crossreference step has run")
+            raise RuntimeError(
+                f"{self.page}.arrange is accessed before the crossreference step has run"
+            )
         return arrange(self.pages, sort=sort, limit=limit)
 
 
@@ -242,6 +262,7 @@ class PagesField(CrossreferenceField["Page", Pages]):
     {% endblock %}
     ```
     """
+
     def _clean(self, page: Page, value: Any) -> Pages:
         return Pages(page, value)
 
@@ -250,29 +271,34 @@ class TemplateField(fields.Field["TemplatePage", Union[str, jinja2.Template]]):
     """
     Template name or compiled template, taking its default value from Page.TEMPLATE
     """
-    def __get__(self, page: "TemplatePage", type: Optional[Type["TemplatePage"]] = None) -> Union[str, jinja2.Template]:
+
+    def __get__(
+        self, page: TemplatePage, type: type[TemplatePage] | None = None
+    ) -> str | jinja2.Template:
         if self.name not in page.__dict__:
             page.__dict__[self.name] = page.TEMPLATE
             return page.TEMPLATE
         else:
             return cast(str, page.__dict__[self.name])
 
-    def _clean(self, obj: Page, value: Any) -> Union[str, jinja2.Template]:
+    def _clean(self, obj: Page, value: Any) -> str | jinja2.Template:
         if isinstance(value, str):
             return value
         elif isinstance(value, jinja2.Template):
             return value
         else:
             raise TypeError(
-                    f"invalid value of type {type(value)} for {obj!r}.{self.name}:"
-                    " expecting str or jinja2.Template")
+                f"invalid value of type {type(value)} for {obj!r}.{self.name}:"
+                " expecting str or jinja2.Template"
+            )
 
 
 class PageDate(fields.Date["Page"]):
     """
     Make sure, on page load, that the element is a valid aware datetime object
     """
-    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> datetime.datetime:
+
+    def __get__(self, page: Page, type: type[Page] | None = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             if (src := getattr(page, "src", None)) is not None and src.stat is not None:
                 date = page.site.localized_timestamp(src.stat.st_mtime)
@@ -286,7 +312,8 @@ class Draft(fields.Bool["SourcePage"]):
     """
     Make sure the draft exists and is a bool, computed according to the date
     """
-    def __get__(self, page: SourcePage, type: Optional[Type["SourcePage"]] = None) -> Any:
+
+    def __get__(self, page: SourcePage, type: type[SourcePage] | None = None) -> Any:
         if (value := page.__dict__.get(self.name)) is None:
             value = page.date > page.site.generation_time
             page.__dict__[self.name] = value
@@ -299,10 +326,11 @@ class RenderedField(fields.Str["Page"]):
     """
     Field whose value is rendered from other fields
     """
-    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> Optional[str]:
+
+    def __get__(self, page: Page, type: type[Page] | None = None) -> str | None:
         if (cur := page.__dict__.get(self.name)) is None:
             value: str
-            if (tpl := getattr(page, "template_" + self.name, None)):
+            if tpl := getattr(page, "template_" + self.name, None):
                 # If a template exists, render it
                 value = markupsafe.Markup(tpl.render(page=page))
                 self.__dict__[self.name] = value
@@ -320,10 +348,11 @@ class RenderedTitleField(fields.Str["Page"]):
     """
     Render the tile for a page, defaulting to site_name if missing
     """
-    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> str:
+
+    def __get__(self, page: Page, type: type[Page] | None = None) -> str:
         if (cur := page.__dict__.get(self.name)) is None:
             value: str
-            if (tpl := getattr(page, "template_" + self.name, None)):
+            if tpl := getattr(page, "template_" + self.name, None):
                 # If a template exists, render it
                 value = markupsafe.Markup(tpl.render(page=page))
             elif page.site_name is None:
@@ -340,9 +369,10 @@ class Related(collections.abc.MutableMapping[str, "Page"]):
     """
     Container for related pages
     """
+
     def __init__(self, page: Page):
         self.page = page
-        self.pages: dict[str, Union[str, Page]] = {}
+        self.pages: dict[str, str | Page] = {}
 
     def __repr__(self) -> str:
         return f"Related({self.page!r}, {self.pages!r}))"
@@ -360,10 +390,15 @@ class Related(collections.abc.MutableMapping[str, "Page"]):
         else:
             return val
 
-    def __setitem__(self, name: str, page: Union[str, Page]) -> None:
+    def __setitem__(self, name: str, page: str | Page) -> None:
         if (old := self.pages.get(name)) is not None and old != self.page:
-            log.warning("%s: attempt to set related.%s to %r but it was already %r",
-                        self, name, page, old)
+            log.warning(
+                "%s: attempt to set related.%s to %r but it was already %r",
+                self,
+                name,
+                page,
+                old,
+            )
             return
         self.pages[name] = page
 
@@ -380,14 +415,14 @@ class Related(collections.abc.MutableMapping[str, "Page"]):
         return self.pages
 
     @overload
-    def get(self, key: str, /) -> Optional[Page]:
+    def get(self, key: str, /) -> Page | None:
         ...
 
     @overload
-    def get(self, key: str, /, default: Union[Page, T]) -> Union[Page, T]:
+    def get(self, key: str, /, default: Page | T) -> Page | T:
         ...
 
-    def get(self, key: str, default: Union[Page, T, None] = None) -> Union[Page, T, None]:
+    def get(self, key: str, default: Page | T | None = None) -> Page | T | None:
         if (val := self.pages.get(key, None)) is None:
             return default
         elif isinstance(val, str):
@@ -434,7 +469,8 @@ class RelatedField(fields.Field["Page", Related]):
     Features can add to this. For example, [syndication](syndication.md) can add
     `meta.related.archive`, `meta.related.rss`, and `meta.related.atom`.
     """
-    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> Related:
+
+    def __get__(self, page: Page, type: type[Page] | None = None) -> Related:
         if (value := page.__dict__.get(self.name)) is None:
             value = Related(page)
             page.__dict__[self.name] = value
@@ -449,6 +485,7 @@ class Meta:
     """
     Read-only dict accessor to Page's fields
     """
+
     def __init__(self, page: Page):
         self._page = page
 
@@ -503,10 +540,12 @@ class Page(SiteElement):
     This can be a static asset, a file to be rendered, a taxonomy, a
     directory listing, or anything else.
     """
+
     # Page type
     TYPE: str
 
-    date = PageDate(doc="""
+    date = PageDate(
+        doc="""
         Publication date for the page.
 
         A python datetime object, timezone aware. If the date is in the future when
@@ -514,14 +553,18 @@ class Page(SiteElement):
         --draft` to also consider draft pages.
 
         If missing, the modification time of the file is used.
-    """)
+    """
+    )
 
-    copyright = RenderedField(doc="""
+    copyright = RenderedField(
+        doc="""
         Copyright notice for the page. If missing, it's generated using
         `template_copyright`.
-    """)
+    """
+    )
 
-    title = RenderedTitleField(doc="""
+    title = RenderedTitleField(
+        doc="""
         Page title.
 
         If missing:
@@ -533,32 +576,41 @@ class Page(SiteElement):
          * if the page has no title, the title of directory indices above this page is
            inherited.
          * if still no title can be found, the site name is used as a default.
-    """)
+    """
+    )
 
-    description = RenderedField(doc="""
+    description = RenderedField(
+        doc="""
         The page description. If omitted, the page will have no description.
-    """)
+    """
+    )
 
-    indexed = fields.Bool["Page"](default=False, doc="""
+    indexed = fields.Bool["Page"](
+        default=False,
+        doc="""
         If true, the page appears in [directory indices](dir.md) and in
         [page filter results](page_filter.md).
 
         It defaults to true at least for [Markdown](markdown.md),
         [reStructuredText](rst.rst), and [data](data.md) pages.
-    """)
+    """,
+    )
 
     pages = PagesField(structure=True)
 
     related = RelatedField(structure=True)
 
     def __init__(
-            self, site: Site, *,
-            node: Node,
-            search_root_node: Node,
-            dst: str,
-            leaf: bool,
-            directory_index: bool = False,
-            **kw: Any) -> None:
+        self,
+        site: Site,
+        *,
+        node: Node,
+        search_root_node: Node,
+        dst: str,
+        leaf: bool,
+        directory_index: bool = False,
+        **kw: Any,
+    ) -> None:
         # Set these fields early as they are used by __str__/__repr__
 
         # Node where this page is installed in the rendered structure
@@ -582,7 +634,7 @@ class Page(SiteElement):
         self.directory_index: bool = directory_index
         # Basename of this page in the source tree, or None if it's an
         # autogenerated page
-        self.source_name: Optional[str] = None
+        self.source_name: str | None = None
 
         # Check the existence of other mandatory fields
         if self.site_url is None:
@@ -599,30 +651,41 @@ class Page(SiteElement):
         else:
             return self.node.path
 
-    def add_related(self, name: str, page: "Page") -> None:
+    def add_related(self, name: str, page: Page) -> None:
         """
         Set the page as meta.related.name
         """
         self.related[name] = page
 
     def find_pages(
-            self,
-            path: Optional[str] = None,
-            limit: Optional[int] = None,
-            sort: Optional[str] = None,
-            **kw: Any) -> list["Page"]:
+        self,
+        path: str | None = None,
+        limit: int | None = None,
+        sort: str | None = None,
+        **kw: Any,
+    ) -> list[Page]:
         """
         If not set, default root to the path of the containing directory for
         this page
         """
         from .page_filter import PageFilter
-        f = PageFilter(self.site, path=path, limit=limit, sort=sort, root=self.search_root_node, **kw)
+
+        f = PageFilter(
+            self.site,
+            path=path,
+            limit=limit,
+            sort=sort,
+            root=self.search_root_node,
+            **kw,
+        )
         return f.filter()
 
-    def lookup_page(self, path: Path) -> Optional[Page]:
+    def lookup_page(self, path: Path) -> Page | None:
         return self.search_root_node.lookup_page(path)
 
-    def url_for(self, target: Union[str, "Page"], absolute: bool = False, static: bool = False) -> str:
+    def url_for(
+        self, target: str | Page, absolute: bool = False, static: bool = False
+    ) -> str:
         """
         Generate a URL for a page, specified by:
 
@@ -631,7 +694,7 @@ class Page(SiteElement):
         * the target page itself
         """
         # print(f"Page.url_for {self=!r}, {target=!r}")
-        page: "Page"
+        page: Page
         if isinstance(target, str):
             page = self.resolve_path(target, static=static)
         else:
@@ -686,6 +749,7 @@ class Page(SiteElement):
 
     def to_dict(self) -> dict[str, Any]:
         from .utils import dump_meta
+
         res = {
             "meta": dump_meta(self.meta),
             "type": self.TYPE,
@@ -706,7 +770,9 @@ class Page(SiteElement):
         How much this page has changed since the last build
         """
         if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
-            raise RuntimeError("Page.change_extent referenced before running page crossreference stage")
+            raise RuntimeError(
+                "Page.change_extent referenced before running page crossreference stage"
+            )
         return self._compute_change_extent()
 
 
@@ -714,19 +780,25 @@ class SourcePage(Page):
     """
     Page loaded from site sources
     """
-    draft = Draft(doc="""
+
+    draft = Draft(
+        doc="""
 If true, the page is still a draft and will not appear in the destination site,
 unless draft mode is enabled.
 
 It defaults to false, or true if `meta.date` is in the future.
-""")
+"""
+    )
 
     def __init__(
-            self, site: Site, *,
-            node: Node,
-            src: File,
-            old_footprint: Optional[dict[str, Any]] = None,
-            **kw: Any):
+        self,
+        site: Site,
+        *,
+        node: Node,
+        src: File,
+        old_footprint: dict[str, Any] | None = None,
+        **kw: Any,
+    ):
         # Information about the source file for this page
         # Set right away so that __repr__ works
         self.src: File = src
@@ -734,7 +806,7 @@ It defaults to false, or true if `meta.date` is in the future.
         self.source_name: str = os.path.basename(self.src.relpath)
 
         # Cached footprint from the previous run, or None
-        self.old_footprint: Optional[dict[str, Any]] = old_footprint
+        self.old_footprint: dict[str, Any] | None = old_footprint
 
     def __str__(self) -> str:
         return self.site_path
@@ -756,14 +828,18 @@ It defaults to false, or true if `meta.date` is in the future.
         incremental builds
         """
         if self.site.last_load_step < self.site.LOAD_STEP_CROSSREFERENCE:
-            raise RuntimeError("SourcePage._compute_footprint referenced before running page crossreference stage")
+            raise RuntimeError(
+                "SourcePage._compute_footprint referenced before running page crossreference stage"
+            )
         res: dict[str, Any] = {
             "mtime": self.src.stat.st_mtime,
             "size": self.src.stat.st_size,
         }
         # We can cast to list[Page] since we made sure we only run after the crossreference stage
-        if (pages := self.pages):
-            res["pages"] = [page.src.relpath for page in pages if isinstance(page, SourcePage)]
+        if pages := self.pages:
+            res["pages"] = [
+                page.src.relpath for page in pages if isinstance(page, SourcePage)
+            ]
         return res
 
     @cached_property
@@ -778,10 +854,15 @@ It defaults to false, or true if `meta.date` is in the future.
         res = super()._compute_change_extent()
         if (old := self.old_footprint) is None:
             return ChangeExtent.ALL
-        if old.get("mtime") < self.footprint["mtime"] or old.get("size") != self.footprint["size"]:
+        if (
+            old.get("mtime") < self.footprint["mtime"]
+            or old.get("size") != self.footprint["size"]
+        ):
             return ChangeExtent.ALL
         if res == ChangeExtent.UNCHANGED and self.footprint and self.old_footprint:
-            if set(self.footprint.get("pages", ())) != set(self.old_footprint.get("pages", ())):
+            if set(self.footprint.get("pages", ())) != set(
+                self.old_footprint.get("pages", ())
+            ):
                 return ChangeExtent.ALL
         return res
 
@@ -790,10 +871,8 @@ class StandaloneAutoPage(Page):
     """
     Page that has been autogenerated, but not from another page
     """
-    def __init__(
-            self, site: Site, *,
-            node: Node,
-            **kw: Any) -> None:
+
+    def __init__(self, site: Site, *, node: Node, **kw: Any) -> None:
         super().__init__(site, parent=node, node=node, **kw)
 
 
@@ -801,16 +880,16 @@ class AutoPage(Page):
     """
     Autogenerated page
     """
-    created_from = CreatedFromField["AutoPage"](doc="""
+
+    created_from = CreatedFromField["AutoPage"](
+        doc="""
         Page that generated this page.
 
         This is only set in autogenerated pages.
-    """)
+    """
+    )
 
-    def __init__(
-            self, site: Site, *,
-            created_from: Page,
-            **kw: Any) -> None:
+    def __init__(self, site: Site, *, created_from: Page, **kw: Any) -> None:
         if created_from is None:
             raise RuntimeError("created_from is None in AutoPage")
         super().__init__(site, parent=created_from, created_from=created_from, **kw)
@@ -820,9 +899,13 @@ class FrontMatterPage(SourcePage):
     """
     Page with a front matter in its sources
     """
-    front_matter = fields.Dict["FrontMatterPage"](internal=True, doc="""
+
+    front_matter = fields.Dict["FrontMatterPage"](
+        internal=True,
+        doc="""
         Front matter as parsed by the source file
-    """)
+    """,
+    )
 
     def _compute_footprint(self) -> dict[str, Any]:
         res = super()._compute_footprint()
@@ -839,7 +922,9 @@ class FrontMatterPage(SourcePage):
         res = super()._compute_change_extent()
         if res == ChangeExtent.UNCHANGED:
             return res
-        if self.old_footprint is not None and self.footprint["fm"] == self.old_footprint.get("fm"):
+        if self.old_footprint is not None and self.footprint[
+            "fm"
+        ] == self.old_footprint.get("fm"):
             return ChangeExtent.CONTENTS
         else:
             return ChangeExtent.ALL
@@ -849,15 +934,18 @@ class TemplatePage(Page):
     """
     Page that renders using a Jinja2 template
     """
+
     # Default page template
     TEMPLATE = "page.html"
 
-    template = TemplateField(doc="""
+    template = TemplateField(
+        doc="""
         Template used to render the page. Defaults to `page.html`, although specific
         pages of some features can default to other template names.
 
         Use this similarly to [Jekill's layouts](https://jekyllrb.com/docs/step-by-step/04-layouts/).
-    """)
+    """
+    )
 
     @cached_property
     def page_template(self) -> jinja2.Template:
@@ -901,7 +989,9 @@ class TemplatePage(Page):
         rendered = self.render_template(self.page_template, template_args=kw)
         return RenderedString(rendered)
 
-    def render_template(self, template: jinja2.Template, template_args: Optional[dict[Any, Any]] = None) -> str:
+    def render_template(
+        self, template: jinja2.Template, template_args: dict[Any, Any] | None = None
+    ) -> str:
         """
         Render a jinja2 template, logging things if something goes wrong
         """
@@ -920,15 +1010,20 @@ class TemplatePage(Page):
 
 
 class ImagePage(Page):
-    width = fields.Int["ImagePage"](doc="""
+    width = fields.Int["ImagePage"](
+        doc="""
         Image width
-    """)
-    height = fields.Int["ImagePage"](doc="""
+    """
+    )
+    height = fields.Int["ImagePage"](
+        doc="""
         Image height
-    """)
+    """
+    )
 
     def get_img_attributes(
-            self, type: Optional[str] = None, absolute: bool = False) -> dict[str, str]:
+        self, type: str | None = None, absolute: bool = False
+    ) -> dict[str, str]:
         """
         Given a path to an image page, return a dict with <img> attributes that
         can be used to refer to it
@@ -942,7 +1037,8 @@ class ImagePage(Page):
             rel = self.related.get(type, self)
             if not isinstance(rel, ImagePage):
                 raise RuntimeError(
-                        f"{self}: related page of type {type!r} has type {rel.__class__.__name__} instead of ImagePage")
+                    f"{self}: related page of type {type!r} has type {rel.__class__.__name__} instead of ImagePage"
+                )
             res["width"] = str(rel.width)
             res["height"] = str(rel.height)
             res["src"] = self.url_for(rel, absolute=absolute)
