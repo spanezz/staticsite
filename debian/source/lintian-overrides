@@ -1,0 +1,5 @@
+# Same workaround as from libreoffice
+# This *is* the code. lintian, don't assume every HTML file with long lines is generated, thanks, bye!
+staticsite source: source-is-missing [themes/default-b5/static/bootstrap5/js/bootstrap.bundle.js]
+staticsite source: source-is-missing [themes/default-b5/static/bootstrap5/js/bootstrap.esm.js]
+staticsite source: source-is-missing [themes/default-b5/static/bootstrap5/js/bootstrap.js]
