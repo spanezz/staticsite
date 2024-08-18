@@ -1,5 +1,9 @@
 # staticsite user-relevant changes
 
+# New in version 2.5
+
+* Suppport newer docutils
+
 # New in version 2.4
 
 * Updated bundled jquery assets

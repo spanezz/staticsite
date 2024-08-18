@@ -78,6 +78,7 @@ class RestructuredText(MarkupFeature, Feature):
 
     See doc/reference/rst.rst for details.
     """
+
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
 
@@ -90,7 +91,7 @@ class RestructuredText(MarkupFeature, Feature):
     def get_used_page_types(self) -> list[Type[Page]]:
         return [RstPage]
 
-    def parse_rest(self, fd: IO[bytes], remove_docinfo: bool = True) -> tuple[dict[str, Any], DoctreeScan]:
+    def parse_rest(self, fd: IO[str], remove_docinfo: bool = True) -> tuple[dict[str, Any], DoctreeScan]:
         """
         Parse a rest document.
 
@@ -107,8 +108,8 @@ class RestructuredText(MarkupFeature, Feature):
         meta = {}
         if doctree_scan.docinfo is not None:
             for child in doctree_scan.docinfo.children:
-                if child.tagname == 'field':
-                    name = child.attributes.get('classes')[0]
+                if child.tagname == "field":
+                    name = child.attributes.get("classes")[0]
                     for fchild in child.children:
                         if fchild.tagname == "field_body":
                             meta[name] = fchild.astext().strip()
@@ -120,9 +121,11 @@ class RestructuredText(MarkupFeature, Feature):
                 meta["title"] = doctree_scan.first_title.astext()
             # If the title element is at the beginning of the doctree, remove
             # it to avoid a duplicate title in the rendered content
-            if (doctree_scan.docinfo
-                    and doctree_scan.docinfo.children
-                    and doctree_scan.docinfo.children[0] == doctree_scan.first_title):
+            if (
+                doctree_scan.docinfo
+                and doctree_scan.docinfo.children
+                and doctree_scan.docinfo.children[0] == doctree_scan.first_title
+            ):
                 doctree_scan.doctree.children.pop(0)
 
         # If requested, parse some tag contents as yaml
@@ -145,16 +148,14 @@ class RestructuredText(MarkupFeature, Feature):
             return None
 
         # Parse to get at the front matter
-        with directory.open("index.rst", "rb") as fd:
+        with directory.open("index.rst", "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd, remove_docinfo=False)
 
         return meta
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self, node: SourcePageNode, directory: fstree.Tree, files: dict[str, tuple[dict[str, Any], file.File]]
+    ) -> list[Page]:
         if not self.yaml_tags_filled:
             cls = self.site.features.get_page_class(RstPage)
             for name, field in cls._fields.items():
@@ -186,9 +187,7 @@ class RestructuredText(MarkupFeature, Feature):
             if fname in ("index.rst", "README.rst"):
                 page = node.create_source_page_as_index(**kwargs)
             else:
-                page = node.create_source_page_as_path(
-                        name=fname[:-4],
-                        **kwargs)
+                page = node.create_source_page_as_path(name=fname[:-4], **kwargs)
             if page is not None:
                 pages.append(page)
 
@@ -199,7 +198,7 @@ class RestructuredText(MarkupFeature, Feature):
 
     def load_file_meta(self, directory: fstree.Tree, fname: str) -> Tuple[dict[str, Any], DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
-        with directory.open(fname, "rb") as fd:
+        with directory.open(fname, "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd)
 
         return meta, doctree_scan
@@ -219,7 +218,7 @@ class RestArchetype(Archetype):
         meta, rendered = super().render(**kw)
 
         # Reparse the rendered version
-        with io.BytesIO(rendered.encode()) as fd:
+        with io.StringIO(rendered) as fd:
             parsed_meta, doctree_scan = self.feature.parse_rest(fd, remove_docinfo=False)
 
         meta.update(**parsed_meta)
@@ -318,6 +317,7 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
       it with the [`|safe` filter](https://jinja.palletsprojects.com/en/2.10.x/templates/#safe)
       to prevent double escaping
     """
+
     TYPE = "rst"
 
     def __init__(self, *, doctree_scan: DoctreeScan, **kw: Any):
@@ -329,12 +329,12 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
         # Document doctree root node
         self.doctree_scan = doctree_scan
 
-    def front_matter_changed(self, fd: IO[bytes]) -> bool:
+    def front_matter_changed(self, fd: IO[str]) -> bool:
         """
         Check if the front matter read from fd is different from ours
         """
         meta, doctree_scan = self.feature.parse_rest(fd)
-        return (self.front_matter != meta)
+        return self.front_matter != meta
 
     def check(self) -> None:
         self._render_page()
@@ -342,7 +342,7 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
     def _render_page(self, absolute: bool = False) -> str:
         cache_key = self.src.relpath
         with self.markup_render_context(cache_key, absolute=absolute) as context:
-            if (cached := context.cache.get("rendered")):
+            if cached := context.cache.get("rendered"):
                 # log.info("%s: rst cache hit", page.src.relpath)
                 return cast(str, cached)
 
@@ -357,18 +357,24 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
             # TODO: study if/how we can con configure publish_programmatically to
             # do as little work as possible
             output, pub = docutils.core.publish_programmatically(
-                source=self.doctree_scan.doctree, source_path=None,
+                source=self.doctree_scan.doctree,
+                source_path=None,
                 source_class=docutils.io.DocTreeInput,
-                destination=None, destination_path=None,
+                destination=None,
+                destination_path=None,
                 destination_class=docutils.io.StringOutput,
-                reader=None, reader_name='doctree',
-                parser=None, parser_name='null',
-                writer=writer, writer_name=None,
-                settings=None, settings_spec=None,
+                reader=None,
+                reader_name="doctree",
+                parser=None,
+                parser_name="null",
+                writer=writer,
+                writer_name=None,
+                settings=None,
+                settings_spec=None,
                 settings_overrides=None,
                 config_section=None,
-                enable_exit_status=False
-                )
+                enable_exit_status=False,
+            )
             parts = pub.writer.parts
             rendered: str = parts["body"]
             context.cache["rendered"] = rendered
