@@ -38,7 +38,7 @@ serve = ["tornado", "pyinotify"]
 fast_caching = ["lmdb"]
 
 [project.scripts]
-ssite = "ssite"
+ssite = "staticsite.__main__:run_main"
 
 [project.urls]
 homepage = "https://github.com/spanezz/staticsite"
