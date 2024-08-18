@@ -3,15 +3,20 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-from typing import (TYPE_CHECKING, Any, Optional, Sequence, Type, TypeVar,
-                    Union, cast)
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, cast
 
 import jinja2
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
-from staticsite.page import (AutoPage, ChangeExtent, Page, PageNotFoundError,
-                             TemplatePage)
+from staticsite.page import (
+    AutoPage,
+    ChangeExtent,
+    Page,
+    PageNotFoundError,
+    TemplatePage,
+)
 
 if TYPE_CHECKING:
     from staticsite.features import rst
@@ -25,15 +30,18 @@ class Syndication:
     """
     Syndication information for a group of pages
     """
+
     def __init__(
-            self,
-            index: Optional[SyndicationPageMixin], *,
-            title: Optional[str] = None,
-            description: Optional[str] = None,
-            template_title: Optional[str] = None,
-            template_description: Optional[str] = None,
-            add_to: Union[bool, dict[str, Any], None] = True,
-            archive: Union[bool, dict[str, Any]] = True):
+        self,
+        index: SyndicationPageMixin | None,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        template_title: str | None = None,
+        template_description: str | None = None,
+        add_to: bool | dict[str, Any] | None = True,
+        archive: bool | dict[str, Any] = True,
+    ):
         # Default metadata for syndication pages
         self.default_meta: dict[str, Any] = {}
         if title is not None:
@@ -46,7 +54,7 @@ class Syndication:
             self.default_meta["template_description"] = template_description
 
         # Page that defined the syndication
-        self.index: Optional[SyndicationPageMixin] = index
+        self.index: SyndicationPageMixin | None = index
 
         # Pages that get syndicated
         self.pages: list[SyndicationPageMixin] = []
@@ -59,7 +67,7 @@ class Syndication:
         self.add_to = add_to
 
         # Describe if and how to build an archive for this syndication
-        self.archive: Optional[dict[str, Any]]
+        self.archive: dict[str, Any] | None
         if archive is False:
             self.archive = None
         elif archive is True:
@@ -67,16 +75,18 @@ class Syndication:
         elif isinstance(archive, dict):
             self.archive = archive
         else:
-            raise ValueError(f"{archive!r} is not a valid value for a syndication.archive field")
+            raise ValueError(
+                f"{archive!r} is not a valid value for a syndication.archive field"
+            )
 
         # RSS feed page
-        self.rss_page: Optional[RSSPage] = None
+        self.rss_page: RSSPage | None = None
 
         # Atom feed page
-        self.atom_page: Optional[AtomPage] = None
+        self.atom_page: AtomPage | None = None
 
         # Archive page
-        self.archive_page: Optional[ArchivePage] = None
+        self.archive_page: ArchivePage | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -105,11 +115,17 @@ class Syndication:
         """
         if self.index is None:
             raise RuntimeError("Syndication.index field was not set")
-        if "title" not in self.default_meta and "template_title" not in self.default_meta:
+        if (
+            "title" not in self.default_meta
+            and "template_title" not in self.default_meta
+        ):
             self.default_meta["title"] = self.index.title
 
-        if ("description" not in self.default_meta and "template_description"
-                not in self.default_meta and self.index.description):
+        if (
+            "description" not in self.default_meta
+            and "template_description" not in self.default_meta
+            and self.index.description
+        ):
             self.default_meta["description"] = self.index.description
 
         page_name, ext = os.path.splitext(self.index.dst)
@@ -120,10 +136,11 @@ class Syndication:
 
         # RSS feed
         rss_page = self.index.node.create_auto_page_as_file(
-                created_from=self.index,
-                page_cls=RSSPage,
-                dst=f"{page_name}.{RSSPage.TYPE}",
-                **kwargs)
+            created_from=self.index,
+            page_cls=RSSPage,
+            dst=f"{page_name}.{RSSPage.TYPE}",
+            **kwargs,
+        )
         self.rss_page = rss_page
         if rss_page is not None:
             log.debug("%s: adding syndication page for %s", rss_page, self.index)
@@ -133,10 +150,11 @@ class Syndication:
 
         # Atom feed
         atom_page = self.index.node.create_auto_page_as_file(
-                created_from=self.index,
-                page_cls=AtomPage,
-                dst=f"{page_name}.{AtomPage.TYPE}",
-                **kwargs)
+            created_from=self.index,
+            page_cls=AtomPage,
+            dst=f"{page_name}.{AtomPage.TYPE}",
+            **kwargs,
+        )
         self.atom_page = atom_page
         if atom_page is not None:
             log.debug("%s: adding syndication page for %s", atom_page, self.index)
@@ -154,11 +172,11 @@ class Syndication:
         self.archive["pages"] = self.pages
         self.archive["index"] = self.index
         self.archive_page = self.index.node.create_auto_page_as_path(
-                created_from=self.index,
-                page_cls=ArchivePage,
-                name="archive",
-                **self.archive,
-                )
+            created_from=self.index,
+            page_cls=ArchivePage,
+            name="archive",
+            **self.archive,
+        )
         if self.archive_page is not None:
             if self.rss_page is not None:
                 self.archive_page.add_related("rss_feed", self.rss_page)
@@ -228,7 +246,9 @@ class Syndication:
                     pdest.add_related("atom_feed", self.atom_page)
 
     @classmethod
-    def clean_value(self, page: Optional[SyndicationPageMixin], value: Any) -> Optional[Syndication]:
+    def clean_value(
+        self, page: SyndicationPageMixin | None, value: Any
+    ) -> Syndication | None:
         """
         Instantiate a Syndication object from a Page field
         """
@@ -247,7 +267,9 @@ class Syndication:
         elif isinstance(value, dict):
             return Syndication(page, **value)
         else:
-            raise ValueError(f"{value!r} for `syndication` needs to be True or a dictionary of values")
+            raise ValueError(
+                f"{value!r} for `syndication` needs to be True or a dictionary of values"
+            )
 
 
 class SyndicatedPageError(Exception):
@@ -290,9 +312,10 @@ class SyndicationField(TrackedField["SyndicationPageMixin", Optional[Syndication
         template: archive.html
     ```
     """
+
     tracked_by = "syndication"
 
-    def _clean(self, page: SyndicationPageMixin, value: Any) -> Optional[Syndication]:
+    def _clean(self, page: SyndicationPageMixin, value: Any) -> Syndication | None:
         return Syndication.clean_value(page, value)
 
 
@@ -308,7 +331,8 @@ class SyndicationDateField(fields.Date[Page]):
 
     If a page is syndicated and `syndication_date` is missing, it defaults to `date`.
     """
-    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> datetime.datetime:
+
+    def __get__(self, page: Page, type: type[Page] | None = None) -> datetime.datetime:
         if (date := page.__dict__.get(self.name)) is None:
             date = page.date
             page.__dict__[self.name] = date
@@ -321,7 +345,8 @@ class SyndicatedField(fields.Bool[Page]):
 
     If not set, it defaults to the value of `indexed`.
     """
-    def __get__(self, page: Page, type: Optional[Type[Page]] = None) -> bool:
+
+    def __get__(self, page: Page, type: type[Page] | None = None) -> bool:
         if (cur := page.__dict__.get(self.name)) is None:
             value = cast(bool, page.indexed)
             page.__dict__[self.name] = value
@@ -332,11 +357,13 @@ class SyndicatedField(fields.Bool[Page]):
 
 class SyndicationPageMixin(Page):
     syndication = SyndicationField(structure=True)
-    syndicated = SyndicatedField(doc="""
+    syndicated = SyndicatedField(
+        doc="""
         Set to true if the page can be included in a syndication, else to false.
 
         If not set, it defaults to the value of `indexed`.
-    """)
+    """
+    )
     syndication_date = SyndicationDateField()
     # rss_page = fields.Field(doc="""
     #     Page with the RSS feed with posts for the syndication the page is in
@@ -353,16 +380,20 @@ class SyndicationIndexField(fields.Field[P, SyndicationPageMixin]):
     """
     Field containing a Taxonomy object
     """
+
     def _clean(self, page: P, value: Any) -> SyndicationPageMixin:
         if isinstance(value, SyndicationPageMixin):
             return value
         else:
             raise TypeError(
-                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
-                    " expecting SyndicationPageMixin")
+                f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                " expecting SyndicationPageMixin"
+            )
 
 
-def _get_syndicated_pages(page: SyndicationPageMixin, limit: Optional[int] = None) -> Sequence[Page]:
+def _get_syndicated_pages(
+    page: SyndicationPageMixin, limit: int | None = None
+) -> Sequence[Page]:
     """
     Get the sorted list of syndicated pages for a page
     """
@@ -371,7 +402,9 @@ def _get_syndicated_pages(page: SyndicationPageMixin, limit: Optional[int] = Non
         return syndication.pages[:limit]
 
     if (pages := page.pages) is None:
-        raise SyndicatedPageError(f"page {page!r} has no `syndication.pages` or `pages` in metadata")
+        raise SyndicatedPageError(
+            f"page {page!r} has no `syndication.pages` or `pages` in metadata"
+        )
     return pages.arrange("-syndication_date", limit=limit)
 
 
@@ -445,22 +478,25 @@ class SyndicationFeature(PageTrackingMixin[SyndicationPageMixin], Feature):
 
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
-        cast("rst.RestructuredText", self.site.features["rst"]).yaml_tags.add("syndication")
+        cast("rst.RestructuredText", self.site.features["rst"]).yaml_tags.add(
+            "syndication"
+        )
         self.syndications: list[Syndication] = []
         self.j2_globals["syndicated_pages"] = self.jinja2_syndicated_pages
 
-    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+    def get_page_bases(self, page_cls: type[Page]) -> Sequence[type[Page]]:
         return (SyndicationPageMixin,)
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [RSSPage, AtomPage, ArchivePage]
 
     @jinja2.pass_context
     def jinja2_syndicated_pages(
-            self,
-            context: jinja2.runtime.Context,
-            what: Union[str, SyndicationPageMixin, jinja2.Undefined, None] = None,
-            limit: Optional[int] = None) -> Sequence[Page]:
+        self,
+        context: jinja2.runtime.Context,
+        what: str | SyndicationPageMixin | jinja2.Undefined | None = None,
+        limit: int | None = None,
+    ) -> Sequence[Page]:
         """
         Get the list of pages to be syndicated
         """
@@ -468,13 +504,17 @@ class SyndicationFeature(PageTrackingMixin[SyndicationPageMixin], Feature):
             if what is None or isinstance(what, jinja2.Undefined):
                 if (page := context.get("page")) is None:
                     raise SyndicatedPageError(
-                            "syndicated_pages called without a page argument, but page is not set in context")
-                return _get_syndicated_pages(cast(SyndicationPageMixin, page), limit=limit)
+                        "syndicated_pages called without a page argument, but page is not set in context"
+                    )
+                return _get_syndicated_pages(
+                    cast(SyndicationPageMixin, page), limit=limit
+                )
             elif isinstance(what, str):
                 src = context.get("page")
                 if src is None:
                     raise SyndicatedPageError(
-                            "syndicated_pages called without a page argument, but page is not set in context")
+                        "syndicated_pages called without a page argument, but page is not set in context"
+                    )
 
                 try:
                     page = src.resolve_path(what)
@@ -487,7 +527,8 @@ class SyndicationFeature(PageTrackingMixin[SyndicationPageMixin], Feature):
                 return _get_syndicated_pages(what, limit=limit)
             else:
                 raise SyndicatedPageError(
-                        f"syndicated_pages called with a page argument of unsupported type {what.__class__.__name__}")
+                    f"syndicated_pages called with a page argument of unsupported type {what.__class__.__name__}"
+                )
         except SyndicatedPageError as e:
             log.warning("%s: %s", context.name, e)
             return []
@@ -514,9 +555,12 @@ class SyndicationPage(TemplatePage, AutoPage):
     """
     Base class for syndication pages
     """
-    index = SyndicationIndexField["SyndicationPage"](doc="""
+
+    index = SyndicationIndexField["SyndicationPage"](
+        doc="""
         Page that defined the syndication for this feed
-    """)
+    """
+    )
 
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
@@ -543,6 +587,7 @@ class RSSPage(SyndicationPage):
     * `page.meta.index` is the page defining the syndication
     * `page.meta.pages` is a list of all the pages included in the syndication
     """
+
     TYPE = "rss"
     TEMPLATE = "syndication.rss"
 
@@ -559,6 +604,7 @@ class AtomPage(SyndicationPage):
     * `page.meta.index` is the page defining the syndication
     * `page.meta.pages` is a list of all the pages included in the syndication
     """
+
     TYPE = "atom"
     TEMPLATE = "syndication.atom"
 
@@ -571,9 +617,11 @@ class ArchivePage(TemplatePage, AutoPage):
     * `page.created_from`: the page for which the archive page was created
     """
 
-    index = SyndicationIndexField["SyndicationPage"](doc="""
+    index = SyndicationIndexField["SyndicationPage"](
+        doc="""
         Page that defined the syndication for this archive
-    """)
+    """
+    )
 
     TYPE = "archive"
     TEMPLATE = "archive.html"

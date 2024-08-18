@@ -43,9 +43,6 @@ ssite = "ssite"
 [project.urls]
 homepage = "https://github.com/spanezz/staticsite"
 
-[tool.black]
-line-length = 120
-
 [tool.mypy]
 # https://mypy.readthedocs.io/en/latest/config_file.html
 mypy_path = "stubs"

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import heapq
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..page import Page
 
 
-def arrange(pages: list[Page], sort: str, limit: Optional[int] = None) -> list[Page]:
+def arrange(pages: list[Page], sort: str, limit: int | None = None) -> list[Page]:
     """
     Sort the pages by ``sort`` and take the first ``limit`` ones
     """

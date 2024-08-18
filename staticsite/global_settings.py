@@ -1,16 +1,18 @@
 from __future__ import annotations
-from typing import Optional, Sequence, Dict, Any, Union
-import sys
+
 import os
+import sys
+from collections.abc import Sequence
+from typing import Any
 
 # Default settings
 
 # Root directory used to resolve relative path in settings
 # Default if None: the directory where the settings file is found
-PROJECT_ROOT: Optional[str] = None
+PROJECT_ROOT: str | None = None
 
 # Base URL for the site, used to generate absolute URLs
-SITE_URL: Optional[str] = None
+SITE_URL: str | None = None
 
 # Root directory of the site in the URLs we generate.
 #
@@ -19,10 +21,10 @@ SITE_URL: Optional[str] = None
 SITE_ROOT: str = "/"
 
 # Default site name. If None, use the title of the toplevel index
-SITE_NAME: Optional[str] = None
+SITE_NAME: str | None = None
 
 # Default author of the site
-SITE_AUTHOR: Optional[str] = None
+SITE_AUTHOR: str | None = None
 
 # Directory with "archetypes" (templates used by ssite new)
 # If None, archetypes are not used by ssite new
@@ -30,26 +32,28 @@ ARCHETYPES: str = "archetypes"
 
 # Directory with the source content of the site
 # Default if None: PROJECT_ROOT
-CONTENT: Optional[str] = None
+CONTENT: str | None = None
 
 # Directories where themes are looked for
 THEME_PATHS: Sequence[str] = [
-        os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "themes")),
-        "/usr/share/staticsite/themes",
+    os.path.abspath(
+        os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "themes")
+    ),
+    "/usr/share/staticsite/themes",
 ]
 
 # Theme used to render the site.
 # For compatibility, if it is a sequence of strings, it is treated as a list of
 # full paths to theme directories to try in order
-THEME: Union[str, Sequence[str]] = "default"
+THEME: str | Sequence[str] = "default"
 
 # Directory where the static site will be written by build
 # If None, require providing it explicitly to build
-OUTPUT: Optional[str] = None
+OUTPUT: str | None = None
 
 # Time zone used for timestamps on the site
 # (NONE defaults to the system configured timezone)
-TIMEZONE: Optional[str] = None
+TIMEZONE: str | None = None
 
 # Editor used to edit new pages
 EDITOR: str = os.environ.get("EDITOR", "sensible-editor")
@@ -66,10 +70,10 @@ MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
 ]
 MARKDOWN_EXTENSION_CONFIGS = {
-    'markdown.extensions.extra': {
-        'markdown.extensions.footnotes': {
+    "markdown.extensions.extra": {
+        "markdown.extensions.footnotes": {
             # See https://github.com/spanezz/staticsite/issues/13
-            'UNIQUE_IDS': True,
+            "UNIQUE_IDS": True,
         },
     },
 }
@@ -93,7 +97,7 @@ JINJA2_SANDBOXED = True
 
 # Languages used to build the site
 # For now, only the first one is used, and only its locale is used.
-LANGUAGES: Sequence[Dict[str, Any]] = [
+LANGUAGES: Sequence[dict[str, Any]] = [
     {
         "locale": "C",
     },

@@ -1,8 +1,10 @@
-from unittest import TestCase
-from staticsite.settings import Settings
-from staticsite import global_settings
-from .utils import datafile_abspath
 import os
+from unittest import TestCase
+
+from staticsite import global_settings
+from staticsite.settings import Settings
+
+from .utils import datafile_abspath
 
 
 class TestSettings(TestCase):

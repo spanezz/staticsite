@@ -8,13 +8,13 @@ import os
 import shutil
 import time
 from collections import Counter
-from typing import TYPE_CHECKING, Any, Generator, Optional
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any
 
-from .. import utils, render
-from ..site import Path
+from .. import render, utils
 from ..page import ChangeExtent
+from ..site import Path
 from .command import Fail, SiteCommand, register
-
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -29,28 +29,39 @@ class Build(SiteCommand):
     "build the site into the web/ directory of the project"
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
-        parser.add_argument("--type", action="store",
-                            help="render only pages of this type")
-        parser.add_argument("--path", action="store",
-                            help="render only pages under this path")
-        parser.add_argument("--fail-fast", action="store_true",
-                            help="fail the first time a page gives an error in rendering")
-        parser.add_argument("-f", "--full", action="store_true",
-                            help="always do a full rebuild")
+        parser.add_argument(
+            "--type", action="store", help="render only pages of this type"
+        )
+        parser.add_argument(
+            "--path", action="store", help="render only pages under this path"
+        )
+        parser.add_argument(
+            "--fail-fast",
+            action="store_true",
+            help="fail the first time a page gives an error in rendering",
+        )
+        parser.add_argument(
+            "-f", "--full", action="store_true", help="always do a full rebuild"
+        )
         return parser
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.site: Site
 
-    def run(self) -> Optional[int]:
+    def run(self) -> int | None:
         self.site = self.load_site()
         self.builder = Builder(
-                self.site, type_filter=self.args.type,
-                path_filter=self.args.path, fail_fast=self.args.fail_fast,
-                full=self.args.full)
+            self.site,
+            type_filter=self.args.type,
+            path_filter=self.args.path,
+            fail_fast=self.args.fail_fast,
+            full=self.args.full,
+        )
         self.builder.write()
         if self.builder.has_errors:
             return 1
@@ -61,6 +72,7 @@ class RenderStats:
     """
     Statistics collected during rendering
     """
+
     def __init__(self) -> None:
         self.sums: dict[str, int] = Counter()
         self.counts: dict[str, int] = Counter()
@@ -78,6 +90,7 @@ class RenderDirectory:
     """
     A directory where contents are being rendered
     """
+
     def __init__(self, root: str, relpath: str, dir_fd: int):
         self.root = root
         self.relpath = relpath
@@ -109,7 +122,7 @@ class RenderDirectory:
         with utils.open_dir_fd(name, dir_fd=self.dir_fd) as subdir_fd:
             yield RenderDirectory(self.root, subpath, subdir_fd)
 
-    def prepare_subdir(self, name: str) -> Optional[os.stat_result]:
+    def prepare_subdir(self, name: str) -> os.stat_result | None:
         """
         Prepare for rendering a subdirectory.
 
@@ -129,7 +142,7 @@ class RenderDirectory:
             os.mkdir(name, dir_fd=self.dir_fd)
             return None
 
-    def prepare_file(self, name: str) -> Optional[os.stat_result]:
+    def prepare_file(self, name: str) -> os.stat_result | None:
         """
         Prepare for rendering a file
 
@@ -161,12 +174,13 @@ class RenderDirectory:
 
 class Builder:
     def __init__(
-            self,
-            site: Site,
-            type_filter: Optional[str] = None,
-            path_filter: Optional[str] = None,
-            fail_fast: bool = False,
-            full: bool = True):
+        self,
+        site: Site,
+        type_filter: str | None = None,
+        path_filter: str | None = None,
+        fail_fast: bool = False,
+        full: bool = True,
+    ):
         self.site = site
         self.type_filter = type_filter
         self.path_filter = path_filter
@@ -174,17 +188,20 @@ class Builder:
             raise Fail("PROJECT_ROOT is not set")
         if site.settings.OUTPUT is None:
             raise Fail(
-                    "No output directory configured:"
-                    " please use --output or set OUTPUT in settings.py or .staticsite.py")
+                "No output directory configured:"
+                " please use --output or set OUTPUT in settings.py or .staticsite.py"
+            )
         self.build_root = os.path.join(site.settings.PROJECT_ROOT, site.settings.OUTPUT)
         # Logs which pages have been rendered and to which path
         self.build_log: dict[str, Page] = {}
         self.fail_fast = fail_fast
         self.full = full
         self.has_errors = False
-        self.built_marker = render.RenderedString("""---
+        self.built_marker = render.RenderedString(
+            """---
 skip: yes
-""")
+"""
+        )
 
     def write(self) -> None:
         """
@@ -229,37 +246,39 @@ skip: yes
         #     self.build_cache.put("git_dirty", sorted(self.files_changed_in_workdir))
         #     # build_cache.put("git_dirty", repo.head.commit.hexsha)
 
-#     def write_multi_process(self, child_count):
-#         log.info("Generating pages using %d child processes", child_count)
-#
-#         pages = list(self.site.structure.pages.values())
-#
-#         # From http://code.activestate.com/recipes/576785-partition-an-iterable-into-n-lists/
-#         chunks = [pages[i::child_count] for i in range(child_count)]
-#
-#         print(len(pages))
-#         for c in chunks:
-#             print(len(c))
-#
-#         import sys
-#         pids = set()
-#         for chunk in chunks:
-#             pid = os.fork()
-#             if pid == 0:
-#                 self.write_pages(chunk)
-#                 sys.exit(0)
-#             else:
-#                 pids.add(pid)
-#
-#         while pids:
-#             (pid, status) = os.wait()
-#             pids.discard(pid)
+    #     def write_multi_process(self, child_count):
+    #         log.info("Generating pages using %d child processes", child_count)
+    #
+    #         pages = list(self.site.structure.pages.values())
+    #
+    #         # From http://code.activestate.com/recipes/576785-partition-an-iterable-into-n-lists/
+    #         chunks = [pages[i::child_count] for i in range(child_count)]
+    #
+    #         print(len(pages))
+    #         for c in chunks:
+    #             print(len(c))
+    #
+    #         import sys
+    #         pids = set()
+    #         for chunk in chunks:
+    #             pid = os.fork()
+    #             if pid == 0:
+    #                 self.write_pages(chunk)
+    #                 sys.exit(0)
+    #             else:
+    #                 pids.add(pid)
+    #
+    #         while pids:
+    #             (pid, status) = os.wait()
+    #             pids.discard(pid)
 
     def write_single_process(self) -> None:
         root: Node = self.site.root
         if self.path_filter is not None:
             if (node := root.lookup_node(Path.from_string(self.path_filter))) is None:
-                raise Fail(f"path filter {self.path_filter} does not match a path in the site")
+                raise Fail(
+                    f"path filter {self.path_filter} does not match a path in the site"
+                )
             root = node
         stats = RenderStats()
         os.makedirs(self.build_root, exist_ok=True)
@@ -267,18 +286,24 @@ skip: yes
         with RenderDirectory.open(self.build_root) as render_dir:
             # Write built marker
             old_file = render_dir.prepare_file(".staticsite")
-            self.built_marker.write(name=".staticsite", dir_fd=render_dir.dir_fd, old=old_file)
+            self.built_marker.write(
+                name=".staticsite", dir_fd=render_dir.dir_fd, old=old_file
+            )
 
             # Write rendered contents
             self.write_subtree(root, render_dir, stats=stats)
         for type in sorted(stats.sums.keys()):
-            log.info("%s: %d in %.3fs (%.1f per minute)",
-                     type,
-                     stats.counts[type],
-                     stats.sums[type] / 1_000_000_000,
-                     stats.counts[type] / stats.sums[type] * 60 * 1_000_000_000)
+            log.info(
+                "%s: %d in %.3fs (%.1f per minute)",
+                type,
+                stats.counts[type],
+                stats.sums[type] / 1_000_000_000,
+                stats.counts[type] / stats.sums[type] * 60 * 1_000_000_000,
+            )
 
-    def write_subtree(self, node: Node, render_dir: RenderDirectory, stats: RenderStats) -> None:
+    def write_subtree(
+        self, node: Node, render_dir: RenderDirectory, stats: RenderStats
+    ) -> None:
         """
         Recursively render the given node in the given render directory
         """
@@ -297,7 +322,12 @@ skip: yes
                 except Exception:
                     if self.fail_fast:
                         raise
-                    log.error("%s:%s page failed to render", render_dir.relpath, name, exc_info=True)
+                    log.error(
+                        "%s:%s page failed to render",
+                        render_dir.relpath,
+                        name,
+                        exc_info=True,
+                    )
                     self.has_errors = True
                 else:
                     # log.debug("write_subtree relpath:%s render %s %s", render_dir.relpath, page.TYPE, name)

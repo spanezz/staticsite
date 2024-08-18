@@ -5,8 +5,9 @@ import logging
 import os
 import re
 import zoneinfo
+from collections.abc import Generator, Iterable
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Generator, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import dateutil.parser
 import pytz
@@ -31,6 +32,7 @@ class Path(tuple[str]):
     """
     Path in the site, split into components
     """
+
     re_pathsep = re.compile(re.escape(os.sep) + "+")
 
     # TODO: this is not needed, but mypy is currently unable to understand that
@@ -68,7 +70,7 @@ class Path(tuple[str]):
         return self[-1]
 
     @classmethod
-    def from_string(cls, path: str) -> "Path":
+    def from_string(cls, path: str) -> Path:
         """
         Split a string into a path
         """
@@ -79,24 +81,36 @@ class SiteElement(fields.FieldContainer):
     """
     Common fields for site elements
     """
-    site_name = fields.Str["SiteElement"](inherited=True, doc="""
+
+    site_name = fields.Str["SiteElement"](
+        inherited=True,
+        doc="""
         Name of the site. If missing, it defaults to the title of the toplevel index
         page. If missing, it defaults to the name of the content directory.
-    """)
+    """,
+    )
 
-    site_url = fields.Str["SiteElement"](inherited=True, doc="""
+    site_url = fields.Str["SiteElement"](
+        inherited=True,
+        doc="""
         Base URL for the site, used to generate an absolute URL to the page.
-    """)
+    """,
+    )
 
-    author = fields.Str["SiteElement"](inherited=True, doc="""
+    author = fields.Str["SiteElement"](
+        inherited=True,
+        doc="""
         A string with the name of the author for this page.
 
         SITE_AUTHOR is used as a default if found in settings.
 
         If not found, it defaults to the current user's name.
-    """)
+    """,
+    )
 
-    template_copyright = fields.Template["SiteElement"](inherited=True, doc="""
+    template_copyright = fields.Template["SiteElement"](
+        inherited=True,
+        doc="""
         jinja2 template to use to generate `copyright` when it is not explicitly set.
 
         The template context will have `page` available, with the current page. The
@@ -104,35 +118,45 @@ class SiteElement(fields.FieldContainer):
         in it.
 
         If missing, defaults to `"© {{meta.date.year}} {{meta.author}}"`
-    """)
+    """,
+    )
 
-    template_title = fields.Template["SiteElement"](inherited=True, doc="""
+    template_title = fields.Template["SiteElement"](
+        inherited=True,
+        doc="""
         jinja2 template to use to generate `title` when it is not explicitly set.
 
         The template context will have `page` available, with the current page.
         The result of the template will not be further escaped, so you can use
         HTML markup in it.
-    """)
+    """,
+    )
 
-    template_description = fields.Template["SiteElement"](inherited=True, doc="""
+    template_description = fields.Template["SiteElement"](
+        inherited=True,
+        doc="""
         jinja2 template to use to generate `description` when it is not
         explicitly set.
 
         The template context will have `page` available, with the current page.
         The result of the template will not be further escaped, so you can use
         HTML markup in it.
-    """)
+    """,
+    )
 
-    asset = fields.Bool["SiteElement"](inherited=True, doc="""
+    asset = fields.Bool["SiteElement"](
+        inherited=True,
+        doc="""
         If set to True for a file (for example, by a `file:` pattern in a directory
         index), the file is loaded as a static asset, regardless of whether a feature
         would load it.
 
         If set to True in a directory index, the directory and all its subdirectories
         are loaded as static assets, without the interventions of features.
-    """)
+    """,
+    )
 
-    def lookup_page(self, path: Path) -> Optional[Page]:
+    def lookup_page(self, path: Path) -> Page | None:
         """
         Find a page by given a path starting from this site element
 
@@ -141,9 +165,11 @@ class SiteElement(fields.FieldContainer):
         * the basename of a page's src_relpath
         * the rendered file name
         """
-        raise NotImplementedError(f"{self.__class__.__name__}.lookup_page() not implemented")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}.lookup_page() not implemented"
+        )
 
-    def resolve_path(self, target: Union[str, "Page"], static: bool = False) -> "Page":
+    def resolve_path(self, target: str | Page, static: bool = False) -> Page:
         """
         Return a Page from the site, given a source or site path relative to
         this page.
@@ -181,6 +207,7 @@ class Site:
 
     This class tracks all resources associated with a site.
     """
+
     # Identifiers for steps of the site loading
     LOAD_STEP_INITIAL = 0
     LOAD_STEP_FEATURES = 1
@@ -192,7 +219,11 @@ class Site:
     LOAD_STEP_CROSSREFERENCE = 7
     LOAD_STEP_ALL = LOAD_STEP_CROSSREFERENCE
 
-    def __init__(self, settings: Optional[Settings] = None, generation_time: Optional[datetime.datetime] = None):
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        generation_time: datetime.datetime | None = None,
+    ):
         from .feature import Features
 
         # Site settings
@@ -210,6 +241,7 @@ class Site:
         self.timezone: datetime.tzinfo
         if settings.TIMEZONE is None:
             from dateutil.tz import tzlocal
+
             self.timezone = tzlocal()
         else:
             self.timezone = zoneinfo.ZoneInfo(settings.TIMEZONE)
@@ -219,7 +251,9 @@ class Site:
         if generation_time is not None:
             self.generation_time = generation_time.astimezone(self.timezone)
         else:
-            self.generation_time = pytz.utc.localize(datetime.datetime.utcnow()).astimezone(self.timezone)
+            self.generation_time = pytz.utc.localize(
+                datetime.datetime.utcnow()
+            ).astimezone(self.timezone)
 
         # Filesystem trees scanned by the site
         self.fstrees: dict[str, fstree.Tree] = {}
@@ -237,24 +271,31 @@ class Site:
         self.stage_features_constructed = False
 
         # Theme used to render pages
-        self._theme: Optional[Theme] = None
+        self._theme: Theme | None = None
 
         # Feature implementation registry
         self.features = Features(self)
 
         # Build cache repository
-        self.caches: Union[Caches, DisabledCaches]
+        self.caches: Caches | DisabledCaches
         if self.settings.CACHE_REBUILDS:
             if os.access(self.settings.PROJECT_ROOT, os.W_OK):
-                self.caches = Caches(os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache"))
+                self.caches = Caches(
+                    os.path.join(self.settings.PROJECT_ROOT, ".staticsite-cache")
+                )
             else:
-                log.warning("%s: directory not writable: disabling caching", self.settings.PROJECT_ROOT)
+                log.warning(
+                    "%s: directory not writable: disabling caching",
+                    self.settings.PROJECT_ROOT,
+                )
                 self.caches = DisabledCaches()
         else:
             self.caches = DisabledCaches()
 
         # Content root for the website
-        self.content_root = os.path.normpath(os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT))
+        self.content_root = os.path.normpath(
+            os.path.join(self.settings.PROJECT_ROOT, self.settings.CONTENT)
+        )
 
         # Cache with last build information
         self.build_cache = self.caches.get("build")
@@ -306,14 +347,16 @@ class Site:
         # loaded, so if any remain it means that those pages have been deleted
         return self.previous_source_footprints.keys()
 
-    def iter_pages(self, static: bool = True, source_only: bool = False) -> Generator[Page, None, None]:
+    def iter_pages(
+        self, static: bool = True, source_only: bool = False
+    ) -> Generator[Page, None, None]:
         """
         Iterate all pages in the site
         """
         prune: tuple[Node, ...]
         if static:
             prune = ()
-        elif (self.root != self.static_root):
+        elif self.root != self.static_root:
             prune = (self.static_root,)
         else:
             prune = ()
@@ -330,11 +373,12 @@ class Site:
         yield from self.root.iter_pages(source_only=True)  # type: ignore
 
     @cached_property
-    def archetypes(self) -> "Archetypes":
+    def archetypes(self) -> Archetypes:
         """
         Archetypes defined in the site
         """
         from .archetypes import Archetypes
+
         if self.settings.PROJECT_ROOT is None:
             raise RuntimeError("PROJECT_ROOT is not set and cannot be inferred")
         return Archetypes(self, os.path.join(self.settings.PROJECT_ROOT, "archetypes"))
@@ -361,7 +405,9 @@ class Site:
         from .theme import Theme
 
         if self._theme is not None:
-            raise RuntimeError(f"load_theme called while theme {self._theme.name} was already loaded")
+            raise RuntimeError(
+                f"load_theme called while theme {self._theme.name} was already loaded"
+            )
 
         if isinstance(self.settings.THEME, str):
             self._theme = Theme.create(self, self.settings.THEME)
@@ -387,7 +433,9 @@ class Site:
         if self.settings.SITE_URL:
             self.root.site_url = self.settings.SITE_URL
         if self.settings.SITE_ROOT:
-            self.root.site_path = os.path.normpath(os.path.join("/", self.settings.SITE_ROOT))
+            self.root.site_path = os.path.normpath(
+                os.path.join("/", self.settings.SITE_ROOT)
+            )
         else:
             self.root.site_path = "/"
         if self.settings.SITE_NAME:
@@ -397,6 +445,7 @@ class Site:
         else:
             import getpass
             import pwd
+
             user = getpass.getuser()
             pw = pwd.getpwnam(user)
             self.root.author = pw.pw_gecos.split(",")[0]
@@ -409,6 +458,7 @@ class Site:
         the site tree
         """
         from .source_node import RootNode
+
         if not self.stage_features_constructed:
             log.warning("scan_content called before site features have been loaded")
 
@@ -423,7 +473,9 @@ class Site:
         self._settings_to_meta()
 
         # Create static root node
-        self.static_root = self.root.static_root(Path.from_string(self.settings.STATIC_PATH))
+        self.static_root = self.root.static_root(
+            Path.from_string(self.settings.STATIC_PATH)
+        )
 
         # Scan the main content filesystem
         tree = self.scan_content_tree(src)
@@ -562,15 +614,18 @@ class Site:
         url component or file name.
         """
         from slugify import slugify
+
         return slugify(text)
 
     def localized_timestamp(self, ts: float) -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(ts, tz=pytz.utc).astimezone(self.timezone)
+        return datetime.datetime.fromtimestamp(ts, tz=pytz.utc).astimezone(
+            self.timezone
+        )
 
     # TODO: support partial dates?
     re_isodate = re.compile(r"^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})(Z|\+\d{2}.*)$")
 
-    def clean_date(self, date: Union[str, datetime.datetime]) -> datetime.datetime:
+    def clean_date(self, date: str | datetime.datetime) -> datetime.datetime:
         """
         Return an aware datetime from a potential date value.
 
@@ -583,7 +638,9 @@ class Site:
             mo = self.re_isodate.match(date)
             if mo:
                 if mo.group(2) == "Z":
-                    clean_date = datetime.datetime.fromisoformat(mo.group(1)).replace(tzinfo=pytz.utc)
+                    clean_date = datetime.datetime.fromisoformat(mo.group(1)).replace(
+                        tzinfo=pytz.utc
+                    )
                 else:
                     clean_date = datetime.datetime.fromisoformat(date)
             else:

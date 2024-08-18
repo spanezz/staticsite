@@ -1,7 +1,7 @@
-from unittest import TestCase, SkipTest
-from staticsite.utils import yaml_codec
 import io
+from unittest import SkipTest, TestCase
 
+from staticsite.utils import yaml_codec
 
 yaml_sample = """---
 key: val

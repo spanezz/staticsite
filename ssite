@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-import sys
 import argparse
 import importlib
 import logging
+import sys
+
 from staticsite import __version__
 
 log = logging.getLogger("ssite")
@@ -10,14 +11,28 @@ log = logging.getLogger("ssite")
 
 def main():
     parser = argparse.ArgumentParser(description="Static site generator.")
-    parser.add_argument('--version', "-V", action='version', version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--version", "-V", action="version", version=f"%(prog)s {__version__}"
+    )
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
 
-    modules = ("check", "dump", "dump_meta", "build", "serve", "new", "edit", "site", "meta", "shell")
+    modules = (
+        "check",
+        "dump",
+        "dump_meta",
+        "build",
+        "serve",
+        "new",
+        "edit",
+        "site",
+        "meta",
+        "shell",
+    )
     for name in modules:
         importlib.import_module("staticsite.cmd." + name)
 
     from staticsite.cmd.command import COMMANDS
+
     for c in COMMANDS:
         c.add_subparser(subparsers)
 
@@ -31,6 +46,7 @@ def main():
 
 if __name__ == "__main__":
     from staticsite.cmd.command import Fail, Success
+
     try:
         sys.exit(main())
     except Fail as e:

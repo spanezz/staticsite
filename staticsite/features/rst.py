@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import IO, TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union, cast
+from typing import IO, TYPE_CHECKING, Any, cast
 
 import docutils.core
 import docutils.io
@@ -32,12 +32,12 @@ class DoctreeScan:
         # Doctree root node
         self.doctree = doctree
         # Information useful to locate and remove the docinfo element
-        self.docinfo: Optional[docutils.nodes.docinfo] = None
-        self.docinfo_idx: Optional[int] = None
+        self.docinfo: docutils.nodes.docinfo | None = None
+        self.docinfo_idx: int | None = None
         # First title element
-        self.first_title: Optional[docutils.nodes.title] = None
+        self.first_title: docutils.nodes.title | None = None
         # All <target> link elements that need rewriting on rendering
-        self.links_target: list[Union[docutils.nodes.target, docutils.nodes.reference]] = []
+        self.links_target: list[docutils.nodes.target | docutils.nodes.reference] = []
         # All <image> link elements that need rewriting on rendering
         self.links_image: list[docutils.nodes.image] = []
         # Return True if the link targets have been rewritten
@@ -88,10 +88,12 @@ class RestructuredText(MarkupFeature, Feature):
         self.yaml_tags = {"files", "dirs"}
         self.yaml_tags_filled = False
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [RstPage]
 
-    def parse_rest(self, fd: IO[str], remove_docinfo: bool = True) -> tuple[dict[str, Any], DoctreeScan]:
+    def parse_rest(
+        self, fd: IO[str], remove_docinfo: bool = True
+    ) -> tuple[dict[str, Any], DoctreeScan]:
         """
         Parse a rest document.
 
@@ -140,7 +142,7 @@ class RestructuredText(MarkupFeature, Feature):
 
         return meta, doctree_scan
 
-    def load_dir_meta(self, directory: fstree.Tree) -> Optional[dict[str, Any]]:
+    def load_dir_meta(self, directory: fstree.Tree) -> dict[str, Any] | None:
         # Load front matter from index.rst
         # Do not try to load front matter from README.md, as one wouldn't
         # clutter a repo README with staticsite front matter
@@ -154,7 +156,10 @@ class RestructuredText(MarkupFeature, Feature):
         return meta
 
     def load_dir(
-        self, node: SourcePageNode, directory: fstree.Tree, files: dict[str, tuple[dict[str, Any], file.File]]
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
     ) -> list[Page]:
         if not self.yaml_tags_filled:
             cls = self.site.features.get_page_class(RstPage)
@@ -163,8 +168,8 @@ class RestructuredText(MarkupFeature, Feature):
                     self.yaml_tags.add(name)
             self.yaml_tags_filled = True
 
-        taken: List[str] = []
-        pages: List[Page] = []
+        taken: list[str] = []
+        pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
             if not fname.endswith(".rst"):
                 continue
@@ -173,8 +178,14 @@ class RestructuredText(MarkupFeature, Feature):
             try:
                 fm_meta, doctree_scan = self.load_file_meta(directory, fname)
             except Exception as e:
-                log.debug("%s: Failed to parse RestructuredText page: skipped", src, exc_info=True)
-                log.warning("%s: Failed to parse RestructuredText page: skipped (%s)", src, e)
+                log.debug(
+                    "%s: Failed to parse RestructuredText page: skipped",
+                    src,
+                    exc_info=True,
+                )
+                log.warning(
+                    "%s: Failed to parse RestructuredText page: skipped (%s)", src, e
+                )
                 continue
 
             kwargs.update(fm_meta)
@@ -196,14 +207,18 @@ class RestructuredText(MarkupFeature, Feature):
 
         return pages
 
-    def load_file_meta(self, directory: fstree.Tree, fname: str) -> Tuple[dict[str, Any], DoctreeScan]:
+    def load_file_meta(
+        self, directory: fstree.Tree, fname: str
+    ) -> tuple[dict[str, Any], DoctreeScan]:
         # Parse document into a doctree and extract docinfo metadata
         with directory.open(fname, "rt") as fd:
             meta, doctree_scan = self.parse_rest(fd)
 
         return meta, doctree_scan
 
-    def try_load_archetype(self, archetypes: Archetypes, relpath: str, name: str) -> Optional[Archetype]:
+    def try_load_archetype(
+        self, archetypes: Archetypes, relpath: str, name: str
+    ) -> Archetype | None:
         if os.path.basename(relpath) != name + ".rst":
             return None
         return RestArchetype(archetypes, relpath, self)
@@ -219,7 +234,9 @@ class RestArchetype(Archetype):
 
         # Reparse the rendered version
         with io.StringIO(rendered) as fd:
-            parsed_meta, doctree_scan = self.feature.parse_rest(fd, remove_docinfo=False)
+            parsed_meta, doctree_scan = self.feature.parse_rest(
+                fd, remove_docinfo=False
+            )
 
         meta.update(**parsed_meta)
 
@@ -348,9 +365,13 @@ class RstPage(FrontMatterPage, MarkupPage, TemplatePage):
 
             if not self.doctree_scan.links_rewritten:
                 for node in self.doctree_scan.links_target:
-                    node.attributes["refuri"] = context.link_resolver.resolve_url(node.attributes["refuri"])
+                    node.attributes["refuri"] = context.link_resolver.resolve_url(
+                        node.attributes["refuri"]
+                    )
                 for node in self.doctree_scan.links_image:
-                    node.attributes["uri"] = context.link_resolver.resolve_url(node.attributes["uri"])
+                    node.attributes["uri"] = context.link_resolver.resolve_url(
+                        node.attributes["uri"]
+                    )
                 self.doctree_scan.links_rewritten = True
 
             writer = docutils.writers.html5_polyglot.Writer()

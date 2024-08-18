@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from graphlib import CycleError, TopologicalSorter
-from typing import Iterable, Mapping, TypeVar
+from typing import TypeVar
 
 __all__ = ["CycleError", "sort"]
 

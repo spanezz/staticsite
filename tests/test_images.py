@@ -50,17 +50,19 @@ date: 2019-01-01 12:00:00+02:00
             "blog/images/photo.svg": SVG,
         }
         with self.site(files) as mocksite:
-            mocksite.assertPagePaths((
-                "",
-                "index.rss",
-                "index.atom",
-                "archive",
-                "blog",
-                "blog/post",
-                "blog/images",
-                "blog/images/photo.xpm",
-                "blog/images/photo.svg",
-            ))
+            mocksite.assertPagePaths(
+                (
+                    "",
+                    "index.rss",
+                    "index.atom",
+                    "archive",
+                    "blog",
+                    "blog/post",
+                    "blog/images",
+                    "blog/images/photo.xpm",
+                    "blog/images/photo.svg",
+                )
+            )
 
             post = mocksite.page("")
             rendered = post.render().buf
@@ -82,7 +84,7 @@ date: 2019-01-01 12:00:00+02:00
 
             rss = mocksite.page("index.rss")
             rendered = rss.render().buf
-            mo = re.search(r'src=&#34;([a-z/:.]+)/photo.xpm&#34;', rendered.decode())
+            mo = re.search(r"src=&#34;([a-z/:.]+)/photo.xpm&#34;", rendered.decode())
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")
-            mo = re.search(r'src=&#34;([a-z/:.]+)/photo.svg&#34;', rendered.decode())
+            mo = re.search(r"src=&#34;([a-z/:.]+)/photo.svg&#34;", rendered.decode())
             self.assertEqual(mo.group(1), "https://www.example.org/blog/images")

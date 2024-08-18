@@ -37,22 +37,26 @@ class TestDemo(test_utils.SiteTestMixin, TestCase):
     def test_render_paths(self):
         self.assertBuilt("index.html", "", "index.html")
         self.assertBuilt("pages/README.md", "pages", "pages/index.html")
-        self.assertBuilt("pages/doc/sub.md", "pages/doc/sub", "pages/doc/sub/index.html")
+        self.assertBuilt(
+            "pages/doc/sub.md", "pages/doc/sub", "pages/doc/sub/index.html"
+        )
 
     @test_utils.assert_no_logs()
     def test_different_links(self):
         # Check rendered pages
         page = self.page("pages")
-        self.assertEqual(page.body_start, ['Link: [Docs](doc/sub.md)', '', '[Back home](..)'])
+        self.assertEqual(
+            page.body_start, ["Link: [Docs](doc/sub.md)", "", "[Back home](..)"]
+        )
 
         output = os.path.join(self.build_root, "pages/index.html")
-        with open(output, "rt", encoding="utf8") as fd:
+        with open(output, encoding="utf8") as fd:
             content = fd.read()
         self.assertIn('<a href="/pages/doc/sub">Docs</a>', content)
         self.assertIn('<a href="/">Back home</a>', content)
 
         output = os.path.join(self.build_root, "pages/doc/sub/index.html")
-        with open(output, "rt", encoding="utf8") as fd:
+        with open(output, encoding="utf8") as fd:
             content = fd.read()
         self.assertIn('<a href="/pages">Back to README</a>', content)
 
@@ -60,34 +64,41 @@ class TestDemo(test_utils.SiteTestMixin, TestCase):
         self.maxDiff = None
         page = self.page("tags/example")
         self.assertIsNotNone(page.meta["template_title"])
-        self.assertEqual(page.meta["title"], "Latest posts for tag <strong>example</strong>")
+        self.assertEqual(
+            page.meta["title"], "Latest posts for tag <strong>example</strong>"
+        )
 
-        self.assertEqual(self.page("blog/index.rss").to_dict(), {
-            'site_path': 'blog/index.rss',
-            "build_path": "blog/index.rss",
-            "meta": {
-                "date": '2016-04-16 10:23:00+02:00',
-                "syndication_date": '2016-04-16 10:23:00+02:00',
-                'index': 'J2Page(blog)',
-                'author': "Example author",
-                'copyright': '© 2016 Example author',
-                'created_from': 'J2Page(blog)',
-                'indexed': False,
-                'syndicated': False,
-                'nav': [],
-                'series': [],
-                'tags': [],
-                'pages': ['RstPage(blog/2016/rst_example)',
-                          'MarkdownPage(blog/2016/example-series3)',
-                          'MarkdownPage(blog/2016/example-series2)',
-                          'MarkdownPage(blog/2016/example-series1)',
-                          'MarkdownPage(blog/2016/example)'],
-                'site_name': 'Example web site',
-                'site_url': 'https://www.example.org',
-                'template': 'syndication.rss',
-                'template_copyright': 'compiled:None',
-                'title': 'Example blog feed',
-                'related': {},
+        self.assertEqual(
+            self.page("blog/index.rss").to_dict(),
+            {
+                "site_path": "blog/index.rss",
+                "build_path": "blog/index.rss",
+                "meta": {
+                    "date": "2016-04-16 10:23:00+02:00",
+                    "syndication_date": "2016-04-16 10:23:00+02:00",
+                    "index": "J2Page(blog)",
+                    "author": "Example author",
+                    "copyright": "© 2016 Example author",
+                    "created_from": "J2Page(blog)",
+                    "indexed": False,
+                    "syndicated": False,
+                    "nav": [],
+                    "series": [],
+                    "tags": [],
+                    "pages": [
+                        "RstPage(blog/2016/rst_example)",
+                        "MarkdownPage(blog/2016/example-series3)",
+                        "MarkdownPage(blog/2016/example-series2)",
+                        "MarkdownPage(blog/2016/example-series1)",
+                        "MarkdownPage(blog/2016/example)",
+                    ],
+                    "site_name": "Example web site",
+                    "site_url": "https://www.example.org",
+                    "template": "syndication.rss",
+                    "template_copyright": "compiled:None",
+                    "title": "Example blog feed",
+                    "related": {},
+                },
+                "type": "rss",
             },
-            "type": "rss",
-        })
+        )

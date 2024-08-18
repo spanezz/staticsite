@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from . import utils as test_utils
 
 
@@ -12,6 +13,7 @@ class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
     """
     Test theme functions
     """
+
     def test_no_site_root(self):
         files = {
             ".staticsite": {
@@ -45,7 +47,10 @@ class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(url_for("dir/index.html", page=page), "/dir")
 
             # Test absolute urls
-            self.assertEqual(url_for("page1", page=page, absolute=True), "https://www.example.org/page1")
+            self.assertEqual(
+                url_for("page1", page=page, absolute=True),
+                "https://www.example.org/page1",
+            )
 
     def test_site_path(self):
         files = {
@@ -81,7 +86,10 @@ class TestUrlFor(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(url_for("page3", page=page), "/prefix/page3")
 
             # Test absolute urls
-            self.assertEqual(url_for("page1", page=page, absolute=True), "https://www.example.org/prefix/page1")
+            self.assertEqual(
+                url_for("page1", page=page, absolute=True),
+                "https://www.example.org/prefix/page1",
+            )
 
 
 class TestMarkdownFilter(test_utils.MockSiteTestMixin, TestCase):
@@ -95,7 +103,11 @@ class TestMarkdownFilter(test_utils.MockSiteTestMixin, TestCase):
             page = mocksite.page("")
 
             tpl = site.theme.jinja2.from_string(
-                    "{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}")
+                "{% filter markdown %}*This* is an [example](http://example.org){% endfilter %}"
+            )
 
             res = tpl.render(page=page)
-            self.assertEqual(res, '<p><em>This</em> is an <a href="http://example.org">example</a></p>')
+            self.assertEqual(
+                res,
+                '<p><em>This</em> is an <a href="http://example.org">example</a></p>',
+            )

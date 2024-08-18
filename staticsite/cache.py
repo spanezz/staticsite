@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import os
 from functools import cached_property
-from typing import Any, Protocol, Type
+from typing import Any, Protocol
 
 try:
     import lmdb
+
     HAVE_LMDB = True
 except ModuleNotFoundError:
     HAVE_LMDB = False
@@ -23,10 +24,11 @@ class Cache(Protocol):
         ...
 
 
-CacheImplementation: Type[Cache]
+CacheImplementation: type[Cache]
 
 
 if HAVE_LMDB:
+
     class LMDBCache:
         def __init__(self, fname: str):
             self.fname = fname + ".lmdb"
@@ -34,7 +36,9 @@ if HAVE_LMDB:
         @cached_property
         def db(self) -> lmdb.Environment:
             os.makedirs(os.path.dirname(self.fname), exist_ok=True)
-            return lmdb.open(self.fname, metasync=False, sync=False, map_size=100*1024*1024)
+            return lmdb.open(
+                self.fname, metasync=False, sync=False, map_size=100 * 1024 * 1024
+            )
 
         def get(self, relpath: str) -> Any:
             with self.db.begin() as tr:
@@ -80,6 +84,7 @@ class DisabledCache:
     """
     noop render cache, for when caching is disabled
     """
+
     def __init__(self, fname: str):
         self.fname = fname
 
@@ -95,6 +100,7 @@ class Caches:
     Repository of caches that, if kept across site builds, can speed up further
     builds
     """
+
     def __init__(self, root: str):
         self.root = root
 

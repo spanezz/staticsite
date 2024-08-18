@@ -12,6 +12,7 @@ class TestBuildSettings(test_utils.MockSiteTestMixin, TestCase):
     """
     Test settings after command line parsing
     """
+
     def test_defaults(self):
         with self.site(test_utils.MockSite({}, auto_load_site=False)) as mocksite:
             with mock.patch("os.getcwd", return_value=mocksite.root):
@@ -97,7 +98,7 @@ class TestExampleProject(test_utils.SiteTestMixin, TestCase):
         output = os.path.join(self.build_root, "index.html")
         self.assertTrue(os.path.exists(output))
 
-        with open(output, "rt", encoding="utf8") as fd:
+        with open(output, encoding="utf8") as fd:
             content = fd.read()
 
         # FIXME: this does not make sense anymore, since title is not defined

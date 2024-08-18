@@ -43,15 +43,13 @@ read python3 profile data).
 
 ## Linting
 
-Just run `flake8` in the project directory.
-
-staticsite should be flake8-clean, with a `max-line-length` of 120.
+You can run `make check` to run a range of configured lint tools.
 
 
 ## Static type checking
 
 ```
-mypy staticsite ssite
+make mypy
 ```
 
 
@@ -66,8 +64,7 @@ codespell --write-changes --skip debian/copyright *.md debian doc example static
 
 * Run tests
     * `nose2-3`
-    * `flake8`
-    * `mypy ssite staticsite`
+    * `make check`
 * Build for debian
     * `debian/rules debsrc`
     * `sudo cowbuilder update`

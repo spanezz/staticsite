@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterator, Optional, Sequence, Type, cast
+from collections.abc import Iterator, Sequence
+from typing import Any, cast
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
@@ -15,7 +16,7 @@ class NavData:
     def __init__(self, page: Page, paths: list[str]):
         self.page = page
         self.paths = paths
-        self.resolved: Optional[list["NavPageMixin"]] = None
+        self.resolved: list[NavPageMixin] | None = None
 
     def _resolve(self) -> None:
         if self.resolved is not None:
@@ -29,11 +30,11 @@ class NavData:
                 continue
             self.resolved.append(cast(NavPageMixin, page))
 
-    def __iter__(self) -> Iterator["NavPageMixin"]:
+    def __iter__(self) -> Iterator[NavPageMixin]:
         self._resolve()
         return cast(list["NavPageMixin"], self.resolved).__iter__()
 
-    def to_dict(self) -> list["NavPageMixin"]:
+    def to_dict(self) -> list[NavPageMixin]:
         self._resolve()
         return cast(list["NavPageMixin"], self.resolved)
 
@@ -43,6 +44,7 @@ class NavField(TrackedField[Page, NavData]):
     List of page paths, relative to the page defining the nav element, that
     are used for the navbar.
     """
+
     tracked_by = "nav"
 
     def __init__(self, **kw: Any):
@@ -63,23 +65,26 @@ class NavNodeMixin(Node):
 
 class NavPageMixin(Page):
     nav = NavField(structure=True)
-    nav_title = fields.Str[Page](doc="""
+    nav_title = fields.Str[Page](
+        doc="""
         Title to use when this page is linked in a navbar.
 
         It defaults to `page.title`, or to the series name for series pages.
 
         `nav_title` is only guaranteed to exist for pages that are used in `nav`.
-    """)
+    """
+    )
 
 
 class Nav(PageTrackingMixin[NavPageMixin], Feature):
     """
     Expand a 'pages' metadata containing a page filter into a list of pages.
     """
-    def get_node_bases(self) -> Sequence[Type[Node]]:
+
+    def get_node_bases(self) -> Sequence[type[Node]]:
         return (NavNodeMixin,)
 
-    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+    def get_page_bases(self, page_cls: type[Page]) -> Sequence[type[Page]]:
         return (NavPageMixin,)
 
     def crossreference(self) -> None:

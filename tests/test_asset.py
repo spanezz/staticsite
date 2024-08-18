@@ -34,12 +34,14 @@ class TestAsset(test_utils.MockSiteTestMixin, TestCase):
         # $ TZ=UTC date +%s --date="2016-11-01" → 1477958400
         FILE_TS = 1477958400
 
-        sitedef = test_utils.MockSite({
-            ".staticsite": {
-                "asset": True,
-            },
-            "testasset": "test",
-        })
+        sitedef = test_utils.MockSite(
+            {
+                ".staticsite": {
+                    "asset": True,
+                },
+                "testasset": "test",
+            }
+        )
         sitedef.auto_load_site = False
         sitedef.mock_file_mtime = None
 
@@ -58,7 +60,10 @@ class TestAsset(test_utils.MockSiteTestMixin, TestCase):
             self.assertEqual(page.node.name, "")
             self.assertEqual(page.TYPE, "asset")
             self.assertEqual(page.src.stat.st_mtime, FILE_TS)
-            self.assertEqual(page.meta["date"], datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc))
+            self.assertEqual(
+                page.meta["date"],
+                datetime.datetime(2016, 11, 1, 0, 0, 0, tzinfo=pytz.utc),
+            )
             self.assertEqual(page.meta["site_url"], "https://www.example.org")
             self.assertEqual(page.site_path, "testasset")
             self.assertEqual(page.node.path, "")

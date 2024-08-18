@@ -23,7 +23,9 @@ date: 2016-04-17 10:00
 class TestSyndication(test_utils.MockSiteTestMixin, TestCase):
     def test_simple(self):
         files = dict(BASE_FILES)
-        files["blog.md"] = """---
+        files[
+            "blog.md"
+        ] = """---
 date: 2016-04-16 10:23:00+02:00
 pages: blog/*
 syndication: yes
@@ -35,22 +37,34 @@ text
 """
         with self.site(files) as mocksite:
             blog, post1, post2, widget, rss, atom = mocksite.page(
-                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
+                "blog",
+                "blog/post1",
+                "blog/post2",
+                "blog/widget",
+                "blog/index.rss",
+                "blog/index.atom",
+            )
 
             synd = blog.syndication
             self.assertEqual(synd.pages, [post2, post1])
 
             self.assertIsNone(post1.syndication)
-            self.assertEqual(post1.related, {
-                "rss_feed": rss,
-                "atom_feed": atom,
-            })
+            self.assertEqual(
+                post1.related,
+                {
+                    "rss_feed": rss,
+                    "atom_feed": atom,
+                },
+            )
 
             self.assertIsNone(post2.syndication)
-            self.assertEqual(post2.related, {
-                "rss_feed": rss,
-                "atom_feed": atom,
-            })
+            self.assertEqual(
+                post2.related,
+                {
+                    "rss_feed": rss,
+                    "atom_feed": atom,
+                },
+            )
 
             self.assertEqual(rss.pages, synd.pages)
             self.assertEqual(rss.title, blog.title)
@@ -62,7 +76,9 @@ text
 
     def test_add_to_false(self):
         files = dict(BASE_FILES)
-        files["blog.md"] = """---
+        files[
+            "blog.md"
+        ] = """---
 date: 2016-04-16 10:23:00+02:00
 pages: blog/*
 syndication:
@@ -76,7 +92,13 @@ text
 """
         with self.site(files) as mocksite:
             blog, post1, post2, widget, rss, atom = mocksite.page(
-                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
+                "blog",
+                "blog/post1",
+                "blog/post2",
+                "blog/widget",
+                "blog/index.rss",
+                "blog/index.atom",
+            )
 
             synd = blog.syndication
             self.assertEqual(synd.pages, [post2, post1])
@@ -93,7 +115,9 @@ text
 
     def test_complex(self):
         files = dict(BASE_FILES)
-        files["blog.md"] = """---
+        files[
+            "blog.md"
+        ] = """---
 date: 2016-04-16 10:23:00+02:00
 pages: blog/*2.*
 syndication:
@@ -107,16 +131,25 @@ text
 """
         with self.site(files) as mocksite:
             blog, post1, post2, widget, rss, atom = mocksite.page(
-                    "blog", "blog/post1", "blog/post2", "blog/widget", "blog/index.rss", "blog/index.atom")
+                "blog",
+                "blog/post1",
+                "blog/post2",
+                "blog/widget",
+                "blog/index.rss",
+                "blog/index.atom",
+            )
 
             synd = blog.syndication
             self.assertEqual(synd.pages, [post2])
 
             self.assertIsNone(post1.syndication)
-            self.assertEqual(post1.related, {
-                "rss_feed": rss,
-                "atom_feed": atom,
-            })
+            self.assertEqual(
+                post1.related,
+                {
+                    "rss_feed": rss,
+                    "atom_feed": atom,
+                },
+            )
             self.assertIsNone(post2.syndication)
             self.assertIsNone(widget.syndication)
             self.assertEqual(rss.pages, synd.pages)

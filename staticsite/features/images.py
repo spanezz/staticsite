@@ -4,11 +4,12 @@ import itertools
 import logging
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast, Iterable
+from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from staticsite import fields
 from staticsite.feature import Feature, PageTrackingMixin, TrackedField
-from staticsite.page import AutoPage, ChangeExtent, Page, SourcePage, ImagePage
+from staticsite.page import AutoPage, ChangeExtent, ImagePage, Page, SourcePage
 from staticsite.render import RenderedElement, RenderedFile
 from staticsite.utils.images import ImageScanner
 
@@ -38,17 +39,19 @@ class ImageField(TrackedField[Page, Union[str, "Image"]]):
     If not set, and an image exists with the same name as the page (besides the
     extension), that image is used.
     """
+
     tracked_by = "images"
 
-    def _clean(self, page: Page, value: Any) -> Union[str, "Image"]:
+    def _clean(self, page: Page, value: Any) -> str | Image:
         if isinstance(value, str):
             return value
         elif isinstance(value, Image):
             return value
         else:
             raise TypeError(
-                    f"invalid value of type {type(value)} for {page!r}.{self.name}:"
-                    " expecting str or Image")
+                f"invalid value of type {type(value)} for {page!r}.{self.name}:"
+                " expecting str or Image"
+            )
 
 
 class ImagePageMixin(Page):
@@ -117,6 +120,7 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
     Scaled versions of the image will be available in the image's [`related`
     field](../fields/related.md).
     """
+
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         mimetypes.init()
@@ -124,17 +128,18 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
         # Nodes that contain images
         self.images: set[Image] = set()
 
-    def get_page_bases(self, page_cls: Type[Page]) -> Sequence[Type[Page]]:
+    def get_page_bases(self, page_cls: type[Page]) -> Sequence[type[Page]]:
         return (ImagePageMixin,)
 
-    def get_used_page_types(self) -> list[Type[Page]]:
+    def get_used_page_types(self) -> list[type[Page]]:
         return [Image, ScaledImage]
 
     def load_dir(
-            self,
-            node: SourcePageNode,
-            directory: fstree.Tree,
-            files: dict[str, tuple[dict[str, Any], file.File]]) -> list[Page]:
+        self,
+        node: SourcePageNode,
+        directory: fstree.Tree,
+        files: dict[str, tuple[dict[str, Any], file.File]],
+    ) -> list[Page]:
         taken: list[str] = []
         pages: list[Page] = []
         for fname, (kwargs, src) in files.items():
@@ -152,11 +157,8 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
             kwargs.update(img_meta)
 
             page = node.create_source_page_as_file(
-                page_cls=Image,
-                src=src,
-                mimetype=mimetype,
-                dst=fname,
-                **kwargs)
+                page_cls=Image, src=src, mimetype=mimetype, dst=fname, **kwargs
+            )
 
             if page is not None:
                 pages.append(page)
@@ -192,7 +194,8 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
                         name=name,
                         info=info,
                         dst=scaled_fname,
-                        **rel_kwargs)
+                        **rel_kwargs,
+                    )
 
     def crossreference(self) -> None:
         # Resolve image from strings to Image pages
@@ -201,8 +204,11 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
             if isinstance(val, str):
                 resolved = page.resolve_path(val)
                 if not isinstance(resolved, (Image, ScaledImage)):
-                    log.warning("%s: image field resolves to %s which is not an image page",
-                                self, page.image)
+                    log.warning(
+                        "%s: image field resolves to %s which is not an image page",
+                        self,
+                        page.image,
+                    )
                 else:
                     page.image = resolved
 
@@ -215,8 +221,13 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
             pages = cast(Iterable[ImagePageMixin], image.node.build_pages.values())
             if image.node.sub is not None:
                 pages = itertools.chain(
-                        pages,
-                        (cast(ImagePageMixin, subnode.page) for subnode in image.node.sub.values() if subnode.page))
+                    pages,
+                    (
+                        cast(ImagePageMixin, subnode.page)
+                        for subnode in image.node.sub.values()
+                        if subnode.page
+                    ),
+                )
 
             # Find pages matching this image's name
             for page in pages:
@@ -224,7 +235,7 @@ class Images(PageTrackingMixin[ImagePageMixin], Feature):
                 if not isinstance(page, SourcePage):
                     # Don't associate to generated pages
                     continue
-                if (page.src.relpath == image.src.relpath):
+                if page.src.relpath == image.src.relpath:
                     # Don't associate to variants of this image
                     continue
                 if basename_no_ext(page.src.relpath) == name:
@@ -239,6 +250,7 @@ class Image(ImagePage, SourcePage):
     """
     An image as found in the source directory
     """
+
     TYPE = "image"
 
     lat = fields.Float[Page](doc="Image latitude")
@@ -260,11 +272,12 @@ class RenderedScaledImage(RenderedElement):
         self.width = width
         self.height = height
 
-    def write(self, *, name: str, dir_fd: int, old: Optional[os.stat_result]) -> None:
+    def write(self, *, name: str, dir_fd: int, old: os.stat_result | None) -> None:
         # If target exists and mtime is ok, keep it
         if old and old.st_mtime >= self.src.stat.st_mtime:
             return
         import PIL
+
         with PIL.Image.open(self.src.abspath) as img:
             img = img.resize((self.width, self.height))
             with self.dirfd_open(name, "wb", dir_fd=dir_fd) as out:
@@ -279,6 +292,7 @@ class ScaledImage(ImagePage, AutoPage):
     """
     Scaled version of an image
     """
+
     TYPE = "scaledimage"
 
     # Note: from Python 3.12, we can parameterize Page on the type of
@@ -289,23 +303,27 @@ class ScaledImage(ImagePage, AutoPage):
     # With 3.12 we can remove the casts in favour of an extra type in the page
     # definition
 
-    def __init__(self, *args: Any, mimetype: str, name: str, info: dict[str, Any], **kw: Any):
+    def __init__(
+        self, *args: Any, mimetype: str, name: str, info: dict[str, Any], **kw: Any
+    ):
         super().__init__(*args, **kw)
         self.name = name
         created_from = cast(Image, self.created_from)
         self.date = created_from.date
-        if (title := created_from.title):
+        if title := created_from.title:
             self.title = title
 
         if "height" not in kw:
             self.height = round(
-                    created_from.height * (
-                        info["width"] / created_from.width))
+                created_from.height * (info["width"] / created_from.width)
+            )
 
         created_from.add_related(name, self)
 
     def render(self, **kw: Any) -> RenderedElement:
-        return RenderedScaledImage(cast(Image, self.created_from).src, self.width, self.height)
+        return RenderedScaledImage(
+            cast(Image, self.created_from).src, self.width, self.height
+        )
 
     def _compute_change_extent(self) -> ChangeExtent:
         if self.created_from is None:

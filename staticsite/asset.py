@@ -13,6 +13,7 @@ class Asset(SourcePage):
     """
     A static asset, copied as is
     """
+
     TYPE = "asset"
 
     def __init__(self, site: Site, *, name: str, **kw: Any):

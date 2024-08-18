@@ -3,8 +3,8 @@ from __future__ import annotations
 import fnmatch
 import os
 import re
-from typing import (TYPE_CHECKING, Any, Callable, FrozenSet, Generator,
-                    Optional, Sequence, Union, cast)
+from collections.abc import Callable, Generator, Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 from . import site
 from .page import Page
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .node import Node
 
 
-def compile_page_match(pattern: Union[str, re.Pattern[str]]) -> re.Pattern[str]:
+def compile_page_match(pattern: str | re.Pattern[str]) -> re.Pattern[str]:
     """
     Return a compiled re.Pattern from a glob or regular expression.
 
@@ -26,12 +26,14 @@ def compile_page_match(pattern: Union[str, re.Pattern[str]]) -> re.Pattern[str]:
     """
     if isinstance(pattern, re.Pattern):
         return pattern
-    if pattern and (pattern[0] == '^' or pattern[-1] == '$'):
+    if pattern and (pattern[0] == "^" or pattern[-1] == "$"):
         return re.compile(pattern)
     return re.compile(fnmatch.translate(pattern))
 
 
-def sort_args(sort: Optional[str]) -> tuple[Optional[str], bool, Optional[Callable[[Page], Any]]]:
+def sort_args(
+    sort: str | None,
+) -> tuple[str | None, bool, Callable[[Page], Any] | None]:
     """
     Parse a page sort string, returning a tuple of:
     * which page metadata is used for sorting, or None if sorting is not based
@@ -51,12 +53,16 @@ def sort_args(sort: Optional[str]) -> tuple[Optional[str], bool, Optional[Callab
 
     # Add a sort key function
     if sort == "url":
+
         def key(page: Page) -> Any:
             return page.site_path
+
         return None, reverse, key
     else:
+
         def key(page: Page) -> Any:
             return getattr(page, cast(str, sort), None)
+
         return sort, reverse, key
 
 
@@ -66,18 +72,20 @@ class PageFilter:
     """
 
     def __init__(
-            self,
-            site: "site.Site", *,
-            path: Optional[str] = None,
-            limit: Optional[int] = None,
-            sort: Optional[str] = None,
-            root: Optional[Node] = None,
-            allow: Optional[Sequence[Page]] = None,
-            **kw: str):
+        self,
+        site: site.Site,
+        *,
+        path: str | None = None,
+        limit: int | None = None,
+        sort: str | None = None,
+        root: Node | None = None,
+        allow: Sequence[Page] | None = None,
+        **kw: str,
+    ):
         self.site = site
         self.root = root or site.root
 
-        self.re_path: Optional[re.Pattern[str]]
+        self.re_path: re.Pattern[str] | None
         if path is not None:
             self.re_path = compile_page_match(path)
         else:
@@ -85,9 +93,10 @@ class PageFilter:
 
         self.sort_meta, self.sort_reverse, self.sort_key = sort_args(sort)
 
-        self.taxonomy_filters: list[tuple[str, FrozenSet[str]]] = []
+        self.taxonomy_filters: list[tuple[str, frozenset[str]]] = []
         if (taxonomy_feature := self.site.features.get("taxonomy")) is not None:
             from staticsite.features.taxonomy import TaxonomyFeature
+
             for taxonomy in cast(TaxonomyFeature, taxonomy_feature).taxonomies.values():
                 t_filter = kw.get(taxonomy.name)
                 if t_filter is None:
@@ -111,7 +120,7 @@ class PageFilter:
             pages.sort(key=self.sort_key, reverse=self.sort_reverse)
 
         if self.limit is not None:
-            pages = pages[:self.limit]
+            pages = pages[: self.limit]
 
         return pages
 
@@ -142,7 +151,9 @@ class PageFilter:
             if self.re_path is not None:
                 if self.re_path.match(os.path.join(relpath, name)):
                     pass
-                elif page.source_name and self.re_path.match((os.path.join(relpath, page.source_name))):
+                elif page.source_name and self.re_path.match(
+                    os.path.join(relpath, page.source_name)
+                ):
                     pass
                 else:
                     # print(f"  {page=!r} {page.src=} did not match")

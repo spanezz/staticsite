@@ -10,7 +10,6 @@ from typing import Any
 from ..cache import DisabledCache
 from ..utils import images
 from ..utils import yaml_codec as yaml
-
 from .command import Command, Fail, Success, register
 
 log = logging.getLogger("meta")
@@ -21,6 +20,7 @@ class Meta(Command):
     """
     Edit metadata for a file
     """
+
     def __init__(self, *args: Any, **kw: Any):
         super().__init__(*args, **kw)
         self.scanner = images.ImageScanner(DisabledCache("disabled"))
@@ -30,12 +30,17 @@ class Meta(Command):
         Run the editor on this file
         """
         settings_dict = self.settings.as_dict()
-        cmd = [x.format(name=fname, **settings_dict) for x in self.settings.EDIT_COMMAND]
+        cmd = [
+            x.format(name=fname, **settings_dict) for x in self.settings.EDIT_COMMAND
+        ]
         try:
             res = subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError as e:
-            raise Fail("Editor command {} exited with error {}".format(
-                " ".join(shlex.quote(x) for x in cmd), e.returncode))
+            raise Fail(
+                "Editor command {} exited with error {}".format(
+                    " ".join(shlex.quote(x) for x in cmd), e.returncode
+                )
+            )
         return res
 
     def edit_meta(self, meta: dict[str, Any]) -> dict[str, Any]:
@@ -47,7 +52,7 @@ class Meta(Command):
             yaml.dump(meta, fd)
             fd.flush()
             self.edit(fd.name)
-            with open(fd.name, "rt") as newfd:
+            with open(fd.name) as newfd:
                 if not isinstance((res := yaml.load(newfd)), dict):
                     raise RuntimeError("YAML did not parse as a dict")
                 return res
@@ -98,7 +103,9 @@ class Meta(Command):
         self.save_changes(meta, new_meta)
 
     @classmethod
-    def add_subparser(cls, subparsers: "argparse._SubParsersAction[Any]") -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("file", help="edit the metadata of this file")
         return parser
