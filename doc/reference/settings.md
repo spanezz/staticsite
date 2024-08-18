@@ -2,7 +2,7 @@
 
 Sites can provide a configuration file, called `settings.py` or
 `.staticsite.py` by default, that is interpreted via Python similarly to what
-happens in [Django](https://docs.djangoproject.com/en/1.9/topics/settings/).
+happens in [Django](https://docs.djangoproject.com/en/5.0/topics/settings/).
 
 Only uppercase values set in the configuration are used by staticsite, the rest
 is ignored.
