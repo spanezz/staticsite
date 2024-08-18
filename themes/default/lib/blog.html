@@ -90,7 +90,7 @@
 
 {% macro pages(pages, limit=10) -%}
   {% for entry in syndicated_pages(pages, limit=limit + 1) %}
-    {% if loop.index == 11 %}
+    {% if loop.index == limit + 1 %}
     <div class="card mb-4">
       <div class="card-body">
         <a href="{{url_for(page.meta.related.archive)}}#{{loop.index0}}">Archive of all posts</a>
