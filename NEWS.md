@@ -3,6 +3,7 @@
 # New in version 2.5
 
 * Suppport newer docutils
+* Updated bundled jquery assets
 
 # New in version 2.4
 
