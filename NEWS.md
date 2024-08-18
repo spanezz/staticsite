@@ -4,6 +4,7 @@
 
 * Suppport newer docutils
 * Updated bundled jquery assets
+* New `default-b5` template using Bootstrap 5
 
 # New in version 2.4
 

@@ -1,0 +1,115 @@
+{% macro inline_page(page) -%}
+<div class="card mb-4">
+  <h3 class="card-header">
+    <a href="{{url_for(page)}}" class="text-decoration-none">{{page.meta.title}}</a>
+  </h3>
+  <div class="card-body">
+    {% if page.meta.image %}
+    {% with img = page.meta.image %}
+    <figure class="figure float-right ml-3 text-center">
+      {{img_for(img, class="figure-img img-fluid rounded", sizes="(min-width: 1200px) 33vw, (min-width: 576px) 25vw, 100vw")}}
+      {% if img.meta.title %}<figcaption class="figure-caption text-center">{{img.meta.title}}</figcaption>{% endif %}
+    </figure>
+    {% endwith %}
+    {% endif %}
+
+    {{page.html_inline()|safe}}
+  </div>
+  <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+    <div>
+      <small><a href="{{url_for(page)}}" class="text-decoration-none">{{page.meta.date.strftime("%Y-%m-%d")}}</a></small>
+    </div>
+    <div class="text-right">
+    {% for tag in page.meta.tags %}
+    <a class="badge rounded-pill bg-primary" href="{{ url_for(tag) }}" class="label label-default">{{tag.name}}</a>
+    {% endfor %}
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro main_link() -%}
+  {% if page.created_from %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(page.created_from)}}">{{page.created_from.meta.title}}</a>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro archive_link() -%}
+  {% if page.meta.related.archive %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(page.meta.related.archive)}}">Archive</a>
+    </div>
+  </div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro top_tags(limit=15) -%}
+{% with tags = taxonomy("tags") %}
+  {% if tags %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(tags)}}">Top {{limit}} tags</a>
+    </div>
+    <div class="card-body">
+      {% for category_page in tags.top_categories(15) %}
+      <a class="badge rounded-pill bg-primary text-decoration-none" href="{{url_for(category_page)}}">{{category_page.name}}
+        <span class="text-dark bg-light rounded-pill px-1">{{category_page.meta.pages|length}}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+{% endwith %}
+{%- endmacro %}
+
+{% macro recent_series(limit=5) %}
+{% with series = taxonomy("series") %}
+  {% if series %}
+  <div class="card mb-2">
+    <div class="card-header">
+      <a href="{{url_for(series)}}">Recent series</a>
+    </div>
+    <div class="list-group list-group-flush">
+      {% for category_page in series.most_recent(5) %}
+        {% with info = category_page.series_info %}
+        <a class="list-group-item list-group-item-action" href="{{url_for(category_page)}}">
+          {{info.title}}
+        </a>
+        {% endwith %}
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+{% endwith %}
+{%- endmacro %}
+
+{% macro pages(pages, limit=10) -%}
+  {% for entry in syndicated_pages(pages, limit=limit + 1) %}
+    {% if loop.index == limit + 1 %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <a href="{{url_for(page.meta.related.archive)}}#{{loop.index0}}">Archive of all posts</a>
+      </div>
+    </div>
+    {% else %}
+    {{inline_page(entry)}}
+    {% endif %}
+  {% else %}
+  <p class="lead">There are no posts yet.</p>
+  {% endfor %}
+{%- endmacro %}
+
+{% macro archive(pages) -%}
+<ul class="list-group">
+  {% for page in syndicated_pages(pages) %}
+  <li class="list-group-item"><a name="{{loop.index}}"><a href="{{url_for(page)}}">{{page.meta.date.strftime("%Y-%m-%d")}} - {{page.meta.title}}</a></li>
+  {% else %}
+  <p class="lead">There are no posts yet.</p>
+  {% endfor %}
+</ul>
+{%- endmacro %}
