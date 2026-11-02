@@ -1,6 +1,5 @@
+import tomllib
 from unittest import TestCase
-
-import toml
 
 from staticsite.utils import front_matter
 
@@ -34,5 +33,5 @@ class TestToml(TestCase):
         )
 
     def test_invalid_bool(self):
-        with self.assertRaises(toml.decoder.TomlDecodeError):
+        with self.assertRaises(tomllib.TOMLDecodeError):
             fmt, data = front_matter.read_string(toml_invalid_bool)

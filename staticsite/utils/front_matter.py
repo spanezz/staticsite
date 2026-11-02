@@ -67,11 +67,11 @@ def read_markdown_partial(
         while True:
             line = fd.readline()
             if not line or line.rstrip() == b"+++":
-                import toml
+                import tomllib
 
                 return (
                     "toml",
-                    toml.loads(buf.decode()),
+                    tomllib.loads(buf.decode()),
                     (x.rstrip().decode() for x in fd),
                 )
             buf += line
@@ -89,9 +89,9 @@ def read_markdown_partial(
                 (x.rstrip().decode() for x in fd),
             )
         elif head[3:] == b"toml":
-            import toml
+            import tomllib
 
-            return "toml", toml.loads(buf.decode()), (x.rstrip().decode() for x in fd)
+            return "toml", tomllib.loads(buf.decode()), (x.rstrip().decode() for x in fd)
         elif head[3:] == b"json":
             return "json", json.loads(buf.decode()), (x.rstrip().decode() for x in fd)
         else:
@@ -127,9 +127,9 @@ def read_whole(fd: IO[str]) -> tuple[str, dict[str, Any]]:
 
     mo = re_toml.match(content)
     if mo:
-        import toml
+        import tomllib
 
-        return "toml", (val if (val := toml.loads(mo.group(1))) is not None else {})
+        return "toml", (val if (val := tomllib.loads(mo.group(1))) is not None else {})
 
     return "yaml", (val if (val := yaml_codec.loads(content)) is not None else {})
 
@@ -147,8 +147,8 @@ def read_string(content: str) -> tuple[str, dict[str, Any]]:
 
     mo = re_toml.match(content)
     if mo:
-        import toml
+        import tomllib
 
-        return "toml", toml.loads(mo.group(1))
+        return "toml", tomllib.loads(mo.group(1))
 
     return "yaml", yaml_codec.loads(content)
