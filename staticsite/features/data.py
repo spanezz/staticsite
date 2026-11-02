@@ -183,9 +183,9 @@ def parse_data(fd: IO[str], fmt: str) -> Any:
 
         return json.load(fd)
     elif fmt == "toml":
-        import toml
+        import tomllib
 
-        return toml.load(fd)
+        return tomllib.load(fd)
     elif fmt == "yaml":
         return yaml_codec.load(fd)
     else:
