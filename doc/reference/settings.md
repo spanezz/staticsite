@@ -41,7 +41,7 @@ overridden by `settings.py` or `.staticsite.py`.
   for. Currently only the first entry is used, and it should contain a `locale`
   key with the locale to use to build the site. In the future this can grow
   into building multiple versions of the site for different languages.
-  Defaults to `[{"locale": "C"}]`.
+  Defaults to `[{"locale": "utf-8"}]`.
 
 
 ## `ssite build` settings

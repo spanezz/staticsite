@@ -99,7 +99,7 @@ JINJA2_SANDBOXED = True
 # For now, only the first one is used, and only its locale is used.
 LANGUAGES: Sequence[dict[str, Any]] = [
     {
-        "locale": "C",
+        "locale": "utf-8",
     },
 ]
 
